@@ -16,7 +16,7 @@ make
 Import WALA into Eclipse
 
 1. File => Import => Existing Projects into Workspace
-2. Ensure that "copy projects into workspace" is _not_ checked
+2. Ensure that "copy projects into workspace" is __not__ checked
 3. Browser to the SCanDroid/wala/wala-src directory, click ok
 4. Various WALA projects should appear in the "Projects:" list
 5. Uncheck the following WALA related projects:  _polyglot_ and _j2ee_
@@ -31,6 +31,20 @@ Export the following WALA .jar files into SCanDroid/wala
 - wala_ide.jar
 - wala_shrike.jar
 - wala_util.jar
+
+Modify your WALA properties file according to [WALA:Getting Started](http://wala.sourceforge.net/wiki/index.php/UserGuide:Getting_Started#Configuring_WALA_properties).  Specifically you may need to change the **java_runtime_dir** property to your JRE path.
+
+Compiling SCanDroid
+```
+ant clean; ant build; ant jar
+```
+Running SCanDroid
+```
+java -jar sap.jar --help
+#for a list of options
+java -Xmx6g -jar sap.jar application.apk
+#Example: Sets the Java VM maximum memory allocation pool to 6g and starts analyzing application.apk
+```
 
 
 Dependencies
