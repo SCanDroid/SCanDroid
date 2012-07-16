@@ -1,6 +1,6 @@
 /*
  *
- * Copyright (c) 2010-2012,
+ * Copyright (c) 2009-2012,
  *
  *  Jonathan Bardin     <astrosus@gmail.com>
  *  Steve Suh           <suhsteve@gmail.com>

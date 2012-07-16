@@ -1,6 +1,6 @@
 /*
  *
- * Copyright (c) 2010-2012,
+ * Copyright (c) 2009-2012,
  *
  *  Adam Fuchs          <afuchs@cs.umd.edu>
  *  Avik Chaudhuri      <avik@cs.umd.edu>
