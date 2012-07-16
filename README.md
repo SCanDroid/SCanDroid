@@ -1,10 +1,37 @@
 SCanDroid
 =========
-
 Security Certiﬁer for anDroid
 
 Getting Started
 ===============
+Fetch SCanDroid from github
+```
+git clone https://github.com/SCanDroid/SCanDroid.git
+```
+Download WALA and patch source
+```
+cd SCanDroid/wala
+make
+```
+Import WALA into Eclipse
+
+1. File => Import => Existing Projects into Workspace
+2. Ensure that "copy projects into workspace" is _not_ checked
+3. Browser to the SCanDroid/wala/wala-src directory, click ok
+4. Various WALA projects should appear in the "Projects:" list
+5. Uncheck the following WALA related projects:  _polyglot_ and _j2ee_
+6. Click Finish
+
+Export the following WALA .jar files into SCanDroid/wala
+- wala_cast.jar
+- wala_cast_java.jar
+- wala_cast_java_jdt.jar
+- wala_core_tests.jar
+- wala_core.jar
+- wala_ide.jar
+- wala_shrike.jar
+- wala_util.jar
+
 
 Dependencies
 ============
