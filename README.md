@@ -36,6 +36,8 @@ Modify your WALA properties file according to [WALA:Getting Started](http://wala
 
 Place other dependencies in SCanDroid/lib (dexlib, JUnit, JGraphT, etc...)
 
+Finally, SCanDroid uses the Android library during the analysis.  The Android jar included in the [Android SDK](developer.android.com/sdk) includes methods that are stubbed out.  This makes it lightweight and ideal for download and development.  However SCanDroid requires either a well modeled Android library or the full implementation.  You may model your own, compile the full implemntation, or download a precompiled version online.
+
 Compiling SCanDroid
 ```
 ant clean; ant build; ant jar
