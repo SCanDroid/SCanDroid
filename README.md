@@ -34,6 +34,8 @@ Export the following WALA .jar files into SCanDroid/wala
 
 Modify your WALA properties file according to [WALA:Getting Started](http://wala.sourceforge.net/wiki/index.php/UserGuide:Getting_Started#Configuring_WALA_properties).  Specifically you may need to change the **java_runtime_dir** property to your JRE path.
 
+Place other dependencies in SCanDroid/lib (dexlib, JUnit, JGraphT, etc...)
+
 Compiling SCanDroid
 ```
 ant clean; ant build; ant jar
@@ -50,7 +52,7 @@ java -Xmx6g -jar sap.jar application.apk
 Dependencies
 ============
 - [WALA](http://wala.sourceforge.net) provides static analysis capabilities for Java bytecode and related languages.  The system is licensed under the Eclipse Public License.
-- [dexlib](http://code.google.com/p/smali) is a library to read in and write out dex files. dexlib is licensed under the BSD License.
-- [JUnit](http://www.junit.org) is a unit testing framework. You need JUnit only if you want to run the unit tests.  JUnit is licensed under the terms of the IBM Common Public License.
-- [JGraphT](http://jgrapht.org) is a free Java class library that provides mathematical graph-theory objects and algorithms. It runs on Java 2 Platform (requires JDK 1.6 or later). JGraphT is licensed under the terms of the GNU Lesser General Public License (LGPL).
-- [Apache Commons CLI](http://commons.apache.org/cli) provides an API for parsing command line options passed to programs. The Commons CLI library is licensed under the Apache Software License.
+- [dexlib](http://code.google.com/p/smali) is a library to read in and write out dex files. dexlib is licensed under the BSD License. `1.3.4`
+- [JUnit](http://www.junit.org) is a unit testing framework. You need JUnit only if you want to run the unit tests.  JUnit is licensed under the terms of the IBM Common Public License. `4.9b2`
+- [JGraphT](http://jgrapht.org) is a free Java class library that provides mathematical graph-theory objects and algorithms. It runs on Java 2 Platform (requires JDK 1.6 or later). JGraphT is licensed under the terms of the GNU Lesser General Public License (LGPL). `0.8.3`
+- [Apache Commons CLI](http://commons.apache.org/cli) provides an API for parsing command line options passed to programs. The Commons CLI library is licensed under the Apache Software License. `1.2`
