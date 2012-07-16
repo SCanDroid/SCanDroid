@@ -2,6 +2,10 @@ SCanDroid
 =========
 Security Certiﬁer for anDroid
 
+(c) Copyright 2009-2012
+
+The preferred license for SCanDroid is the BSD License and the majority of the SCanDroid software is licensed with it.  However there are a few case-by-case exceptions that are under the Eclipse Public License.
+
 Getting Started
 ===============
 Fetch SCanDroid from github
