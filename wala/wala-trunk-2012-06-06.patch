@@ -1,0 +1,109 @@
+diff --git a/com.ibm.wala.cast/source/java/com/ibm/wala/cast/loader/CAstAbstractNativeLoader.java b/com.ibm.wala.cast/source/java/com/ibm/wala/cast/loader/CAstAbstractNativeLoader.java
+deleted file mode 100644
+index e69de29..0000000
+diff --git a/com.ibm.wala.cast/source/java/com/ibm/wala/cast/tree/TranslatorToCAst.java b/com.ibm.wala.cast/source/java/com/ibm/wala/cast/tree/TranslatorToCAst.java
+deleted file mode 100644
+index e69de29..0000000
+diff --git a/com.ibm.wala.core/src/com/ibm/wala/classLoader/ClassLoaderFactoryImpl.java b/com.ibm.wala.core/src/com/ibm/wala/classLoader/ClassLoaderFactoryImpl.java
+index 20331a4..e88efb8 100644
+--- a/com.ibm.wala.core/src/com/ibm/wala/classLoader/ClassLoaderFactoryImpl.java
++++ b/com.ibm.wala.core/src/com/ibm/wala/classLoader/ClassLoaderFactoryImpl.java
+@@ -98,8 +98,18 @@ public class ClassLoaderFactoryImpl implements ClassLoaderFactory {
+             SetOfClasses.class, IClassHierarchy.class});
+         cl = (IClassLoader) ctor.newInstance(new Object[] { classLoaderReference, parent, exclusions, cha});
+       } catch (Exception e) {
+-        Warnings.add(InvalidClassLoaderImplementation.create(implClass));
+-        cl = new ClassLoaderImpl(classLoaderReference, scope.getArrayClassLoader(), parent, exclusions, cha);
++        try
++        {
++          Class<?> impl = Class.forName(implClass);
++          Constructor<?> ctor = impl.getDeclaredConstructor(new Class[] { ClassLoaderReference.class, ArrayClassLoader.class, IClassLoader.class,
++              SetOfClasses.class, IClassHierarchy.class});
++          cl = (IClassLoader) ctor.newInstance(new Object[] { classLoaderReference, scope.getArrayClassLoader(), parent, exclusions, cha});
++        } catch (Exception e2) {
++          System.err.println("failed to load impl class "+implClass);
++          e2.printStackTrace(System.err);
++          Warnings.add(InvalidClassLoaderImplementation.create(implClass));
++          cl = new ClassLoaderImpl(classLoaderReference, scope.getArrayClassLoader(), parent, exclusions, cha);
++        }
+       }
+     cl.init(scope.getModules(classLoaderReference));
+     return cl;
+diff --git a/com.ibm.wala.core/src/com/ibm/wala/classLoader/ClassLoaderImpl.java b/com.ibm.wala.core/src/com/ibm/wala/classLoader/ClassLoaderImpl.java
+index aae02f4..400a677 100644
+--- a/com.ibm.wala.core/src/com/ibm/wala/classLoader/ClassLoaderImpl.java
++++ b/com.ibm.wala.core/src/com/ibm/wala/classLoader/ClassLoaderImpl.java
+@@ -244,7 +244,7 @@ public class ClassLoaderImpl implements IClassLoader {
+   /**
+    * Set up the set of classes loaded by this object.
+    */
+-  private void loadAllClasses(Collection<ModuleEntry> moduleEntries, Map<String, Object> fileContents) {
++  protected void loadAllClasses(Collection<ModuleEntry> moduleEntries, Map<String, Object> fileContents) {
+     for (Iterator<ModuleEntry> it = moduleEntries.iterator(); it.hasNext();) {
+       ModuleEntry entry = it.next();
+       if (!entry.isClassFile()) {
+diff --git a/com.ibm.wala.core/src/com/ibm/wala/properties/WalaProperties.java b/com.ibm.wala.core/src/com/ibm/wala/properties/WalaProperties.java
+index 5172c03..cc7dd58 100644
+--- a/com.ibm.wala.core/src/com/ibm/wala/properties/WalaProperties.java
++++ b/com.ibm.wala.core/src/com/ibm/wala/properties/WalaProperties.java
+@@ -85,7 +85,7 @@ public final class WalaProperties {
+     return result;
+   }
+ 
+-  final static String PROPERTY_FILENAME = "wala.properties"; //$NON-NLS-1$
++  final static String PROPERTY_FILENAME = "conf/wala.properties"; //$NON-NLS-1$
+ 
+   public static Properties loadProperties() throws WalaException {
+     try {
+diff --git a/com.ibm.wala.core/src/com/ibm/wala/util/config/AnalysisScopeReader.java b/com.ibm.wala.core/src/com/ibm/wala/util/config/AnalysisScopeReader.java
+index e4dd376..7140d4a 100644
+--- a/com.ibm.wala.core/src/com/ibm/wala/util/config/AnalysisScopeReader.java
++++ b/com.ibm.wala.core/src/com/ibm/wala/util/config/AnalysisScopeReader.java
+@@ -13,6 +13,7 @@ package com.ibm.wala.util.config;
+ import java.io.BufferedReader;
+ import java.io.File;
+ import java.io.FileInputStream;
++import java.io.FileNotFoundException;
+ import java.io.IOException;
+ import java.io.InputStreamReader;
+ import java.util.StringTokenizer;
+@@ -56,13 +57,17 @@ public class AnalysisScopeReader {
+       FileProvider fp) throws IOException {
+     BufferedReader r = null;
+     try {
++      String line;
++      try {
+       File scopeFile = fp.getFile(scopeFileName, javaLoader);
+       assert scopeFile.exists();
+ 
+-      String line;
+       // assume the scope file is UTF-8 encoded; ASCII files will also be handled properly
+       // TODO allow specifying encoding as a parameter?
+       r = new BufferedReader(new InputStreamReader(new FileInputStream(scopeFile), "UTF-8"));
++      } catch (FileNotFoundException e) {
++        r = new BufferedReader(new InputStreamReader(javaLoader.getResourceAsStream(scopeFileName)));
++      }
+       while ((line = r.readLine()) != null) {
+         processScopeDefLine(scope, javaLoader, line);
+       }
+@@ -70,7 +75,6 @@ public class AnalysisScopeReader {
+       if (exclusionsFile != null) {
+         scope.setExclusions(FileOfClasses.createFileOfClasses(exclusionsFile));
+       }
+-
+     } finally {
+       if (r != null) {
+         try {
+diff --git a/com.ibm.wala.core/src/com/ibm/wala/util/io/FileProvider.java b/com.ibm.wala.core/src/com/ibm/wala/util/io/FileProvider.java
+index 22aeabf..a5bb1e3 100644
+--- a/com.ibm.wala.core/src/com/ibm/wala/util/io/FileProvider.java
++++ b/com.ibm.wala.core/src/com/ibm/wala/util/io/FileProvider.java
+@@ -101,7 +101,7 @@ public class FileProvider {
+       }
+       throw new FileNotFoundException(fileName);
+     } else {
+-      return new File(filePathFromURL(url));
++      return new File(filePathFromURL(url) == null ? url.getPath() : filePathFromURL(url));
+     }
+   }
+ 
