@@ -36,11 +36,11 @@ Export the following WALA .jar files into SCanDroid/wala
 - wala_shrike.jar
 - wala_util.jar
 
-Modify your WALA properties file according to [WALA:Getting Started](http://wala.sourceforge.net/wiki/index.php/UserGuide:Getting_Started#Configuring_WALA_properties).  Specifically you may need to change the **java_runtime_dir** property to your JRE path.
+Modify your WALA properties file according to [WALA:Getting Started](http://wala.sourceforge.net/wiki/index.php/UserGuide:Getting_Started#Configuring_WALA_properties).  Specifically, you may need to change the **java_runtime_dir** property to your JRE path.
 
 Place other dependencies in SCanDroid/lib (dexlib, JUnit, JGraphT, etc...)
 
-Finally, SCanDroid uses the Android library during the analysis.  The Android jar included in the [Android SDK](developer.android.com/sdk) includes methods that are stubbed out.  This makes it lightweight and ideal for download and development.  However SCanDroid requires either a well modeled Android library or the full implementation.  You may model your own, compile the full implemntation, or download a precompiled version online.
+Finally, SCanDroid uses the Android library during the analysis.  The Android jar included in the [Android SDK](developer.android.com/sdk) includes methods that are stubbed out.  This makes it lightweight and ideal for download and development, however SCanDroid requires either a well modeled Android library or the full implementation.  You may model your own, compile the full implemntation, or download a precompiled version online.
 
 Compiling SCanDroid
 ```
