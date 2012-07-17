@@ -8,6 +8,8 @@ The preferred license for SCanDroid is the BSD License and the majority of the S
 
 Getting Started
 ===============
+You will need to have [ant](http://ant.apache.org/) and [JRE 5 or 6](http://www.oracle.com/technetwork/java/javase/downloads/index.html) (JRE 7 is not supported by WALA at the moment) installed to compile SCanDroid.
+
 Fetch SCanDroid from github
 ```
 git clone https://github.com/SCanDroid/SCanDroid.git
