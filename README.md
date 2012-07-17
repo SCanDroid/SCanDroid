@@ -38,7 +38,11 @@ Export the following WALA .jar files into SCanDroid/wala
 - wala_shrike.jar
 - wala_util.jar
 
-Modify your WALA properties file according to [WALA:Getting Started](http://wala.sourceforge.net/wiki/index.php/UserGuide:Getting_Started#Configuring_WALA_properties).  Specifically, you may need to change the **java_runtime_dir** property to your JRE path.
+Modify your WALA properties file according to [WALA:Getting Started](http://wala.sourceforge.net/wiki/index.php/UserGuide:Getting_Started#Configuring_WALA_properties).  Specifically, you may need to change the **java_runtime_dir** property to your JRE path.  You may need to modify one of the following files depending on your OS.
+- SCanDroid/conf/wala.properties.linux
+- SCanDroid/conf/wala.properties.mac
+- SCanDroid/conf/wala.properties.windows
+
 
 Place other dependencies in SCanDroid/lib (dexlib, JUnit, JGraphT, etc...)
 
