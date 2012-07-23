@@ -114,7 +114,7 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
         scope.setLoaderImpl(ClassLoaderReference.Application,
                             "com.ibm.wala.classLoader.WDexClassLoaderImpl");
         scope.addToScope(ClassLoaderReference.Primordial,
-                new JarFile("data/android-2.3.7_r1.jar"));
+                new JarFile(CLI.getOption("android-lib")));
         cha = ClassHierarchy.make(scope);
 
         //log ClassHierarchy warnings
