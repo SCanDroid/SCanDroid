@@ -101,7 +101,7 @@ public class CLI {
 		options.addOption("r", "model-reflection", false, "use built-in WALA reflection support");
 		options.addOption("e", "separate-entries", false, "analyze each entry point separately");
 		options.addOption("i", "IFDS-Explorer", false, "analyze each entry point separately");
-		options.addOption(OptionBuilder.withLongOpt( "android-lib" ).withDescription( "use ALIB instead of default android lib" ).hasArg().withArgName("ALIB").create() );
+		options.addOption(OptionBuilder.withLongOpt( "android-lib" ).withDescription( "include ALIB in scope of analysis" ).hasArg().withArgName("ALIB").create() );
 		
 	}
 		
