@@ -52,7 +52,7 @@ Place other dependencies in _SCanDroid/lib_.  Your dependency files should be si
 
 If you downloaded a different version, please edit build.xml and change the .jar names accordingly.
 
-Finally, SCanDroid uses the Android library during the analysis.  The Android jar included in the [Android SDK](developer.android.com/sdk) includes methods that are stubbed out.  This makes it lightweight and ideal for download and development, however SCanDroid requires either a well modeled Android library or the full implementation.  You may model your own, compile the full implemntation, or download a precompiled version online.
+Finally, SCanDroid uses the Android library during the analysis.  The Android jar included in the [Android SDK](developer.android.com/sdk) includes methods that are stubbed out.  This makes it lightweight and ideal for download and development, however SCanDroid requires either a well modeled Android library or the full implementation.  You may model your own, compile the full implemntation, or download a precompiled version online. [GrepCode](http://grepcode.com/project/repository.grepcode.com/java/ext/com.google.android/android/) has some precompiled Android libraries that may be used.
 
 ####Compiling and Running
 Compiling SCanDroid
