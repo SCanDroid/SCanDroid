@@ -63,7 +63,7 @@ Running SCanDroid
 ```
 java -jar sap.jar --help
 #for a list of options
-java -Xmx6g -jar sap.jar --android-lib=android-2.3.7_r1.jar application.apk
+java -Xmx6g -jar sap.jar --android-lib=path/android-2.3.7_r1.jar application.apk
 #Example: Sets the Java VM maximum memory allocation pool to 6g, includes 
 #version 2.3.7_r1 of the android library in the scope of the analysis, and 
 #starts analyzing application.apk
