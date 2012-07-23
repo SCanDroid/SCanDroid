@@ -76,6 +76,11 @@ public class CLI {
     	if (CLI.hasOption("verbose")) {    		
     		setProperty("LOG_LEVEL", line.getOptionValue("verbose"));
     	}
+    	
+    	if (!CLI.hasOption("android-lib")) {
+    		System.err.println("Please specify an android library");
+    		System.exit(0);
+    	}
 		
 		fetchClasspath(reqArgs);
 		fetchFilename();
@@ -102,6 +107,10 @@ public class CLI {
 		
 	public static boolean hasOption(String s) {
 		return line != null && line.hasOption(s);
+	}
+	
+	public static String getOption(String s) {
+		return  line.getOptionValue("android-lib");
 	}
 	
 	private static void fetchClasspath(boolean reqArgs) {
