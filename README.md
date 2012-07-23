@@ -27,7 +27,7 @@ Import WALA into Eclipse
 2. Ensure that "copy projects into workspace" is __not__ checked
 3. Browser to the SCanDroid/wala/wala-src directory, click ok
 4. Various WALA projects should appear in the "Projects:" list
-5. Uncheck the following WALA related projects:  _polyglot_ and _j2ee_
+5. Uncheck the following WALA related projects:  _polyglot_ and _js_
 6. Click Finish
 
 Export the following WALA .jar files into SCanDroid/wala
