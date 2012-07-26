@@ -63,15 +63,28 @@ public class UriPrefixContextSelector implements ContextSelector {
                 callee.getSignature().equals("java.lang.String.valueOf(Ljava/lang/Object;)Ljava/lang/String;") ||
                 callee.getSignature().equals("java.lang.String.toString()Ljava/lang/String;") ||
                 callee.getSignature().equals("android.net.Uri.parse(Ljava/lang/String;)Landroid/net/Uri;") ||
-                callee.getSignature().equals("android.net.Uri.withAppendedPath(Landroid/net/Uri;Ljava/lang/String;)Landroid/net/Uri;")
+                callee.getSignature().equals("android.net.Uri.withAppendedPath(Landroid/net/Uri;Ljava/lang/String;)Landroid/net/Uri;") ||
+//                callee.getSignature().equals("android.net.Uri$StringUri.buildUpon()Landroid/net/Uri$Builder;") ||
+//                callee.getSignature().equals("android.net.Uri$OpaqueUri.buildUpon()Landroid/net/Uri$Builder;") ||
+                callee.getSignature().equals("android.net.Uri$Builder.build()Landroid/net/Uri;")
                 )
         {
-            //System.out.println("Adding context to "+callee.getSignature());
+//            System.out.println("Adding context to "+callee.getSignature());
+//            for (int i = 0; i < receivers.length; i++)
+//            	System.out.println("\t#"+i+" "+receivers[i]);
             if(receivers[0] instanceof NormalAllocationInNode)
             {
+//                System.out.println("\t\tNormalAllocationInNode "+callee.getSignature());
                 if(((NormalAllocationInNode)receivers[0]).getSite().getDeclaredType().getClassLoader().equals(ClassLoaderReference.Application))
                     // create a context based on the site and the receiver
                     return new CallerSiteContextPair(caller,site,new ReceiverInstanceContext(receivers[0]));
+//                if (callee.getSignature().equals("android.net.Uri$StringUri.buildUpon()Landroid/net/Uri$Builder;") ||
+//                		callee.getSignature().equals("android.net.Uri$OpaqueUri.buildUpon()Landroid/net/Uri$Builder;") ||
+//                		callee.getSignature().equals("android.net.Uri$Builder.build()Landroid/net/Uri;"))
+//                	return new CallerSiteContextPair(caller,site,new ReceiverInstanceContext(receivers[0]));
+                if (callee.getSignature().equals("android.net.Uri$Builder.build()Landroid/net/Uri;"))
+                	return new CallerSiteContextPair(caller,site,new ReceiverInstanceContext(receivers[0]));
+                	
             }
             else if(callee.getSignature().equals("java.lang.String.valueOf(Ljava/lang/Object;)Ljava/lang/String;") ||
                     callee.getSignature().equals("java.lang.String.toString()Ljava/lang/String;") ||

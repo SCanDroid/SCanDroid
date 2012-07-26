@@ -44,12 +44,38 @@ import com.ibm.wala.types.TypeReference;
 public class InputFlow implements FlowType {
 
     public final TypeReference activityClass;
+    private final CGNode inNode;
+    final String type;
+    final int argNum;
+    final String callee;
 
     public InputFlow(TypeReference activityClass)
     {
         this.activityClass = activityClass;
+        inNode = null;
+        type = "";
+        argNum = 0;
+        callee = "";
     }
-
+    
+    public InputFlow(TypeReference activityClass, CGNode node, String type, String callee)
+    {
+        this.activityClass = activityClass;
+        this.inNode = node;
+        this.type = type;
+        argNum = 0;
+        this.callee = callee;
+    }
+    
+    public InputFlow(TypeReference activityClass, CGNode node, String type,String callee, int argNum)
+    {
+        this.activityClass = activityClass;
+        this.inNode = node;
+        this.type = type;
+        this.argNum = argNum;
+        this.callee = callee;
+    }
+    
     @Override
     public int hashCode()
     {
@@ -59,18 +85,24 @@ public class InputFlow implements FlowType {
     @Override
     public boolean equals(Object other)
     {
-        return other != null && other instanceof InputFlow && ((InputFlow)other).activityClass.equals(activityClass);
+//        return other != null && other instanceof InputFlow && ((InputFlow)other).activityClass.equals(activityClass);
+    	return other != null && other instanceof InputFlow && ((InputFlow)other).inNode.equals(inNode)
+    			&& ((InputFlow)other).argNum == argNum;
     }
 
     @Override
     public String toString()
     {
-        return "InputFlow("+activityClass+")";
+    	if (argNum == 0)
+    		return type+" - InputFlow(Caller:"+inNode.getMethod().getSignature()+" ==> Callee:"+callee+")";
+    	else
+    		return type+" - InputFlow(Caller:"+inNode.getMethod().getSignature()+" ==> Callee:"+callee+", Parameter:"+argNum+")";
+//        return "InputFlow("+activityClass+")";
     }
 
 	@Override
 	public CGNode getRelevantNode() {
-		// TODO Auto-generated method stub
-		return null;
+		return inNode;
 	}
+	
 }

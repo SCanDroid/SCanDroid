@@ -40,7 +40,7 @@ package spec;
 
 public interface ISourceSpec{
     public enum SourceType {
-        INPUT_SOURCE,     /* Arguments to entry points. */
+        INPUT_SOURCE,     /* Arguments to entry points or return values from FunctionCalls */
         PROVIDER_SOURCE,  /* Results from content providers. */
         BINDER_SOURCE,   /* Sources from onTransact/Transact. */
         ARG_SOURCE,		 /* Arguments to invoke calls */
@@ -48,5 +48,5 @@ public interface ISourceSpec{
     }
 	
 	public SourceType getType();
-	
+		
 }

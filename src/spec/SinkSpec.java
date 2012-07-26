@@ -42,6 +42,7 @@ import java.util.Collection;
 
 import util.AndroidAppLoader;
 
+import com.ibm.wala.classLoader.IMethod;
 import com.ibm.wala.ipa.callgraph.CGNode;
 import com.ibm.wala.ssa.ISSABasicBlock;
 import com.ibm.wala.ssa.SSAInvokeInstruction;
@@ -75,7 +76,7 @@ public abstract class SinkSpec implements ISinkSpec {
 	}
 	
     abstract public <E extends ISSABasicBlock> Collection<FlowType> getFlowType(
-    		AndroidAppLoader<E> loader,SSAInvokeInstruction invInst,
+    		AndroidAppLoader<E> loader,IMethod im, SSAInvokeInstruction invInst,
             CGNode node, int argNum);
 	
 }

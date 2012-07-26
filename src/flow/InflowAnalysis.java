@@ -57,6 +57,7 @@ import util.AndroidAppLoader;
 import com.ibm.wala.classLoader.IMethod;
 import com.ibm.wala.ipa.callgraph.CGNode;
 import com.ibm.wala.ipa.callgraph.impl.Everywhere;
+import com.ibm.wala.ipa.callgraph.propagation.InstanceKey;
 import com.ibm.wala.ipa.cfg.BasicBlockInContext;
 import com.ibm.wala.ssa.ISSABasicBlock;
 import com.ibm.wala.ssa.SSAInstruction;
@@ -64,6 +65,7 @@ import com.ibm.wala.ssa.SSAInvokeInstruction;
 
 import domain.CodeElement;
 import flow.types.FlowType;
+import flow.types.IKFlow;
 
 public class InflowAnalysis <E extends ISSABasicBlock> {
 
@@ -106,7 +108,7 @@ public class InflowAnalysis <E extends ISSABasicBlock> {
     }
     
     
-    private static<E extends ISSABasicBlock> void processReturnBinderSource(Map<BasicBlockInContext<E>,Map<FlowType,Set<CodeElement>>> taintMap, AndroidAppLoader<E> loader, ArrayList<SourceSpec> ssAL) {
+    private static<E extends ISSABasicBlock> void processFunctionCalls(Map<BasicBlockInContext<E>,Map<FlowType,Set<CodeElement>>> taintMap, AndroidAppLoader<E> loader, ArrayList<SourceSpec> ssAL) {
     	Collection<IMethod> targets = new HashSet<IMethod>();
     	ArrayList<Collection<IMethod>> targetList = new ArrayList<Collection<IMethod>>();
     	
@@ -137,7 +139,7 @@ public class InflowAnalysis <E extends ISSABasicBlock> {
 								int[] argNums = ssAL.get(i).getArgNums();
 								argNums = (argNums == null) ? SourceSpec.getNewArgNums((target.isStatic())?target.getNumberOfParameters():target.getNumberOfParameters()-1) : argNums;
 
-								ssAL.get(i).addDomainElements(taintMap, null, block, invInst, loader, argNums);
+								ssAL.get(i).addDomainElements(taintMap, target, block, invInst, loader, argNums);
 
 							}
 						}									
@@ -149,7 +151,7 @@ public class InflowAnalysis <E extends ISSABasicBlock> {
 
     public static <E extends ISSABasicBlock>
       Map<BasicBlockInContext<E>,Map<FlowType,Set<CodeElement>>> analyze(
-            AndroidAppLoader<E> loader) {
+            AndroidAppLoader<E> loader, Map<InstanceKey, String> prefixes) {
 
         System.out.println("***************************");
         System.out.println("* Running inflow analysis *");
@@ -162,29 +164,15 @@ public class InflowAnalysis <E extends ISSABasicBlock> {
         SourceSpec[] ss = s.getSourceSpecs();
         ArrayList<SourceSpec> ssAL = new ArrayList<SourceSpec>();
         for (int i = 0; i < ss.length; i++) {
-        	switch(ss[i].getType()){
-
-        	case INPUT_SOURCE:
+        	if (ss[i] instanceof EntryArgSourceSpec)
         		processInputSource(taintMap, loader, ss[i]);
-        		break;
-        	case PROVIDER_SOURCE:
-        		break;
-        	case RETURN_SOURCE:
-        	case ARG_SOURCE:
+        	else if (ss[i] instanceof CallRetSourceSpec || ss[i] instanceof CallArgSourceSpec)
         		ssAL.add(ss[i]);
-        		break;
-        	case BINDER_SOURCE:
-        		if (ss[i] instanceof EntryArgSourceSpec)
-            		processInputSource(taintMap, loader, ss[i]);
-        		else if (ss[i] instanceof CallArgSourceSpec)
-        			ssAL.add(ss[i]);
-        		break;
-        	default:
-        		throw new UnsupportedOperationException("SourceType not yet Implemented");        			
-        	}
+        	else 
+        		throw new UnsupportedOperationException("Unrecognized SourceSpec");
         } 
         if (!ssAL.isEmpty())
-        	processReturnBinderSource(taintMap, loader, ssAL);        	   
+        	processFunctionCalls(taintMap, loader, ssAL);
 
         System.out.println("************");
         System.out.println("* Results: *");
@@ -195,7 +183,13 @@ public class InflowAnalysis <E extends ISSABasicBlock> {
             {
                 for(CodeElement o:e2.getValue())
                 {
+                    if (e2.getKey() instanceof IKFlow) {
+                    	InstanceKey e2IK = ((IKFlow)e2.getKey()).getIK();
+                    	if (prefixes.containsKey(e2IK))
+                    			System.out.println("Uri Prefix: " + prefixes.get(e2IK));                    	
+                    }
                     System.out.println("\tBasicBlockInContext: "+e.getKey()+"\n\tFlowType: "+e2.getKey()+"\n\tCodeElement: "+o+"\n");
+
                 }
             }
         }

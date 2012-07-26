@@ -38,12 +38,15 @@
 
 package spec;
 
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
 import util.AndroidAppLoader;
 
 import com.ibm.wala.classLoader.IMethod;
+import com.ibm.wala.ipa.callgraph.CGNode;
 import com.ibm.wala.ipa.callgraph.propagation.InstanceKey;
 import com.ibm.wala.ipa.callgraph.propagation.LocalPointerKey;
 import com.ibm.wala.ipa.cfg.BasicBlockInContext;
@@ -53,34 +56,54 @@ import com.ibm.wala.ssa.SSAInvokeInstruction;
 import domain.CodeElement;
 import flow.InflowAnalysis;
 import flow.types.FlowType;
-import flow.types.sources.CallRetArgSourceFlow;
-import flow.types.sources.CallRetSourceFlow;
+import flow.types.IKFlow;
+import flow.types.InputFlow;
 
-class CallRetSourceSpec extends SourceSpec {
+public class CallRetSourceSpec extends SourceSpec {
+	final String sig = "CallRetSource";
 	CallRetSourceSpec(MethodNamePattern name, int[] args) {
 		namePattern = name;
 		argNums = args;
-		myType = SourceType.RETURN_SOURCE;
+		myType = SourceType.INPUT_SOURCE;
+	}
+
+	CallRetSourceSpec(MethodNamePattern name, int[] args, SourceType type) {
+		namePattern = name;
+		argNums = args;
+		myType = type;
 	}
 
 	@Override
 	public<E extends ISSABasicBlock> void addDomainElements(
 			Map<BasicBlockInContext<E>, Map<FlowType, Set<CodeElement>>> taintMap,
 			IMethod im, BasicBlockInContext<E> block, SSAInvokeInstruction invInst,
-			AndroidAppLoader<E> loader, int[] newArgNums) {				
-		//if we're not tracking any parameters that's associated with this return value, then just add the class as an input flow
-		//covers GetIntentTaintSourcer from prev impl.
-		if (newArgNums.length == 0)
-			InflowAnalysis.addDomainElements(taintMap, block, new CallRetSourceFlow(invInst, block.getNode()), CodeElement.valueElements(loader.pa, block.getNode(), invInst.getDef(0)));
-		//otherwise mark the InstanceKeys associated with this parameter (ie, may be useful in case we need to track which URI is associated with a ContentResolver.query call)
-		//covers QueryTaintSourcer from prev impl.
-		else {
-			for (int j = 0; j<newArgNums.length; j++) 
-				for (InstanceKey ik:loader.pa.getPointsToSet(new LocalPointerKey(block.getNode(), invInst.getUse(newArgNums[j]))))
-					InflowAnalysis.addDomainElements(taintMap, block, new CallRetArgSourceFlow(ik, invInst, newArgNums[j], block.getNode()), CodeElement.valueElements(loader.pa, block.getNode(), invInst.getDef(0)));
+			AndroidAppLoader<E> loader, int[] newArgNums) {
+
+		for (FlowType ft:getFlowType(invInst,block.getNode(),loader, im)) {
+			InflowAnalysis.addDomainElements(taintMap, block, ft, CodeElement.valueElements(loader.pa, block.getNode(), invInst.getDef(0)));
 		}
-		
 	}
 
+	public<E extends ISSABasicBlock> Collection<FlowType> getFlowType(SSAInvokeInstruction invInst,
+			CGNode node, AndroidAppLoader<E> loader, IMethod im) {
+
+		HashSet<FlowType> flowSet = new HashSet<FlowType>();
+		flowSet.clear();
+		switch(myType) {
+		case PROVIDER_SOURCE:
+			for(InstanceKey ik:loader.pa.getPointsToSet(new LocalPointerKey(node, invInst.getUse(1))))
+			{
+				flowSet.add(new IKFlow(ik, loader.pa.getInstanceKeyMapping().getMappedIndex(ik), node, sig, im.getSignature()));
+			}
+			break;
+		case INPUT_SOURCE:
+			flowSet.add(new InputFlow(invInst.getCallSite().getDeclaredTarget().getDeclaringClass(), node, sig, im.getSignature()));
+			break;
+		default:
+			throw new UnsupportedOperationException("SourceType not yet Implemented");        			
+
+		}
+		return flowSet;
+	}
 
 }

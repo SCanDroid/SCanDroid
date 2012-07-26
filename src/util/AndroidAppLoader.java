@@ -125,17 +125,9 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
         }
         Warnings.clear();
 
-        Iterable<Entrypoint> entrypoints = Util.makeMainEntrypoints(scope, cha);
-
-
         // Try to look for entry points
         EntryPoints ep = new EntryPoints(classpath, cha, this);
         entries = ep.getEntries();
-
-        //add main entry point -- however usually used for test suites?  android don't have mains ?
-        for (Entrypoint entry: entrypoints) {
-          entries.add(entry);
-        }
     }
 
     public void buildGraphs(LinkedList<Entrypoint> localEntries) throws CancelException {

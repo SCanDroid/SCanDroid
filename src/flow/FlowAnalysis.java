@@ -39,8 +39,11 @@
 
 package flow;
 
+import static util.MyLogger.LogLevel.DEBUG;
+
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -50,6 +53,7 @@ import util.AndroidAppLoader;
 import util.CLI;
 import util.GraphUtil;
 import util.IFDSTaintFlowFunctionProvider;
+import util.MyLogger;
 
 import com.ibm.wala.dataflow.IFDS.IFlowFunctionMap;
 import com.ibm.wala.dataflow.IFDS.IMergeFunction;
@@ -154,6 +158,9 @@ public class FlowAnalysis<E extends ISSABasicBlock> {
         try {
         	TabulationResult<BasicBlockInContext<E>,CGNode, DomainElement> flowResult = solver.solve();
         	if (CLI.hasOption("IFDS-Explorer")) {
+        		for (int i = 1; i < domain.getSize(); i++) {        			
+                    MyLogger.log(DEBUG,"DomainElement #"+i+" = " + domain.getMappedObject(i));        			
+        		}
         		GraphUtil.exploreIFDS(flowResult);
         	}
             return flowResult;

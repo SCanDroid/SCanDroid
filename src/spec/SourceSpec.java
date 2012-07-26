@@ -76,7 +76,7 @@ public abstract class SourceSpec implements ISourceSpec {
 	public SourceType getType() {
 		return myType;
 	}
-	
+		
 	abstract public<E extends ISSABasicBlock> void addDomainElements(
 			Map<BasicBlockInContext<E>,Map<FlowType,Set<CodeElement>>> taintMap, 
 			IMethod im, BasicBlockInContext<E> block, SSAInvokeInstruction invInst,

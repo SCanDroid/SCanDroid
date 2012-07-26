@@ -38,12 +38,15 @@
 
 package spec;
 
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
 import util.AndroidAppLoader;
 
 import com.ibm.wala.classLoader.IMethod;
+import com.ibm.wala.ipa.callgraph.CGNode;
 import com.ibm.wala.ipa.callgraph.propagation.InstanceKey;
 import com.ibm.wala.ipa.callgraph.propagation.LocalPointerKey;
 import com.ibm.wala.ipa.cfg.BasicBlockInContext;
@@ -52,11 +55,12 @@ import com.ibm.wala.ssa.SSAInvokeInstruction;
 
 import domain.CodeElement;
 import flow.InflowAnalysis;
+import flow.types.BinderFlow;
 import flow.types.FlowType;
-import flow.types.sources.CallArgBinderSourceFlow;
-import flow.types.sources.CallArgSourceFlow;
+import flow.types.IKFlow;
 
 public class CallArgSourceSpec extends SourceSpec {
+	final String name = "CallArgSource";
 	CallArgSourceSpec(MethodNamePattern name, int[] args) {
 		namePattern = name;
 		argNums = args;
@@ -72,15 +76,35 @@ public class CallArgSourceSpec extends SourceSpec {
 	@Override
 	public<E extends ISSABasicBlock> void addDomainElements(
 			Map<BasicBlockInContext<E>, Map<FlowType, Set<CodeElement>>> taintMap,
-			IMethod im_notused, BasicBlockInContext<E> block, SSAInvokeInstruction invInst,
+			IMethod target, BasicBlockInContext<E> block, SSAInvokeInstruction invInst,
 			AndroidAppLoader<E> loader, int[] newArgNums) {
 
-		for (InstanceKey ik:loader.pa.getPointsToSet(new LocalPointerKey(block.getNode(), invInst.getReceiver()))) {		
-			for (int j = 0; j<newArgNums.length; j++) 
-				if (myType == SourceType.ARG_SOURCE)
-					InflowAnalysis.addDomainElements(taintMap, block, new CallArgSourceFlow(ik, invInst, newArgNums[j], block.getNode()), CodeElement.valueElements(loader.pa, block.getNode(), invInst.getUse(newArgNums[j])));
-				else if (myType == SourceType.BINDER_SOURCE)
-					InflowAnalysis.addDomainElements(taintMap, block, new CallArgBinderSourceFlow(ik, invInst, newArgNums[j], block.getNode()), CodeElement.valueElements(loader.pa, block.getNode(), invInst.getUse(newArgNums[j])));
+//		for (FlowType ft:getFlowType(invInst,block.getNode(),loader)) {
+		for (int j = 0; j<newArgNums.length; j++) {
+			for (FlowType ft:getFlowType(invInst,block.getNode(),loader, target, newArgNums[j])) {
+				InflowAnalysis.addDomainElements(taintMap, block, ft, CodeElement.valueElements(loader.pa, block.getNode(), invInst.getUse(newArgNums[j])));
+			}
 		}
+	}
+
+
+	public<E extends ISSABasicBlock> Collection<FlowType> getFlowType(SSAInvokeInstruction invInst,
+			CGNode node, AndroidAppLoader<E> loader, IMethod target, int argNum) {
+		HashSet<FlowType> flowSet = new HashSet<FlowType>();
+		flowSet.clear();
+		switch(myType) {
+		case ARG_SOURCE:
+			for(InstanceKey ik:loader.pa.getPointsToSet(new LocalPointerKey(node, invInst.getReceiver())))
+				flowSet.add(new IKFlow(ik, loader.pa.getInstanceKeyMapping().getMappedIndex(ik), node, name, target.getSignature(), argNum));
+			break;
+		case BINDER_SOURCE :
+			for(InstanceKey ik:loader.pa.getPointsToSet(new LocalPointerKey(node, invInst.getReceiver())))
+				flowSet.add(new BinderFlow(ik, node, name, target.getSignature(), argNum));
+			break;
+		default:
+			throw new UnsupportedOperationException("SourceType not yet Implemented");        			
+		}
+		return flowSet;
+
 	}
 }

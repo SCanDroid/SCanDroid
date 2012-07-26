@@ -43,6 +43,7 @@ import java.util.HashSet;
 
 import util.AndroidAppLoader;
 
+import com.ibm.wala.classLoader.IMethod;
 import com.ibm.wala.ipa.callgraph.CGNode;
 import com.ibm.wala.ssa.ISSABasicBlock;
 import com.ibm.wala.ssa.SSAInvokeInstruction;
@@ -57,7 +58,7 @@ class EntryRetSinkSpec extends SinkSpec {
     
     @Override
     public <E extends ISSABasicBlock> Collection<FlowType> getFlowType(
-    		AndroidAppLoader<E> loader,SSAInvokeInstruction invInst,
+    		AndroidAppLoader<E> loader, IMethod im, SSAInvokeInstruction invInst,
             CGNode node, int argNum) {
     	HashSet<FlowType> flowSet = new HashSet<FlowType>();
     	flowSet.clear();

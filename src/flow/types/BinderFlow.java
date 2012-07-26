@@ -43,29 +43,36 @@ import com.ibm.wala.ipa.callgraph.propagation.InstanceKey;
 
 public class BinderFlow implements FlowType {
     public final InstanceKey ik;
-    private String inMethod;
-    private CGNode inNode;
+    private final CGNode inNode;
+    final String type;
+    final int argNum;
+    final String callee;
 
     public BinderFlow(InstanceKey ik)
     {
         this.ik = ik;
-        inMethod = "";
         inNode = null;
+        type = "";
+        argNum = 0;
+        callee = "";
     }
 
-    public BinderFlow(InstanceKey ik, String m, CGNode n)
+    public BinderFlow(InstanceKey ik, CGNode n, String type, String callee)
     {
         this.ik = ik;
-        inMethod = m;
         inNode = n;
+        this.type = type;
+        argNum = 0;
+        this.callee = callee;
     }
-
-    public void setMethod(String m) {
-        inMethod = m;
-    }
-
-    public String getMethodName() {
-        return inMethod;
+    
+    public BinderFlow(InstanceKey ik, CGNode n, String type, String callee, int argNum)
+    {
+        this.ik = ik;
+        inNode = n;
+        this.type = type;
+        this.argNum = argNum;
+        this.callee = callee;
     }
 
     @Override
@@ -87,12 +94,17 @@ public class BinderFlow implements FlowType {
     @Override
     public String toString()
     {
-        return "BinderFlow("+ik+" :: "+inMethod+")";
+    	if (argNum == 0)
+    		return type+" - BinderFlow(Caller:"+inNode.getMethod().getSignature()+" ==> Callee:"+callee+") IK: " + ik;
+    	else
+    		return type+" - BinderFlow(Caller:"+inNode.getMethod().getSignature()+" ==> Callee:"+callee+", Parameter:"+argNum+") IK: " + ik;
+//        return "BinderFlow("+ik+" :: "+inNode.getMethod().getSignature()+")";
     }
   
     @Override
     public CGNode getRelevantNode()
     {
-    	return null;
+    	return inNode;
     }
+    
 }

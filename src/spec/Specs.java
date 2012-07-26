@@ -75,6 +75,15 @@ public class Specs implements ISpecs {
 	
 	static MethodNamePattern actGetIntent =
 			new MethodNamePattern(act, "getIntent");
+	
+	static MethodNamePattern actStartActivityForResult =
+			new MethodNamePattern(act, "startActivityForResult");
+	static MethodNamePattern actStartActivityIfNeeded =
+			new MethodNamePattern(act, "startActivityIfNeeded");
+	static MethodNamePattern actStartNextMatchingActivity =
+			new MethodNamePattern(act, "startNextMatchingActivity");
+	static MethodNamePattern actStartActivityFromChild =
+			new MethodNamePattern(act, "startActivityFromChild");
 
 	static MethodNamePattern svcCreate =
 			new MethodNamePattern(svc, "onCreate");
@@ -84,8 +93,6 @@ public class Specs implements ISpecs {
 			new MethodNamePattern(svc, "onStartCommand");
 	static MethodNamePattern svcBind =
 			new MethodNamePattern(svc, "onBind");
-	// static MethodNamePattern svcTransact =
-	//     new MethodNamePattern(svc, "onTransact");
 
 	static MethodNamePattern rslvQuery =
 			new MethodNamePattern(rslv, "query");
@@ -141,7 +148,7 @@ public class Specs implements ISpecs {
 	public MethodNamePattern[] getEntrypointSpecs() { return entrypointSpecs; }
 
 	static SourceSpec[] sourceSpecs = {
-		new EntryArgSourceSpec( actCreate, null ),
+//		new EntryArgSourceSpec( actCreate, null ),
 		//doesn't have any parameters
 		// new EntryArgSourceSpec( actStart, null ),
 		// new EntryArgSourceSpec( actResume, null ),
@@ -149,33 +156,33 @@ public class Specs implements ISpecs {
 		// new EntryArgSourceSpec( actRestart, null ),
 		// new EntryArgSourceSpec( actDestroy, null ),
 		//track all parameters?  or just the Intent data(3)
-		new EntryArgSourceSpec( actOnActivityResult, null ),
-		new EntryArgSourceSpec( actOnRestoreInstanceState, null ),
-		new EntryArgSourceSpec( actOnSaveInstanceState, null ),
+		new EntryArgSourceSpec( actOnActivityResult, new int[] {3}, SourceType.RETURN_SOURCE),
+//		new EntryArgSourceSpec( actOnRestoreInstanceState, null ),
+//		new EntryArgSourceSpec( actOnSaveInstanceState, null ),
 
-		new EntryArgSourceSpec( svcCreate, null ),
-		new EntryArgSourceSpec( svcStart, null ),
-		new EntryArgSourceSpec( svcStartCommand, null ),
-		new EntryArgSourceSpec( svcBind, null ),
+//		new EntryArgSourceSpec( svcCreate, null ),
+		new EntryArgSourceSpec( svcStart, new int[] {1} ),
+		new EntryArgSourceSpec( svcStartCommand, new int[] {1} ),
+		new EntryArgSourceSpec( svcBind, new int[] {1} ),
+		
+		new EntryArgSourceSpec(bndOnTransact, new int[] { 2 }, SourceType.BINDER_SOURCE),
+
 		//doesn't exist
 		// new EntryArgSourceSpec( svcTransact, null ),
 
 		//no parameters
 		//new EntryArgSourceSpec( prvCreate, null ),
-		new CallArgSourceSpec( prvQuery, null ),
-		new CallArgSourceSpec( prvInsert, null ),
-		new CallArgSourceSpec( prvUpdate, null ),
-		
-		new EntryArgSourceSpec(bndOnTransact, new int[] { 2 }, SourceType.BINDER_SOURCE),
-		
+//		new CallArgSourceSpec( prvQuery, new int[] { 2, 3, 4, 5 }, SourceType.PROVIDER_SOURCE),
+//		new CallArgSourceSpec( prvInsert, new int[] { 2 }, SourceType.PROVIDER_SOURCE),
+//		new CallArgSourceSpec( prvUpdate, new int[] { 2, 3, 4 }, SourceType.PROVIDER_SOURCE),
+				
 		new CallArgSourceSpec(bndTransact, new int[] { 3 }, SourceType.BINDER_SOURCE),
 		
-		new CallRetSourceSpec(rslvQuery, new int[] { 1 }),
-		new CallRetSourceSpec(httpExecute, new int[] {}),
+		new CallRetSourceSpec(rslvQuery, new int[] {}, SourceType.PROVIDER_SOURCE),
+//		new CallRetSourceSpec(httpExecute, new int[] {}),
 		new CallRetSourceSpec(actGetIntent, new int[] {}),
 		
-		
-		new CallRetSourceSpec(new MethodNamePattern("LTest/Apps/GenericSource", "getIntSource"), new int[]{}),
+//		new CallRetSourceSpec(new MethodNamePattern("LTest/Apps/GenericSource", "getIntSource"), new int[]{}),
 
 		
 	};
@@ -184,22 +191,29 @@ public class Specs implements ISpecs {
 
 	static SinkSpec[] sinkSpecs = {
 		new CallArgSinkSpec(actSetResult, new int[] { 2 }, SinkType.RETURN_SINK),
-		new CallArgSinkSpec(bndTransact, new int[] { 2 }),
+//		new CallArgSinkSpec(bndTransact, new int[] { 2 }),
+		
 		new CallArgSinkSpec(rslvQuery, new int[] { 2, 3, 4, 5 }, SinkType.PROVIDER_SINK),
 		new CallArgSinkSpec(rslvInsert, new int[] { 2 }, SinkType.PROVIDER_SINK),
-		new CallArgSinkSpec(rslvUpdate, new int[] { 2 }, SinkType.PROVIDER_SINK),
+//		new CallArgSinkSpec(rslvUpdate, new int[] { 2, 3, 4 }, SinkType.PROVIDER_SINK),
+		
 		new CallArgSinkSpec(ctxBindService, new int[] { 1 }, SinkType.SERVICE_SINK),
 		new CallArgSinkSpec(ctxStartService, new int[] { 1 }, SinkType.SERVICE_SINK),
+		
 		new CallArgSinkSpec(ctxStartActivity, new int[] { 1 }, SinkType.ACTIVITY_SINK),
+		new CallArgSinkSpec(actStartActivityForResult, new int[] { 1 }, SinkType.ACTIVITY_SINK),
+		new CallArgSinkSpec(actStartActivityIfNeeded, new int[] { 1 }, SinkType.ACTIVITY_SINK),		
+		new CallArgSinkSpec(actStartNextMatchingActivity, new int[] { 1 }, SinkType.ACTIVITY_SINK),
+		new CallArgSinkSpec(actStartActivityFromChild, new int[] { 2 }, SinkType.ACTIVITY_SINK),		
 
 		
 		new EntryArgSinkSpec( bndOnTransact, new int[] { 3 } ),
-		new EntryArgSinkSpec( actOnActivityResult, new int[] { 2 } ),
-		new EntryArgSinkSpec( actOnSaveInstanceState, new int[] { 0 } ),
+//		new EntryArgSinkSpec( actOnActivityResult, new int[] { 2 } ),
+//		new EntryArgSinkSpec( actOnSaveInstanceState, new int[] { 0 } ),
 
 		//new EntryRetSinkSpec(prvQuery),
 		
-		new CallArgSinkSpec(new MethodNamePattern("LTest/Apps/GenericSink", "setSink"), new int[]{ 1 }),
+//		new CallArgSinkSpec(new MethodNamePattern("LTest/Apps/GenericSink", "setSink"), new int[]{ 1 }),
 
 	};
 

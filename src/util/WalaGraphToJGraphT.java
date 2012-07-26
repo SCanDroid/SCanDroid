@@ -70,8 +70,9 @@ public class WalaGraphToJGraphT {
         HashSet<DomainElement> deSet = new HashSet<DomainElement>();
         for (int i = 1; i < domain.getSize(); i++) {
         	DomainElement de = domain.getMappedObject(i);
-        	if (de.taintSource.equals(source))
+        	if (de.taintSource.equals(source)){
         		deSet.add(de);
+        	}
         }
         
         Iterator<BasicBlockInContext<E>> bbI = loader.graph.iterator();               
@@ -80,7 +81,9 @@ public class WalaGraphToJGraphT {
             IntSet resultSet = flowResult.getResult(block);
             for (DomainElement de: deSet) {
             	if (resultSet.contains(domain.getMappedIndex(de)) && !jgrapht.containsVertex(block.getNode()))
-            		jgrapht.addVertex(bbI.next().getNode());            	
+            	{
+            		jgrapht.addVertex(block.getNode());
+            	}
             }
         }
         
@@ -91,14 +94,16 @@ public class WalaGraphToJGraphT {
         	if (jgrapht.containsVertex(currNode)) {
         		for (Iterator<CGNode> succI = loader.cg.getSuccNodes(currNode); succI.hasNext(); ) {
         			CGNode succ = succI.next();
-        			if (jgrapht.containsVertex(succ))
+        			if (jgrapht.containsVertex(succ)) {
         				jgrapht.addEdge(currNode, succ);
+        				jgrapht.addEdge(succ, currNode);
+        			}
         		}
-        		for (Iterator<CGNode> predI = loader.cg.getPredNodes(currNode); predI.hasNext(); ) {
-        			CGNode pred = predI.next();
-        			if (jgrapht.containsVertex(pred))
-        				jgrapht.addEdge(currNode, pred);
-        		}
+//        		for (Iterator<CGNode> predI = loader.cg.getPredNodes(currNode); predI.hasNext(); ) {
+//        			CGNode pred = predI.next();
+//        			if (jgrapht.containsVertex(pred))
+//        				jgrapht.addEdge(currNode, pred);
+//        		}
         	}
         }
     }
