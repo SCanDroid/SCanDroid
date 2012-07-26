@@ -37,6 +37,7 @@
  */
 
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
@@ -89,6 +90,10 @@ public class SeparateEntryAnalysis {
                  LinkedList<Entrypoint> localEntries) {
         try {
             loader.buildGraphs(localEntries);
+    		// load the permissions
+    		Set<String> manifestFilenames = new HashSet<String>();
+    		Permissions perms = Permissions.load(manifestFilenames);
+
             System.out.println("Supergraph size = "
                     + loader.graph.getNumberOfNodes());
 
@@ -99,7 +104,7 @@ public class SeparateEntryAnalysis {
 
             System.out.println("Running inflow analysis.");
             Map<BasicBlockInContext<IExplodedBasicBlock>, Map<FlowType, Set<CodeElement>>> initialTaints = InflowAnalysis
-                    .analyze(loader);
+                    .analyze(loader, prefixes);
             System.out.println("  Initial taint size = "
                     + initialTaints.size());
                        
@@ -113,7 +118,11 @@ public class SeparateEntryAnalysis {
                     .analyze(loader, flowResult, domain);
             System.out.println("  Permission outflow size = "
                     + permissionOutflow.size());
+            
+            System.out.println("Running Checker.");
+    		Checker.check(permissionOutflow, perms, prefixes);
 
+            
             System.out.println();
             System.out
                     .println("================================================================");

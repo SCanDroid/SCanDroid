@@ -44,12 +44,38 @@ import com.ibm.wala.types.TypeReference;
 public class ReturnFlow implements FlowType {
 
     public final TypeReference activityClass;
+    private final CGNode inNode;
+    final String type;
+    final int argNum;
+    final String callee;
 
     public ReturnFlow(TypeReference activityClass)
     {
         this.activityClass = activityClass;
+        inNode = null;
+        argNum = 0;
+        type = "";
+        callee = "";
     }
-
+    
+    public ReturnFlow(TypeReference activityClass, CGNode node, String type, String callee)
+    {
+        this.activityClass = activityClass;
+        inNode = node;
+        this.type = type;
+        argNum = 0;
+        this.callee = callee;
+    }
+    
+    public ReturnFlow(TypeReference activityClass, CGNode node, String type, String callee, int argNum)
+    {
+        this.activityClass = activityClass;
+        this.inNode = node;
+        this.type = type;
+        this.argNum = argNum;
+        this.callee = callee;
+    }
+    
     @Override
     public int hashCode()
     {
@@ -59,18 +85,26 @@ public class ReturnFlow implements FlowType {
     @Override
     public boolean equals(Object other)
     {
-        return other != null && other instanceof ReturnFlow && ((ReturnFlow)other).activityClass.equals(activityClass);
+//        return other != null && other instanceof ReturnFlow && ((ReturnFlow)other).activityClass.equals(activityClass);
+    	return other != null && other instanceof ReturnFlow && ((ReturnFlow)other).inNode.equals(inNode)
+    			&& ((ReturnFlow)other).argNum == argNum;
     }
 
     @Override
     public String toString()
     {
-        return "ReturnFlow("+activityClass+")";
+    	if (argNum == 0)
+    		return type+" - ReturnFlow(Caller:"+inNode.getMethod().getSignature()+" ==> Callee:"+callee+")";
+    	else
+    		return type+" - ReturnFlow(Caller:"+inNode.getMethod().getSignature()+" ==> Callee:"+callee+", Parameter:"+argNum+")";
+
+//        return "ReturnFlow("+activityClass+")";
+    	
     }
 
 	@Override
 	public CGNode getRelevantNode() {
-		// TODO Auto-generated method stub
-		return null;
+		return inNode;
 	}
+
 }

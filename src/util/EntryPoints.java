@@ -59,6 +59,7 @@ import org.w3c.dom.NodeList;
 import com.ibm.wala.classLoader.IMethod;
 import com.ibm.wala.ipa.callgraph.Entrypoint;
 import com.ibm.wala.ipa.callgraph.impl.DefaultEntrypoint;
+import com.ibm.wala.ipa.callgraph.impl.Util;
 import com.ibm.wala.ipa.cha.ClassHierarchy;
 import com.ibm.wala.types.ClassLoaderReference;
 import com.ibm.wala.types.MethodReference;
@@ -97,8 +98,16 @@ public class EntryPoints {
 //      else
 //          defaultEntryPoints(cha, loader);
 
-        //defaultEntryPoints(cha, loader);
-        activityModelEntry(cha,loader);
+        defaultEntryPoints(cha, loader);
+        //activityModelEntry(cha,loader);
+        
+        if (CLI.hasOption("main-entrypoint")) {
+        	Iterable<Entrypoint> mainEntrypoints = Util.makeMainEntrypoints(cha.getScope(), cha);
+        	//add main entry point -- however usually used for test suites?  android don't have mains
+        	for (Entrypoint entry: mainEntrypoints) {
+        		entries.add(entry);
+        	}
+        }
 
     }
 
@@ -178,22 +187,39 @@ public class EntryPoints {
     public void activityModelEntry(ClassHierarchy cha, AndroidAppLoader loader) {
 
 
-        ArrayList<MethodReference> entryPointMRs = new ArrayList<MethodReference>();
-        entryPointMRs.add(StringStuff.makeMethodReference("android.app.Activity.ActivityModel()V"));
-         for(MethodReference mr:entryPointMRs)
-         for(IMethod im:cha.getPossibleTargets(mr))
-         {
-             log(DEBUG,"Considering target "+im.getSignature());
+    	ArrayList<MethodReference> entryPointMRs = new ArrayList<MethodReference>();
+    	entryPointMRs.add(StringStuff.makeMethodReference("android.app.Activity.ActivityModel()V"));
+    	
+        // find all onActivityResult functions and add them as entry points
+        entryPointMRs.add(StringStuff.makeMethodReference("android.app.Activity.onActivityResult(IILandroid/content/Intent;)V"));
+        //SERVICE ENTRY POINTS
+        // onCreate
+        entryPointMRs.add(StringStuff.makeMethodReference("android.app.Service.onCreate()V"));
+        // onStart
+        entryPointMRs.add(StringStuff.makeMethodReference("android.app.Service.onStart(Landroid/content/Intent;I)V"));
+        // onStartCommand
+        entryPointMRs.add(StringStuff.makeMethodReference("android.app.Service.onStartCommand(Landroid/content/Intent;II)I"));
+        // onBind
+        entryPointMRs.add(StringStuff.makeMethodReference("android.app.Service.onBind(Landroid/content/Intent;)Landroid/os/IBinder;"));
+        // onTransact
+        // no such method exists?
+        entryPointMRs.add(StringStuff.makeMethodReference("android.app.Service.onTransact(ILandroid/os/Parcel;Landroid/os/Parcel;I)B"));
+        // onDestroy?
+    	
+    	for(MethodReference mr:entryPointMRs)
+    		for(IMethod im:cha.getPossibleTargets(mr))
+    		{
+    			log(DEBUG,"Considering target "+im.getSignature());
 
-             // limit to functions defined within the application
-             if(im.getReference().getDeclaringClass().getClassLoader().
-                                     equals(ClassLoaderReference.Application))
-             {
-                 log(DEBUG,"Adding entry point: "+im.getSignature());
-                 entries.add(new DefaultEntrypoint(im, cha));
-             }
-         }
- }
+    			// limit to functions defined within the application
+    			if(im.getReference().getDeclaringClass().getClassLoader().
+    					equals(ClassLoaderReference.Application))
+    			{
+    				log(DEBUG,"Adding entry point: "+im.getSignature());
+    				entries.add(new DefaultEntrypoint(im, cha));
+    			}
+    		}
+    }
 
     public void unpackApk(String classpath){
         StringTokenizer st = new StringTokenizer(classpath, File.pathSeparator);

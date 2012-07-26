@@ -169,7 +169,8 @@ public class Checker {
         for (Entry<InstanceKey, String> prefix: prefixes.entrySet()) {
             if (prefix.getKey() instanceof NormalAllocationInNode) {
                 NormalAllocationInNode ik = (NormalAllocationInNode) prefix.getKey();
-                if (ik.getConcreteType().getName().toString().equals("Landroid/net/Uri")) {
+                System.out.println("Checker: " + ik.getConcreteType().getName().toString());
+                if (ik.getConcreteType().getName().toString().contains("Landroid/net/Uri")) {
 //                  System.out.println(pa.getInstanceKeyMapping().getMappedIndex(ik) + " << " + perms.readPerms(prefix.getValue()));
                     readPerms.put(ik, perms.readPerms(prefix.getValue()));
 //                  System.out.println(pa.getInstanceKeyMapping().getMappedIndex(ik) + " >> " + perms.writePerms(prefix.getValue()));

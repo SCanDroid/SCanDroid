@@ -43,10 +43,40 @@ import com.ibm.wala.ipa.callgraph.propagation.InstanceKey;
 
 public class IKFlow implements FlowType {
     public final InstanceKey ik;
+    private final CGNode inNode;
+    private final int argNum;
+    private final String type;
+    private final String callee;
+    private final int ikIndex;
 
     public IKFlow(InstanceKey ik)
     {
         this.ik = ik;
+        inNode = null;
+        type = "";
+        argNum = 0;
+        callee = "";
+        ikIndex = -1;
+    }
+    
+    public IKFlow(InstanceKey ik, int index, CGNode node, String type, String callee)
+    {
+        this.ik = ik;
+        this.inNode = node;
+        this.type = type;
+        this.argNum = 0;
+        this.callee = callee;
+        this.ikIndex = index;
+    }
+    
+    public IKFlow(InstanceKey ik, int index, CGNode node, String type, String callee, int argNum)
+    {
+        this.ik = ik;
+        this.inNode = node;
+        this.type = type;
+        this.argNum = argNum;
+        this.callee = callee;
+        this.ikIndex = index;
     }
 
     @Override
@@ -68,14 +98,19 @@ public class IKFlow implements FlowType {
     @Override
     public String toString()
     {
-        return "IKFlow("+ik+")";
+    	if (argNum == 0)
+    		return type+" - IKFlow(Caller:"+inNode.getMethod().getSignature()+" ==> Callee:"+callee+") IK: " + ik + " index: " + ikIndex;
+    	else
+    		return type+" - IKFlow(Caller:"+inNode.getMethod().getSignature()+" ==> Callee:"+callee+", Parameter:"+argNum+") IK: " + ik + " index: " + ikIndex;
+//        return "IKFlow("+ik+")";
     }
 
 	@Override
 	public CGNode getRelevantNode() {
-		// TODO Auto-generated method stub
-		return null;
+		return inNode;
 	}
-
-
+	
+	public InstanceKey getIK() {
+		return ik;
+	}
 }

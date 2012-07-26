@@ -44,10 +44,18 @@ import com.ibm.wala.types.TypeReference;
 public class CallFlow implements FlowType {
 
     public final TypeReference activityClass;
+    private final CGNode inNode;
 
     public CallFlow(TypeReference activityClass)
     {
         this.activityClass = activityClass;
+        inNode = null;
+    }
+    
+    public CallFlow(TypeReference activityClass, CGNode node)
+    {
+        this.activityClass = activityClass;
+        inNode = node;
     }
 
 
@@ -72,8 +80,8 @@ public class CallFlow implements FlowType {
 
 	@Override
 	public CGNode getRelevantNode() {
-		// TODO Auto-generated method stub
-		return null;
+		return inNode;
 	}
+	
 
 }

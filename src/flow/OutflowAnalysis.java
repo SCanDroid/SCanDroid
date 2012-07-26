@@ -44,12 +44,15 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
 import org.jgrapht.graph.DefaultEdge;
 
+import spec.CallArgSinkSpec;
+import spec.EntryArgSinkSpec;
 import spec.SinkSpec;
 import spec.Specs;
 import util.AndroidAppLoader;
@@ -72,7 +75,8 @@ import domain.IFDSTaintDomain;
 import domain.InstanceKeyElement;
 import domain.LocalElement;
 import flow.types.FlowType;
-import flow.types.sinks.EntryArgSinkFlow;
+import flow.types.ReturnFlow;
+
 
 public class OutflowAnalysis <E extends ISSABasicBlock> {
 
@@ -146,7 +150,7 @@ public class OutflowAnalysis <E extends ISSABasicBlock> {
                 	                    }
                 	                }
                 	                
-                    	            for(FlowType dest: ssAL.get(i).getFlowType(loader, invInst, node, argNums[j])) {
+                    	            for(FlowType dest: ssAL.get(i).getFlowType(loader, target, invInst, node, argNums[j])) {
                     	                for(FlowType source: taintTypeSet) {
                     	                    // flow taint into uriIK
                     	                    addEdge(flowGraph, source, dest);
@@ -171,17 +175,17 @@ public class OutflowAnalysis <E extends ISSABasicBlock> {
     		// look for a tainted reply
 
     		CGNode node = loader.cg.getNode(im, Everywhere.EVERYWHERE);
-    		newArgNums = (ss.getArgNums() == null) ? SinkSpec.getNewArgNums((im.isStatic())?im.getNumberOfParameters():im.getNumberOfParameters()-1) : ss.getArgNums();
     		if (node == null || !loader.partialGraph.containsNode(node))
     			continue;
+
+    		newArgNums = (ss.getArgNums() == null) ? SinkSpec.getNewArgNums((im.isStatic())?im.getNumberOfParameters():im.getNumberOfParameters()-1) : ss.getArgNums();
 
     		for (int i = 0; i < newArgNums.length; i++) {
     			
     			for(DomainElement de:domain.getPossibleElements(new LocalElement(node.getIR().getParameter(newArgNums[i])))) {
     				for (BasicBlockInContext<E> block: loader.graph.getExitsForProcedure(node) ) {
     					if(flowResult.getResult(block).contains(domain.getMappedIndex(de))) {
-    						addEdge(flowGraph,de.taintSource,
-    								new EntryArgSinkFlow(node, newArgNums[i]));
+    						addEdge(flowGraph,de.taintSource, new ReturnFlow(im.getDeclaringClass().getReference(), node, "EntryArgSink", im.getSignature(), newArgNums[i]));
     					}
     				}
     			}
@@ -189,8 +193,7 @@ public class OutflowAnalysis <E extends ISSABasicBlock> {
     				for(DomainElement de:domain.getPossibleElements(new InstanceKeyElement(ik))) {
     					for (BasicBlockInContext<E> block : loader.graph.getExitsForProcedure(node)) {
     						if(flowResult.getResult(block).contains(domain.getMappedIndex(de))) {
-    							addEdge(flowGraph,de.taintSource,
-    									new EntryArgSinkFlow(node, newArgNums[i]));
+    							addEdge(flowGraph,de.taintSource, new ReturnFlow(im.getDeclaringClass().getReference(), node, "EntryArgSink", im.getSignature(), newArgNums[i]));
     						}
     					}
     				}
@@ -214,22 +217,12 @@ public class OutflowAnalysis <E extends ISSABasicBlock> {
         SinkSpec[] ss = s.getSinkSpecs();
         ArrayList<SinkSpec> ssAL = new ArrayList<SinkSpec>();
         for (int i = 0; i < ss.length; i++) {
-        	switch (ss[i].getType()) {
-        	case INPUT_SINK:
+        	if (ss[i] instanceof EntryArgSinkSpec)
         		processEntryArgs(flowResult, domain, loader, taintFlow, ss[i]);
-        		break;
-        	case PROVIDER_SINK:
-        	case ACTIVITY_SINK:
-        	case CALL_SINK:
-        	case RETURN_SINK:
-        	case SERVICE_SINK:
+        	else if (ss[i] instanceof CallArgSinkSpec)
         		ssAL.add(ss[i]);
-        		break;
-        	default:
-        		throw new UnsupportedOperationException("SourceType not yet Implemented");        			
-
-        	}
-
+        	else
+        		throw new UnsupportedOperationException("SourceSpec not yet Implemented");
         }
         if (!ssAL.isEmpty())
         	processArgSinks(flowResult, domain, loader, taintFlow, ssAL);
@@ -244,14 +237,17 @@ public class OutflowAnalysis <E extends ISSABasicBlock> {
         	System.out.println("Source: " + e.getKey());
             for(FlowType target:e.getValue())
             {
-            	System.out.println("Sink: " + target);
+            	System.out.println("\t=> Sink: " + target);
+            	//System.out.println("SourceNode: "+ e.getKey().getRelevantNode() + "\nSinkNode: "+target.getRelevantNode());
                 walaJgraphT.calcPath(e.getKey().getRelevantNode(), target.getRelevantNode());
-                System.out.println("Method Trace");
+                Iterator<DefaultEdge> edgeI = walaJgraphT.getPath().getEdgeList().iterator();
+                if (edgeI.hasNext())
+                	System.out.println("\t::Method Trace::");
                 int counter = 1;
-                for (Iterator<DefaultEdge> edgeI = walaJgraphT.getPath().getEdgeList().iterator(); edgeI.hasNext(); counter++) {
+                while (edgeI.hasNext()) {
                     DefaultEdge edge = edgeI.next();
-                    System.out.println("\t#"+counter+": " + walaJgraphT.getJGraphT().getEdgeSource(edge).getMethod().getSignature()
-                            + " ==> " + walaJgraphT.getJGraphT().getEdgeTarget(edge).getMethod().getSignature());
+                    System.out.println("\t\t#"+counter+": " + walaJgraphT.getJGraphT().getEdgeSource(edge).getMethod().getSignature()
+                            + " ==> " + walaJgraphT.getJGraphT().getEdgeTarget(edge).getMethod().getSignature());              
                 }
 
             }

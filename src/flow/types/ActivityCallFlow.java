@@ -44,10 +44,27 @@ import com.ibm.wala.types.TypeReference;
 public class ActivityCallFlow implements FlowType {
 
     public final TypeReference activityClass;
+    private final CGNode inNode;
+    final int argNum;
+    final String type;
+    public final String callee;
 
     public ActivityCallFlow(TypeReference activityClass)
     {
         this.activityClass = activityClass;
+        inNode = null;
+        type = "";
+        argNum = 0;
+        callee = "";
+    }
+    
+    public ActivityCallFlow(TypeReference activityClass, CGNode node, String type, String callee, int argNum)
+    {
+        this.activityClass = activityClass;
+        inNode = node;
+        this.type = type;
+        this.argNum = argNum;
+        this.callee = callee;
     }
 
     @Override
@@ -59,18 +76,25 @@ public class ActivityCallFlow implements FlowType {
     @Override
     public boolean equals(Object other)
     {
-        return other != null && other instanceof ActivityCallFlow && ((ActivityCallFlow)other).activityClass.equals(activityClass);
+//        return other != null && other instanceof ActivityCallFlow && ((ActivityCallFlow)other).activityClass.equals(activityClass);
+    	return other != null && other instanceof ActivityCallFlow && ((ActivityCallFlow)other).activityClass.equals(activityClass)
+    			&& ((ActivityCallFlow)other).argNum == argNum;
     }
 
     @Override
     public String toString()
     {
-        return "ActivityCallFlow("+activityClass+")";
+    	if (argNum == 0)
+    		return type+" - ActivityCallFlow(Caller:"+inNode.getMethod().getSignature()+" ==> Callee:"+callee+")";
+    	else
+    		return type+" - ActivityCallFlow(Caller:"+inNode.getMethod().getSignature()+" ==> Callee:"+callee+", Parameter:"+argNum+")";
+//        return "ActivityCallFlow("+activityClass+")";
     }
 
     @Override
     public CGNode getRelevantNode()
     {
-    	return null;
+    	return inNode;
     }
+    
 }

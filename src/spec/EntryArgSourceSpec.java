@@ -56,12 +56,15 @@ import domain.CodeElement;
 import domain.InstanceKeyElement;
 import domain.LocalElement;
 import flow.InflowAnalysis;
+import flow.types.BinderFlow;
 import flow.types.FlowType;
-import flow.types.sources.EntryArgBinderSourceFlow;
-import flow.types.sources.EntryArgSourceFlow;
+import flow.types.InputFlow;
+import flow.types.ReturnFlow;
 
 public class EntryArgSourceSpec extends SourceSpec {
 
+	final String name = "EntryArgSource";
+	
 	EntryArgSourceSpec(MethodNamePattern name, int[] args) {
         namePattern = name;
         argNums = args;
@@ -86,23 +89,33 @@ public class EntryArgSourceSpec extends SourceSpec {
 		case INPUT_SOURCE:
 			for (BasicBlockInContext<E> block : loader.graph.getEntriesForProcedure(node) )
 			{
+//				FlowType flowType = new InputFlow(im.getReference().getDeclaringClass(), node, name);
 				for (int i = 0; i < newArgNums.length; i++) {
-					InflowAnalysis.addDomainElements(taintMap, block, new EntryArgSourceFlow(node, newArgNums[i]), CodeElement.valueElements(loader.pa, node, node.getIR().getParameter(newArgNums[i])));
+					FlowType flowType = new InputFlow(im.getReference().getDeclaringClass(), node, name, im.getSignature(), newArgNums[i]);
+					InflowAnalysis.addDomainElements(taintMap, block, flowType, CodeElement.valueElements(loader.pa, node, node.getIR().getParameter(newArgNums[i])));
 				}
 			}
 			break;
+		case RETURN_SOURCE:
+			for (BasicBlockInContext<E> block : loader.graph.getEntriesForProcedure(node) )
+			{
+//				FlowType flowType = new ReturnFlow(im.getReference().getDeclaringClass(), node, name);
+				for (int i = 0; i < newArgNums.length; i++) {
+					FlowType flowType = new ReturnFlow(im.getReference().getDeclaringClass(), node, name, im.getSignature(), newArgNums[i]);
+					InflowAnalysis.addDomainElements(taintMap, block, flowType, CodeElement.valueElements(loader.pa, node, node.getIR().getParameter(newArgNums[i])));
+				}
+			}
+			break;			
 		case BINDER_SOURCE:
 			for (int i = 0; i < newArgNums.length; i++) {
 
 				for(InstanceKey ik:loader.pa.getPointsToSet(new LocalPointerKey(node,node.getIR().getParameter(newArgNums[i]))))
 				{
-					EntryArgBinderSourceFlow flow = new EntryArgBinderSourceFlow(ik, node, newArgNums[i]);
+					FlowType flow = new BinderFlow(ik, node, name, im.getSignature(), newArgNums[i]);
 
 					for (BasicBlockInContext<E> block : loader.graph.getEntriesForProcedure(node) ){
-						InflowAnalysis.addDomainElement(taintMap, block, flow,
-								new InstanceKeyElement(ik));
-						InflowAnalysis.addDomainElement(taintMap, block, flow,
-								new LocalElement(node.getIR().getParameter(newArgNums[i])));
+						InflowAnalysis.addDomainElement(taintMap, block, flow, new InstanceKeyElement(ik));
+						InflowAnalysis.addDomainElement(taintMap, block, flow, new LocalElement(node.getIR().getParameter(newArgNums[i])));
 					}
 				}
 			}
