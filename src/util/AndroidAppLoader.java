@@ -146,13 +146,15 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
         SSAContextInterpreter ci = new DexIContextInterpreter(options.getSSAOptions());
         AnalysisCache cache = new AnalysisCache();
         SSAPropagationCallGraphBuilder cgb;
-        if(CLI.hasOption("context-sensitive")) {
-            cgb = Util.makeVanillaZeroOneCFABuilder(options, cache, cha, scope,
-                    new UriPrefixContextSelector(), ci);
-        } else {
-            cgb = Util.makeZeroCFABuilder(options, cache, cha, scope,
-                    new UriPrefixContextSelector(), ci);
-        }
+//        if(CLI.hasOption("context-sensitive")) {
+//            cgb = Util.makeVanillaZeroOneCFABuilder(options, cache, cha, scope,
+//                    new UriPrefixContextSelector(), ci);
+//        } else {
+//            cgb = Util.makeZeroCFABuilder(options, cache, cha, scope,
+//                    new UriPrefixContextSelector(), ci);
+//        }
+        cgb = Util.makeVanillaZeroOneCFABuilder(options, cache, cha, scope,
+                new UriPrefixContextSelector(), ci);
 
         //CallGraphBuilder construction warnings
         for(Iterator<Warning> wi = Warnings.iterator(); wi.hasNext();)

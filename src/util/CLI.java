@@ -97,7 +97,7 @@ public class CLI {
 		options.addOption("p", "partial-call-graph", false, "create partial call graph pdf");
 		options.addOption("o", "one-leve-call-graph", false, "create one level call graph pdf");
 		options.addOption("l", "include-library", false, "analyze library in flow analysis");
-		options.addOption("s", "context-sensitive", false, "use context-sensitive 0-1-CFA");
+		//options.addOption("s", "context-sensitive", false, "use context-sensitive 0-1-CFA");
 		options.addOption("r", "model-reflection", false, "use built-in WALA reflection support");
 		options.addOption("e", "separate-entries", false, "analyze each entry point separately");
 		options.addOption("i", "IFDS-Explorer", false, "analyze each entry point separately");
