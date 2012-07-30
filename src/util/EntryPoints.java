@@ -186,23 +186,18 @@ public class EntryPoints {
     
     public void activityModelEntry(ClassHierarchy cha, AndroidAppLoader loader) {
     	ArrayList<MethodReference> entryPointMRs = new ArrayList<MethodReference>();
-    	entryPointMRs.add(StringStuff.makeMethodReference("android.app.Activity.ActivityModel()V"));
     	
-        // find all onActivityResult functions and add them as entry points
-        entryPointMRs.add(StringStuff.makeMethodReference("android.app.Activity.onActivityResult(IILandroid/content/Intent;)V"));
-        //SERVICE ENTRY POINTS
-        // onCreate
-        entryPointMRs.add(StringStuff.makeMethodReference("android.app.Service.onCreate()V"));
-        // onStart
-        entryPointMRs.add(StringStuff.makeMethodReference("android.app.Service.onStart(Landroid/content/Intent;I)V"));
-        // onStartCommand
-        entryPointMRs.add(StringStuff.makeMethodReference("android.app.Service.onStartCommand(Landroid/content/Intent;II)I"));
-        // onBind
-        entryPointMRs.add(StringStuff.makeMethodReference("android.app.Service.onBind(Landroid/content/Intent;)Landroid/os/IBinder;"));
-        // onTransact
-        // no such method exists?
-        entryPointMRs.add(StringStuff.makeMethodReference("android.app.Service.onTransact(ILandroid/os/Parcel;Landroid/os/Parcel;I)B"));
-        // onDestroy?
+    	String[] methodReferences = {
+    	   "android.app.Activity.ActivityModel()V",
+    	   // find all onActivityResult functions and add them as entry points
+    	   "android.app.Activity.onActivityResult(IILandroid/content/Intent;)V",
+
+    	   //SERVICE ENTRY POINTS
+    	   "android.app.Service.onCreate()V",
+    	   "android.app.Service.onStart(Landroid/content/Intent;I)V",
+    	   "android.app.Service.onBind(Landroid/content/Intent;)Landroid/os/IBinder;",
+    	   "android.app.Service.onTransact(ILandroid/os/Parcel;Landroid/os/Parcel;I)B",
+    	};
     	
     	for(MethodReference mr:entryPointMRs) {
     		for(IMethod im:cha.getPossibleTargets(mr))
@@ -219,13 +214,21 @@ public class EntryPoints {
     		}
     	}
     	
-        MethodReference activityThreadMain =
-                StringStuff.makeMethodReference(
-                        "android.app.ActivityThread.main([Ljava/lang/String;)V"); 
-        for(IMethod im:cha.getPossibleTargets(activityThreadMain)) {
-            log(DEBUG,"Adding entry point: "+im.getSignature());
-            entries.add(new DefaultEntrypoint(im, cha));
-        }
+    	
+    	String[] systemEntyPoints = {
+    	   "android.app.ActivityThread.main([Ljava/lang/String;)V",
+    	   "com.android.server.ServerThread.run()V"
+    	};
+    	
+    	for (int i = 0; i < systemEntyPoints.length; i++) {
+            MethodReference methodRef =
+                StringStuff.makeMethodReference(systemEntyPoints[i]);
+
+            for(IMethod im:cha.getPossibleTargets(methodRef)) {
+                log(DEBUG,"Adding entry point: "+im.getSignature());
+                entries.add(new DefaultEntrypoint(im, cha));
+            }
+    	}
     }
 
     public void unpackApk(String classpath){
