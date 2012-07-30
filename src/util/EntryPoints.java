@@ -98,8 +98,8 @@ public class EntryPoints {
 //      else
 //          defaultEntryPoints(cha, loader);
 
-        defaultEntryPoints(cha, loader);
-        //activityModelEntry(cha,loader);
+        //defaultEntryPoints(cha, loader);
+        activityModelEntry(cha,loader);
         
         if (CLI.hasOption("main-entrypoint")) {
         	Iterable<Entrypoint> mainEntrypoints = Util.makeMainEntrypoints(cha.getScope(), cha);
@@ -188,6 +188,7 @@ public class EntryPoints {
 
 
     	ArrayList<MethodReference> entryPointMRs = new ArrayList<MethodReference>();
+    	entryPointMRs.add(StringStuff.makeMethodReference("android.app.ActivityThread.main([Ljava/lang/String)V"));
     	entryPointMRs.add(StringStuff.makeMethodReference("android.app.Activity.ActivityModel()V"));
     	
         // find all onActivityResult functions and add them as entry points

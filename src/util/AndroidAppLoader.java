@@ -52,6 +52,7 @@ import java.util.jar.JarFile;
 import prefixTransfer.UriPrefixContextSelector;
 
 import com.ibm.wala.classLoader.DexIContextInterpreter;
+import com.ibm.wala.classLoader.IClass;
 import com.ibm.wala.dataflow.IFDS.ICFGSupergraph;
 import com.ibm.wala.dataflow.IFDS.ISupergraph;
 import com.ibm.wala.dex.util.config.DexAnalysisScopeReader;
@@ -74,6 +75,7 @@ import com.ibm.wala.ssa.ISSABasicBlock;
 import com.ibm.wala.ssa.analysis.IExplodedBasicBlock;
 import com.ibm.wala.types.ClassLoaderReference;
 import com.ibm.wala.util.CancelException;
+import com.ibm.wala.util.Predicate;
 import com.ibm.wala.util.collections.Filter;
 import com.ibm.wala.util.graph.Graph;
 import com.ibm.wala.util.graph.GraphSlicer;
@@ -93,7 +95,8 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
     public ISupergraph<BasicBlockInContext<E>, CGNode> graph;
     public Graph<CGNode> partialGraph;
     public Graph<CGNode> oneLevelGraph;
-
+    public Graph<CGNode> systemToApkGraph;
+    
     /**
      *
      * @param classpath
@@ -130,6 +133,7 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
         entries = ep.getEntries();
     }
 
+    @SuppressWarnings("deprecation")
     public void buildGraphs(LinkedList<Entrypoint> localEntries) throws CancelException {
 
         AnalysisOptions options = new AnalysisOptions(scope, localEntries);
@@ -232,13 +236,42 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
                     }
                 });
 
+        systemToApkGraph = GraphSlicer.prune(cg, new Predicate<CGNode>() {
+            @Override
+            public boolean test(CGNode node) {
+                
+                if (! fromLoader(node, ClassLoaderReference.Primordial)) {
+                    return false;
+                }
+                Iterator<CGNode> succs = cg.getSuccNodes(node);
+                while(succs.hasNext()) {
+                    CGNode n = succs.next();
+                    
+                    if (fromLoader(n, ClassLoaderReference.Application)) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+            private boolean fromLoader(CGNode node, ClassLoaderReference clr) {
+                IClass declClass = node.getMethod().getDeclaringClass();
+
+                ClassLoaderReference nodeClRef =
+                        declClass.getClassLoader().getReference();
+
+                return nodeClRef.equals(clr);
+            }
+        });
 
         if (CLI.hasOption("c"))
         	GraphUtil.makeCG(this);
         if (CLI.hasOption("p"))
         	GraphUtil.makePCG(this);
         if (CLI.hasOption("o"))
-        	GraphUtil.makeOneLCG(this);        
+        	GraphUtil.makeOneLCG(this);   
+        if (CLI.hasOption("s"))
+            GraphUtil.makeSystemToAPKCG(this);
         
     }
     
