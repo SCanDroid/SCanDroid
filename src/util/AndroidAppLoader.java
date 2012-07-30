@@ -240,17 +240,33 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
             @Override
             public boolean test(CGNode node) {
                 
-                if (! fromLoader(node, ClassLoaderReference.Primordial)) {
+                if (fromLoader(node, ClassLoaderReference.Primordial)) {
+                    Iterator<CGNode> succs = cg.getSuccNodes(node);
+                    while(succs.hasNext()) {
+                        CGNode n = succs.next();
+                    
+                        if (fromLoader(n, ClassLoaderReference.Application)) {
+                            return true;
+                        }
+                    }
+                    // primordial method, with no link to APK code:
+                    return false;
+                } else if (fromLoader(node, ClassLoaderReference.Application)) {
+                    // see if this is an APK method that was 
+                    // invoked by a primordial method:
+                    Iterator<CGNode> preds = cg.getPredNodes(node);
+                    while(preds.hasNext()) {
+                        CGNode n = preds.next();
+                    
+                        if (fromLoader(n, ClassLoaderReference.Primordial)) {
+                            return true;
+                        }
+                    }
+                    // APK code, no link to primordial:
                     return false;
                 }
-                Iterator<CGNode> succs = cg.getSuccNodes(node);
-                while(succs.hasNext()) {
-                    CGNode n = succs.next();
-                    
-                    if (fromLoader(n, ClassLoaderReference.Application)) {
-                        return true;
-                    }
-                }
+                
+                // who knows, not interesting:
                 return false;
             }
 

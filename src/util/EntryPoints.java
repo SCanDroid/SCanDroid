@@ -185,10 +185,7 @@ public class EntryPoints {
     }
     
     public void activityModelEntry(ClassHierarchy cha, AndroidAppLoader loader) {
-
-
     	ArrayList<MethodReference> entryPointMRs = new ArrayList<MethodReference>();
-    	entryPointMRs.add(StringStuff.makeMethodReference("android.app.ActivityThread.main([Ljava/lang/String)V"));
     	entryPointMRs.add(StringStuff.makeMethodReference("android.app.Activity.ActivityModel()V"));
     	
         // find all onActivityResult functions and add them as entry points
@@ -207,7 +204,7 @@ public class EntryPoints {
         entryPointMRs.add(StringStuff.makeMethodReference("android.app.Service.onTransact(ILandroid/os/Parcel;Landroid/os/Parcel;I)B"));
         // onDestroy?
     	
-    	for(MethodReference mr:entryPointMRs)
+    	for(MethodReference mr:entryPointMRs) {
     		for(IMethod im:cha.getPossibleTargets(mr))
     		{
     			log(DEBUG,"Considering target "+im.getSignature());
@@ -220,6 +217,15 @@ public class EntryPoints {
     				entries.add(new DefaultEntrypoint(im, cha));
     			}
     		}
+    	}
+    	
+        MethodReference activityThreadMain =
+                StringStuff.makeMethodReference(
+                        "android.app.ActivityThread.main([Ljava/lang/String;)V"); 
+        for(IMethod im:cha.getPossibleTargets(activityThreadMain)) {
+            log(DEBUG,"Adding entry point: "+im.getSignature());
+            entries.add(new DefaultEntrypoint(im, cha));
+        }
     }
 
     public void unpackApk(String classpath){
