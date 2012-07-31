@@ -185,50 +185,51 @@ public class EntryPoints {
     }
     
     public void activityModelEntry(ClassHierarchy cha, AndroidAppLoader loader) {
-    	ArrayList<MethodReference> entryPointMRs = new ArrayList<MethodReference>();
-    	
-    	String[] methodReferences = {
-    	   "android.app.Activity.ActivityModel()V",
-    	   // find all onActivityResult functions and add them as entry points
-    	   "android.app.Activity.onActivityResult(IILandroid/content/Intent;)V",
+        ArrayList<MethodReference> entryPointMRs =
+                new ArrayList<MethodReference>();
 
-    	   //SERVICE ENTRY POINTS
-    	   "android.app.Service.onCreate()V",
-    	   "android.app.Service.onStart(Landroid/content/Intent;I)V",
-    	   "android.app.Service.onBind(Landroid/content/Intent;)Landroid/os/IBinder;",
-    	   "android.app.Service.onTransact(ILandroid/os/Parcel;Landroid/os/Parcel;I)B",
-    	};
-    	
-    	for(MethodReference mr:entryPointMRs) {
-    		for(IMethod im:cha.getPossibleTargets(mr))
-    		{
-    			log(DEBUG,"Considering target "+im.getSignature());
+        String[] methodReferences = {
+            "android.app.Activity.ActivityModel()V",
+            // find all onActivityResult functions and add them as entry points
+            "android.app.Activity.onActivityResult(IILandroid/content/Intent;)V",
 
-    			// limit to functions defined within the application
-    			if(im.getReference().getDeclaringClass().getClassLoader().
-    					equals(ClassLoaderReference.Application))
-    			{
-    				log(DEBUG,"Adding entry point: "+im.getSignature());
-    				entries.add(new DefaultEntrypoint(im, cha));
-    			}
-    		}
-    	}
-    	
-    	
-    	String[] systemEntyPoints = {
-    	   "android.app.ActivityThread.main([Ljava/lang/String;)V",
-    	   "com.android.server.ServerThread.run()V"
-    	};
-    	
-    	for (int i = 0; i < systemEntyPoints.length; i++) {
+            // SERVICE ENTRY POINTS
+            "android.app.Service.onCreate()V",
+            "android.app.Service.onStart(Landroid/content/Intent;I)V",
+            "android.app.Service.onBind(Landroid/content/Intent;)Landroid/os/IBinder;",
+            "android.app.Service.onTransact(ILandroid/os/Parcel;Landroid/os/Parcel;I)B"
+         };
+
+        for (int i = 0; i < methodReferences.length; i++) {
+            MethodReference mr =
+                    StringStuff.makeMethodReference(methodReferences[i]);
+            
+            for (IMethod im : cha.getPossibleTargets(mr)) {
+                log(DEBUG, "Considering target " + im.getSignature());
+
+                // limit to functions defined within the application
+                if (im.getReference().getDeclaringClass().getClassLoader()
+                        .equals(ClassLoaderReference.Application)) {
+                    log(DEBUG, "Adding entry point: " + im.getSignature());
+                    entries.add(new DefaultEntrypoint(im, cha));
+                }
+            }
+        }
+
+        String[] systemEntyPoints = { 
+           "android.app.ActivityThread.main([Ljava/lang/String;)V"
+           , "com.android.server.ServerThread.run()V"
+        };
+
+        for (int i = 0; i < systemEntyPoints.length; i++) {
             MethodReference methodRef =
-                StringStuff.makeMethodReference(systemEntyPoints[i]);
+                    StringStuff.makeMethodReference(systemEntyPoints[i]);
 
-            for(IMethod im:cha.getPossibleTargets(methodRef)) {
-                log(DEBUG,"Adding entry point: "+im.getSignature());
+            for (IMethod im : cha.getPossibleTargets(methodRef)) {
+                log(DEBUG, "Adding entry point: " + im.getSignature());
                 entries.add(new DefaultEntrypoint(im, cha));
             }
-    	}
+        }
     }
 
     public void unpackApk(String classpath){
