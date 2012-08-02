@@ -132,6 +132,7 @@
             <zipfileset excludes="META-INF/*.SF" src="${WALA}/wala_cast_java.jar"/>
             <zipfileset excludes="META-INF/*.SF" src="${WALA}/wala_cast_java_jdt.jar"/>
             <zipfileset excludes="META-INF/*.SF" src="${WALA}/wala_core.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="${WALA}/wala_core_tests.jar"/>
             <zipfileset excludes="META-INF/*.SF" src="${WALA}/wala_ide.jar"/>
             <zipfileset excludes="META-INF/*.SF" src="${WALA}/wala_shrike.jar"/>
             <zipfileset excludes="META-INF/*.SF" src="${WALA}/wala_util.jar"/>
