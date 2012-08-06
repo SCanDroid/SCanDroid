@@ -52,6 +52,7 @@ import java.util.jar.JarFile;
 import prefixTransfer.UriPrefixContextSelector;
 
 import com.ibm.wala.classLoader.DexIContextInterpreter;
+import com.ibm.wala.classLoader.IClass;
 import com.ibm.wala.dataflow.IFDS.ICFGSupergraph;
 import com.ibm.wala.dataflow.IFDS.ISupergraph;
 import com.ibm.wala.dex.util.config.DexAnalysisScopeReader;
@@ -61,19 +62,24 @@ import com.ibm.wala.ipa.callgraph.AnalysisOptions.ReflectionOptions;
 import com.ibm.wala.ipa.callgraph.AnalysisScope;
 import com.ibm.wala.ipa.callgraph.CGNode;
 import com.ibm.wala.ipa.callgraph.CallGraph;
+import com.ibm.wala.ipa.callgraph.propagation.cfa.ZeroXInstanceKeys;
 import com.ibm.wala.ipa.callgraph.Entrypoint;
 import com.ibm.wala.ipa.callgraph.impl.PartialCallGraph;
 import com.ibm.wala.ipa.callgraph.impl.Util;
+import com.ibm.wala.ipa.callgraph.propagation.cfa.DexSSAPropagationCallGraphBuilder;
 import com.ibm.wala.ipa.callgraph.propagation.PointerAnalysis;
 import com.ibm.wala.ipa.callgraph.propagation.SSAContextInterpreter;
 import com.ibm.wala.ipa.callgraph.propagation.SSAPropagationCallGraphBuilder;
 import com.ibm.wala.ipa.cfg.BasicBlockInContext;
 import com.ibm.wala.ipa.cha.ClassHierarchy;
 import com.ibm.wala.ipa.cha.ClassHierarchyException;
+import com.ibm.wala.ssa.IR;
 import com.ibm.wala.ssa.ISSABasicBlock;
+import com.ibm.wala.ssa.SSAInstruction;
 import com.ibm.wala.ssa.analysis.IExplodedBasicBlock;
 import com.ibm.wala.types.ClassLoaderReference;
 import com.ibm.wala.util.CancelException;
+import com.ibm.wala.util.Predicate;
 import com.ibm.wala.util.collections.Filter;
 import com.ibm.wala.util.graph.Graph;
 import com.ibm.wala.util.graph.GraphSlicer;
@@ -93,7 +99,8 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
     public ISupergraph<BasicBlockInContext<E>, CGNode> graph;
     public Graph<CGNode> partialGraph;
     public Graph<CGNode> oneLevelGraph;
-
+    public Graph<CGNode> systemToApkGraph;
+    
     /**
      *
      * @param classpath
@@ -108,13 +115,17 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
               CancelException, ClassHierarchyException
     {
 
+    	//scope = com.ibm.wala.util.config.AnalysisScopeReader.makeJavaBinaryAnalysisScope(classpath, new FileProvider().getFile("conf/Java60RegressionExclusions.txt"));
+
         scope = DexAnalysisScopeReader.makeAndroidBinaryAnalysisScope(classpath,
                                                                       new FileProvider().getFile("conf/Java60RegressionExclusions.txt"));
 
         scope.setLoaderImpl(ClassLoaderReference.Application,
                             "com.ibm.wala.classLoader.WDexClassLoaderImpl");
-        scope.addToScope(ClassLoaderReference.Primordial,
+        scope.addToScope(ClassLoaderReference.Application,
                 new JarFile(CLI.getOption("android-lib")));
+        scope.addToScope(ClassLoaderReference.Application,
+                new JarFile("/Users/ssuh/Documents/projects/SCanDroid/SimpleAnalysisPluginDexLib/scandroid/WataAccessTest.jar"));
         cha = ClassHierarchy.make(scope);
 
         //log ClassHierarchy warnings
@@ -130,6 +141,7 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
         entries = ep.getEntries();
     }
 
+    @SuppressWarnings("deprecation")
     public void buildGraphs(LinkedList<Entrypoint> localEntries) throws CancelException {
 
         AnalysisOptions options = new AnalysisOptions(scope, localEntries);
@@ -145,16 +157,22 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
 
         SSAContextInterpreter ci = new DexIContextInterpreter(options.getSSAOptions());
         AnalysisCache cache = new AnalysisCache();
-        SSAPropagationCallGraphBuilder cgb;
+        SSAPropagationCallGraphBuilder tempcgb, cgb;
 //        if(CLI.hasOption("context-sensitive")) {
 //            cgb = Util.makeVanillaZeroOneCFABuilder(options, cache, cha, scope,
 //                    new UriPrefixContextSelector(), ci);
 //        } else {
-//            cgb = Util.makeZeroCFABuilder(options, cache, cha, scope,
-//                    new UriPrefixContextSelector(), ci);
+            tempcgb = Util.makeZeroCFABuilder(options, cache, cha, scope,
+                    new UriPrefixContextSelector(), ci);
+            cgb = new DexSSAPropagationCallGraphBuilder(cha, options, cache, tempcgb.getContextSelector(), (SSAContextInterpreter)tempcgb.getContextInterpreter(), ZeroXInstanceKeys.NONE);
 //        }
-        cgb = Util.makeVanillaZeroOneCFABuilder(options, cache, cha, scope,
-                new UriPrefixContextSelector(), ci);
+//        tempcgb = Util.makeVanillaZeroOneCFABuilder(options, cache, cha, scope,
+//                new UriPrefixContextSelector(), ci);
+//            cgb = new DexSSAPropagationCallGraphBuilder(cha, options, cache, tempcgb.getContextSelector(), (SSAContextInterpreter)tempcgb.getContextInterpreter(), ZeroXInstanceKeys.ALLOCATIONS | ZeroXInstanceKeys.CONSTANT_SPECIFIC);
+
+//        cgb = Util.makeZeroCFABuilder(options, cache, cha, scope);
+
+        
 
         //CallGraphBuilder construction warnings
         for(Iterator<Warning> wi = Warnings.iterator(); wi.hasNext();)
@@ -232,13 +250,107 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
                     }
                 });
 
+        systemToApkGraph = GraphSlicer.prune(cg, new Predicate<CGNode>() {
+            @Override
+            public boolean test(CGNode node) {
+                
+                if (fromLoader(node, ClassLoaderReference.Primordial)) {
+                    Iterator<CGNode> succs = cg.getSuccNodes(node);
+                    while(succs.hasNext()) {
+                        CGNode n = succs.next();
+                    
+                        if (fromLoader(n, ClassLoaderReference.Application)) {
+                            return true;
+                        }
+                    }
+                    // primordial method, with no link to APK code:
+                    return false;
+                } else if (fromLoader(node, ClassLoaderReference.Application)) {
+                    // see if this is an APK method that was 
+                    // invoked by a primordial method:
+                    Iterator<CGNode> preds = cg.getPredNodes(node);
+                    while(preds.hasNext()) {
+                        CGNode n = preds.next();
+                    
+                        if (fromLoader(n, ClassLoaderReference.Primordial)) {
+                            return true;
+                        }
+                    }
+                    // APK code, no link to primordial:
+                    return false;
+                }
+                
+                // who knows, not interesting:
+                return false;
+            }
+
+            private boolean fromLoader(CGNode node, ClassLoaderReference clr) {
+                IClass declClass = node.getMethod().getDeclaringClass();
+
+                ClassLoaderReference nodeClRef =
+                        declClass.getClassLoader().getReference();
+
+                return nodeClRef.equals(clr);
+            }
+        });
 
         if (CLI.hasOption("c"))
         	GraphUtil.makeCG(this);
         if (CLI.hasOption("p"))
         	GraphUtil.makePCG(this);
         if (CLI.hasOption("o"))
-        	GraphUtil.makeOneLCG(this);        
+        	GraphUtil.makeOneLCG(this);   
+        if (CLI.hasOption("s"))
+            GraphUtil.makeSystemToAPKCG(this);
+        
+        for (Iterator<CGNode> nodeI = cg.iterator(); nodeI.hasNext();) {
+        	CGNode node = nodeI.next();
+        	if (node.getMethod().getSignature().equals("android.location.LocationManager$ListenerTransport._handleMessage(Landroid/os/Message;)V")) {
+        		System.out.println(node.getMethod().getSignature());
+        		IR ir = node.getIR();
+        		for (SSAInstruction ssa:ir.getInstructions()) {
+        			System.out.println("\t"+ssa);
+        		}        		        		
+        	}
+        	if (node.getMethod().getSignature().equals("android.location.LocationManager$ListenerTransport.access(Landroid/os/Message;)V")) {
+        		System.out.println(node.getMethod().getSignature());
+        		IR ir = node.getIR();
+        		for (SSAInstruction ssa:ir.getInstructions()) {
+        			System.out.println("\t"+ssa);
+        		}        		        		
+        	}
+        	if (node.getMethod().getSignature().equals("android.location.LocationManager$ListenerTransport$1.handleMessage(Landroid/os/Message;)V")) {
+        		System.out.println(node.getMethod().getSignature());
+        		IR ir = node.getIR();
+        		for (SSAInstruction ssa:ir.getInstructions()) {
+        			System.out.println("\t"+ssa);
+        		}        		        		
+        	}
+
+        	if (node.getMethod().getSignature().equals("android.location.LocationManager$ListenerTransport.access$000(Landroid/location/LocationManager$ListenerTransport;Landroid/os/Message;)V")) {
+        		System.out.println(node.getMethod().getSignature());
+        		IR ir = node.getIR();
+        		for (SSAInstruction ssa:ir.getInstructions()) {
+        			System.out.println("\t"+ssa);
+        		}        		        		
+        	}
+        	
+        	
+//        	System.out.println("Node: " + node.getClass().getSimpleName());
+//        	for (Iterator<CGNode> succI = cg.getSuccNodes(node); succI.hasNext();) {
+//        		System.out.println("\tSuccNode: " + succI.next().getMethod().getSignature());
+//        	}
+        }
+        
+        for (Iterator<CGNode> nodeI = cg.iterator(); nodeI.hasNext();) {
+        	CGNode node = nodeI.next();        	        	
+            	
+        	System.out.println("CGNode: " + node);
+        	for (Iterator<CGNode> succI = cg.getSuccNodes(node); succI.hasNext();) {
+        		System.out.println("\tSuccCGNode: " + succI.next().getMethod().getSignature());
+        	}
+        }
+        
         
     }
     

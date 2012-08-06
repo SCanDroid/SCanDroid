@@ -84,7 +84,7 @@ public class UriPrefixContextSelector implements ContextSelector {
 //                	return new CallerSiteContextPair(caller,site,new ReceiverInstanceContext(receivers[0]));
                 if (callee.getSignature().equals("android.net.Uri$Builder.build()Landroid/net/Uri;"))
                 	return new CallerSiteContextPair(caller,site,new ReceiverInstanceContext(receivers[0]));
-                	
+                    //return new CallerSiteContext(caller,site);                	
             }
             else if(callee.getSignature().equals("java.lang.String.valueOf(Ljava/lang/Object;)Ljava/lang/String;") ||
                     callee.getSignature().equals("java.lang.String.toString()Ljava/lang/String;") ||

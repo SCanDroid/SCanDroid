@@ -230,6 +230,7 @@ public class UriPrefixTransferGraph implements Graph<InstanceKeySite> {
         						InstanceKey stringKey = points.iterator().next();
 
         						OrdinalSet<InstanceKey> returnSet = pa.getPointsToSet(new LocalPointerKey(caller, invoke.getReturnValue(0)));
+        						System.out.println("Sizeof returnset: " + returnSet.size() +"--"+pk);
         						for (Iterator<InstanceKey> rIK=returnSet.iterator(); rIK.hasNext(); ) {
         							InstanceKey returnIK = rIK.next();
         							node = new UriAppendString(pa.getInstanceKeyMapping().getMappedIndex(returnIK), pa.getInstanceKeyMapping().getMappedIndex(uriKey), pa.getInstanceKeyMapping().getMappedIndex(stringKey));
@@ -280,7 +281,7 @@ public class UriPrefixTransferGraph implements Graph<InstanceKeySite> {
                     }
                     //Doesn't seem to be entering this else with the current android jar -- reimplemented above using LocalPointerKey
                     else if (m.getSignature().equals("android.net.Uri.withAppendedPath(Landroid/net/Uri;Ljava/lang/String;)Landroid/net/Uri;")) {
-                    	System.out.println("oink");
+                        MyLogger.log(DEBUG, "android.net.Uri.withAppendedPath(Landroid/net/Uri;Ljava/lang/String;)Landroid/net/Uri call: " + caller);
                         SSAInvokeInstruction invoke = (SSAInvokeInstruction) caller.getIR().getBasicBlocksForCall(csr)[0].getLastInstruction();
                         LocalPointerKey lkey = new LocalPointerKey(caller, invoke.getUse(0));
                         if (pa.getPointsToSet(lkey).iterator().hasNext()) {

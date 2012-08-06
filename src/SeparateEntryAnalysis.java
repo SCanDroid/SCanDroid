@@ -96,7 +96,7 @@ public class SeparateEntryAnalysis {
 
             System.out.println("Supergraph size = "
                     + loader.graph.getNumberOfNodes());
-
+/*
              System.out.println("Running prefix analysis.");
              Map<InstanceKey, String> prefixes =
                  UriPrefixAnalysis.runAnalysisHelper(loader.cg, loader.pa);
@@ -144,7 +144,7 @@ public class SeparateEntryAnalysis {
                     System.out.println("    --> " + t);
                 }
             }            
-            
+            */
         } catch (com.ibm.wala.util.debug.UnimplementedError e) {
             e.printStackTrace();
         } catch (CancelException e){

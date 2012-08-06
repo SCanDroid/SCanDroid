@@ -74,7 +74,12 @@ public class GraphUtil{
 		GraphUtil.cg = loader.oneLevelGraph;
 		GraphUtil.suffix = "OneLevelCallGraph";
 		make();
-	}
+	}  
+	public static <E extends ISSABasicBlock> void makeSystemToAPKCG(AndroidAppLoader<E> loader) {
+        GraphUtil.cg = loader.systemToApkGraph;
+        GraphUtil.suffix = "SystemToApkGraph";
+        make();
+    }
 
 	public static <E extends ISSABasicBlock> void exploreIFDS(TabulationResult<BasicBlockInContext<E>, CGNode, DomainElement> flowResult) {
 		Properties p = null;

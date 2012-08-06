@@ -102,7 +102,8 @@ public class CLI {
 		options.addOption("e", "separate-entries", false, "analyze each entry point separately");
 		options.addOption("i", "IFDS-Explorer", false, "analyze each entry point separately");
 		options.addOption("m", "main-entrypoint", false, "look for main methods and add them as entrypoints");
-		
+		options.addOption("s", "system-to-apk-call-graph", false, "create system to apk callgraph");		
+
 		options.addOption(OptionBuilder.withLongOpt( "android-lib" ).withDescription( "include ALIB in scope of analysis" ).hasArg().withArgName("ALIB").create() );
 		
 	}
