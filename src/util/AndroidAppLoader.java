@@ -62,7 +62,6 @@ import com.ibm.wala.ipa.callgraph.AnalysisOptions.ReflectionOptions;
 import com.ibm.wala.ipa.callgraph.AnalysisScope;
 import com.ibm.wala.ipa.callgraph.CGNode;
 import com.ibm.wala.ipa.callgraph.CallGraph;
-import com.ibm.wala.ipa.callgraph.propagation.cfa.ZeroXInstanceKeys;
 import com.ibm.wala.ipa.callgraph.Entrypoint;
 import com.ibm.wala.ipa.callgraph.impl.PartialCallGraph;
 import com.ibm.wala.ipa.callgraph.impl.Util;
@@ -122,10 +121,9 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
 
         scope.setLoaderImpl(ClassLoaderReference.Application,
                             "com.ibm.wala.classLoader.WDexClassLoaderImpl");
-        scope.addToScope(ClassLoaderReference.Application,
+        scope.addToScope(ClassLoaderReference.Primordial,
                 new JarFile(CLI.getOption("android-lib")));
-        scope.addToScope(ClassLoaderReference.Application,
-                new JarFile("/Users/ssuh/Documents/projects/SCanDroid/SimpleAnalysisPluginDexLib/scandroid/WataAccessTest.jar"));
+
         cha = ClassHierarchy.make(scope);
 
         //log ClassHierarchy warnings
@@ -157,21 +155,21 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
 
         SSAContextInterpreter ci = new DexIContextInterpreter(options.getSSAOptions());
         AnalysisCache cache = new AnalysisCache();
-        SSAPropagationCallGraphBuilder tempcgb, cgb;
+        SSAPropagationCallGraphBuilder zeroxcgb, cgb;
 //        if(CLI.hasOption("context-sensitive")) {
 //            cgb = Util.makeVanillaZeroOneCFABuilder(options, cache, cha, scope,
 //                    new UriPrefixContextSelector(), ci);
 //        } else {
-            tempcgb = Util.makeZeroCFABuilder(options, cache, cha, scope,
-                    new UriPrefixContextSelector(), ci);
-            cgb = new DexSSAPropagationCallGraphBuilder(cha, options, cache, tempcgb.getContextSelector(), (SSAContextInterpreter)tempcgb.getContextInterpreter(), ZeroXInstanceKeys.NONE);
+        zeroxcgb = Util.makeZeroCFABuilder(options, cache, cha, scope,
+                    new UriPrefixContextSelector(), ci);        
 //        }
-//        tempcgb = Util.makeVanillaZeroOneCFABuilder(options, cache, cha, scope,
+//        zeroxcgb = Util.makeVanillaZeroOneCFABuilder(options, cache, cha, scope,
 //                new UriPrefixContextSelector(), ci);
-//            cgb = new DexSSAPropagationCallGraphBuilder(cha, options, cache, tempcgb.getContextSelector(), (SSAContextInterpreter)tempcgb.getContextInterpreter(), ZeroXInstanceKeys.ALLOCATIONS | ZeroXInstanceKeys.CONSTANT_SPECIFIC);
 
 //        cgb = Util.makeZeroCFABuilder(options, cache, cha, scope);
 
+        cgb = new DexSSAPropagationCallGraphBuilder(cha, options, cache, zeroxcgb.getContextSelector(), (SSAContextInterpreter)zeroxcgb.getContextInterpreter(), zeroxcgb.getInstanceKeys());
+        
         
 
         //CallGraphBuilder construction warnings
