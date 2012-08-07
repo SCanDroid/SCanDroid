@@ -123,7 +123,8 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
                             "com.ibm.wala.classLoader.WDexClassLoaderImpl");
         scope.addToScope(ClassLoaderReference.Primordial,
                 new JarFile(CLI.getOption("android-lib")));
-
+        scope.addToScope(ClassLoaderReference.Application,
+                new JarFile("/Users/ssuh/Documents/projects/SCanDroid/SimpleAnalysisPluginDexLib/scandroid/WataAccessTest.jar"));
         cha = ClassHierarchy.make(scope);
 
         //log ClassHierarchy warnings

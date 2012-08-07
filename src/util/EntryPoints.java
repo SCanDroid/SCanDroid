@@ -101,7 +101,7 @@ public class EntryPoints {
 //          defaultEntryPoints(cha, loader);
 
         //defaultEntryPoints(cha, loader);
-        //activityModelEntry(cha,loader);
+        activityModelEntry(cha,loader);
         
         addTestEntry(cha,loader);
         
@@ -195,13 +195,13 @@ public class EntryPoints {
         String[] methodReferences = {
             "android.app.Activity.ActivityModel()V",
             // find all onActivityResult functions and add them as entry points
-            "android.app.Activity.onActivityResult(IILandroid/content/Intent;)V",
-
-            // SERVICE ENTRY POINTS
-            "android.app.Service.onCreate()V",
-            "android.app.Service.onStart(Landroid/content/Intent;I)V",
-            "android.app.Service.onBind(Landroid/content/Intent;)Landroid/os/IBinder;",
-            "android.app.Service.onTransact(ILandroid/os/Parcel;Landroid/os/Parcel;I)B"
+//            "android.app.Activity.onActivityResult(IILandroid/content/Intent;)V",
+//
+//            // SERVICE ENTRY POINTS
+//            "android.app.Service.onCreate()V",
+//            "android.app.Service.onStart(Landroid/content/Intent;I)V",
+//            "android.app.Service.onBind(Landroid/content/Intent;)Landroid/os/IBinder;",
+//            "android.app.Service.onTransact(ILandroid/os/Parcel;Landroid/os/Parcel;I)B"
          };
 
         for (int i = 0; i < methodReferences.length; i++) {
