@@ -51,6 +51,7 @@ import com.ibm.wala.shrikeCT.InvalidClassFileException;
 import com.ibm.wala.types.ClassLoaderReference;
 import com.ibm.wala.util.config.AnalysisScopeReader;
 import com.ibm.wala.util.debug.Assertions;
+import com.ibm.wala.util.io.FileProvider;
 
 
 /**
@@ -61,7 +62,7 @@ public class DexAnalysisScopeReader extends AnalysisScopeReader {
 
       private static final ClassLoader WALA_CLASSLOADER = AnalysisScopeReader.class.getClassLoader();
 
-      private static final String BASIC_FILE = "primordial.txt";
+      private static final String BASIC_FILE = "./conf/primordial.txt";
 
       /**
        * @param classPath class path to analyze, delimited by File.pathSeparator
@@ -72,7 +73,7 @@ public class DexAnalysisScopeReader extends AnalysisScopeReader {
       public static AnalysisScope makeAndroidBinaryAnalysisScope(String classPath, File exclusionsFile) throws IOException {
           if (classPath == null) {
               throw new IllegalArgumentException("classPath null");
-          }
+          }                  
           AnalysisScope scope = AnalysisScopeReader.readJavaScope(BASIC_FILE, exclusionsFile, WALA_CLASSLOADER);
           ClassLoaderReference loader = scope.getLoader(AnalysisScope.APPLICATION);
           addClassPathToScope(classPath, scope, loader);
