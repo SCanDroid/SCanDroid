@@ -55,17 +55,15 @@ import com.ibm.wala.types.FieldReference;
 
 public class DexIContextInterpreter implements SSAContextInterpreter {
 
-    public DexIContextInterpreter(SSAOptions options)
+    public DexIContextInterpreter(SSAOptions options, AnalysisCache cache)
     {
         this.options = options;
-        factory = new DexIRFactory();
-        this.cache = new AnalysisCache((IRFactory<IMethod>)factory);
+        this.cache = cache;
     }
 
     private final SSAOptions options;
     private final AnalysisCache cache;
 
-    private final DexIRFactory factory;
 
     public boolean understands(CGNode node) {
         if(node.getMethod() instanceof DexIMethod)
@@ -117,5 +115,5 @@ public class DexIContextInterpreter implements SSAContextInterpreter {
     public ControlFlowGraph<SSAInstruction, ISSABasicBlock> getCFG(CGNode n) {
         IR ir = getIR(n);
         return ir.getControlFlowGraph();
-    }
+    }    
 };

@@ -51,8 +51,11 @@ import java.util.jar.JarFile;
 
 import prefixTransfer.UriPrefixContextSelector;
 
+import com.ibm.wala.analysis.reflection.ReflectionContextInterpreter;
 import com.ibm.wala.classLoader.DexIContextInterpreter;
+import com.ibm.wala.classLoader.DexIRFactory;
 import com.ibm.wala.classLoader.IClass;
+import com.ibm.wala.classLoader.IMethod;
 import com.ibm.wala.dataflow.IFDS.ICFGSupergraph;
 import com.ibm.wala.dataflow.IFDS.ISupergraph;
 import com.ibm.wala.dex.util.config.DexAnalysisScopeReader;
@@ -65,6 +68,8 @@ import com.ibm.wala.ipa.callgraph.CallGraph;
 import com.ibm.wala.ipa.callgraph.Entrypoint;
 import com.ibm.wala.ipa.callgraph.impl.PartialCallGraph;
 import com.ibm.wala.ipa.callgraph.impl.Util;
+import com.ibm.wala.ipa.callgraph.propagation.cfa.DefaultSSAInterpreter;
+import com.ibm.wala.ipa.callgraph.propagation.cfa.DelegatingSSAContextInterpreter;
 import com.ibm.wala.ipa.callgraph.propagation.cfa.DexSSAPropagationCallGraphBuilder;
 import com.ibm.wala.ipa.callgraph.propagation.PointerAnalysis;
 import com.ibm.wala.ipa.callgraph.propagation.SSAContextInterpreter;
@@ -73,6 +78,7 @@ import com.ibm.wala.ipa.cfg.BasicBlockInContext;
 import com.ibm.wala.ipa.cha.ClassHierarchy;
 import com.ibm.wala.ipa.cha.ClassHierarchyException;
 import com.ibm.wala.ssa.IR;
+import com.ibm.wala.ssa.IRFactory;
 import com.ibm.wala.ssa.ISSABasicBlock;
 import com.ibm.wala.ssa.SSAInstruction;
 import com.ibm.wala.ssa.analysis.IExplodedBasicBlock;
@@ -80,6 +86,7 @@ import com.ibm.wala.types.ClassLoaderReference;
 import com.ibm.wala.util.CancelException;
 import com.ibm.wala.util.Predicate;
 import com.ibm.wala.util.collections.Filter;
+import com.ibm.wala.util.config.AnalysisScopeReader;
 import com.ibm.wala.util.graph.Graph;
 import com.ibm.wala.util.graph.GraphSlicer;
 import com.ibm.wala.util.io.FileProvider;
@@ -115,16 +122,17 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
     {
 
     	//scope = com.ibm.wala.util.config.AnalysisScopeReader.makeJavaBinaryAnalysisScope(classpath, new FileProvider().getFile("conf/Java60RegressionExclusions.txt"));
+    	
+        scope = DexAnalysisScopeReader.makeAndroidBinaryAnalysisScope(classpath, new FileProvider().getFile("conf/Java60RegressionExclusions.txt"));
 
-        scope = DexAnalysisScopeReader.makeAndroidBinaryAnalysisScope(classpath,
-                                                                      new FileProvider().getFile("conf/Java60RegressionExclusions.txt"));
+        scope.setLoaderImpl(ClassLoaderReference.Application, "com.ibm.wala.classLoader.WDexClassLoaderImpl");
+        scope.addToScope(ClassLoaderReference.Primordial, new JarFile(CLI.getOption("android-lib")));
+        
+//		AnalysisScope scope = AnalysisScopeReader.makeJavaBinaryAnalysisScope(
+//				"/Users/ssuh/Documents/projects/SCanDroid/SimpleAnalysisPluginDexLib/scandroid/SimpleAndroidApp.jar",
+//				new FileProvider().getFile("/Users/ssuh/Documents/projects/SCanDroid/SimpleAnalysisPluginDexLib/scandroid/conf/Java60RegressionExclusions.txt"));
+//		scope.addToScope(ClassLoaderReference.Primordial, new JarFile("/Users/ssuh/Documents/projects/SCanDroid/SimpleAnalysisPluginDexLib/scandroid/data/android-2.3.7_r1.jar"));
 
-        scope.setLoaderImpl(ClassLoaderReference.Application,
-                            "com.ibm.wala.classLoader.WDexClassLoaderImpl");
-        scope.addToScope(ClassLoaderReference.Primordial,
-                new JarFile(CLI.getOption("android-lib")));
-        scope.addToScope(ClassLoaderReference.Application,
-                new JarFile("/Users/ssuh/Documents/projects/SCanDroid/SimpleAnalysisPluginDexLib/scandroid/WataAccessTest.jar"));
         cha = ClassHierarchy.make(scope);
 
         //log ClassHierarchy warnings
@@ -150,27 +158,25 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
         }
 
         options.setEntrypoints(localEntries);
-        if(!CLI.hasOption("model-reflection")) {
-            options.setReflectionOptions(ReflectionOptions.NONE);
-        }
-
-        SSAContextInterpreter ci = new DexIContextInterpreter(options.getSSAOptions());
-        AnalysisCache cache = new AnalysisCache();
-        SSAPropagationCallGraphBuilder zeroxcgb, cgb;
-//        if(CLI.hasOption("context-sensitive")) {
-//            cgb = Util.makeVanillaZeroOneCFABuilder(options, cache, cha, scope,
-//                    new UriPrefixContextSelector(), ci);
-//        } else {
-        zeroxcgb = Util.makeZeroCFABuilder(options, cache, cha, scope,
-                    new UriPrefixContextSelector(), ci);        
-//        }
-//        zeroxcgb = Util.makeVanillaZeroOneCFABuilder(options, cache, cha, scope,
-//                new UriPrefixContextSelector(), ci);
-
-//        cgb = Util.makeZeroCFABuilder(options, cache, cha, scope);
-
-        cgb = new DexSSAPropagationCallGraphBuilder(cha, options, cache, zeroxcgb.getContextSelector(), (SSAContextInterpreter)zeroxcgb.getContextInterpreter(), zeroxcgb.getInstanceKeys());
         
+        if(!CLI.hasOption("reflection"))
+        	options.setReflectionOptions(ReflectionOptions.valueOf(CLI.getOption("reflection")));
+        else
+        	options.setReflectionOptions(ReflectionOptions.NONE);
+        	
+        
+        AnalysisCache cache = new AnalysisCache((IRFactory<IMethod>)new DexIRFactory());
+        //AnalysisCache cache = new AnalysisCache();
+        
+        //SSAContextInterpreter ci = new DexIContextInterpreter(options.getSSAOptions(), cache);
+        //ci = new DelegatingSSAContextInterpreter(ReflectionContextInterpreter.createReflectionContextInterpreter(cha, options, cache), ci);
+        
+        SSAPropagationCallGraphBuilder zeroxcgb, cgb;
+
+        zeroxcgb = Util.makeVanillaZeroOneCFABuilder(options, cache, cha, scope,
+                new UriPrefixContextSelector(options, cha), null);
+        //cgb = new DexSSAPropagationCallGraphBuilder(cha, options, cache, zeroxcgb.getContextSelector(), (SSAContextInterpreter)zeroxcgb.getContextInterpreter(), zeroxcgb.getInstanceKeys());
+        cgb = zeroxcgb;
         
 
         //CallGraphBuilder construction warnings
@@ -302,56 +308,16 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
         if (CLI.hasOption("s"))
             GraphUtil.makeSystemToAPKCG(this);
         
-        for (Iterator<CGNode> nodeI = cg.iterator(); nodeI.hasNext();) {
-        	CGNode node = nodeI.next();
-        	if (node.getMethod().getSignature().equals("android.location.LocationManager$ListenerTransport._handleMessage(Landroid/os/Message;)V")) {
-        		System.out.println(node.getMethod().getSignature());
-        		IR ir = node.getIR();
-        		for (SSAInstruction ssa:ir.getInstructions()) {
-        			System.out.println("\t"+ssa);
-        		}        		        		
-        	}
-        	if (node.getMethod().getSignature().equals("android.location.LocationManager$ListenerTransport.access(Landroid/os/Message;)V")) {
-        		System.out.println(node.getMethod().getSignature());
-        		IR ir = node.getIR();
-        		for (SSAInstruction ssa:ir.getInstructions()) {
-        			System.out.println("\t"+ssa);
-        		}        		        		
-        	}
-        	if (node.getMethod().getSignature().equals("android.location.LocationManager$ListenerTransport$1.handleMessage(Landroid/os/Message;)V")) {
-        		System.out.println(node.getMethod().getSignature());
-        		IR ir = node.getIR();
-        		for (SSAInstruction ssa:ir.getInstructions()) {
-        			System.out.println("\t"+ssa);
-        		}        		        		
-        	}
+        if (CLI.hasOption("a")) {
+        	for (Iterator<CGNode> nodeI = cg.iterator(); nodeI.hasNext();) {
+        		CGNode node = nodeI.next();        	        	
 
-        	if (node.getMethod().getSignature().equals("android.location.LocationManager$ListenerTransport.access$000(Landroid/location/LocationManager$ListenerTransport;Landroid/os/Message;)V")) {
-        		System.out.println(node.getMethod().getSignature());
-        		IR ir = node.getIR();
-        		for (SSAInstruction ssa:ir.getInstructions()) {
-        			System.out.println("\t"+ssa);
-        		}        		        		
-        	}
-        	
-        	
-//        	System.out.println("Node: " + node.getClass().getSimpleName());
-//        	for (Iterator<CGNode> succI = cg.getSuccNodes(node); succI.hasNext();) {
-//        		System.out.println("\tSuccNode: " + succI.next().getMethod().getSignature());
-//        	}
-        }
-        
-        for (Iterator<CGNode> nodeI = cg.iterator(); nodeI.hasNext();) {
-        	CGNode node = nodeI.next();        	        	
-            	
-        	System.out.println("CGNode: " + node);
-        	for (Iterator<CGNode> succI = cg.getSuccNodes(node); succI.hasNext();) {
-        		System.out.println("\tSuccCGNode: " + succI.next().getMethod().getSignature());
+        		System.out.println("CGNode: " + node);
+        		for (Iterator<CGNode> succI = cg.getSuccNodes(node); succI.hasNext();) {
+        			System.out.println("\tSuccCGNode: " + succI.next().getMethod().getSignature());
+        		}
         	}
         }
-        
-        
     }
-    
-    
+       
 }

@@ -103,8 +103,7 @@ public class DexModuleEntry implements ModuleEntry {
      * @see com.ibm.wala.classLoader.ModuleEntry#isClassFile()
      */
     public boolean isClassFile() {
-        return true;
-        //return false;
+        return false;
     }
 
     /*

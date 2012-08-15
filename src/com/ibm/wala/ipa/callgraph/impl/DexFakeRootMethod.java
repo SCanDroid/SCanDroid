@@ -2,6 +2,10 @@ package com.ibm.wala.ipa.callgraph.impl;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 import com.ibm.wala.cfg.IBasicBlock;
 import com.ibm.wala.classLoader.CallSiteReference;
@@ -31,7 +35,11 @@ public class DexFakeRootMethod extends AbstractRootMethod {
 	public static final Descriptor descr = Descriptor.findOrCreate(new TypeName[0], TypeReference.VoidName);
 
 	public static final MethodReference rootMethod = MethodReference.findOrCreate(FakeRootClass.FAKE_ROOT_CLASS, name, descr);
-
+	
+	public static Map<TypeReference, Integer> referenceTypeMap = new HashMap<TypeReference, Integer>();
+	
+//	public static Set<TypeReference> referenceTypeSet = new HashSet<TypeReference>();
+	
 	public DexFakeRootMethod(final IClassHierarchy cha, AnalysisOptions options, AnalysisCache cache) {
 		super(rootMethod, cha, options, cache);
 	}
@@ -91,58 +99,78 @@ public class DexFakeRootMethod extends AbstractRootMethod {
 			}
 			if (invokeCtor) {
 				IMethod ctor = cha.resolveMethod(klass, MethodReference.initSelector);
-				System.out.println("ctor: " + ctor.getSignature());
-				System.out.println("klass: " + klass.getName());
-				
 				if (ctor!=null) {
-					ArrayList<SSANewInstruction> allocSitesAL = new ArrayList<SSANewInstruction>();
+					int[] allocSites = null;
+					referenceTypeMap.put(T, instance);
 
 					if (!ctor.getDeclaringClass().getName().toString().equals(klass.getName().toString())) {
-						System.out.println("klass != ctor: " + ctor.getSignature());
 						boolean found = false;
 						for (IMethod im: klass.getAllMethods()) {
 							if (im.getDeclaringClass().getName().toString().equals(klass.getName().toString()) && 
 									im.getSelector().getName().toString().equals(MethodReference.initAtom.toString())) {
 								ctor = im;
-								System.out.println("new ctor: " + ctor.getSignature());
-								for (int j = 1; j < im.getNumberOfParameters(); j++) {									
-									allocSitesAL.add(addAllocation(im.getParameterType(j), invokeCtor));
+								allocSites = new int[ctor.getNumberOfParameters()];
+								allocSites[0] = instance;
+								for (int j = 1; j < ctor.getNumberOfParameters(); j++) {
+									if (im.getParameterType(j).isPrimitiveType()) {
+										allocSites[j] = addLocal();
+									}
+									else if (referenceTypeMap.containsKey(im.getParameterType(j))) {
+										allocSites[j] = referenceTypeMap.get(im.getParameterType(j)).intValue();
+									}
+									else {
+										SSANewInstruction n = addAllocation(im.getParameterType(j), invokeCtor); 
+										allocSites[j] = (n == null) ? -1 : n.getDef();
+										referenceTypeMap.put(im.getParameterType(j), allocSites[j]);
+									}									
 								}
 								found = true;
 								break;
 							}
 						}
 						if (!found) {
-							System.out.println("no constructors.  klass may be an interface: " + klass.isInterface());
-//							//for (IClass ic:cha.computeSubClasses(T)) {
-//							for (IClass ic: cha.getImplementors(T)){
-//								System.out.println("\timplementors: " + ic.getName());
-//								if (ic.getClassLoader().getReference().equals(ClassLoaderReference.Application)) {
-//									System.out.println("\tApplication implementor: " + ic.getName());
-//									addAllocation(ic.getReference(), invokeCtor);
-//									break;
-//								}
-//								else if (ic.getName().toString().equals("Landroid/location/ILocationManager$Stub$Proxy")) {
-//									System.out.println("\tILocationManager implementor: " + ic.getName());
-//									addAllocation(ic.getReference(), invokeCtor);
-//									break;
-//								}
-//								else if (ic.getName().toString().equals("Landroid/os/Binder")) {
-//									System.out.println("\tIBinder implementor: " + ic.getName());
-//									addAllocation(ic.getReference(), invokeCtor);
-//									break;
-//								}
-//							
-//							}
+							Set<IClass> implementors = cha.getImplementors(T);
+							int[] values = new int[implementors.size()];
+							int countErrors = 0;
+							int index = 0;
+							for (IClass ic: implementors){
+								int value;
+								
+								if (referenceTypeMap.containsKey(ic.getReference())) {
+									value = referenceTypeMap.get(ic.getReference()).intValue();
+								}
+								else {
+									SSANewInstruction n = addAllocation(ic.getReference(), invokeCtor);
+									value = (n == null) ? -1 : n.getDef();
+									referenceTypeMap.put(ic.getReference(), value);
+								}
+								if (value == -1) {
+									countErrors++;
+								} else {
+									values[index - countErrors] = value;
+								}
+								index++;
+							}
+
+							if (countErrors > 0) {
+								int[] oldValues = values;
+								values = new int[oldValues.length - countErrors];
+								System.arraycopy(oldValues, 0, values, 0, values.length);
+							}
+							if (values.length > 1) {
+								instance = addPhi(values);
+								referenceTypeMap.put(T, instance);
+							}
 						}
 					}
-					int[] allocSites = new int[ctor.getNumberOfParameters()];
-					allocSites[0] = instance;
-					assert(allocSites.length-1 == allocSitesAL.size());
-					for (int i = 1; i < allocSites.length; i++) {
-						allocSites[i] = allocSitesAL.get(i-1).getDef();
+					if (allocSites!=null)
+					for (int p=0;p<allocSites.length; p++) {
+						if (allocSites[p] == -1) {
+							Warnings.add(AllocationFailure.create(T));
+							return null;
+						}
 					}
-					addInvocation(allocSites, CallSiteReference.make(statements.size(), ctor.getReference(),
+					addInvocation(allocSites==null?new int[] {instance}:allocSites, CallSiteReference.make(statements.size(), ctor.getReference(),
 							IInvokeInstruction.Dispatch.SPECIAL));
 				}
 			}
@@ -150,6 +178,7 @@ public class DexFakeRootMethod extends AbstractRootMethod {
 		cache.invalidate(this, Everywhere.EVERYWHERE);
 		return result;
 	}
+	
 
 	private static class AllocationFailure extends Warning {
 

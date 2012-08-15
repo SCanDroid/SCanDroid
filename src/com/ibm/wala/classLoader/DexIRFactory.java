@@ -12,9 +12,11 @@
 
 package com.ibm.wala.classLoader;
 
+import com.ibm.wala.cfg.ControlFlowGraph;
 import com.ibm.wala.classLoader.IMethod;
 import com.ibm.wala.ipa.callgraph.Context;
 import com.ibm.wala.shrikeCT.InvalidClassFileException;
+import com.ibm.wala.ssa.DefaultIRFactory;
 import com.ibm.wala.ssa.IR;
 import com.ibm.wala.ssa.IRFactory;
 import com.ibm.wala.ssa.SSACFG;
@@ -29,21 +31,30 @@ import com.ibm.wala.ssa.DexSSABuilder;
 import util.MyLogger;
 import static util.MyLogger.LogLevel.WARNING;
 
-public class DexIRFactory implements IRFactory<IMethod> {
+public class DexIRFactory extends DefaultIRFactory {
 
     public final static boolean buildLocalMap = false;
 
-    public DexCFG makeCFG(final DexIMethod method, Context context) {
-        return new DexCFG(method, context);
+    @Override
+    public ControlFlowGraph makeCFG(IMethod method, Context C) throws IllegalArgumentException {
+    	if (method == null) {
+    	      throw new IllegalArgumentException("null method");
+    	}
+    	if (method instanceof DexIMethod)
+    		return new DexCFG((DexIMethod)method, C);    
+    	return super.makeCFG(method,C);    	    
     }
 
-    public IR makeIR(final IMethod _method, Context C, final SSAOptions options) throws IllegalArgumentException {
-
-        final DexIMethod method = (DexIMethod)_method;
-
-        if (method == null) {
+    @Override
+    public IR makeIR(IMethod _method, Context C, final SSAOptions options) throws IllegalArgumentException {    	
+        if (_method == null) {
             throw new IllegalArgumentException("null method");
         }
+        
+    	if (!(_method instanceof DexIMethod))
+    		return super.makeIR(_method, C, options);
+        final DexIMethod method = (DexIMethod)_method;
+
         //      com.ibm.wala.shrikeBT.IInstruction[] instructions = null;
         //      try {
         //        instructions = method.getInstructions();
@@ -51,7 +62,7 @@ public class DexIRFactory implements IRFactory<IMethod> {
         //        e.printStackTrace();
         //        Assertions.UNREACHABLE();
         //      }
-        final DexCFG cfg = makeCFG(method, C);
+        final DexCFG cfg = (DexCFG)makeCFG(method, C);
 
         // calculate the SSA registers from the given cfg
 
@@ -127,8 +138,13 @@ public class DexIRFactory implements IRFactory<IMethod> {
         };
     }
 
+    @Override
     public boolean contextIsIrrelevant(IMethod method) {
-        // this factory always returns the same IR for a method
-        return true;
+    	if (method == null) {
+    	      throw new IllegalArgumentException("null method");
+    	}
+    	if (method instanceof DexIMethod)
+    		return true;
+    	return super.contextIsIrrelevant(method);
     }
 }
