@@ -93,18 +93,19 @@ public class CLI {
 	private static void setupOptions() {
 		options.addOption("h", "help", false, "print this message" );
 		options.addOption(OptionBuilder.withLongOpt( "verbose" ).withDescription( "set desired debugging outout level \"ERROR (0), WARNING (1), INFO (2), DEBUG (3)\"" ).hasArg().withArgName("level").create());
-		options.addOption("c", "call-graph", false, "create call graph pdf");
-		options.addOption("p", "partial-call-graph", false, "create partial call graph pdf");
-		options.addOption("o", "one-leve-call-graph", false, "create one level call graph pdf");
+		options.addOption("c", "call-graph", false, "create full call graph pdf");
+		options.addOption("p", "partial-call-graph", false, "create partial call graph pdf (Application only)");
+		options.addOption("o", "one-level-call-graph", false, "create one level call graph pdf (Application + 1 level of System calls)");
+		options.addOption("s", "system-to-apk-call-graph", false, "create system to apk callgraph (System + 1 level of Application calls)");		
 		options.addOption("l", "include-library", false, "analyze library in flow analysis");
-		//options.addOption("s", "context-sensitive", false, "use context-sensitive 0-1-CFA");
 		options.addOption("r", "model-reflection", false, "use built-in WALA reflection support");
 		options.addOption("e", "separate-entries", false, "analyze each entry point separately");
-		options.addOption("i", "IFDS-Explorer", false, "analyze each entry point separately");
+		options.addOption("i", "IFDS-Explorer", false, "bring up a gui to analyze domainelements for flow analysis");
 		options.addOption("m", "main-entrypoint", false, "look for main methods and add them as entrypoints");
-		options.addOption("s", "system-to-apk-call-graph", false, "create system to apk callgraph");		
+		options.addOption("a", "stdout-call-graph", false, "output full call graph to stdout");
 
 		options.addOption(OptionBuilder.withLongOpt( "android-lib" ).withDescription( "include ALIB in scope of analysis" ).hasArg().withArgName("ALIB").create() );
+		options.addOption(OptionBuilder.withLongOpt( "reflection" ).withDescription( "FULL, NO_FLOW_TO_CASTS, NO_METHOD_INVOKE, NO_FLOW_TO_CASTS_NO_METHOD_INVOKE, ONE_FLOW_TO_CASTS_NO_METHOD_INVOKE, NO_STRING_CONSTANTS, NONE (Default)").hasArg().withArgName("ALIB").create() );	    
 		
 	}
 		
@@ -113,7 +114,7 @@ public class CLI {
 	}
 	
 	public static String getOption(String s) {
-		return  line.getOptionValue("android-lib");
+		return  line.getOptionValue(s);
 	}
 	
 	private static void fetchClasspath(boolean reqArgs) {
