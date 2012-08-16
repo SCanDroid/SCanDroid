@@ -16,11 +16,8 @@ git clone https://github.com/SCanDroid/SCanDroid.git
 ```
 
 ####WALA
-Download WALA and patch source
-```
-cd SCanDroid/wala
-make
-```
+Download [WALA](http://wala.sourceforge.net/wiki/index.php/UserGuide:Accessing_WALA_Using_Git) and create jars
+
 Import WALA into Eclipse
 
 1. File => Import => Existing Projects into Workspace
