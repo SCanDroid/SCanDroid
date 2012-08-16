@@ -159,7 +159,7 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
 
         options.setEntrypoints(localEntries);
         
-        if(!CLI.hasOption("reflection"))
+        if(CLI.hasOption("reflection"))
         	options.setReflectionOptions(ReflectionOptions.valueOf(CLI.getOption("reflection")));
         else
         	options.setReflectionOptions(ReflectionOptions.NONE);
