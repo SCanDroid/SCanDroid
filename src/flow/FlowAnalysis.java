@@ -157,14 +157,12 @@ public class FlowAnalysis<E extends ISSABasicBlock> {
 
         try {
         	TabulationResult<BasicBlockInContext<E>,CGNode, DomainElement> flowResult = solver.solve();
-                /*
         	if (CLI.hasOption("IFDS-Explorer")) {
         		for (int i = 1; i < domain.getSize(); i++) {        			
                     MyLogger.log(DEBUG,"DomainElement #"+i+" = " + domain.getMappedObject(i));        			
         		}
         		GraphUtil.exploreIFDS(flowResult);
         	}
-                */
             return flowResult;
         } catch (CancelException e) {
             throw new CancelRuntimeException(e);

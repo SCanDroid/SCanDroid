@@ -182,7 +182,9 @@ public class Specs implements ISpecs {
 //		new CallRetSourceSpec(httpExecute, new int[] {}),
 		new CallRetSourceSpec(actGetIntent, new int[] {}),
 		
-//		new CallRetSourceSpec(new MethodNamePattern("LTest/Apps/GenericSource", "getIntSource"), new int[]{}),
+		new CallRetSourceSpec(new MethodNamePattern("LTest/Apps/GenericSource", "getIntSource"), new int[]{}),
+		new CallRetSourceSpec(new MethodNamePattern("LTest/Apps/GenericSource", "getStringSource"), new int[]{}),
+
 
 		
 	};
@@ -213,8 +215,8 @@ public class Specs implements ISpecs {
 
 		//new EntryRetSinkSpec(prvQuery),
 		
-//		new CallArgSinkSpec(new MethodNamePattern("LTest/Apps/GenericSink", "setSink"), new int[]{ 1 }),
-
+		new CallArgSinkSpec(new MethodNamePattern("LTest/Apps/GenericSink", "setSink"), new int[]{ 1 }),
+		
 	};
 
 	public SinkSpec[] getSinkSpecs() { return sinkSpecs; }

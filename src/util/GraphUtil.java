@@ -43,7 +43,7 @@ import java.util.Properties;
 import com.ibm.wala.dataflow.IFDS.TabulationResult;
 import com.ibm.wala.examples.drivers.PDFTypeHierarchy;
 import com.ibm.wala.examples.properties.WalaExamplesProperties;
-//import com.ibm.wala.ide.ui.IFDSExplorer;
+import com.ibm.wala.ide.ui.IFDSExplorer;
 import com.ibm.wala.ipa.callgraph.CGNode;
 import com.ibm.wala.ipa.cfg.BasicBlockInContext;
 import com.ibm.wala.properties.WalaProperties;
@@ -81,7 +81,6 @@ public class GraphUtil{
         make();
     }
 
-        /*
 	public static <E extends ISSABasicBlock> void exploreIFDS(TabulationResult<BasicBlockInContext<E>, CGNode, DomainElement> flowResult) {
 		Properties p = null;
 		try {
@@ -99,7 +98,6 @@ public class GraphUtil{
 		}
 
 	}
-        */
 
 	private static void make() {
 		Properties p = null;

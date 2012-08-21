@@ -38,22 +38,26 @@
 
 package com.ibm.wala.classLoader;
 
-import static com.ibm.wala.types.TypeName.string2TypeName;
 import static util.MyLogger.LogLevel.DEBUG;
 
+import java.io.IOException;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Iterator;
-import java.util.Map;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 
 import util.MyLogger;
 
 import com.ibm.wala.ipa.callgraph.impl.SetOfClasses;
 import com.ibm.wala.ipa.cha.IClassHierarchy;
-import com.ibm.wala.shrikeCT.InvalidClassFileException;
 import com.ibm.wala.types.ClassLoaderReference;
 import com.ibm.wala.types.TypeName;
-import com.ibm.wala.util.shrike.ShrikeClassReaderHandle;
+import com.ibm.wala.util.collections.HashCodeComparator;
+import com.ibm.wala.util.collections.HashSetFactory;
+import com.ibm.wala.util.collections.Iterator2Collection;
 import com.ibm.wala.util.warnings.Warning;
 import com.ibm.wala.util.warnings.Warnings;
 
@@ -65,32 +69,90 @@ public class WDexClassLoaderImpl extends ClassLoaderImpl {
     private SetOfClasses lExclusions;
     private IClassLoader lParent;
 
-    public WDexClassLoaderImpl(ClassLoaderReference loader,
-            ArrayClassLoader arrayClassLoader, IClassLoader parent,
+    
+    //Commented out until IBM fixes ClassLoaderFactoryImpl "protected IClassLoader makeNewClassLoader"
+    
+//    public WDexClassLoaderImpl(ClassLoaderReference loader,
+//            ArrayClassLoader arrayClassLoader, IClassLoader parent,
+//            SetOfClasses exclusions, IClassHierarchy cha) {
+//        super(loader, arrayClassLoader, parent, exclusions, cha);
+//        lParent = parent;
+//        lExclusions = exclusions;
+//        //DEBUG_LEVEL = 0;
+//    }
+    
+    public WDexClassLoaderImpl(ClassLoaderReference loader,IClassLoader parent,
             SetOfClasses exclusions, IClassHierarchy cha) {
-        super(loader, arrayClassLoader, parent, exclusions, cha);
+        super(loader, cha.getScope().getArrayClassLoader(), parent, exclusions, cha);
         lParent = parent;
         lExclusions = exclusions;
         //DEBUG_LEVEL = 0;
     }
     
-    /*
-     * (non-Javadoc)
-     *
-     * @see
-     * com.ibm.wala.classLoader.ClassLoaderImpl#loadAllClasses(java.util.Collection
-     * )
-     */
     @Override
-    protected void loadAllClasses(Collection<ModuleEntry> moduleEntries, Map<String, Object> fileContents) {
+    public void init(List<Module> modules) throws IOException {
+    	super.init(modules);
+        // module are loaded according to the given order (same as in Java VM)
+        Set<ModuleEntry> classModuleEntries = HashSetFactory.make();
+        
+        for (Iterator<Module> it = modules.iterator(); it.hasNext();) {
+            Module archive = it.next();
+            MyLogger.log(DEBUG,"add archive: : "+archive);
+            Set<ModuleEntry> classFiles = getDexFiles(archive);
+            
+            removeClassFiles(classFiles, classModuleEntries);
+            loadAllDexClasses(classFiles);
+            
+            for (Iterator<ModuleEntry> it2 = classFiles.iterator(); it2.hasNext();) {
+            	ModuleEntry file = it2.next();
+            	classModuleEntries.add(file);
+            }
+        }                       
+    }
+    
 
+    /**
+     * Remove from s any class file module entries which already are in t
+     */
+    private void removeClassFiles(Set<ModuleEntry> s, Set<ModuleEntry> t) {
+    	Set<String> old = HashSetFactory.make();
+    	for (Iterator<ModuleEntry> it = t.iterator(); it.hasNext();) {
+    		ModuleEntry m = it.next();
+    		old.add(m.getClassName());
+    	}
+    	HashSet<ModuleEntry> toRemove = HashSetFactory.make();
+    	for (Iterator<ModuleEntry> it = s.iterator(); it.hasNext();) {
+    		ModuleEntry m = it.next();
+    		if (old.contains(m.getClassName())) {
+    			toRemove.add(m);
+    		}
+    	}
+    	s.removeAll(toRemove);
+    }
+    
+    private Set<ModuleEntry> getDexFiles(Module M) throws IOException {
+    	TreeSet<ModuleEntry> sortedEntries = new TreeSet<ModuleEntry>(HashCodeComparator.instance());
+    	sortedEntries.addAll(Iterator2Collection.toSet(M.getEntries()));
+    	HashSet<ModuleEntry> result = HashSetFactory.make();
+    	for (Iterator<ModuleEntry> it = sortedEntries.iterator(); it.hasNext();) {
+    		ModuleEntry entry = (ModuleEntry) it.next();
+    		if (entry instanceof DexModuleEntry) {    		
+    			result.add(entry);
+    		}
+    	}
+    	return result;
+    }
+    
+    
+    private void loadAllDexClasses(Collection<ModuleEntry> moduleEntries) {
+    	
     	for (Iterator<ModuleEntry> it = moduleEntries.iterator(); it.hasNext();) {
     		ModuleEntry entry = it.next();
 
     		// Dalvik class
     		if (entry instanceof DexModuleEntry) {
     			DexModuleEntry dexEntry = ((DexModuleEntry) entry);
-    			TypeName tName = string2TypeName(dexEntry.getClassName());
+    			TypeName tName = TypeName.string2TypeName(dexEntry.getClassName());
 
     			//if (DEBUG_LEVEL > 0) {
     			//  System.err.println("Consider dex class: " + tName);
@@ -120,64 +182,10 @@ public class WDexClassLoaderImpl extends ClassLoaderImpl {
     					Warnings.add(InvalidDexFile.create(dexEntry.getClassName()));
     				}
     			}
-
-
-
-
-
     		}
-
-    		// Java Class
-    		else if (entry instanceof JarFileEntry) {
-    			String className = entry.getClassName().replace('.', '/');
-    			//if (DEBUG_LEVEL > 0) {
-    			//  System.err.println("Consider " + className);
-    			//}
-
-    			if (lExclusions != null && lExclusions.contains(className)) {
-    				//if (DEBUG_LEVEL > 0) {
-    				//  System.err.println("Excluding " + className);
-    				//}
-    				continue;
-    			}
-
-    			ShrikeClassReaderHandle reader = new ShrikeClassReaderHandle(
-    					entry);
-
-    			className = "L" + className;
-    			//if (DEBUG_LEVEL > 0) {
-    			//  System.err.println("Load class " + className);
-    			//}
-    			try {
-    				TypeName T = TypeName.string2TypeName(className);
-    				if (loadedClasses.get(T) != null) {
-    					Warnings.add(MultipleDexImplementationsWarning
-    							.create(className));
-    				} else if (lParent != null && lParent.lookupClass(T) != null) {
-    					Warnings.add(MultipleDexImplementationsWarning
-    							.create(className));
-    				} else {
-    					ShrikeClass klass = new ShrikeClass(reader, this, cha);
-    					if (klass.getReference().getName().equals(T)) {
-    						loadedClasses.put(T, klass); // new ShrikeClass(reader, this, cha));
-    						//if (DEBUG_LEVEL > 1) {
-    						//  System.err.println("put " + T + " ");
-    						//}
-    					} else {
-    						Warnings.add(InvalidDexFile.create(className));
-    					}
-    				}
-    			} catch (InvalidClassFileException e) {
-    				//if (DEBUG_LEVEL > 0) {
-    				//  System.err.println("Ignoring class " + className
-    				//          + " due to InvalidClassFileException");
-    				//}
-    				Warnings.add(InvalidDexFile.create(className));
-    			}
-    		} // continue if jar
     	}
-
     }
+
 
     /**
      * @return the IClassHierarchy of this classLoader.

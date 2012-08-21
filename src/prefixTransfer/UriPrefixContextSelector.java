@@ -40,22 +40,32 @@ package prefixTransfer;
 
 import com.ibm.wala.classLoader.CallSiteReference;
 import com.ibm.wala.classLoader.IMethod;
+import com.ibm.wala.ipa.callgraph.AnalysisOptions;
 import com.ibm.wala.ipa.callgraph.CGNode;
 import com.ibm.wala.ipa.callgraph.Context;
 import com.ibm.wala.ipa.callgraph.ContextSelector;
+import com.ibm.wala.ipa.callgraph.impl.DefaultContextSelector;
 import com.ibm.wala.ipa.callgraph.impl.Everywhere;
 import com.ibm.wala.ipa.callgraph.propagation.InstanceKey;
 import com.ibm.wala.ipa.callgraph.propagation.NormalAllocationInNode;
 import com.ibm.wala.ipa.callgraph.propagation.ReceiverInstanceContext;
 import com.ibm.wala.ipa.callgraph.propagation.cfa.CallerSiteContext;
 import com.ibm.wala.ipa.callgraph.propagation.cfa.CallerSiteContextPair;
+import com.ibm.wala.ipa.cha.IClassHierarchy;
 import com.ibm.wala.types.ClassLoaderReference;
 import com.ibm.wala.util.intset.EmptyIntSet;
 import com.ibm.wala.util.intset.IntSet;
 
-public class UriPrefixContextSelector implements ContextSelector {
+public class UriPrefixContextSelector extends DefaultContextSelector {
 
-    /* TODO: fix receivers[0] references. */
+	//private final ContextSelector delegate;
+	
+    public UriPrefixContextSelector(AnalysisOptions options, IClassHierarchy cha) {
+		super(options, cha);		
+	}
+
+	/* TODO: fix receivers[0] references. */
+    @Override
     public Context getCalleeTarget(CGNode caller, CallSiteReference site,
             IMethod callee, InstanceKey[] receivers) {
         if(callee.getSignature().equals("java.lang.StringBuilder.toString()Ljava/lang/String;") ||
@@ -84,7 +94,7 @@ public class UriPrefixContextSelector implements ContextSelector {
 //                	return new CallerSiteContextPair(caller,site,new ReceiverInstanceContext(receivers[0]));
                 if (callee.getSignature().equals("android.net.Uri$Builder.build()Landroid/net/Uri;"))
                 	return new CallerSiteContextPair(caller,site,new ReceiverInstanceContext(receivers[0]));
-                	
+                    //return new CallerSiteContext(caller,site);                	
             }
             else if(callee.getSignature().equals("java.lang.String.valueOf(Ljava/lang/Object;)Ljava/lang/String;") ||
                     callee.getSignature().equals("java.lang.String.toString()Ljava/lang/String;") ||
@@ -103,11 +113,11 @@ public class UriPrefixContextSelector implements ContextSelector {
         {
             //System.out.println("Call to "+callee+" from caller "+caller+" in context "+caller.getContext());
         }
-        return Everywhere.EVERYWHERE;
+        return super.getCalleeTarget(caller, site, callee, receivers);
     }
 
+    @Override
     public IntSet getRelevantParameters(CGNode node, CallSiteReference call) {
-        // TODO: is this the right way to do it?
-        return EmptyIntSet.instance;
+    	return super.getRelevantParameters(node,call);
     }
 }

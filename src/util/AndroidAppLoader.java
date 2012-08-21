@@ -51,8 +51,11 @@ import java.util.jar.JarFile;
 
 import prefixTransfer.UriPrefixContextSelector;
 
+import com.ibm.wala.analysis.reflection.ReflectionContextInterpreter;
 import com.ibm.wala.classLoader.DexIContextInterpreter;
+import com.ibm.wala.classLoader.DexIRFactory;
 import com.ibm.wala.classLoader.IClass;
+import com.ibm.wala.classLoader.IMethod;
 import com.ibm.wala.dataflow.IFDS.ICFGSupergraph;
 import com.ibm.wala.dataflow.IFDS.ISupergraph;
 import com.ibm.wala.dex.util.config.DexAnalysisScopeReader;
@@ -65,18 +68,25 @@ import com.ibm.wala.ipa.callgraph.CallGraph;
 import com.ibm.wala.ipa.callgraph.Entrypoint;
 import com.ibm.wala.ipa.callgraph.impl.PartialCallGraph;
 import com.ibm.wala.ipa.callgraph.impl.Util;
+import com.ibm.wala.ipa.callgraph.propagation.cfa.DefaultSSAInterpreter;
+import com.ibm.wala.ipa.callgraph.propagation.cfa.DelegatingSSAContextInterpreter;
+import com.ibm.wala.ipa.callgraph.propagation.cfa.DexSSAPropagationCallGraphBuilder;
 import com.ibm.wala.ipa.callgraph.propagation.PointerAnalysis;
 import com.ibm.wala.ipa.callgraph.propagation.SSAContextInterpreter;
 import com.ibm.wala.ipa.callgraph.propagation.SSAPropagationCallGraphBuilder;
 import com.ibm.wala.ipa.cfg.BasicBlockInContext;
 import com.ibm.wala.ipa.cha.ClassHierarchy;
 import com.ibm.wala.ipa.cha.ClassHierarchyException;
+import com.ibm.wala.ssa.IR;
+import com.ibm.wala.ssa.IRFactory;
 import com.ibm.wala.ssa.ISSABasicBlock;
+import com.ibm.wala.ssa.SSAInstruction;
 import com.ibm.wala.ssa.analysis.IExplodedBasicBlock;
 import com.ibm.wala.types.ClassLoaderReference;
 import com.ibm.wala.util.CancelException;
 import com.ibm.wala.util.Predicate;
 import com.ibm.wala.util.collections.Filter;
+import com.ibm.wala.util.config.AnalysisScopeReader;
 import com.ibm.wala.util.graph.Graph;
 import com.ibm.wala.util.graph.GraphSlicer;
 import com.ibm.wala.util.io.FileProvider;
@@ -111,13 +121,18 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
               CancelException, ClassHierarchyException
     {
 
-        scope = DexAnalysisScopeReader.makeAndroidBinaryAnalysisScope(classpath,
-                                                                      new FileProvider().getFile("conf/Java60RegressionExclusions.txt"));
+    	//scope = com.ibm.wala.util.config.AnalysisScopeReader.makeJavaBinaryAnalysisScope(classpath, new FileProvider().getFile("conf/Java60RegressionExclusions.txt"));
+    	
+        scope = DexAnalysisScopeReader.makeAndroidBinaryAnalysisScope(classpath, new FileProvider().getFile("conf/Java60RegressionExclusions.txt"));
 
-        scope.setLoaderImpl(ClassLoaderReference.Application,
-                            "com.ibm.wala.classLoader.WDexClassLoaderImpl");
-        scope.addToScope(ClassLoaderReference.Primordial,
-                new JarFile(CLI.getOption("android-lib")));
+        scope.setLoaderImpl(ClassLoaderReference.Application, "com.ibm.wala.classLoader.WDexClassLoaderImpl");
+        scope.addToScope(ClassLoaderReference.Primordial, new JarFile(CLI.getOption("android-lib")));
+        
+//		AnalysisScope scope = AnalysisScopeReader.makeJavaBinaryAnalysisScope(
+//				"/Users/ssuh/Documents/projects/SCanDroid/SimpleAnalysisPluginDexLib/scandroid/SimpleAndroidApp.jar",
+//				new FileProvider().getFile("/Users/ssuh/Documents/projects/SCanDroid/SimpleAnalysisPluginDexLib/scandroid/conf/Java60RegressionExclusions.txt"));
+//		scope.addToScope(ClassLoaderReference.Primordial, new JarFile("/Users/ssuh/Documents/projects/SCanDroid/SimpleAnalysisPluginDexLib/scandroid/data/android-2.3.7_r1.jar"));
+
         cha = ClassHierarchy.make(scope);
 
         //log ClassHierarchy warnings
@@ -143,22 +158,26 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
         }
 
         options.setEntrypoints(localEntries);
-        if(!CLI.hasOption("model-reflection")) {
-            options.setReflectionOptions(ReflectionOptions.NONE);
-        }
+        
+        if(CLI.hasOption("reflection"))
+        	options.setReflectionOptions(ReflectionOptions.valueOf(CLI.getOption("reflection")));
+        else
+        	options.setReflectionOptions(ReflectionOptions.NONE);
+        	
+        
+        AnalysisCache cache = new AnalysisCache((IRFactory<IMethod>)new DexIRFactory());
+        //AnalysisCache cache = new AnalysisCache();
+        
+        //SSAContextInterpreter ci = new DexIContextInterpreter(options.getSSAOptions(), cache);
+        //ci = new DelegatingSSAContextInterpreter(ReflectionContextInterpreter.createReflectionContextInterpreter(cha, options, cache), ci);
+        
+        SSAPropagationCallGraphBuilder zeroxcgb, cgb;
 
-        SSAContextInterpreter ci = new DexIContextInterpreter(options.getSSAOptions());
-        AnalysisCache cache = new AnalysisCache();
-        SSAPropagationCallGraphBuilder cgb;
-//        if(CLI.hasOption("context-sensitive")) {
-//            cgb = Util.makeVanillaZeroOneCFABuilder(options, cache, cha, scope,
-//                    new UriPrefixContextSelector(), ci);
-//        } else {
-//            cgb = Util.makeZeroCFABuilder(options, cache, cha, scope,
-//                    new UriPrefixContextSelector(), ci);
-//        }
-        cgb = Util.makeVanillaZeroOneCFABuilder(options, cache, cha, scope,
-                new UriPrefixContextSelector(), ci);
+//        zeroxcgb = Util.makeZeroCFABuilder(options, cache, cha, scope, new UriPrefixContextSelector(options, cha), null);
+        zeroxcgb = Util.makeVanillaZeroOneCFABuilder(options, cache, cha, scope, new UriPrefixContextSelector(options, cha), null);
+        //cgb = new DexSSAPropagationCallGraphBuilder(cha, options, cache, zeroxcgb.getContextSelector(), (SSAContextInterpreter)zeroxcgb.getContextInterpreter(), zeroxcgb.getInstanceKeys());
+        cgb = zeroxcgb;
+        
 
         //CallGraphBuilder construction warnings
         for(Iterator<Warning> wi = Warnings.iterator(); wi.hasNext();)
@@ -186,14 +205,13 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
         pa = cgb.getPointerAnalysis();
 
         // TODO: prune out a lot more stuff
-        partialGraph = GraphSlicer.prune(cg,
-                new Filter<CGNode>() {
-                    public boolean accepts(CGNode o) {
-                        return o.getMethod().getDeclaringClass()
-                                .getClassLoader().getReference().equals(
-                                        ClassLoaderReference.Application);
-                    }
-                });
+        partialGraph = GraphSlicer.prune(cg, new Predicate<CGNode> (){
+			@Override
+			//CallGraph composed of APK nodes
+			public boolean test(CGNode node) {
+				return fromLoader(node, ClassLoaderReference.Application);
+			}        
+        });
 
         Collection<CGNode> nodes = new HashSet<CGNode>();
 
@@ -209,32 +227,31 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
         else
         	graph = (ISupergraph) ICFGSupergraph.make(pcg, cache);
 
-        oneLevelGraph = GraphSlicer.prune(cg,
-                new Filter<CGNode>() {
-                    public boolean accepts(CGNode o) {
-                        if (o.getMethod().getDeclaringClass()
-                                .getClassLoader().getReference().equals(
-                                        ClassLoaderReference.Application))
-                                        return true;
-                        else {
-                            Iterator<CGNode> n = cg.getPredNodes(o);
-                            while(n.hasNext()) {
-                                if (n.next().getMethod().getDeclaringClass()
-                                        .getClassLoader().getReference().equals(
-                                                ClassLoaderReference.Application))
-                                    return true;
-                            }
-                            n = cg.getSuccNodes(o);
-                            while(n.hasNext()) {
-                                if (n.next().getMethod().getDeclaringClass()
-                                        .getClassLoader().getReference().equals(
-                                                ClassLoaderReference.Application))
-                                    return true;
-                            }
-                            return false;
-                        }
+        oneLevelGraph = GraphSlicer.prune(cg, new Predicate<CGNode>() {
+            @Override
+            public boolean test(CGNode node) {
+                //Node in APK
+                if (fromLoader(node, ClassLoaderReference.Application)) {
+                	return true;
+                } else {
+                    Iterator<CGNode> n = cg.getPredNodes(node);
+                    while(n.hasNext()) {
+                    	//Primordial node has a successor in APK
+                        if (fromLoader(n.next(), ClassLoaderReference.Application))
+                            return true;
                     }
-                });
+                    n = cg.getSuccNodes(node);
+                    while(n.hasNext()) {
+                    	//Primordial node has a predecessor in APK
+                        if (fromLoader(n.next(), ClassLoaderReference.Application))
+                            return true;
+                    }
+                    //Primordial node with no direct successors or predecessors to APK code
+                    return false;
+                }
+            }
+        }); 
+
 
         systemToApkGraph = GraphSlicer.prune(cg, new Predicate<CGNode>() {
             @Override
@@ -249,11 +266,11 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
                             return true;
                         }
                     }
-                    // primordial method, with no link to APK code:
+                    // Primordial method, with no link to APK code:
                     return false;
                 } else if (fromLoader(node, ClassLoaderReference.Application)) {
                     // see if this is an APK method that was 
-                    // invoked by a primordial method:
+                    // invoked by a Primordial method:
                     Iterator<CGNode> preds = cg.getPredNodes(node);
                     while(preds.hasNext()) {
                         CGNode n = preds.next();
@@ -262,21 +279,12 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
                             return true;
                         }
                     }
-                    // APK code, no link to primordial:
+                    // APK code, no link to Primordial:
                     return false;
                 }
                 
                 // who knows, not interesting:
                 return false;
-            }
-
-            private boolean fromLoader(CGNode node, ClassLoaderReference clr) {
-                IClass declClass = node.getMethod().getDeclaringClass();
-
-                ClassLoaderReference nodeClRef =
-                        declClass.getClassLoader().getReference();
-
-                return nodeClRef.equals(clr);
             }
         });
 
@@ -289,7 +297,25 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
         if (CLI.hasOption("s"))
             GraphUtil.makeSystemToAPKCG(this);
         
+        if (CLI.hasOption("a")) {
+        	for (Iterator<CGNode> nodeI = cg.iterator(); nodeI.hasNext();) {
+        		CGNode node = nodeI.next();        	        	
+
+        		System.out.println("CGNode: " + node);
+        		for (Iterator<CGNode> succI = cg.getSuccNodes(node); succI.hasNext();) {
+        			System.out.println("\tSuccCGNode: " + succI.next().getMethod().getSignature());
+        		}
+        	}
+        }
     }
     
-    
+    static boolean fromLoader(CGNode node, ClassLoaderReference clr) {
+        IClass declClass = node.getMethod().getDeclaringClass();
+
+        ClassLoaderReference nodeClRef =
+                declClass.getClassLoader().getReference();
+
+        return nodeClRef.equals(clr);
+    }
+       
 }

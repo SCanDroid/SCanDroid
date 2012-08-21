@@ -58,7 +58,9 @@ import org.w3c.dom.NodeList;
 
 import com.ibm.wala.classLoader.IMethod;
 import com.ibm.wala.ipa.callgraph.Entrypoint;
+import com.ibm.wala.ipa.callgraph.impl.ArgumentTypeEntrypoint;
 import com.ibm.wala.ipa.callgraph.impl.DefaultEntrypoint;
+import com.ibm.wala.ipa.callgraph.impl.SubtypesEntrypoint;
 import com.ibm.wala.ipa.callgraph.impl.Util;
 import com.ibm.wala.ipa.cha.ClassHierarchy;
 import com.ibm.wala.types.ClassLoaderReference;
@@ -98,8 +100,10 @@ public class EntryPoints {
 //      else
 //          defaultEntryPoints(cha, loader);
 
-        //defaultEntryPoints(cha, loader);
-        activityModelEntry(cha,loader);
+        defaultEntryPoints(cha, loader);
+//        activityModelEntry(cha,loader);
+        
+//        addTestEntry(cha,loader);
         
         if (CLI.hasOption("main-entrypoint")) {
         	Iterable<Entrypoint> mainEntrypoints = Util.makeMainEntrypoints(cha.getScope(), cha);
@@ -166,7 +170,7 @@ public class EntryPoints {
             // onDestroy?
 
             // onLocationChanged
-            entryPointMRs.add(StringStuff.makeMethodReference("android.location.LocationListener.onLocationChanged(Landroid/location/Location;)V"));
+//            entryPointMRs.add(StringStuff.makeMethodReference("android.location.LocationListener.onLocationChanged(Landroid/location/Location;)V"));
 
 
             for(MethodReference mr:entryPointMRs)
@@ -191,13 +195,13 @@ public class EntryPoints {
         String[] methodReferences = {
             "android.app.Activity.ActivityModel()V",
             // find all onActivityResult functions and add them as entry points
-            "android.app.Activity.onActivityResult(IILandroid/content/Intent;)V",
-
-            // SERVICE ENTRY POINTS
-            "android.app.Service.onCreate()V",
-            "android.app.Service.onStart(Landroid/content/Intent;I)V",
-            "android.app.Service.onBind(Landroid/content/Intent;)Landroid/os/IBinder;",
-            "android.app.Service.onTransact(ILandroid/os/Parcel;Landroid/os/Parcel;I)B"
+//            "android.app.Activity.onActivityResult(IILandroid/content/Intent;)V",
+//
+//            // SERVICE ENTRY POINTS
+//            "android.app.Service.onCreate()V",
+//            "android.app.Service.onStart(Landroid/content/Intent;I)V",
+//            "android.app.Service.onBind(Landroid/content/Intent;)Landroid/os/IBinder;",
+//            "android.app.Service.onTransact(ILandroid/os/Parcel;Landroid/os/Parcel;I)B"
          };
 
         for (int i = 0; i < methodReferences.length; i++) {
@@ -217,8 +221,17 @@ public class EntryPoints {
         }
 
         String[] systemEntyPoints = { 
-           "android.app.ActivityThread.main([Ljava/lang/String;)V"
-           , "com.android.server.ServerThread.run()V"
+//           "android.app.ActivityThread.main([Ljava/lang/String;)V"
+//           , "com.android.server.ServerThread.run()V"
+        	//"android.location.LocationManager$ListenerTransport._handleMessage(Landroid/os/Message;)V"
+//        		"android.location.LocationManager$ListenerTransport$1.handleMessage(Landroid/os/Message;)V"
+//        		"android.os.Handler.handleMessage(Landroid/os/Message;)V",
+//        		"android.os.Handler.dispatchMessage(Landroid/os/Message;)V",
+//        		"android.view.View.dispatchTouchEvent(Landroid/view/MotionEvent;)Z",
+//        		"android.view.View.onTouchEvent(Landroid/view/MotionEvent;)Z",
+//        		"android.view.View.setOnClickListener(Landroid/view/View$OnClickListener;)V",
+//        		"com.android.server.ServerThread.run()V",
+        		//"android.app.ActivityThread.main([Ljava/lang/String;)V"
         };
 
         for (int i = 0; i < systemEntyPoints.length; i++) {
@@ -231,6 +244,33 @@ public class EntryPoints {
             }
         }
     }
+    
+    
+    public void addTestEntry(ClassHierarchy cha, AndroidAppLoader loader) {
+    	ArrayList<MethodReference> entryPointMRs =
+    			new ArrayList<MethodReference>();
+
+    	String[] methodReferences = {
+//    			"Test.Apps.Outer$PrivateInnerClass.printNum()V",
+    			//"Test.Apps.Outer$PublicInnerClass.printNum()V"
+    			//"Test.Apps.Outer.<init>()V"
+    			//"Test.Apps.Outer.getNum()I"
+    			//"Test.Apps.FixpointSolver.someMethod(LTest/Apps/GenericSink;LTest/Apps/GenericSource;)V"
+    			//"Test.Apps.Outer$PrivateInnerClass.testParameters(LTest/Apps/GenericSink;LTest/Apps/GenericSource;)V"
+    			"android.view.View.setOnClickListener(Landroid/view/View$OnClickListener;)V",
+    	};
+
+    	for (int i = 0; i < methodReferences.length; i++) {
+    		MethodReference mr =
+    				StringStuff.makeMethodReference(methodReferences[i]);
+
+    		for (IMethod im : cha.getPossibleTargets(mr)) {
+    			log(DEBUG, "Adding entry point: " + im.getSignature());
+    			entries.add(new DefaultEntrypoint(im, cha));
+    		}
+    	}
+    }
+    
 
     public void unpackApk(String classpath){
         StringTokenizer st = new StringTokenizer(classpath, File.pathSeparator);
