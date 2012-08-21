@@ -100,8 +100,8 @@ public class EntryPoints {
 //      else
 //          defaultEntryPoints(cha, loader);
 
-        //defaultEntryPoints(cha, loader);
-        activityModelEntry(cha,loader);
+        defaultEntryPoints(cha, loader);
+//        activityModelEntry(cha,loader);
         
 //        addTestEntry(cha,loader);
         
@@ -230,7 +230,7 @@ public class EntryPoints {
 //        		"android.view.View.dispatchTouchEvent(Landroid/view/MotionEvent;)Z",
 //        		"android.view.View.onTouchEvent(Landroid/view/MotionEvent;)Z",
 //        		"android.view.View.setOnClickListener(Landroid/view/View$OnClickListener;)V",
-        		"com.android.server.ServerThread.run()V",
+//        		"com.android.server.ServerThread.run()V",
         		//"android.app.ActivityThread.main([Ljava/lang/String;)V"
         };
 

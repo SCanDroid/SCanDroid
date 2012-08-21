@@ -51,6 +51,7 @@ import com.ibm.wala.ipa.callgraph.CGNode;
 import com.ibm.wala.ipa.callgraph.Entrypoint;
 import com.ibm.wala.ipa.callgraph.propagation.InstanceKey;
 import com.ibm.wala.ipa.cfg.BasicBlockInContext;
+import com.ibm.wala.ssa.SSAInstruction;
 import com.ibm.wala.ssa.analysis.IExplodedBasicBlock;
 import com.ibm.wala.util.CancelException;
 
@@ -96,7 +97,7 @@ public class SeparateEntryAnalysis {
 
             System.out.println("Supergraph size = "
                     + loader.graph.getNumberOfNodes());
-/*
+
              System.out.println("Running prefix analysis.");
              Map<InstanceKey, String> prefixes =
                  UriPrefixAnalysis.runAnalysisHelper(loader.cg, loader.pa);
@@ -144,7 +145,36 @@ public class SeparateEntryAnalysis {
                     System.out.println("    --> " + t);
                 }
             }            
-            */
+            
+            System.out.println("DOMAIN ELEMENTS");
+            for (int i = 1; i < domain.getSize(); i++) {
+            	System.out.println("#"+i+" - "+domain.getMappedObject(i));
+            }
+            System.out.println("------");
+            for (CGNode n:loader.cg.getEntrypointNodes()) {
+            	for (int i = 0; i < 6; i++)
+            	{
+            		try {
+            		System.out.println(i+": ");
+            		String[] s = n.getIR().getLocalNames(n.getIR().getInstructions().length-1, i);
+            		
+            		for (String ss:s)
+            			System.out.println("\t"+ss);
+            		}
+            		catch (Exception e) {
+            			System.out.println("exception at " + i);
+            		}
+            	}
+            }
+            
+            System.out.println("------");
+            for (CGNode n:loader.cg.getEntrypointNodes()) {
+            	for (SSAInstruction ssa: n.getIR().getInstructions()) {
+//            		System.out.println("Definition " + ssa.getDef() + ":"+ssa);
+            		System.out.println("Definition "+ssa);
+            	}
+            }
+            
         } catch (com.ibm.wala.util.debug.UnimplementedError e) {
             e.printStackTrace();
         } catch (CancelException e){

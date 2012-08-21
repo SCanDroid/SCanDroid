@@ -81,6 +81,7 @@ public class WDexClassLoaderImpl extends ClassLoaderImpl {
     
     @Override
     public void init(List<Module> modules) throws IOException {
+    	System.out.println("moo");
     	super.init(modules);
         // module are loaded according to the given order (same as in Java VM)
         Set<ModuleEntry> classModuleEntries = HashSetFactory.make();

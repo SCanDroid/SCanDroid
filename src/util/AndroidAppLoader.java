@@ -173,8 +173,8 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
         
         SSAPropagationCallGraphBuilder zeroxcgb, cgb;
 
-        zeroxcgb = Util.makeVanillaZeroOneCFABuilder(options, cache, cha, scope,
-                new UriPrefixContextSelector(options, cha), null);
+//        zeroxcgb = Util.makeZeroCFABuilder(options, cache, cha, scope, new UriPrefixContextSelector(options, cha), null);
+        zeroxcgb = Util.makeVanillaZeroOneCFABuilder(options, cache, cha, scope, new UriPrefixContextSelector(options, cha), null);
         //cgb = new DexSSAPropagationCallGraphBuilder(cha, options, cache, zeroxcgb.getContextSelector(), (SSAContextInterpreter)zeroxcgb.getContextInterpreter(), zeroxcgb.getInstanceKeys());
         cgb = zeroxcgb;
         

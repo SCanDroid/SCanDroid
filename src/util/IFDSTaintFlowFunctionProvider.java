@@ -131,6 +131,7 @@ implements IFlowFunctionMap<BasicBlockInContext<E>> {
 			while (instructions.hasNext()) {
 				SSAInstruction instruction = instructions.next();
 				UseDefSetPair p = new UseDefSetPair();
+				boolean thisToResult = false;
 				if(instruction instanceof SSAInvokeInstruction)
 				{
 					SSAInvokeInstruction invInst = (SSAInvokeInstruction)instruction;
@@ -147,7 +148,13 @@ implements IFlowFunctionMap<BasicBlockInContext<E>> {
 							p.defs.addAll(CodeElement.valueElements(pa, bb.getNode(), invInst.getDef(i)));
 						}
 					}
+					thisToResult = true;
 				}
+				if (thisToResult) {
+					useToDefList.add(p);
+					p = new UseDefSetPair();
+				}
+					
 
 				if (inFlow(instruction)) {
 					if (instruction instanceof SSAGetInstruction) {
@@ -351,21 +358,40 @@ implements IFlowFunctionMap<BasicBlockInContext<E>> {
 		public ReturnDefUse(BasicBlockInContext<E> dest,
 				BasicBlockInContext<E> call) {
 			super(dest);
+			
 			// TODO: look into exception handling through getDef(1)
-			if(call.getLastInstruction().getNumberOfDefs() == 1)
-			{
-				//System.out.println("\treturn defines something: "+call.getLastInstruction());
-				callSet = new LocalElement(call.getLastInstruction().getDef(0));
-				if(call.getLastInstruction() instanceof SSAInvokeInstruction)
-				{
-					SSAInvokeInstruction invInst = (SSAInvokeInstruction) call.getLastInstruction();
-					if(!invInst.isSpecial() && !invInst.isStatic()) {
-						receivers.addAll(CodeElement.valueElements(pa, call.getNode(), invInst.getReceiver()));
+			if(call.getLastInstruction() instanceof SSAInvokeInstruction) {
+				SSAInvokeInstruction invInst = (SSAInvokeInstruction) call.getLastInstruction();
+				if(!invInst.isSpecial() && !invInst.isStatic()) {
+//					for (int i = 0; i < invInst.getNumberOfReturnValues(); i++) {
+//						
+//					}
+					if (invInst.hasDef()) {
+						callSet = new LocalElement(invInst.getReturnValue(0));
+
+						//used to be invInst.getReceiver(), but I believe that was incorrect.
+						receivers.addAll(CodeElement.valueElements(pa, call.getNode(), invInst.getReturnValue(0)));
 					}
-				}
+				}				
 			}
 			else
 				callSet = null;
+			
+//			// TODO: look into exception handling through getDef(1)
+//			if(call.getLastInstruction().getNumberOfDefs() == 1)
+//			{
+//				//System.out.println("\treturn defines something: "+call.getLastInstruction());
+//				callSet = new LocalElement(call.getLastInstruction().getDef(0));
+//				if(call.getLastInstruction() instanceof SSAInvokeInstruction)
+//				{
+//					SSAInvokeInstruction invInst = (SSAInvokeInstruction) call.getLastInstruction();
+//					if(!invInst.isSpecial() && !invInst.isStatic()) {
+//						receivers.addAll(CodeElement.valueElements(pa, call.getNode(), invInst.getReceiver()));
+//					}
+//				}
+//			}
+//			else
+//				callSet = null;
 		}
 
 		@Override
@@ -374,8 +400,10 @@ implements IFlowFunctionMap<BasicBlockInContext<E>> {
 			if(d1 != 0 && domain.getMappedObject(d1).codeElement instanceof ReturnElement)
 			{
 				BitVectorIntSet set = new BitVectorIntSet();
-				if(callSet != null)
+				if(callSet != null) {
+					System.out.println("callset: " + callSet);
 					set.add(domain.getMappedIndex(new DomainElement(callSet,domain.getMappedObject(d1).taintSource)));
+				}
 				return set;
 			}
 			else if(d1 != 0 && domain.getMappedObject(d1).codeElement instanceof LocalElement)
