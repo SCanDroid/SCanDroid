@@ -69,19 +69,28 @@ public class WDexClassLoaderImpl extends ClassLoaderImpl {
     private SetOfClasses lExclusions;
     private IClassLoader lParent;
 
-    public WDexClassLoaderImpl(ClassLoaderReference loader,
-            ArrayClassLoader arrayClassLoader, IClassLoader parent,
+    
+    //Commented out until IBM fixes ClassLoaderFactoryImpl "protected IClassLoader makeNewClassLoader"
+    
+//    public WDexClassLoaderImpl(ClassLoaderReference loader,
+//            ArrayClassLoader arrayClassLoader, IClassLoader parent,
+//            SetOfClasses exclusions, IClassHierarchy cha) {
+//        super(loader, arrayClassLoader, parent, exclusions, cha);
+//        lParent = parent;
+//        lExclusions = exclusions;
+//        //DEBUG_LEVEL = 0;
+//    }
+    
+    public WDexClassLoaderImpl(ClassLoaderReference loader,IClassLoader parent,
             SetOfClasses exclusions, IClassHierarchy cha) {
-        super(loader, arrayClassLoader, parent, exclusions, cha);
+        super(loader, cha.getScope().getArrayClassLoader(), parent, exclusions, cha);
         lParent = parent;
         lExclusions = exclusions;
         //DEBUG_LEVEL = 0;
     }
     
-    
     @Override
     public void init(List<Module> modules) throws IOException {
-    	System.out.println("moo");
     	super.init(modules);
         // module are loaded according to the given order (same as in Java VM)
         Set<ModuleEntry> classModuleEntries = HashSetFactory.make();
