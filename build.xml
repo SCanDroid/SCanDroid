@@ -7,6 +7,9 @@
     <property name="debuglevel" value="source,lines,vars"/>
     <property name="target" value="1.5"/>
     <property name="source" value="1.5"/>
+	
+	<property name="src-dir" value="src"/>
+	<property name="test-src-dir" value="test"/>
 
     <path id="SimpleAnalysisPlugin.classpath">
         <pathelement location="bin"/>
@@ -29,7 +32,7 @@
     <target name="init" depends="init-mac,init-linux,init-windows">
         <mkdir dir="bin"/>
         <copy includeemptydirs="false" todir="bin">
-            <fileset dir="src">
+            <fileset dir="${src-dir}">
                 <exclude name="**/*.launch"/>
                 <exclude name="**/*.svn"/>
                 <exclude name="**/*.java"/>
@@ -66,9 +69,9 @@
     <!-- Clean the project -->
     <target name="clean">
         <delete dir="bin"/>
-	<delete file="sap.jar"/>
-	<delete file="sap_project.zip"/>
-	<delete file="sap_project-src.zip"/>
+        <delete file="sap.jar"/>
+        <delete file="sap_project.zip"/>
+        <delete file="sap_project-src.zip"/>
     </target>
     <target depends="clean" name="cleanall"/>
 
@@ -78,7 +81,7 @@
     <target depends="init" name="build-project">
         <echo message="${ant.project.name}: ${ant.file}"/>
         <javac debug="true" debuglevel="${debuglevel}" destdir="bin" source="${source}" target="${target}" includeantruntime="false">
-            <src path="src"/>
+            <src path="${src-dir}"/>
             <classpath refid="SimpleAnalysisPlugin.classpath"/>
         </javac>
     </target>
@@ -99,27 +102,27 @@
         </copy>
     </target>
 
-	<!-- practice -->
-	<target name="practice.dex.CG" depends="run-init,build">
-		<java classname="practice.dex.PDFCallGraphTest" failonerror="true" fork="yes">
-			<arg line="-apk ${HOME}/apks/Hello.apk"/>
-			<classpath refid="SimpleAnalysisPlugin.classpath"/>
-		</java>
-	</target>
-	
-	<target name="practice.dex.TI" depends="run-init,build">
-		<java classname="practice.dex.TypeInferenceTest" failonerror="true" fork="yes">
-			<arg line="-apk ${HOME}/apks/Hello.apk" />
-			<classpath refid="SimpleAnalysisPlugin.classpath"/>
-		</java>
-	</target>
+    <!-- practice -->
+    <target name="practice.dex.CG" depends="run-init,build">
+        <java classname="practice.dex.PDFCallGraphTest" failonerror="true" fork="yes">
+            <arg line="-apk ${HOME}/apks/Hello.apk"/>
+            <classpath refid="SimpleAnalysisPlugin.classpath"/>
+        </java>
+    </target>
 
-	<target name="practice.dex.IR" depends="run-init,build">
-		<java classname="practice.dex.PDFWalaIRTest" failonerror="true" fork="yes">
-			<arg line="-apk ${HOME}/apks/Hello.apk" />
-			<classpath refid="SimpleAnalysisPlugin.classpath"/>
-		</java>
-	</target>
+    <target name="practice.dex.TI" depends="run-init,build">
+        <java classname="practice.dex.TypeInferenceTest" failonerror="true" fork="yes">
+            <arg line="-apk ${HOME}/apks/Hello.apk" />
+            <classpath refid="SimpleAnalysisPlugin.classpath"/>
+        </java>
+    </target>
+
+    <target name="practice.dex.IR" depends="run-init,build">
+        <java classname="practice.dex.PDFWalaIRTest" failonerror="true" fork="yes">
+            <arg line="-apk ${HOME}/apks/Hello.apk" />
+            <classpath refid="SimpleAnalysisPlugin.classpath"/>
+        </java>
+    </target>
 
     <!-- Create the jar -->
     <target depends="build" name="jar">
@@ -156,11 +159,23 @@
     <target name="zip-src" depends="clean">
  	<zip destfile="${HOME}/sap_project-src.zip">
   	  <zipfileset dir="conf/" includes="*" prefix="conf/"/>
-	  <zipfileset dir="tools/" includes="script.pl,apktool.jar" prefix="tools"/>
-	  <zipfileset dir="src/" includes="**/*.java" prefix="src"/>
-	  <zipfileset dir="lib/" includes="*.jar" prefix="lib"/>
+      <zipfileset dir="tools/" includes="script.pl,apktool.jar" prefix="tools"/>
+      <zipfileset dir="${src-dir}/" includes="**/*.java" prefix="${src-dir}"/>
+      <zipfileset dir="lib/" includes="*.jar" prefix="lib"/>
   	  <fileset dir="." includes="build.xml"/>
   	</zip>
     </target>
 
+    <target name="test" depends="build">
+        <junit haltonerror="false" haltonfailure="false" fork="yes">
+        	<!-- Use the basic SCanDroid classpath: -->
+            <classpath refid="SimpleAnalysisPlugin.classpath"/>
+        	
+            <batchtest>
+                <fileset dir="${test-src-dir}" includes="**/*Test.java" />
+                <!-- basic output -->
+                <formatter type="plain" usefile="false"/>
+            </batchtest>
+        </junit>
+    </target>
 </project>
