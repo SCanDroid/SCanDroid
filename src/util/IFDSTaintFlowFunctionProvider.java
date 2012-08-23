@@ -38,12 +38,16 @@
  */
 
 package util;
+import static util.MyLogger.LogLevel.DEBUG;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+
+import synthMethod.MethodAnalysis;
 
 import com.ibm.wala.dataflow.IFDS.IFlowFunction;
 import com.ibm.wala.dataflow.IFDS.IFlowFunctionMap;
@@ -55,6 +59,7 @@ import com.ibm.wala.ipa.callgraph.propagation.LocalPointerKey;
 import com.ibm.wala.ipa.callgraph.propagation.PointerAnalysis;
 import com.ibm.wala.ipa.callgraph.propagation.PointerKey;
 import com.ibm.wala.ipa.cfg.BasicBlockInContext;
+import com.ibm.wala.ipa.summaries.XMLMethodSummaryReader;
 import com.ibm.wala.ssa.ISSABasicBlock;
 import com.ibm.wala.ssa.SSAArrayLoadInstruction;
 import com.ibm.wala.ssa.SSAArrayStoreInstruction;
@@ -63,6 +68,7 @@ import com.ibm.wala.ssa.SSAInstruction;
 import com.ibm.wala.ssa.SSAInvokeInstruction;
 import com.ibm.wala.ssa.SSAPutInstruction;
 import com.ibm.wala.ssa.SSAReturnInstruction;
+import com.ibm.wala.types.ClassLoaderReference;
 import com.ibm.wala.util.intset.BitVectorIntSet;
 import com.ibm.wala.util.intset.IntSet;
 import com.ibm.wala.util.intset.OrdinalSet;
@@ -82,14 +88,16 @@ implements IFlowFunctionMap<BasicBlockInContext<E>> {
 	private final IFDSTaintDomain<E> domain;
 	private final ISupergraph<BasicBlockInContext<E>,CGNode> graph;
 	private final PointerAnalysis pa;
-
+	private final XMLMethodSummaryReader methodSummaryReader;
 
 	public IFDSTaintFlowFunctionProvider(IFDSTaintDomain<E> domain,
-			ISupergraph<BasicBlockInContext<E>, CGNode> graph, PointerAnalysis pa)
+			ISupergraph<BasicBlockInContext<E>, CGNode> graph, PointerAnalysis pa, XMLMethodSummaryReader msr)
 	{
 		this.domain = domain;
 		this.graph = graph;
 		this.pa = pa;
+//		this.methodSummaryReader = methodSummaryReader;
+		this.methodSummaryReader = msr;
 	}
 
 	// instruction has a valid def set
@@ -165,16 +173,17 @@ implements IFlowFunctionMap<BasicBlockInContext<E>> {
 //
 //							int valueNumber = instruction.getUse(i);
 //							Set<CodeElement> elements = new HashSet<CodeElement>();
-//							elements.add(new LocalElement(valueNumber));
+//							//elements.add(new LocalElement(valueNumber));
 //							PointerKey pk = new LocalPointerKey(bb.getNode(), valueNumber);
 //							OrdinalSet<InstanceKey> m = pa.getPointsToSet(pk);
 //							if(m != null) {
 //								for(Iterator<InstanceKey> keyIter = m.iterator();keyIter.hasNext();) {
-//									System.out.println("Adding Get element "+ gi.getDeclaredField().getSignature());
+////									System.out.println("Adding Get element "+ gi.getDeclaredField().getSignature());
 //									elements.add(new FieldElement(keyIter.next(), gi.getDeclaredField().getSignature()));
 //								}
 //							}
-//							p.uses.addAll(elements);
+//							p.uses.addAll(elements);							
+							p.uses.add(new FieldElement(bb.getMethod().getDeclaringClass().getReference(), gi.getDeclaredField().getSignature()));
 							p.uses.addAll(CodeElement.valueElements(pa, bb.getNode(), instruction.getUse(i)));
 
 						}
@@ -216,6 +225,7 @@ implements IFlowFunctionMap<BasicBlockInContext<E>> {
 //								}
 //							}
 //							p.defs.addAll(elements);
+							p.defs.add(new FieldElement(bb.getMethod().getDeclaringClass().getReference(), pi.getDeclaredField().getSignature()));
 							p.defs.addAll(CodeElement.valueElements(pa, bb.getNode(), instruction.getUse(0)));
 
 						}
@@ -293,7 +303,13 @@ implements IFlowFunctionMap<BasicBlockInContext<E>> {
 
 		final SSAInvokeInstruction instruction = (SSAInvokeInstruction) src.getLastInstruction();
 
-		//System.out.println("Call to method inside call graph: " + instruction.getDeclaredTarget());
+//		System.out.println("Call to method inside call graph src target: " + instruction.getDeclaredTarget());
+//		System.out.println("Call to method inside call graph dest node : " + dest.getNode().getMethod().getReference());
+		if (instruction.getDeclaredTarget().getDeclaringClass().getClassLoader().equals(ClassLoaderReference.Primordial) &&
+				!methodSummaryReader.getSummaries().containsKey(instruction.getDeclaredTarget())) {
+            MyLogger.log(DEBUG,"Primordial and No Summary! (getCallFlowFunction) - " + instruction.getDeclaredTarget());
+            MethodAnalysis.analyze(new IFDSTaintDomain<E>(), graph, pa, methodSummaryReader, src, dest);
+		}
 
 		final Map<CodeElement,CodeElement> parameterMap = new HashMap<CodeElement,CodeElement>();
 		for (int i = 0; i < instruction.getNumberOfParameters(); i++) {
@@ -321,12 +337,24 @@ implements IFlowFunctionMap<BasicBlockInContext<E>> {
 	public IUnaryFlowFunction getCallNoneToReturnFlowFunction(
 			BasicBlockInContext<E> src,
 			BasicBlockInContext<E> dest) {
+		//I Believe this method is called only if there are no callees of src in the supergraph
+		//if supergraph included all primordials, this method can still be called if it calls a 		
+		//method that wasn't included in the scope
+		
 		//Assertions.UNREACHABLE();
 		// TODO: Look up summary for this method, or warn if it doesn't exist.
 		assert (src.getNode().equals(dest.getNode()));
-		//final SSAInvokeInstruction instruction = (SSAInvokeInstruction) src.getLastInstruction();
+		
+		final SSAInvokeInstruction instruction = (SSAInvokeInstruction) src.getLastInstruction();
+		
+		if (instruction.getDeclaredTarget().getDeclaringClass().getClassLoader().equals(ClassLoaderReference.Primordial) &&
+				!methodSummaryReader.getSummaries().containsKey(instruction.getDeclaredTarget())) {
+            MyLogger.log(DEBUG,"Primordial and No Summary! (getCallNoneToReturnFlowFunction) - " + instruction.getDeclaredTarget());
+		}
+		
+		
 
-		//System.out.println("call to return(no callee) method inside call graph: " + instruction.getDeclaredTarget());
+		System.out.println("call to return(no callee) method inside call graph: " + src.getNode()+"--" + instruction.getDeclaredTarget());
 		return new DefUse(dest);
 	}
 
@@ -401,7 +429,7 @@ implements IFlowFunctionMap<BasicBlockInContext<E>> {
 			{
 				BitVectorIntSet set = new BitVectorIntSet();
 				if(callSet != null) {
-					System.out.println("callset: " + callSet);
+//					System.out.println("callset: " + callSet);
 					set.add(domain.getMappedIndex(new DomainElement(callSet,domain.getMappedObject(d1).taintSource)));
 				}
 				return set;

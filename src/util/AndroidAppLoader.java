@@ -43,10 +43,12 @@ import static util.MyLogger.LogLevel.DEBUG;
 import static util.MyLogger.LogLevel.INFO;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.Map.Entry;
 import java.util.jar.JarFile;
 
 import prefixTransfer.UriPrefixContextSelector;
@@ -77,12 +79,15 @@ import com.ibm.wala.ipa.callgraph.propagation.SSAPropagationCallGraphBuilder;
 import com.ibm.wala.ipa.cfg.BasicBlockInContext;
 import com.ibm.wala.ipa.cha.ClassHierarchy;
 import com.ibm.wala.ipa.cha.ClassHierarchyException;
+import com.ibm.wala.ipa.summaries.MethodSummary;
+import com.ibm.wala.ipa.summaries.XMLMethodSummaryReader;
 import com.ibm.wala.ssa.IR;
 import com.ibm.wala.ssa.IRFactory;
 import com.ibm.wala.ssa.ISSABasicBlock;
 import com.ibm.wala.ssa.SSAInstruction;
 import com.ibm.wala.ssa.analysis.IExplodedBasicBlock;
 import com.ibm.wala.types.ClassLoaderReference;
+import com.ibm.wala.types.MethodReference;
 import com.ibm.wala.util.CancelException;
 import com.ibm.wala.util.Predicate;
 import com.ibm.wala.util.collections.Filter;
@@ -99,6 +104,7 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
     public final AnalysisScope scope;
     public final ClassHierarchy cha;
     public final LinkedList<Entrypoint> entries;
+    public XMLMethodSummaryReader methodSummaryReader; 
 
     public CallGraph cg;
     public PointerAnalysis pa;
@@ -287,6 +293,16 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
                 return false;
             }
         });
+        
+        
+        methodSummaryReader = new XMLMethodSummaryReader(Util.class.getClassLoader().getResourceAsStream(Util.nativeSpec), scope);
+        System.out.println("===== Method Summaries =====");
+        for (Entry<MethodReference, MethodSummary> mr:methodSummaryReader.getSummaries().entrySet()) {
+        	System.out.println("MethoReference: " + mr.getKey());
+        	System.out.println("\tMethodSummary: " + mr.getValue());
+        	
+        }
+
 
         if (CLI.hasOption("c"))
         	GraphUtil.makeCG(this);

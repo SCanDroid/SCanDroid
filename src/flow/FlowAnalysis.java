@@ -75,7 +75,7 @@ import domain.DomainElement;
 import domain.IFDSTaintDomain;
 import flow.types.FlowType;
 
-public class FlowAnalysis<E extends ISSABasicBlock> {
+public class FlowAnalysis {
 
     public static <E extends ISSABasicBlock> TabulationResult<BasicBlockInContext<E>,
                                    CGNode, DomainElement> analyze(
@@ -116,8 +116,8 @@ public class FlowAnalysis<E extends ISSABasicBlock> {
         }
 
         final IFlowFunctionMap<BasicBlockInContext<E>> functionMap =
-            new IFDSTaintFlowFunctionProvider<E>(domain, loader.graph, loader.pa);
-
+            new IFDSTaintFlowFunctionProvider<E>(domain, loader.graph, loader.pa, loader.methodSummaryReader);
+        
         final TabulationProblem<BasicBlockInContext<E>, CGNode, DomainElement>
           problem =
             new TabulationProblem<BasicBlockInContext<E>, CGNode, DomainElement>() {

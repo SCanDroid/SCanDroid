@@ -2,8 +2,7 @@
  *
  * Copyright (c) 2009-2012,
  *
- *  Adam Fuchs          <afuchs@cs.umd.edu>
- *  Avik Chaudhuri      <avik@cs.umd.edu>
+ *  Steve Suh           <suhsteve@gmail.com>
  *
  * All rights reserved.
  *
@@ -36,47 +35,46 @@
  *
  */
 
-package domain;
+package flow.types;
 
-import com.ibm.wala.ipa.callgraph.propagation.InstanceKey;
+import com.ibm.wala.ipa.callgraph.CGNode;
+import com.ibm.wala.types.MethodReference;
 import com.ibm.wala.types.TypeReference;
 
-public class FieldElement extends CodeElement {
-    private String fieldname;
-//    private InstanceKey object;
-    private TypeReference object;
+public class ParameterFlow implements FlowType {
 
-//    public FieldElement(InstanceKey object, String fieldname)
-//    {
-//        this.fieldname = fieldname;
-//        this.object = object;
-//    }
-    public FieldElement(TypeReference object, String fieldname)
+    public final MethodReference methodRef;
+    final int argNum;
+    
+    public ParameterFlow(MethodReference methodRef, int argNum)
     {
-        this.fieldname = fieldname;
-        this.object = object;
-    }
-
-    @Override
-    public boolean equals(Object other)
-    {
-        if(other != null && other instanceof FieldElement)
-        {
-            FieldElement otherFE = (FieldElement)other;
-            return object.equals(otherFE.object) && fieldname.equals(otherFE.fieldname);
-        }
-        return false;
+    	this.methodRef = methodRef;
+    	this.argNum = argNum;    	
     }
 
     @Override
     public int hashCode()
     {
-        return object.hashCode() + fieldname.hashCode();
+        return methodRef.hashCode()^argNum;
+    }
+
+    @Override
+    public boolean equals(Object other)
+    {
+    	return other != null & other instanceof ParameterFlow && 
+    			((ParameterFlow)other).methodRef.equals(methodRef) && ((ParameterFlow)other).argNum == argNum;
     }
 
     @Override
     public String toString()
     {
-        return "FieldElement("+fieldname+","+object+")";
+    	return "ParameterFlow("+argNum+", "+methodRef+")";
     }
+
+    @Override
+    public CGNode getRelevantNode()
+    {
+    	return null;
+    }
+    
 }
