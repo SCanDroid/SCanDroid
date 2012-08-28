@@ -39,22 +39,31 @@
 package domain;
 
 import com.ibm.wala.ipa.callgraph.propagation.InstanceKey;
+import com.ibm.wala.types.FieldReference;
 import com.ibm.wala.types.TypeReference;
 
 public class FieldElement extends CodeElement {
-    private String fieldname;
-//    private InstanceKey object;
-    private TypeReference object;
+    private FieldReference fieldRef;
+    private InstanceKey object;
+//    private TypeReference object;
 
-//    public FieldElement(InstanceKey object, String fieldname)
+    public FieldElement(InstanceKey object, FieldReference fieldRef)
+    {
+        this.fieldRef = fieldRef;
+        this.object = object;
+    }
+//    public FieldElement(TypeReference object, String fieldname)
 //    {
 //        this.fieldname = fieldname;
 //        this.object = object;
 //    }
-    public FieldElement(TypeReference object, String fieldname)
-    {
-        this.fieldname = fieldname;
-        this.object = object;
+    
+    public InstanceKey getIK() {
+    	return object;
+    }
+    
+    public FieldReference getRef() {
+    	return fieldRef;
     }
 
     @Override
@@ -63,7 +72,7 @@ public class FieldElement extends CodeElement {
         if(other != null && other instanceof FieldElement)
         {
             FieldElement otherFE = (FieldElement)other;
-            return object.equals(otherFE.object) && fieldname.equals(otherFE.fieldname);
+            return object.equals(otherFE.object) && fieldRef.equals(otherFE.fieldRef);
         }
         return false;
     }
@@ -71,12 +80,12 @@ public class FieldElement extends CodeElement {
     @Override
     public int hashCode()
     {
-        return object.hashCode() + fieldname.hashCode();
+        return object.hashCode() * fieldRef.hashCode();
     }
 
     @Override
     public String toString()
     {
-        return "FieldElement("+fieldname+","+object+")";
+        return "FieldElement("+fieldRef.getSignature()+","+object+")";
     }
 }

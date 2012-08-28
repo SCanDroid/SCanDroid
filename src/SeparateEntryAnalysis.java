@@ -43,6 +43,7 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
 
+import synthMethod.XMLMethodSummaryWriter;
 import util.AndroidAppLoader;
 import util.CLI;
 
@@ -84,6 +85,7 @@ public class SeparateEntryAnalysis {
             }
         } else {
             analyze(loader, loader.entries);
+            XMLMethodSummaryWriter.createXML();
         }
     }
 

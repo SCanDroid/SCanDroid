@@ -182,7 +182,7 @@ public class Specs implements ISpecs {
 //		new CallRetSourceSpec(httpExecute, new int[] {}),
 		new CallRetSourceSpec(actGetIntent, new int[] {}),
 		
-		new CallRetSourceSpec(new MethodNamePattern("LTest/Apps/GenericSource", "getIntSource"), new int[]{}),
+//		new CallRetSourceSpec(new MethodNamePattern("LTest/Apps/GenericSource", "getIntSource"), new int[]{}),
 		new CallRetSourceSpec(new MethodNamePattern("LTest/Apps/GenericSource", "getStringSource"), new int[]{}),
 
 

@@ -42,6 +42,10 @@ import static util.MyLogger.log;
 import static util.MyLogger.LogLevel.DEBUG;
 import static util.MyLogger.LogLevel.INFO;
 
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
@@ -67,18 +71,26 @@ import com.ibm.wala.ipa.callgraph.AnalysisOptions.ReflectionOptions;
 import com.ibm.wala.ipa.callgraph.AnalysisScope;
 import com.ibm.wala.ipa.callgraph.CGNode;
 import com.ibm.wala.ipa.callgraph.CallGraph;
+import com.ibm.wala.ipa.callgraph.ClassTargetSelector;
+import com.ibm.wala.ipa.callgraph.ContextSelector;
 import com.ibm.wala.ipa.callgraph.Entrypoint;
+import com.ibm.wala.ipa.callgraph.MethodTargetSelector;
 import com.ibm.wala.ipa.callgraph.impl.PartialCallGraph;
 import com.ibm.wala.ipa.callgraph.impl.Util;
 import com.ibm.wala.ipa.callgraph.propagation.cfa.DefaultSSAInterpreter;
 import com.ibm.wala.ipa.callgraph.propagation.cfa.DelegatingSSAContextInterpreter;
 import com.ibm.wala.ipa.callgraph.propagation.cfa.DexSSAPropagationCallGraphBuilder;
+import com.ibm.wala.ipa.callgraph.propagation.cfa.ZeroXCFABuilder;
+import com.ibm.wala.ipa.callgraph.propagation.cfa.ZeroXInstanceKeys;
 import com.ibm.wala.ipa.callgraph.propagation.PointerAnalysis;
 import com.ibm.wala.ipa.callgraph.propagation.SSAContextInterpreter;
 import com.ibm.wala.ipa.callgraph.propagation.SSAPropagationCallGraphBuilder;
 import com.ibm.wala.ipa.cfg.BasicBlockInContext;
 import com.ibm.wala.ipa.cha.ClassHierarchy;
 import com.ibm.wala.ipa.cha.ClassHierarchyException;
+import com.ibm.wala.ipa.cha.IClassHierarchy;
+import com.ibm.wala.ipa.summaries.BypassClassTargetSelector;
+import com.ibm.wala.ipa.summaries.BypassMethodTargetSelector;
 import com.ibm.wala.ipa.summaries.MethodSummary;
 import com.ibm.wala.ipa.summaries.XMLMethodSummaryReader;
 import com.ibm.wala.ssa.IR;
@@ -95,16 +107,19 @@ import com.ibm.wala.util.config.AnalysisScopeReader;
 import com.ibm.wala.util.graph.Graph;
 import com.ibm.wala.util.graph.GraphSlicer;
 import com.ibm.wala.util.io.FileProvider;
+import com.ibm.wala.util.strings.Atom;
 import com.ibm.wala.util.warnings.Warning;
 import com.ibm.wala.util.warnings.Warnings;
 
 
 public class AndroidAppLoader<E extends ISSABasicBlock> {
+	public static final String methodSpec = "MethodSummaries.xml";
+	public static final String pathToSpec = "data";
+    public static XMLMethodSummaryReader methodSummaryReader; 
 
     public final AnalysisScope scope;
     public final ClassHierarchy cha;
     public final LinkedList<Entrypoint> entries;
-    public XMLMethodSummaryReader methodSummaryReader; 
 
     public CallGraph cg;
     public PointerAnalysis pa;
@@ -129,7 +144,7 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
 
     	//scope = com.ibm.wala.util.config.AnalysisScopeReader.makeJavaBinaryAnalysisScope(classpath, new FileProvider().getFile("conf/Java60RegressionExclusions.txt"));
     	
-        scope = DexAnalysisScopeReader.makeAndroidBinaryAnalysisScope(classpath, new FileProvider().getFile("conf/Java60RegressionExclusions.txt"));
+        scope = DexAnalysisScopeReader.makeAndroidBinaryAnalysisScope(classpath, new FileProvider().getFile("conf"+File.separator+"Java60RegressionExclusions.txt"));
 
         scope.setLoaderImpl(ClassLoaderReference.Application, "com.ibm.wala.classLoader.WDexClassLoaderImpl");
         scope.addToScope(ClassLoaderReference.Primordial, new JarFile(CLI.getOption("android-lib")));
@@ -180,7 +195,7 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
         SSAPropagationCallGraphBuilder zeroxcgb, cgb;
 
 //        zeroxcgb = Util.makeZeroCFABuilder(options, cache, cha, scope, new UriPrefixContextSelector(options, cha), null);
-        zeroxcgb = Util.makeVanillaZeroOneCFABuilder(options, cache, cha, scope, new UriPrefixContextSelector(options, cha), null);
+        zeroxcgb = makeVanillaZeroOneCFABuilder(options, cache, cha, scope, new UriPrefixContextSelector(options, cha), null);
         //cgb = new DexSSAPropagationCallGraphBuilder(cha, options, cache, zeroxcgb.getContextSelector(), (SSAContextInterpreter)zeroxcgb.getContextInterpreter(), zeroxcgb.getInstanceKeys());
         cgb = zeroxcgb;
         
@@ -295,7 +310,6 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
         });
         
         
-        methodSummaryReader = new XMLMethodSummaryReader(Util.class.getClassLoader().getResourceAsStream(Util.nativeSpec), scope);
         System.out.println("===== Method Summaries =====");
         for (Entry<MethodReference, MethodSummary> mr:methodSummaryReader.getSummaries().entrySet()) {
         	System.out.println("MethoReference: " + mr.getKey());
@@ -311,8 +325,8 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
         if (CLI.hasOption("o"))
         	GraphUtil.makeOneLCG(this);   
         if (CLI.hasOption("s"))
-            GraphUtil.makeSystemToAPKCG(this);
-        
+        	GraphUtil.makeSystemToAPKCG(this);
+
         if (CLI.hasOption("a")) {
         	for (Iterator<CGNode> nodeI = cg.iterator(); nodeI.hasNext();) {
         		CGNode node = nodeI.next();        	        	
@@ -333,5 +347,58 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
 
         return nodeClRef.equals(clr);
     }
-       
+    
+    public static SSAPropagationCallGraphBuilder makeVanillaZeroOneCFABuilder(AnalysisOptions options, AnalysisCache cache,
+    		IClassHierarchy cha, AnalysisScope scope, ContextSelector customSelector, SSAContextInterpreter customInterpreter) {
+
+    	if (options == null) {
+    		throw new IllegalArgumentException("options is null");
+    	}
+    	Util.addDefaultSelectors(options, cha);
+    	//    	    addDefaultBypassLogic(options, scope, Util.class.getClassLoader(), cha);
+    	//    	    addBypassLogic(options, scope, AndroidAppLoader.class.getClassLoader(), methodSpec, cha);
+    	addBypassLogic(options, scope, methodSpec, cha);
+
+
+    	return ZeroXCFABuilder.make(cha, options, cache, customSelector, customInterpreter, ZeroXInstanceKeys.ALLOCATIONS | ZeroXInstanceKeys.CONSTANT_SPECIFIC);
+    }
+
+    
+//    public static void addBypassLogic(AnalysisOptions options, AnalysisScope scope, ClassLoader cl, String xmlFile,
+//    	      IClassHierarchy cha) throws IllegalArgumentException {
+    public static void addBypassLogic(AnalysisOptions options, AnalysisScope scope, String xmlFile,
+    		IClassHierarchy cha) throws IllegalArgumentException {
+
+    	if (scope == null) {
+    		throw new IllegalArgumentException("scope is null");
+    	}
+    	if (options == null) {
+    		throw new IllegalArgumentException("options is null");
+    	}
+//    	if (cl == null) {
+//    		throw new IllegalArgumentException("cl is null");
+//    	}
+    	if (cha == null) {
+    		throw new IllegalArgumentException("cha cannot be null");
+    	}
+
+    	InputStream s;
+    	try {
+    		s = new FileInputStream(new File(pathToSpec+File.separator+methodSpec));
+    		//    	InputStream s = cl.getResourceAsStream(xmlFile);
+    		methodSummaryReader = new XMLMethodSummaryReader(s, scope);
+
+    		MethodTargetSelector ms = new BypassMethodTargetSelector(options.getMethodTargetSelector(), methodSummaryReader.getSummaries(),
+    				methodSummaryReader.getIgnoredPackages(), cha);
+    		options.setSelector(ms);
+
+    		ClassTargetSelector cs = new BypassClassTargetSelector(options.getClassTargetSelector(), methodSummaryReader.getAllocatableClasses(), cha,
+    				cha.getLoader(scope.getLoader(Atom.findOrCreateUnicodeAtom("Synthetic"))));
+    		options.setSelector(cs);
+    	} catch (FileNotFoundException e) {
+    		e.printStackTrace();
+    	}
+
+    }
+
 }

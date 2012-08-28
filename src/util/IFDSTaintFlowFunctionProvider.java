@@ -171,20 +171,20 @@ implements IFlowFunctionMap<BasicBlockInContext<E>> {
 							//Use commented out code if we want to use FieldElement instead of InstanceKeyElement
 //							System.out.println("Found SSAGetInstruction Use of: " + instruction.getUse(i));
 //
-//							int valueNumber = instruction.getUse(i);
-//							Set<CodeElement> elements = new HashSet<CodeElement>();
-//							//elements.add(new LocalElement(valueNumber));
-//							PointerKey pk = new LocalPointerKey(bb.getNode(), valueNumber);
-//							OrdinalSet<InstanceKey> m = pa.getPointsToSet(pk);
-//							if(m != null) {
-//								for(Iterator<InstanceKey> keyIter = m.iterator();keyIter.hasNext();) {
-////									System.out.println("Adding Get element "+ gi.getDeclaredField().getSignature());
-//									elements.add(new FieldElement(keyIter.next(), gi.getDeclaredField().getSignature()));
-//								}
-//							}
-//							p.uses.addAll(elements);							
-							p.uses.add(new FieldElement(bb.getMethod().getDeclaringClass().getReference(), gi.getDeclaredField().getSignature()));
-							p.uses.addAll(CodeElement.valueElements(pa, bb.getNode(), instruction.getUse(i)));
+							int valueNumber = instruction.getUse(i);
+							Set<CodeElement> elements = new HashSet<CodeElement>();
+//							elements.add(new LocalElement(valueNumber));
+							PointerKey pk = new LocalPointerKey(bb.getNode(), valueNumber);
+							OrdinalSet<InstanceKey> m = pa.getPointsToSet(pk);
+							if(m != null) {
+								for(Iterator<InstanceKey> keyIter = m.iterator();keyIter.hasNext();) {
+//									System.out.println("Adding Get element "+ gi.getDeclaredField().getSignature());
+									elements.add(new FieldElement(keyIter.next(), gi.getDeclaredField()));
+								}
+							}
+							p.uses.addAll(elements);							
+//							p.uses.add(new FieldElement(bb.getMethod().getDeclaringClass().getReference(), gi.getDeclaredField().getSignature()));
+//							p.uses.addAll(CodeElement.valueElements(pa, bb.getNode(), instruction.getUse(i)));
 
 						}
 						//getinstruction only has 1 def
@@ -212,21 +212,21 @@ implements IFlowFunctionMap<BasicBlockInContext<E>> {
 						if (instruction.getNumberOfUses() > 0) {
 							//Use commented out code if we want to use FieldElement instead of InstanceKeyElement
 //							System.out.println("Found SSAPutInstruction Def of: " + instruction.getUse(0));
-//							int valueNumber = instruction.getUse(0);
-//							Set<CodeElement> elements = new HashSet<CodeElement>();
+							int valueNumber = instruction.getUse(0);
+							Set<CodeElement> elements = new HashSet<CodeElement>();
 //							elements.add(new LocalElement(valueNumber));
-//							PointerKey pk = new LocalPointerKey(bb.getNode(), valueNumber);
-//							OrdinalSet<InstanceKey> m = pa.getPointsToSet(pk);
-//							if(m != null) {
-//								for(Iterator<InstanceKey> keyIter = m.iterator();keyIter.hasNext();) {
+							PointerKey pk = new LocalPointerKey(bb.getNode(), valueNumber);
+							OrdinalSet<InstanceKey> m = pa.getPointsToSet(pk);
+							if(m != null) {
+								for(Iterator<InstanceKey> keyIter = m.iterator();keyIter.hasNext();) {
 //									System.out.println("Adding Put element "+ pi.getDeclaredField().getSignature());
-//
-//									elements.add(new FieldElement(keyIter.next(), pi.getDeclaredField().getSignature()));
-//								}
-//							}
-//							p.defs.addAll(elements);
-							p.defs.add(new FieldElement(bb.getMethod().getDeclaringClass().getReference(), pi.getDeclaredField().getSignature()));
-							p.defs.addAll(CodeElement.valueElements(pa, bb.getNode(), instruction.getUse(0)));
+
+									elements.add(new FieldElement(keyIter.next(), pi.getDeclaredField()));
+								}
+							}
+							p.defs.addAll(elements);
+//							p.defs.add(new FieldElement(bb.getMethod().getDeclaringClass().getReference(), pi.getDeclaredField().getSignature()));
+//							p.defs.addAll(CodeElement.valueElements(pa, bb.getNode(), instruction.getUse(0)));
 
 						}
 					}
@@ -305,8 +305,9 @@ implements IFlowFunctionMap<BasicBlockInContext<E>> {
 
 //		System.out.println("Call to method inside call graph src target: " + instruction.getDeclaredTarget());
 //		System.out.println("Call to method inside call graph dest node : " + dest.getNode().getMethod().getReference());
-		if (instruction.getDeclaredTarget().getDeclaringClass().getClassLoader().equals(ClassLoaderReference.Primordial) &&
-				!methodSummaryReader.getSummaries().containsKey(instruction.getDeclaredTarget())) {
+//		if (instruction.getDeclaredTarget().getDeclaringClass().getClassLoader().equals(ClassLoaderReference.Primordial) &&
+//				!methodSummaryReader.getSummaries().containsKey(instruction.getDeclaredTarget())) {
+		if (true) {
             MyLogger.log(DEBUG,"Primordial and No Summary! (getCallFlowFunction) - " + instruction.getDeclaredTarget());
             MethodAnalysis.analyze(new IFDSTaintDomain<E>(), graph, pa, methodSummaryReader, src, dest);
 		}
