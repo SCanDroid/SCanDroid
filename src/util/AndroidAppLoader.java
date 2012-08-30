@@ -38,12 +38,15 @@
  */
 
 package util;
+
 import static util.MyLogger.log;
 import static util.MyLogger.LogLevel.DEBUG;
 import static util.MyLogger.LogLevel.INFO;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -98,240 +101,260 @@ import com.ibm.wala.util.io.FileProvider;
 import com.ibm.wala.util.warnings.Warning;
 import com.ibm.wala.util.warnings.Warnings;
 
-
 public class AndroidAppLoader<E extends ISSABasicBlock> {
 
-    public final AnalysisScope scope;
-    public final ClassHierarchy cha;
-    public final LinkedList<Entrypoint> entries;
-    public XMLMethodSummaryReader methodSummaryReader; 
+	public final AnalysisScope scope;
+	public final ClassHierarchy cha;
+	public final LinkedList<Entrypoint> entries;
+	public XMLMethodSummaryReader methodSummaryReader;
 
-    public CallGraph cg;
-    public PointerAnalysis pa;
-    public ISupergraph<BasicBlockInContext<E>, CGNode> graph;
-    public Graph<CGNode> partialGraph;
-    public Graph<CGNode> oneLevelGraph;
-    public Graph<CGNode> systemToApkGraph;
-    
-    /**
-     *
-     * @param classpath
-     * @param packagename
-     * @throws IOException
-     * @throws IllegalArgumentException
-     * @throws CancelException
-     * @throws ClassHierarchyException
-     */
-    public AndroidAppLoader(String classpath)
-       throws IOException, IllegalArgumentException,
-              CancelException, ClassHierarchyException
-    {
+	public CallGraph cg;
+	public PointerAnalysis pa;
+	public ISupergraph<BasicBlockInContext<E>, CGNode> graph;
+	public Graph<CGNode> partialGraph;
+	public Graph<CGNode> oneLevelGraph;
+	public Graph<CGNode> systemToApkGraph;
 
-    	//scope = com.ibm.wala.util.config.AnalysisScopeReader.makeJavaBinaryAnalysisScope(classpath, new FileProvider().getFile("conf/Java60RegressionExclusions.txt"));
-    	
-        scope = DexAnalysisScopeReader.makeAndroidBinaryAnalysisScope(classpath, new FileProvider().getFile("conf/Java60RegressionExclusions.txt"));
+	public AndroidAppLoader(String classpath) throws IllegalArgumentException,
+			ClassHierarchyException, IOException, CancelException {
+		this(classpath, new File(CLI.getOption("android-lib")));
+	}
 
-        scope.setLoaderImpl(ClassLoaderReference.Application, "com.ibm.wala.classLoader.WDexClassLoaderImpl");
-        scope.addToScope(ClassLoaderReference.Primordial, new JarFile(CLI.getOption("android-lib")));
-        
-//		AnalysisScope scope = AnalysisScopeReader.makeJavaBinaryAnalysisScope(
-//				"/Users/ssuh/Documents/projects/SCanDroid/SimpleAnalysisPluginDexLib/scandroid/SimpleAndroidApp.jar",
-//				new FileProvider().getFile("/Users/ssuh/Documents/projects/SCanDroid/SimpleAnalysisPluginDexLib/scandroid/conf/Java60RegressionExclusions.txt"));
-//		scope.addToScope(ClassLoaderReference.Primordial, new JarFile("/Users/ssuh/Documents/projects/SCanDroid/SimpleAnalysisPluginDexLib/scandroid/data/android-2.3.7_r1.jar"));
+	/**
+	 * 
+	 * @param classpath
+	 * @param packagename
+	 * @throws IOException
+	 * @throws IllegalArgumentException
+	 * @throws CancelException
+	 * @throws ClassHierarchyException
+	 */
+	public AndroidAppLoader(String classpath, File androidLib)
+			throws IOException, IllegalArgumentException, CancelException,
+			ClassHierarchyException {
 
-        cha = ClassHierarchy.make(scope);
+		// scope =
+		// com.ibm.wala.util.config.AnalysisScopeReader.makeJavaBinaryAnalysisScope(classpath,
+		// new FileProvider().getFile("conf/Java60RegressionExclusions.txt"));
 
-        //log ClassHierarchy warnings
-        for(Iterator<Warning> wi = Warnings.iterator(); wi.hasNext();)
-        {
-            Warning w = wi.next();
-            log(w);
-        }
-        Warnings.clear();
+		scope = DexAnalysisScopeReader.makeAndroidBinaryAnalysisScope(
+				classpath, new FileProvider()
+						.getFile("conf/Java60RegressionExclusions.txt"));
 
-        // Try to look for entry points
-        EntryPoints ep = new EntryPoints(classpath, cha, this);
-        entries = ep.getEntries();
-    }
+		scope.setLoaderImpl(ClassLoaderReference.Application,
+				"com.ibm.wala.classLoader.WDexClassLoaderImpl");
+		scope.addToScope(ClassLoaderReference.Primordial,
+				new JarFile(androidLib));
 
-    @SuppressWarnings("deprecation")
-    public void buildGraphs(LinkedList<Entrypoint> localEntries) throws CancelException {
+		// AnalysisScope scope =
+		// AnalysisScopeReader.makeJavaBinaryAnalysisScope(
+		// "/Users/ssuh/Documents/projects/SCanDroid/SimpleAnalysisPluginDexLib/scandroid/SimpleAndroidApp.jar",
+		// new
+		// FileProvider().getFile("/Users/ssuh/Documents/projects/SCanDroid/SimpleAnalysisPluginDexLib/scandroid/conf/Java60RegressionExclusions.txt"));
+		// scope.addToScope(ClassLoaderReference.Primordial, new
+		// JarFile("/Users/ssuh/Documents/projects/SCanDroid/SimpleAnalysisPluginDexLib/scandroid/data/android-2.3.7_r1.jar"));
 
-        AnalysisOptions options = new AnalysisOptions(scope, localEntries);
-        for(Entrypoint e:localEntries)
-        {
-            MyLogger.log(DEBUG,"Entrypoint: "+e);
-        }
+		cha = ClassHierarchy.make(scope);
 
-        options.setEntrypoints(localEntries);
-        
-        if(CLI.hasOption("reflection"))
-        	options.setReflectionOptions(ReflectionOptions.valueOf(CLI.getOption("reflection")));
-        else
-        	options.setReflectionOptions(ReflectionOptions.NONE);
-        	
-        
-        AnalysisCache cache = new AnalysisCache((IRFactory<IMethod>)new DexIRFactory());
-        //AnalysisCache cache = new AnalysisCache();
-        
-        //SSAContextInterpreter ci = new DexIContextInterpreter(options.getSSAOptions(), cache);
-        //ci = new DelegatingSSAContextInterpreter(ReflectionContextInterpreter.createReflectionContextInterpreter(cha, options, cache), ci);
-        
-        SSAPropagationCallGraphBuilder zeroxcgb, cgb;
+		// log ClassHierarchy warnings
+		for (Iterator<Warning> wi = Warnings.iterator(); wi.hasNext();) {
+			Warning w = wi.next();
+			log(w);
+		}
+		Warnings.clear();
 
-//        zeroxcgb = Util.makeZeroCFABuilder(options, cache, cha, scope, new UriPrefixContextSelector(options, cha), null);
-        zeroxcgb = Util.makeVanillaZeroOneCFABuilder(options, cache, cha, scope, new UriPrefixContextSelector(options, cha), null);
-        //cgb = new DexSSAPropagationCallGraphBuilder(cha, options, cache, zeroxcgb.getContextSelector(), (SSAContextInterpreter)zeroxcgb.getContextInterpreter(), zeroxcgb.getInstanceKeys());
-        cgb = zeroxcgb;
-        
+		// Try to look for entry points
+		EntryPoints ep = new EntryPoints(classpath, cha, this);
+		entries = ep.getEntries();
+	}
 
-        //CallGraphBuilder construction warnings
-        for(Iterator<Warning> wi = Warnings.iterator(); wi.hasNext();)
-        {
-            Warning w = wi.next();
-            MyLogger.log(w);
-        }
-        Warnings.clear();
+	@SuppressWarnings("deprecation")
+	public void buildGraphs(LinkedList<Entrypoint> localEntries)
+			throws CancelException {
 
+		AnalysisOptions options = new AnalysisOptions(scope, localEntries);
+		for (Entrypoint e : localEntries) {
+			MyLogger.log(DEBUG, "Entrypoint: " + e);
+		}
 
-        MyLogger.log(INFO, "*************************");
-        MyLogger.log(INFO, "* Building Call Graph   *");
-        MyLogger.log(INFO, "*************************");
+		options.setEntrypoints(localEntries);
 
-        cg = cgb.makeCallGraph(options);
+		if (CLI.hasOption("reflection"))
+			options.setReflectionOptions(ReflectionOptions.valueOf(CLI
+					.getOption("reflection")));
+		else
+			options.setReflectionOptions(ReflectionOptions.NONE);
 
-        //makeCallGraph warnings
-        for(Iterator<Warning> wi = Warnings.iterator(); wi.hasNext();)
-        {
-            Warning w = wi.next();
-            MyLogger.log(w);
-        }
-        Warnings.clear();
+		AnalysisCache cache = new AnalysisCache(
+				(IRFactory<IMethod>) new DexIRFactory());
+		// AnalysisCache cache = new AnalysisCache();
 
-        pa = cgb.getPointerAnalysis();
+		// SSAContextInterpreter ci = new
+		// DexIContextInterpreter(options.getSSAOptions(), cache);
+		// ci = new
+		// DelegatingSSAContextInterpreter(ReflectionContextInterpreter.createReflectionContextInterpreter(cha,
+		// options, cache), ci);
 
-        // TODO: prune out a lot more stuff
-        partialGraph = GraphSlicer.prune(cg, new Predicate<CGNode> (){
+		SSAPropagationCallGraphBuilder zeroxcgb, cgb;
+
+		// zeroxcgb = Util.makeZeroCFABuilder(options, cache, cha, scope, new
+		// UriPrefixContextSelector(options, cha), null);
+		zeroxcgb = Util.makeVanillaZeroOneCFABuilder(options, cache, cha,
+				scope, new UriPrefixContextSelector(options, cha), null);
+		// cgb = new DexSSAPropagationCallGraphBuilder(cha, options, cache,
+		// zeroxcgb.getContextSelector(),
+		// (SSAContextInterpreter)zeroxcgb.getContextInterpreter(),
+		// zeroxcgb.getInstanceKeys());
+		cgb = zeroxcgb;
+
+		// CallGraphBuilder construction warnings
+		for (Iterator<Warning> wi = Warnings.iterator(); wi.hasNext();) {
+			Warning w = wi.next();
+			MyLogger.log(w);
+		}
+		Warnings.clear();
+
+		MyLogger.log(INFO, "*************************");
+		MyLogger.log(INFO, "* Building Call Graph   *");
+		MyLogger.log(INFO, "*************************");
+
+		cg = cgb.makeCallGraph(options);
+
+		// makeCallGraph warnings
+		for (Iterator<Warning> wi = Warnings.iterator(); wi.hasNext();) {
+			Warning w = wi.next();
+			MyLogger.log(w);
+		}
+		Warnings.clear();
+
+		pa = cgb.getPointerAnalysis();
+
+		// TODO: prune out a lot more stuff
+		partialGraph = GraphSlicer.prune(cg, new Predicate<CGNode>() {
 			@Override
-			//CallGraph composed of APK nodes
+			// CallGraph composed of APK nodes
 			public boolean test(CGNode node) {
 				return fromLoader(node, ClassLoaderReference.Application);
-			}        
-        });
+			}
+		});
 
-        Collection<CGNode> nodes = new HashSet<CGNode>();
+		Collection<CGNode> nodes = new HashSet<CGNode>();
 
-        for (Iterator<CGNode> nIter = partialGraph.iterator(); nIter.hasNext();) {
-            nodes.add(nIter.next());
-        }
+		for (Iterator<CGNode> nIter = partialGraph.iterator(); nIter.hasNext();) {
+			nodes.add(nIter.next());
+		}
 
-        CallGraph pcg = PartialCallGraph.make(cg, cg
-                    .getEntrypointNodes(), nodes);
-        
-        if (CLI.hasOption("include-library"))
-        	graph = (ISupergraph) ICFGSupergraph.make(cg, cache);
-        else
-        	graph = (ISupergraph) ICFGSupergraph.make(pcg, cache);
+		CallGraph pcg = PartialCallGraph.make(cg, cg.getEntrypointNodes(),
+				nodes);
 
-        oneLevelGraph = GraphSlicer.prune(cg, new Predicate<CGNode>() {
-            @Override
-            public boolean test(CGNode node) {
-                //Node in APK
-                if (fromLoader(node, ClassLoaderReference.Application)) {
-                	return true;
-                } else {
-                    Iterator<CGNode> n = cg.getPredNodes(node);
-                    while(n.hasNext()) {
-                    	//Primordial node has a successor in APK
-                        if (fromLoader(n.next(), ClassLoaderReference.Application))
-                            return true;
-                    }
-                    n = cg.getSuccNodes(node);
-                    while(n.hasNext()) {
-                    	//Primordial node has a predecessor in APK
-                        if (fromLoader(n.next(), ClassLoaderReference.Application))
-                            return true;
-                    }
-                    //Primordial node with no direct successors or predecessors to APK code
-                    return false;
-                }
-            }
-        }); 
+		if (CLI.hasOption("include-library"))
+			graph = (ISupergraph) ICFGSupergraph.make(cg, cache);
+		else
+			graph = (ISupergraph) ICFGSupergraph.make(pcg, cache);
 
+		oneLevelGraph = GraphSlicer.prune(cg, new Predicate<CGNode>() {
+			@Override
+			public boolean test(CGNode node) {
+				// Node in APK
+				if (fromLoader(node, ClassLoaderReference.Application)) {
+					return true;
+				} else {
+					Iterator<CGNode> n = cg.getPredNodes(node);
+					while (n.hasNext()) {
+						// Primordial node has a successor in APK
+						if (fromLoader(n.next(),
+								ClassLoaderReference.Application))
+							return true;
+					}
+					n = cg.getSuccNodes(node);
+					while (n.hasNext()) {
+						// Primordial node has a predecessor in APK
+						if (fromLoader(n.next(),
+								ClassLoaderReference.Application))
+							return true;
+					}
+					// Primordial node with no direct successors or predecessors
+					// to APK code
+					return false;
+				}
+			}
+		});
 
-        systemToApkGraph = GraphSlicer.prune(cg, new Predicate<CGNode>() {
-            @Override
-            public boolean test(CGNode node) {
-                
-                if (fromLoader(node, ClassLoaderReference.Primordial)) {
-                    Iterator<CGNode> succs = cg.getSuccNodes(node);
-                    while(succs.hasNext()) {
-                        CGNode n = succs.next();
-                    
-                        if (fromLoader(n, ClassLoaderReference.Application)) {
-                            return true;
-                        }
-                    }
-                    // Primordial method, with no link to APK code:
-                    return false;
-                } else if (fromLoader(node, ClassLoaderReference.Application)) {
-                    // see if this is an APK method that was 
-                    // invoked by a Primordial method:
-                    Iterator<CGNode> preds = cg.getPredNodes(node);
-                    while(preds.hasNext()) {
-                        CGNode n = preds.next();
-                    
-                        if (fromLoader(n, ClassLoaderReference.Primordial)) {
-                            return true;
-                        }
-                    }
-                    // APK code, no link to Primordial:
-                    return false;
-                }
-                
-                // who knows, not interesting:
-                return false;
-            }
-        });
-        
-        
-        methodSummaryReader = new XMLMethodSummaryReader(Util.class.getClassLoader().getResourceAsStream(Util.nativeSpec), scope);
-        System.out.println("===== Method Summaries =====");
-        for (Entry<MethodReference, MethodSummary> mr:methodSummaryReader.getSummaries().entrySet()) {
-        	System.out.println("MethoReference: " + mr.getKey());
-        	System.out.println("\tMethodSummary: " + mr.getValue());
-        	
-        }
+		systemToApkGraph = GraphSlicer.prune(cg, new Predicate<CGNode>() {
+			@Override
+			public boolean test(CGNode node) {
 
+				if (fromLoader(node, ClassLoaderReference.Primordial)) {
+					Iterator<CGNode> succs = cg.getSuccNodes(node);
+					while (succs.hasNext()) {
+						CGNode n = succs.next();
 
-        if (CLI.hasOption("c"))
-        	GraphUtil.makeCG(this);
-        if (CLI.hasOption("p"))
-        	GraphUtil.makePCG(this);
-        if (CLI.hasOption("o"))
-        	GraphUtil.makeOneLCG(this);   
-        if (CLI.hasOption("s"))
-            GraphUtil.makeSystemToAPKCG(this);
-        
-        if (CLI.hasOption("a")) {
-        	for (Iterator<CGNode> nodeI = cg.iterator(); nodeI.hasNext();) {
-        		CGNode node = nodeI.next();        	        	
+						if (fromLoader(n, ClassLoaderReference.Application)) {
+							return true;
+						}
+					}
+					// Primordial method, with no link to APK code:
+					return false;
+				} else if (fromLoader(node, ClassLoaderReference.Application)) {
+					// see if this is an APK method that was
+					// invoked by a Primordial method:
+					Iterator<CGNode> preds = cg.getPredNodes(node);
+					while (preds.hasNext()) {
+						CGNode n = preds.next();
 
-        		System.out.println("CGNode: " + node);
-        		for (Iterator<CGNode> succI = cg.getSuccNodes(node); succI.hasNext();) {
-        			System.out.println("\tSuccCGNode: " + succI.next().getMethod().getSignature());
-        		}
-        	}
-        }
-    }
-    
-    static boolean fromLoader(CGNode node, ClassLoaderReference clr) {
-        IClass declClass = node.getMethod().getDeclaringClass();
+						if (fromLoader(n, ClassLoaderReference.Primordial)) {
+							return true;
+						}
+					}
+					// APK code, no link to Primordial:
+					return false;
+				}
 
-        ClassLoaderReference nodeClRef =
-                declClass.getClassLoader().getReference();
+				// who knows, not interesting:
+				return false;
+			}
+		});
 
-        return nodeClRef.equals(clr);
-    }
-       
+		methodSummaryReader = new XMLMethodSummaryReader(Util.class
+				.getClassLoader().getResourceAsStream(Util.nativeSpec), scope);
+		System.out.println("===== Method Summaries =====");
+		for (Entry<MethodReference, MethodSummary> mr : methodSummaryReader
+				.getSummaries().entrySet()) {
+			System.out.println("MethoReference: " + mr.getKey());
+			System.out.println("\tMethodSummary: " + mr.getValue());
+
+		}
+
+		if (CLI.hasOption("c"))
+			GraphUtil.makeCG(this);
+		if (CLI.hasOption("p"))
+			GraphUtil.makePCG(this);
+		if (CLI.hasOption("o"))
+			GraphUtil.makeOneLCG(this);
+		if (CLI.hasOption("s"))
+			GraphUtil.makeSystemToAPKCG(this);
+
+		if (CLI.hasOption("a")) {
+			for (Iterator<CGNode> nodeI = cg.iterator(); nodeI.hasNext();) {
+				CGNode node = nodeI.next();
+
+				System.out.println("CGNode: " + node);
+				for (Iterator<CGNode> succI = cg.getSuccNodes(node); succI
+						.hasNext();) {
+					System.out.println("\tSuccCGNode: "
+							+ succI.next().getMethod().getSignature());
+				}
+			}
+		}
+	}
+
+	static boolean fromLoader(CGNode node, ClassLoaderReference clr) {
+		IClass declClass = node.getMethod().getDeclaringClass();
+
+		ClassLoaderReference nodeClRef = declClass.getClassLoader()
+				.getReference();
+
+		return nodeClRef.equals(clr);
+	}
+
 }
