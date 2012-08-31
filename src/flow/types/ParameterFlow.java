@@ -37,14 +37,20 @@
 
 package flow.types;
 
+import java.util.Set;
+
 import com.ibm.wala.ipa.callgraph.CGNode;
+import com.ibm.wala.ipa.callgraph.propagation.InstanceKey;
 import com.ibm.wala.types.MethodReference;
 import com.ibm.wala.types.TypeReference;
+import com.ibm.wala.util.intset.OrdinalSet;
+
+import domain.CodeElement;
 
 public class ParameterFlow implements FlowType {
 
     public final MethodReference methodRef;
-    final int argNum;
+    public final int argNum;
     
     public ParameterFlow(MethodReference methodRef, int argNum)
     {
@@ -55,7 +61,7 @@ public class ParameterFlow implements FlowType {
     @Override
     public int hashCode()
     {
-        return methodRef.hashCode()^argNum;
+        return methodRef.hashCode()*argNum;
     }
 
     @Override

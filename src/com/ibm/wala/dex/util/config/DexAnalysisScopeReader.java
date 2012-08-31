@@ -62,7 +62,7 @@ public class DexAnalysisScopeReader extends AnalysisScopeReader {
 
       private static final ClassLoader WALA_CLASSLOADER = AnalysisScopeReader.class.getClassLoader();
 
-      private static final String BASIC_FILE = "./conf/primordial.txt";
+      private static final String BASIC_FILE = "conf"+File.separator+"primordial.txt";
 
       /**
        * @param classPath class path to analyze, delimited by File.pathSeparator

@@ -39,38 +39,43 @@
 package flow.types;
 
 import com.ibm.wala.ipa.callgraph.CGNode;
+import com.ibm.wala.types.FieldReference;
 import com.ibm.wala.types.MethodReference;
 import com.ibm.wala.types.TypeReference;
 
 public class FieldFlow implements FlowType {
 
-   public final TypeReference classRef;
-   private String fieldname;
-
+   private FieldReference fieldRef;
    
-   public FieldFlow(TypeReference classRef, String fieldname)
-   {
-   	this.classRef = classRef;
-   	this.fieldname = fieldname;    	
+   public FieldFlow(FieldReference fieldRef)
+   {	   
+	   this.fieldRef = fieldRef;
+//   	this.classRef = classRef;
+//   	this.fieldname = fieldname;    	
+   }
+   
+   public FieldReference getRef() {
+	   return fieldRef;
    }
 
    @Override
    public int hashCode()
    {
-       return classRef.hashCode()*fieldname.hashCode();
+       return fieldRef.hashCode();
    }
 
    @Override
    public boolean equals(Object other)
    {
    	return other != null & other instanceof FieldFlow && 
-   			((FieldFlow)other).classRef.equals(classRef) && ((FieldFlow)other).fieldname.equals(fieldname);
+//   			((FieldFlow)other).classRef.equals(classRef) && ((FieldFlow)other).fieldname.equals(fieldname);
+   			((FieldFlow)other).fieldRef.equals(fieldRef);
    }
 
    @Override
    public String toString()
    {
-   	return "FieldFlow("+fieldname+", "+classRef+")";
+   	return "FieldFlow("+fieldRef.getName()+", "+fieldRef.getDeclaringClass().getName()+")";
    }
 
    @Override
