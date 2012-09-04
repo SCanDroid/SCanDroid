@@ -49,6 +49,8 @@ import java.util.Set;
 
 import synthMethod.MethodAnalysis;
 
+import com.ibm.wala.classLoader.IClass;
+import com.ibm.wala.classLoader.IField;
 import com.ibm.wala.dataflow.IFDS.IFlowFunction;
 import com.ibm.wala.dataflow.IFDS.IFlowFunctionMap;
 import com.ibm.wala.dataflow.IFDS.ISupergraph;
@@ -58,7 +60,9 @@ import com.ibm.wala.ipa.callgraph.propagation.InstanceKey;
 import com.ibm.wala.ipa.callgraph.propagation.LocalPointerKey;
 import com.ibm.wala.ipa.callgraph.propagation.PointerAnalysis;
 import com.ibm.wala.ipa.callgraph.propagation.PointerKey;
+import com.ibm.wala.ipa.callgraph.propagation.StaticFieldKey;
 import com.ibm.wala.ipa.cfg.BasicBlockInContext;
+import com.ibm.wala.ipa.cha.IClassHierarchy;
 import com.ibm.wala.ipa.summaries.XMLMethodSummaryReader;
 import com.ibm.wala.ssa.ISSABasicBlock;
 import com.ibm.wala.ssa.SSAArrayLoadInstruction;
@@ -69,6 +73,8 @@ import com.ibm.wala.ssa.SSAInvokeInstruction;
 import com.ibm.wala.ssa.SSAPutInstruction;
 import com.ibm.wala.ssa.SSAReturnInstruction;
 import com.ibm.wala.types.ClassLoaderReference;
+import com.ibm.wala.types.FieldReference;
+import com.ibm.wala.types.TypeReference;
 import com.ibm.wala.util.intset.BitVectorIntSet;
 import com.ibm.wala.util.intset.IntSet;
 import com.ibm.wala.util.intset.OrdinalSet;
@@ -160,30 +166,33 @@ implements IFlowFunctionMap<BasicBlockInContext<E>> {
 					p = new UseDefSetPair();
 				}
 					
+			    IClassHierarchy ch = bb.getNode().getClassHierarchy();
 
 				if (inFlow(instruction)) {
 					if (instruction instanceof SSAGetInstruction) {
 						SSAGetInstruction gi = (SSAGetInstruction)instruction;
-						for (int i = 0; i < instruction.getNumberOfUses(); i++) {
-							//Use commented out code if we want to use FieldElement instead of InstanceKeyElement
-//							System.out.println("Found SSAGetInstruction Use of: " + instruction.getUse(i));
-//
-							int valueNumber = instruction.getUse(i);
-							Set<CodeElement> elements = new HashSet<CodeElement>();
-//							elements.add(new LocalElement(valueNumber));
-							PointerKey pk = new LocalPointerKey(bb.getNode(), valueNumber);
-							OrdinalSet<InstanceKey> m = pa.getPointsToSet(pk);
-							if(m != null) {
-								for(Iterator<InstanceKey> keyIter = m.iterator();keyIter.hasNext();) {
-//									System.out.println("Adding Get element "+ gi.getDeclaredField().getSignature());
-									elements.add(new FieldElement(keyIter.next(), gi.getDeclaredField()));
-								}
-							}
-							p.uses.addAll(elements);							
-//							p.uses.add(new FieldElement(bb.getMethod().getDeclaringClass().getReference(), gi.getDeclaredField().getSignature()));
-//							p.uses.addAll(CodeElement.valueElements(pa, bb.getNode(), instruction.getUse(i)));
+						
+						PointerKey pk;
+						FieldReference declaredField = gi.getDeclaredField();
+                        if ( gi.isStatic()) {
+						    IField staticField =
+                                    getStaticIField(ch, declaredField);
 
+						    pk = new StaticFieldKey(staticField);
+						} else {
+						    int valueNumber = instruction.getUse(0);
+						    pk = new LocalPointerKey(bb.getNode(), valueNumber);
 						}
+						
+						Set<CodeElement> elements = new HashSet<CodeElement>();
+						OrdinalSet<InstanceKey> m = pa.getPointsToSet(pk);
+						if(m != null) {
+							for(Iterator<InstanceKey> keyIter = m.iterator();keyIter.hasNext();) {
+								elements.add(
+								        new FieldElement(keyIter.next(), declaredField));
+							}
+						}
+						p.uses.addAll(elements);
 						//getinstruction only has 1 def
 						p.defs.add(new LocalElement(instruction.getDef(0)));
 					}
@@ -202,30 +211,28 @@ implements IFlowFunctionMap<BasicBlockInContext<E>> {
 				else if (outFlow(instruction)) {
 					if (instruction instanceof SSAPutInstruction) {
 						SSAPutInstruction pi = (SSAPutInstruction)instruction;
-						for (int i = 1; i < instruction.getNumberOfUses(); i++) {
-							//System.out.println("Found SSAPutInstruction Use of: " + instruction.getUse(i));
-							p.uses.addAll(CodeElement.valueElements(pa, bb.getNode(), instruction.getUse(i)));
-						}
-						if (instruction.getNumberOfUses() > 0) {
-							//Use commented out code if we want to use FieldElement instead of InstanceKeyElement
-//							System.out.println("Found SSAPutInstruction Def of: " + instruction.getUse(0));
+						PointerKey pk;
+
+						Set<CodeElement> elements = new HashSet<CodeElement>();
+						if (pi.isStatic()) {
+						    p.uses.addAll(CodeElement.valueElements(pa, bb.getNode(), instruction.getUse(0)));
+						    FieldReference declaredField = pi.getDeclaredField();
+                            IField staticField = getStaticIField(ch, declaredField);
+						    pk = new StaticFieldKey(staticField);
+						} else {
+						    p.uses.addAll(CodeElement.valueElements(pa, bb.getNode(), instruction.getUse(1)));
 							int valueNumber = instruction.getUse(0);
-							Set<CodeElement> elements = new HashSet<CodeElement>();
-//							elements.add(new LocalElement(valueNumber));
-							PointerKey pk = new LocalPointerKey(bb.getNode(), valueNumber);
-							OrdinalSet<InstanceKey> m = pa.getPointsToSet(pk);
-							if(m != null) {
-								for(Iterator<InstanceKey> keyIter = m.iterator();keyIter.hasNext();) {
-//									System.out.println("Adding Put element "+ pi.getDeclaredField().getSignature());
-
-									elements.add(new FieldElement(keyIter.next(), pi.getDeclaredField()));
-								}
-							}
-							p.defs.addAll(elements);
-//							p.defs.add(new FieldElement(bb.getMethod().getDeclaringClass().getReference(), pi.getDeclaredField().getSignature()));
-//							p.defs.addAll(CodeElement.valueElements(pa, bb.getNode(), instruction.getUse(0)));
-
-						}
+							pk = new LocalPointerKey(bb.getNode(), valueNumber);
+						}	
+                        OrdinalSet<InstanceKey> m = pa.getPointsToSet(pk);
+                        if (m != null) {
+                            for (Iterator<InstanceKey> keyIter = m.iterator(); keyIter
+                                    .hasNext();) {
+                                elements.add(new FieldElement(keyIter.next(),
+                                        pi.getDeclaredField()));
+                            }
+                        }
+						p.defs.addAll(elements);
 					}
 					else if (instruction instanceof SSAArrayStoreInstruction){						
 						p.uses.addAll(CodeElement.valueElements(pa, bb.getNode(), instruction.getUse(2)));
@@ -264,6 +271,20 @@ implements IFlowFunctionMap<BasicBlockInContext<E>> {
 				useToDefList.add(p);
 			}
 		}
+
+        private IField getStaticIField(IClassHierarchy ch,
+                FieldReference declaredField) {
+            TypeReference staticTypeRef = declaredField.getDeclaringClass();
+            Set<IClass> classes = ch.getImplementors(staticTypeRef);
+            
+            assert classes.size() == 1 : 
+                "Too many classes found for static ref.";
+            
+            IClass staticClass = classes.iterator().next();
+            IField staticField = 
+                    staticClass.getField(declaredField.getName());
+            return staticField;
+        }
 
 		void addTargets(CodeElement d1, BitVectorIntSet set, FlowType taintType)
 		{
