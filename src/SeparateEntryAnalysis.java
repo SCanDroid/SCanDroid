@@ -43,6 +43,7 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
 
+import synthMethod.MethodAnalysis;
 import synthMethod.XMLMethodSummaryWriter;
 import util.AndroidAppLoader;
 import util.CLI;
@@ -52,6 +53,7 @@ import com.ibm.wala.ipa.callgraph.CGNode;
 import com.ibm.wala.ipa.callgraph.Entrypoint;
 import com.ibm.wala.ipa.callgraph.propagation.InstanceKey;
 import com.ibm.wala.ipa.cfg.BasicBlockInContext;
+import com.ibm.wala.ssa.ISSABasicBlock;
 import com.ibm.wala.ssa.SSAInstruction;
 import com.ibm.wala.ssa.analysis.IExplodedBasicBlock;
 import com.ibm.wala.util.CancelException;
@@ -71,8 +73,12 @@ public class SeparateEntryAnalysis {
         System.out.println("Loading app.");
         AndroidAppLoader<IExplodedBasicBlock> loader =
                 new AndroidAppLoader<IExplodedBasicBlock>(CLI.getClasspath());
-        if (loader.entries == null || loader.entries.size() == 0)
+        if (loader.entries == null || loader.entries.size() == 0) {
             throw new IOException("No Entrypoints Detected!");
+        }
+        MethodAnalysis<IExplodedBasicBlock> methodAnalysis =
+           new MethodAnalysis<IExplodedBasicBlock>();
+        
         if(CLI.hasOption("separate-entries")) {
             int i = 1;
             for (Entrypoint entry : loader.entries) {
@@ -80,17 +86,19 @@ public class SeparateEntryAnalysis {
                         loader.entries.size() + ": " + entry);
                 LinkedList<Entrypoint> localEntries = new LinkedList<Entrypoint>();
                 localEntries.add(entry);
-                analyze(loader, localEntries);
+                analyze(loader, localEntries, methodAnalysis);
                 i++;
             }
         } else {
-            analyze(loader, loader.entries);
-            XMLMethodSummaryWriter.createXML();
+            analyze(loader, loader.entries, methodAnalysis);
+            XMLMethodSummaryWriter.createXML(methodAnalysis);
         }
     }
 
-    static void analyze(AndroidAppLoader<IExplodedBasicBlock> loader,
-                 LinkedList<Entrypoint> localEntries) {
+    static void 
+        analyze(AndroidAppLoader<IExplodedBasicBlock> loader,
+                 LinkedList<Entrypoint> localEntries, 
+                 MethodAnalysis<IExplodedBasicBlock> methodAnalysis) {
         try {
             loader.buildGraphs(localEntries);
     		// load the permissions
@@ -113,8 +121,8 @@ public class SeparateEntryAnalysis {
                        
             System.out.println("Running flow analysis.");
             IFDSTaintDomain<IExplodedBasicBlock> domain = new IFDSTaintDomain<IExplodedBasicBlock>();
-            TabulationResult<BasicBlockInContext<IExplodedBasicBlock>, CGNode, DomainElement> flowResult = FlowAnalysis
-                    .analyze(loader, initialTaints, domain);
+            TabulationResult<BasicBlockInContext<IExplodedBasicBlock>, CGNode, DomainElement> 
+              flowResult = FlowAnalysis.analyze(loader, initialTaints, domain, methodAnalysis);
 
             System.out.println("Running outflow analysis.");
             Map<FlowType, Set<FlowType>> permissionOutflow = OutflowAnalysis

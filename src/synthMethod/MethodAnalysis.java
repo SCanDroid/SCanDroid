@@ -96,35 +96,31 @@ import flow.types.FlowType;
 import flow.types.ParameterFlow;
 
 
-public class MethodAnalysis {
-	public static final Map<IMethod, Map<FlowType, Set<CodeElement>>> newSummaries = new HashMap<IMethod, Map<FlowType, Set<CodeElement>>>();
-	public static final Map<IMethod, Map<Integer, OrdinalSet<InstanceKey>>> methodTaints = new HashMap<IMethod, Map<Integer, OrdinalSet<InstanceKey>>>();
+public class MethodAnalysis <E extends ISSABasicBlock>  {
+	public final Map<IMethod, Map<FlowType, Set<CodeElement>>> newSummaries =
+	        new HashMap<IMethod, Map<FlowType, Set<CodeElement>>>();
+	public final Map<IMethod, Map<Integer, OrdinalSet<InstanceKey>>> methodTaints = 
+	        new HashMap<IMethod, Map<Integer, OrdinalSet<InstanceKey>>>();
 	
-//	public static <E extends ISSABasicBlock> TabulationResult<BasicBlockInContext<E>, CGNode, DomainElement> analyze(IFDSTaintDomain<E> d, 
-//			final ISupergraph<BasicBlockInContext<E>, CGNode> graph, PointerAnalysis pa, XMLMethodSummaryReader methodSummaryReader,
-//			BasicBlockInContext<E> callerBlock, BasicBlockInContext<E> methEntryBlock) throws CancelRuntimeException {
-	public static <E extends ISSABasicBlock> void analyze(
-			final ISupergraph<BasicBlockInContext<E>, CGNode> graph,
-			final PointerAnalysis pa,
-			final BasicBlockInContext<E> methEntryBlock // TODO make this into a node or IMethod
-			) throws CancelRuntimeException {
+	public void analyze(
+            final ISupergraph<BasicBlockInContext<E>, CGNode> graph,
+            final PointerAnalysis pa,
+            final BasicBlockInContext<E> methEntryBlock // TODO make this into a node or IMethod
+            ) throws CancelRuntimeException {
 
-	    final IFDSTaintDomain<E> domain = new IFDSTaintDomain<E>();
-	    
-		IMethod entryMethod = methEntryBlock.getMethod();
-		
+        final IFDSTaintDomain<E> domain = new IFDSTaintDomain<E>();
+    
+        IMethod entryMethod = methEntryBlock.getMethod();
+
 		if (newSummaries.containsKey(entryMethod)) {
 			return;
 		}
-		
+
 		Map<FlowType, Set<CodeElement>> methodFlows = new HashMap<FlowType, Set<CodeElement>>();
 		newSummaries.put(entryMethod, methodFlows);
 
 		Map<Integer, OrdinalSet<InstanceKey>> pTaintIKMap = new HashMap<Integer, OrdinalSet<InstanceKey>> ();
 		methodTaints.put(entryMethod, pTaintIKMap);
-		
-		
-		//SSAInvokeInstruction invInst = (SSAInvokeInstruction)callerBlock.getLastInstruction();
 
 		final ArrayList<PathEdge<BasicBlockInContext<E>>>
 		         initialEdges = new ArrayList();
@@ -153,19 +149,25 @@ public class MethodAnalysis {
 			initialEdges.add(PathEdge.createPathEdge(methEntryBlock, 0, methEntryBlock, 
 					domain.getMappedIndex(de)));
 		}
-		
-		//Also taint all field elements
+
+		// Also taint all field elements
 		for (IField myField : entryMethod.getDeclaringClass().getAllFields()) {
 		    PointerKey pk;
-		    if (entryMethod.isStatic()) {
+		    if (myField.isStatic()) {
 		        pk = new StaticFieldKey(myField);
-		    } else {
+		    } else if (!entryMethod.isStatic()) {
 		        pk = new LocalPointerKey(methEntryBlock.getNode(),
 		                methEntryBlock.getNode().getIR().getParameter(0));
+		    } else {
+		        /* do nothing if the method is static and the field is not --
+		         * static methods can't access non-static fields.
+		         */
+		        continue;
 		    }
 		    
 		    for (InstanceKey ik: pa.getPointsToSet(pk)) {
-				DomainElement de = new DomainElement(new FieldElement(ik, myField.getReference()), 
+				DomainElement de = new DomainElement(
+				        new FieldElement(ik, myField.getReference()), 
 						new FieldFlow(myField.getReference()));
 				initialTaints.add(de);
 				initialEdges.add(PathEdge.createPathEdge(methEntryBlock, 0, methEntryBlock, 
@@ -175,7 +177,7 @@ public class MethodAnalysis {
 		}
 
 		final IFlowFunctionMap<BasicBlockInContext<E>> functionMap =
-				new IFDSTaintFlowFunctionProvider<E>(domain, graph, pa);
+				new IFDSTaintFlowFunctionProvider<E>(domain, graph, pa, this);
 
 		final TabulationProblem<BasicBlockInContext<E>, CGNode, DomainElement>
 		   problem =

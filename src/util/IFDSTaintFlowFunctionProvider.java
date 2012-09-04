@@ -94,13 +94,17 @@ implements IFlowFunctionMap<BasicBlockInContext<E>> {
 	private final IFDSTaintDomain<E> domain;
 	private final ISupergraph<BasicBlockInContext<E>,CGNode> graph;
 	private final PointerAnalysis pa;
+	private final MethodAnalysis<E> methodAnalysis;
 
 	public IFDSTaintFlowFunctionProvider(IFDSTaintDomain<E> domain,
-			ISupergraph<BasicBlockInContext<E>, CGNode> graph, PointerAnalysis pa)
+			ISupergraph<BasicBlockInContext<E>, CGNode> graph, 
+			PointerAnalysis pa,
+			MethodAnalysis<E> methodAnalysis)
 	{
 		this.domain = domain;
 		this.graph = graph;
 		this.pa = pa;
+		this.methodAnalysis = methodAnalysis;
 	}
 
 	// instruction has a valid def set
@@ -325,7 +329,7 @@ implements IFlowFunctionMap<BasicBlockInContext<E>> {
 		    && LoaderUtils.fromLoader(dest.getNode(), ClassLoaderReference.Primordial)) {
 		    
             MyLogger.log(DEBUG,"Primordial and No Summary! (getCallFlowFunction) - " + dest.getMethod().getReference());
-            MethodAnalysis.analyze(graph, pa, dest);
+            methodAnalysis.analyze(graph, pa, dest);
             dest.getMethod().isSynthetic();
 		}
 		

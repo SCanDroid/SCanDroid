@@ -49,6 +49,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import synthMethod.MethodAnalysis;
 import util.AndroidAppLoader;
 import util.CLI;
 import util.GraphUtil;
@@ -77,11 +78,14 @@ import flow.types.FlowType;
 
 public class FlowAnalysis {
 
-    public static <E extends ISSABasicBlock> TabulationResult<BasicBlockInContext<E>,
-                                   CGNode, DomainElement> analyze(
-            final AndroidAppLoader<E> loader,
-            Map<BasicBlockInContext<E>,Map<FlowType,Set<CodeElement>>> initialTaints,
-            IFDSTaintDomain<E> d) throws CancelRuntimeException {
+    public static <E extends ISSABasicBlock>
+      TabulationResult<BasicBlockInContext<E>, CGNode, DomainElement> 
+      analyze(final AndroidAppLoader<E> loader,
+            Map<BasicBlockInContext<E>,
+            Map<FlowType,Set<CodeElement>>> initialTaints,
+            IFDSTaintDomain<E> d,
+            MethodAnalysis<E> methodAnalysis
+            ) throws CancelRuntimeException {
 
         System.out.println("*************************");
         System.out.println("* Running flow analysis *");
@@ -116,7 +120,7 @@ public class FlowAnalysis {
         }
 
         final IFlowFunctionMap<BasicBlockInContext<E>> functionMap =
-            new IFDSTaintFlowFunctionProvider<E>(domain, loader.graph, loader.pa);
+            new IFDSTaintFlowFunctionProvider<E>(domain, loader.graph, loader.pa, methodAnalysis);
         
         final TabulationProblem<BasicBlockInContext<E>, CGNode, DomainElement>
           problem =

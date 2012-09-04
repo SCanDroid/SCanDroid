@@ -34,6 +34,7 @@ import org.w3c.dom.NodeList;
 import com.ibm.wala.classLoader.IClass;
 import com.ibm.wala.classLoader.IMethod;
 import com.ibm.wala.ipa.callgraph.propagation.InstanceKey;
+import com.ibm.wala.ssa.analysis.IExplodedBasicBlock;
 import com.ibm.wala.util.intset.OrdinalSet;
 
 import domain.CodeElement;
@@ -154,10 +155,11 @@ public class XMLMethodSummaryWriter {
 		
 	}
 	
-	public static void createXML() {
+	public static void createXML(MethodAnalysis<IExplodedBasicBlock> methodAnalysis) {
 		try {
-			if (MethodAnalysis.newSummaries.isEmpty())
+			if (methodAnalysis.newSummaries.isEmpty()) {
 				return;
+			}
 			
 			DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
 			DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
@@ -170,14 +172,14 @@ public class XMLMethodSummaryWriter {
 			doc.appendChild(rootElement);
 						
 
-			for (Entry<IMethod, Map<FlowType, Set<CodeElement>>> imE:MethodAnalysis.newSummaries.entrySet()) {
+			for (Entry<IMethod, Map<FlowType, Set<CodeElement>>> imE:methodAnalysis.newSummaries.entrySet()) {
 				IMethod im = imE.getKey();				
 				Element mE = getMethodElement(doc, xpath, im, rootElement);
 				if (im.isStatic())
 					mE.setAttribute(A_STATIC, V_TRUE);
 											
 				for (Entry<FlowType, Set<CodeElement>> ftE:imE.getValue().entrySet()) {
-					addFlowsToMethod(doc, mE, ftE, buildIKParamMap(im));
+					addFlowsToMethod(doc, mE, ftE, buildIKParamMap(im, methodAnalysis));
 				}
 				
 			}
@@ -203,9 +205,10 @@ public class XMLMethodSummaryWriter {
 		}
 	}
 	
-	private static Map<InstanceKey, Set<Integer>> buildIKParamMap(IMethod im) {
+	private static Map<InstanceKey, Set<Integer>> buildIKParamMap(IMethod im,
+                           MethodAnalysis<IExplodedBasicBlock> methodAnalysis) {
 		Map<InstanceKey, Set<Integer>> IKMap = new HashMap<InstanceKey, Set<Integer>>();
-		for (Entry<Integer, OrdinalSet<InstanceKey>> entry:MethodAnalysis.methodTaints.get(im).entrySet()) {
+		for (Entry<Integer, OrdinalSet<InstanceKey>> entry:methodAnalysis.methodTaints.get(im).entrySet()) {
 			for (InstanceKey ik:entry.getValue()) {
 				Set<Integer> intSet = IKMap.get(ik);
 				if (intSet == null) {
