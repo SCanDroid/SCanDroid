@@ -210,7 +210,7 @@ public class StringPrefixAnalysis {
                 (ISupergraph) ICFGSupergraph.make(pcg, cache);
 
         //    pdfGraph(graph, "supergraph");
-        final IFlowFunctionMap<BasicBlockInContext<IExplodedBasicBlock>> functionMap = new IFDSTaintFlowFunctionProvider(domain, graph, pa, null);
+        final IFlowFunctionMap<BasicBlockInContext<IExplodedBasicBlock>> functionMap = new IFDSTaintFlowFunctionProvider(domain, graph, pa);
 
         TabulationProblem<BasicBlockInContext<IExplodedBasicBlock>,CGNode,DomainElement> problem = new TabulationProblem<BasicBlockInContext<IExplodedBasicBlock>,CGNode,DomainElement>() {
 

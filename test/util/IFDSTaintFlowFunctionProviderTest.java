@@ -19,10 +19,10 @@ public class IFDSTaintFlowFunctionProviderTest {
 
     @Test
     public final void test() {
-        IFDSTaintFlowFunctionProvider<ISSABasicBlock> fnProvider =
+/*        IFDSTaintFlowFunctionProvider<ISSABasicBlock> fnProvider =
                 new IFDSTaintFlowFunctionProvider<ISSABasicBlock>(null, null, null);
         
-        fnProvider.getNormalFlowFunction(null, null);
+        fnProvider.getNormalFlowFunction(null, null);*/
         fail("not yet implemented");
     }
 

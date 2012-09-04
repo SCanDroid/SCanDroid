@@ -230,7 +230,7 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
 			@Override
 			//CallGraph composed of APK nodes
 			public boolean test(CGNode node) {
-				return fromLoader(node, ClassLoaderReference.Application);
+				return LoaderUtils.fromLoader(node, ClassLoaderReference.Application);
 			}        
         });
 
@@ -252,19 +252,19 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
             @Override
             public boolean test(CGNode node) {
                 //Node in APK
-                if (fromLoader(node, ClassLoaderReference.Application)) {
+                if (LoaderUtils.fromLoader(node, ClassLoaderReference.Application)) {
                 	return true;
                 } else {
                     Iterator<CGNode> n = cg.getPredNodes(node);
                     while(n.hasNext()) {
                     	//Primordial node has a successor in APK
-                        if (fromLoader(n.next(), ClassLoaderReference.Application))
+                        if (LoaderUtils.fromLoader(n.next(), ClassLoaderReference.Application))
                             return true;
                     }
                     n = cg.getSuccNodes(node);
                     while(n.hasNext()) {
                     	//Primordial node has a predecessor in APK
-                        if (fromLoader(n.next(), ClassLoaderReference.Application))
+                        if (LoaderUtils.fromLoader(n.next(), ClassLoaderReference.Application))
                             return true;
                     }
                     //Primordial node with no direct successors or predecessors to APK code
@@ -278,25 +278,25 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
             @Override
             public boolean test(CGNode node) {
                 
-                if (fromLoader(node, ClassLoaderReference.Primordial)) {
+                if (LoaderUtils.fromLoader(node, ClassLoaderReference.Primordial)) {
                     Iterator<CGNode> succs = cg.getSuccNodes(node);
                     while(succs.hasNext()) {
                         CGNode n = succs.next();
                     
-                        if (fromLoader(n, ClassLoaderReference.Application)) {
+                        if (LoaderUtils.fromLoader(n, ClassLoaderReference.Application)) {
                             return true;
                         }
                     }
                     // Primordial method, with no link to APK code:
                     return false;
-                } else if (fromLoader(node, ClassLoaderReference.Application)) {
+                } else if (LoaderUtils.fromLoader(node, ClassLoaderReference.Application)) {
                     // see if this is an APK method that was 
                     // invoked by a Primordial method:
                     Iterator<CGNode> preds = cg.getPredNodes(node);
                     while(preds.hasNext()) {
                         CGNode n = preds.next();
                     
-                        if (fromLoader(n, ClassLoaderReference.Primordial)) {
+                        if (LoaderUtils.fromLoader(n, ClassLoaderReference.Primordial)) {
                             return true;
                         }
                     }
@@ -339,14 +339,7 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
         }
     }
     
-    static boolean fromLoader(CGNode node, ClassLoaderReference clr) {
-        IClass declClass = node.getMethod().getDeclaringClass();
 
-        ClassLoaderReference nodeClRef =
-                declClass.getClassLoader().getReference();
-
-        return nodeClRef.equals(clr);
-    }
     
     public static SSAPropagationCallGraphBuilder makeVanillaZeroOneCFABuilder(AnalysisOptions options, AnalysisCache cache,
     		IClassHierarchy cha, AnalysisScope scope, ContextSelector customSelector, SSAContextInterpreter customInterpreter) {

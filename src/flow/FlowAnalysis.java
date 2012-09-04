@@ -116,7 +116,7 @@ public class FlowAnalysis {
         }
 
         final IFlowFunctionMap<BasicBlockInContext<E>> functionMap =
-            new IFDSTaintFlowFunctionProvider<E>(domain, loader.graph, loader.pa, loader.methodSummaryReader);
+            new IFDSTaintFlowFunctionProvider<E>(domain, loader.graph, loader.pa);
         
         final TabulationProblem<BasicBlockInContext<E>, CGNode, DomainElement>
           problem =

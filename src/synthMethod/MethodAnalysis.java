@@ -103,15 +103,20 @@ public class MethodAnalysis {
 //	public static <E extends ISSABasicBlock> TabulationResult<BasicBlockInContext<E>, CGNode, DomainElement> analyze(IFDSTaintDomain<E> d, 
 //			final ISupergraph<BasicBlockInContext<E>, CGNode> graph, PointerAnalysis pa, XMLMethodSummaryReader methodSummaryReader,
 //			BasicBlockInContext<E> callerBlock, BasicBlockInContext<E> methEntryBlock) throws CancelRuntimeException {
-	public static <E extends ISSABasicBlock> void analyze(IFDSTaintDomain<E> d, 
-			final ISupergraph<BasicBlockInContext<E>, CGNode> graph, PointerAnalysis pa, XMLMethodSummaryReader methodSummaryReader,
-			BasicBlockInContext<E> callerBlock, BasicBlockInContext<E> methEntryBlock) throws CancelRuntimeException {
+	public static <E extends ISSABasicBlock> void analyze(
+			final ISupergraph<BasicBlockInContext<E>, CGNode> graph,
+			final PointerAnalysis pa,
+			final BasicBlockInContext<E> methEntryBlock // TODO make this into a node or IMethod
+			) throws CancelRuntimeException {
 
-		assert(callerBlock.getLastInstruction() instanceof SSAInvokeInstruction);
+	    final IFDSTaintDomain<E> domain = new IFDSTaintDomain<E>();
+	    
 		IMethod entryMethod = methEntryBlock.getMethod();
 		
-		if (newSummaries.containsKey(entryMethod))
+		if (newSummaries.containsKey(entryMethod)) {
 			return;
+		}
+		
 		Map<FlowType, Set<CodeElement>> methodFlows = new HashMap<FlowType, Set<CodeElement>>();
 		newSummaries.put(entryMethod, methodFlows);
 
@@ -119,40 +124,47 @@ public class MethodAnalysis {
 		methodTaints.put(entryMethod, pTaintIKMap);
 		
 		
-		SSAInvokeInstruction invInst = (SSAInvokeInstruction)callerBlock.getLastInstruction();
-
-		final IFDSTaintDomain<E> domain = d;
+		//SSAInvokeInstruction invInst = (SSAInvokeInstruction)callerBlock.getLastInstruction();
 
 		final ArrayList<PathEdge<BasicBlockInContext<E>>>
-		initialEdges = new ArrayList();
+		         initialEdges = new ArrayList();
 		
 		Set<DomainElement> initialTaints = new HashSet<DomainElement> ();
 
-		//Add PathEdges to the initial taints.  In this case, taint all parameters into the method call
+		// Add PathEdges to the initial taints.  
+		// In this case, taint all parameters into the method call
 		for (int i = 0; i < entryMethod.getNumberOfParameters(); i++) {
 //			int id = entryMethod.isStatic()?i:i+1;
 
-			DomainElement de = new DomainElement(new LocalElement(i+1), new ParameterFlow(entryMethod.getReference(),
-					i));
-			pTaintIKMap.put(i, pa.getPointsToSet(new LocalPointerKey(callerBlock.getNode(), invInst.getUse(i))));
-							
+			DomainElement de = new DomainElement(new LocalElement(i+1),
+			                         new ParameterFlow(entryMethod.getReference(),
+					                 i));
+			
+			OrdinalSet<InstanceKey> pointsToSet = 
+			        pa.getPointsToSet(
+			                new LocalPointerKey(methEntryBlock.getNode(),
+			                        methEntryBlock.getNode().getIR().getParameter(i)
+			                        ));
+                			//new LocalPointerKey(callerBlock.getNode(), invInst.getUse(i)));
+            pTaintIKMap.put(i, pointsToSet);
+			
 //							CodeElement.valueElements(pa, methEntryBlock.getNode(), invInst.getUse(i))));
 			initialTaints.add(de);			
 			initialEdges.add(PathEdge.createPathEdge(methEntryBlock, 0, methEntryBlock, 
 					domain.getMappedIndex(de)));
 		}
+		
 		//Also taint all field elements
 		for (IField myField : entryMethod.getDeclaringClass().getAllFields()) {
-			PointerKey pk = entryMethod.isStatic()?new StaticFieldKey(myField):
-				new LocalPointerKey(callerBlock.getNode(), invInst.getUse(0));
-//			for (InstanceKey ik: pa.getPointsToSet(new LocalPointerKey(methEntryBlock.getNode(), invInst.getUse(0)))) {
-			for (InstanceKey ik: pa.getPointsToSet(pk)) {
-				//			DomainElement de = new DomainElement(new FieldElement())
-				//			DomainElement de = new DomainElement(new FieldElement(entryMethod.getDeclaringClass().getReference(),
-				//					myField.getReference().getSignature()),
-				//					new FieldFlow(entryMethod.getDeclaringClass().getReference(),
-				//							myField.getReference().getSignature()));
-
+		    PointerKey pk;
+		    if (entryMethod.isStatic()) {
+		        pk = new StaticFieldKey(myField);
+		    } else {
+		        pk = new LocalPointerKey(methEntryBlock.getNode(),
+		                methEntryBlock.getNode().getIR().getParameter(0));
+		    }
+		    
+		    for (InstanceKey ik: pa.getPointsToSet(pk)) {
 				DomainElement de = new DomainElement(new FieldElement(ik, myField.getReference()), 
 						new FieldFlow(myField.getReference()));
 				initialTaints.add(de);
@@ -162,14 +174,12 @@ public class MethodAnalysis {
 			
 		}
 
-
-
 		final IFlowFunctionMap<BasicBlockInContext<E>> functionMap =
-				new IFDSTaintFlowFunctionProvider<E>(domain, graph, pa, methodSummaryReader);
+				new IFDSTaintFlowFunctionProvider<E>(domain, graph, pa);
 
 		final TabulationProblem<BasicBlockInContext<E>, CGNode, DomainElement>
-		problem =
-		new TabulationProblem<BasicBlockInContext<E>, CGNode, DomainElement>() {
+		   problem =
+		     new TabulationProblem<BasicBlockInContext<E>, CGNode, DomainElement>() {
 
 			public TabulationDomain<DomainElement, BasicBlockInContext<E>> getDomain() {
 				return domain;
@@ -237,14 +247,17 @@ public class MethodAnalysis {
 			for (IntIterator intI = exitResults.intIterator(); intI.hasNext();) {
 				int i = intI.next();
 				DomainElement de = domain.getMappedObject(i);
-				if (initialTaints.contains(de))
+				if (initialTaints.contains(de)) {
 					continue;
+				}
 				assert (de!=null);
+				
 				if (de.codeElement instanceof FieldElement) {
+				    // TODO make sure this covers static fields too.
+				    
 					MyLogger.log(DEBUG,de.taintSource +" FLOWS into FIELD " + de.codeElement);
 					addToFlow(de.taintSource, de.codeElement, methodFlows);
-				}
-				else if (de.codeElement instanceof ReturnElement) {
+				} else if (de.codeElement instanceof ReturnElement) {
 					MyLogger.log(DEBUG,de.taintSource + " FLOWS into RETURNELEMENT " + de.codeElement);
 					addToFlow(de.taintSource, de.codeElement, methodFlows);
 				}

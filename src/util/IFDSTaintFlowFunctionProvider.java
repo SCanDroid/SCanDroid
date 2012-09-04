@@ -88,16 +88,13 @@ implements IFlowFunctionMap<BasicBlockInContext<E>> {
 	private final IFDSTaintDomain<E> domain;
 	private final ISupergraph<BasicBlockInContext<E>,CGNode> graph;
 	private final PointerAnalysis pa;
-	private final XMLMethodSummaryReader methodSummaryReader;
 
 	public IFDSTaintFlowFunctionProvider(IFDSTaintDomain<E> domain,
-			ISupergraph<BasicBlockInContext<E>, CGNode> graph, PointerAnalysis pa, XMLMethodSummaryReader msr)
+			ISupergraph<BasicBlockInContext<E>, CGNode> graph, PointerAnalysis pa)
 	{
 		this.domain = domain;
 		this.graph = graph;
 		this.pa = pa;
-//		this.methodSummaryReader = methodSummaryReader;
-		this.methodSummaryReader = msr;
 	}
 
 	// instruction has a valid def set
@@ -303,14 +300,14 @@ implements IFlowFunctionMap<BasicBlockInContext<E>> {
 
 		final SSAInvokeInstruction instruction = (SSAInvokeInstruction) src.getLastInstruction();
 
-//		System.out.println("Call to method inside call graph src target: " + instruction.getDeclaredTarget());
-//		System.out.println("Call to method inside call graph dest node : " + dest.getNode().getMethod().getReference());
-		if (instruction.getDeclaredTarget().getDeclaringClass().getClassLoader().equals(ClassLoaderReference.Primordial) &&
-				!methodSummaryReader.getSummaries().containsKey(dest.getMethod().getReference())) {
-//		if (true) {
+		if (! dest.getMethod().isSynthetic() 
+		    && LoaderUtils.fromLoader(dest.getNode(), ClassLoaderReference.Primordial)) {
+		    
             MyLogger.log(DEBUG,"Primordial and No Summary! (getCallFlowFunction) - " + dest.getMethod().getReference());
-            MethodAnalysis.analyze(new IFDSTaintDomain<E>(), graph, pa, methodSummaryReader, src, dest);
+            MethodAnalysis.analyze(graph, pa, dest);
+            dest.getMethod().isSynthetic();
 		}
+		
 
 		final Map<CodeElement,CodeElement> parameterMap = new HashMap<CodeElement,CodeElement>();
 		for (int i = 0; i < instruction.getNumberOfParameters(); i++) {
@@ -347,13 +344,6 @@ implements IFlowFunctionMap<BasicBlockInContext<E>> {
 		assert (src.getNode().equals(dest.getNode()));
 		
 		final SSAInvokeInstruction instruction = (SSAInvokeInstruction) src.getLastInstruction();
-		
-		if (instruction.getDeclaredTarget().getDeclaringClass().getClassLoader().equals(ClassLoaderReference.Primordial) &&
-				!methodSummaryReader.getSummaries().containsKey(instruction.getDeclaredTarget())) {
-            MyLogger.log(DEBUG,"Primordial and No Summary! (getCallNoneToReturnFlowFunction) - " + instruction.getDeclaredTarget());
-		}
-		
-		
 
 		System.out.println("call to return(no callee) method inside call graph: " + src.getNode()+"--" + instruction.getDeclaredTarget());
 		return new DefUse(dest);
