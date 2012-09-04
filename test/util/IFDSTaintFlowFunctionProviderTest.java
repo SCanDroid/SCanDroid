@@ -7,6 +7,7 @@ package util;
 
 import static org.junit.Assert.*;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.ibm.wala.ssa.ISSABasicBlock;
@@ -17,7 +18,7 @@ import com.ibm.wala.ssa.ISSABasicBlock;
  */
 public class IFDSTaintFlowFunctionProviderTest {
 
-    @Test
+    @Test @Ignore("not implemented")
     public final void test() {
 /*        IFDSTaintFlowFunctionProvider<ISSABasicBlock> fnProvider =
                 new IFDSTaintFlowFunctionProvider<ISSABasicBlock>(null, null, null);

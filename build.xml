@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <project basedir="." default="build" name="SimpleAnalysisPluginLibDexLib">
     <property environment="env"/>
-    <property name="HOME" value="."/>
+    <property name="HOME" value="${basedir}"/>
     <property name="LIBS" value="${HOME}/lib"/>
     <property name="WALA" value="${HOME}/wala"/>
     <property name="debuglevel" value="source,lines,vars"/>
@@ -13,6 +13,7 @@
 
     <path id="SimpleAnalysisPlugin.classpath">
         <pathelement location="bin"/>
+    	<pathelement location="${basedir}" />
 <!--        <pathelement location="${LIBS}/android_modeled2.jar"/> -->
         <pathelement location="${WALA}/wala_cast.jar"/>
         <pathelement location="${WALA}/wala_cast_java.jar"/>
@@ -189,7 +190,7 @@
     </target>
 
     <target name="test" depends="build, build-tests">
-        <junit haltonerror="false" haltonfailure="false" fork="yes">
+        <junit haltonerror="false" haltonfailure="false" fork="no">
         	<!-- Use the basic SCanDroid classpath: -->
             <classpath refid="SimpleAnalysisPlugin.classpath"/>
         	

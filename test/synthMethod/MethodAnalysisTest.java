@@ -11,6 +11,8 @@ import java.util.List;
 
 import org.junit.Test;
 
+import util.LoaderUtils;
+
 import com.ibm.wala.classLoader.IClass;
 import com.ibm.wala.classLoader.IMethod;
 import com.ibm.wala.dataflow.IFDS.ICFGSupergraph;
@@ -31,17 +33,20 @@ import com.ibm.wala.ipa.cha.ClassHierarchy;
 import com.ibm.wala.ipa.cha.ClassHierarchyException;
 import com.ibm.wala.ssa.ISSABasicBlock;
 import com.ibm.wala.ssa.analysis.IExplodedBasicBlock;
+import com.ibm.wala.types.ClassLoaderReference;
 import com.ibm.wala.util.config.AnalysisScopeReader;
 
 public class MethodAnalysisTest {
 
-    MethodAnalysis methodAnalysis = null;
+    
     
     @Test
     public final void test() 
             throws IllegalArgumentException, CallGraphBuilderCancelException,
             IOException, ClassHierarchyException {
+        MethodAnalysis methodAnalysis = new MethodAnalysis();
         String appJar = "/home/creswick/development/fuse/dev/trivialJar1/target/trivialJar1-1.0-SNAPSHOT.jar";
+        
         AnalysisScope scope = DexAnalysisScopeReader.makeAndroidBinaryAnalysisScope(appJar, 
                 new File("conf/Java60RegressionExclusions.txt"));
         ClassHierarchy cha = ClassHierarchy.make(scope);
@@ -50,15 +55,14 @@ public class MethodAnalysisTest {
         for (IClass iClass : cha) {
             for (Iterator<IMethod> itr = iClass.getAllMethods().iterator(); itr.hasNext();) {
                 IMethod iMethod = (IMethod) itr.next();
-                entrypoints.add(new DefaultEntrypoint(iMethod, cha));
+                
+                if ( LoaderUtils.fromLoader(iMethod, ClassLoaderReference.Application) ) {
+                    entrypoints.add(new DefaultEntrypoint(iMethod, cha));
+                }
             }
         }
         
         AnalysisOptions options = new AnalysisOptions(scope, entrypoints);
-
-        // //
-        // build the call graph
-        // //
         CallGraphBuilder builder = 
                 Util.makeVanillaZeroOneCFABuilder(options, new AnalysisCache(), cha, scope);
         CallGraph cg = builder.makeCallGraph(options, null);
@@ -78,5 +82,8 @@ public class MethodAnalysisTest {
                         entriesForProcedure[i]);
             };
         }
+        
+        
+        XMLMethodSummaryWriter.createXML(methodAnalysis);
     }
 }
