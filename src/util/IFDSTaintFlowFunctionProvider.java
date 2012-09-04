@@ -305,10 +305,10 @@ implements IFlowFunctionMap<BasicBlockInContext<E>> {
 
 //		System.out.println("Call to method inside call graph src target: " + instruction.getDeclaredTarget());
 //		System.out.println("Call to method inside call graph dest node : " + dest.getNode().getMethod().getReference());
-//		if (instruction.getDeclaredTarget().getDeclaringClass().getClassLoader().equals(ClassLoaderReference.Primordial) &&
-//				!methodSummaryReader.getSummaries().containsKey(instruction.getDeclaredTarget())) {
-		if (true) {
-            MyLogger.log(DEBUG,"Primordial and No Summary! (getCallFlowFunction) - " + instruction.getDeclaredTarget());
+		if (instruction.getDeclaredTarget().getDeclaringClass().getClassLoader().equals(ClassLoaderReference.Primordial) &&
+				!methodSummaryReader.getSummaries().containsKey(dest.getMethod().getReference())) {
+//		if (true) {
+            MyLogger.log(DEBUG,"Primordial and No Summary! (getCallFlowFunction) - " + dest.getMethod().getReference());
             MethodAnalysis.analyze(new IFDSTaintDomain<E>(), graph, pa, methodSummaryReader, src, dest);
 		}
 

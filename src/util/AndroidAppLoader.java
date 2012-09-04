@@ -38,7 +38,6 @@
  */
 
 package util;
-
 import static util.MyLogger.log;
 import static util.MyLogger.LogLevel.DEBUG;
 import static util.MyLogger.LogLevel.INFO;
@@ -55,8 +54,6 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map.Entry;
 import java.util.jar.JarFile;
-
-import org.apache.commons.io.FileUtils;
 
 import prefixTransfer.UriPrefixContextSelector;
 
@@ -114,320 +111,294 @@ import com.ibm.wala.util.strings.Atom;
 import com.ibm.wala.util.warnings.Warning;
 import com.ibm.wala.util.warnings.Warnings;
 
+
 public class AndroidAppLoader<E extends ISSABasicBlock> {
 	public static final String methodSpec = "MethodSummaries.xml";
 	public static final String pathToSpec = "data";
-	public static XMLMethodSummaryReader methodSummaryReader;
+    public static XMLMethodSummaryReader methodSummaryReader; 
 
-	public final AnalysisScope scope;
-	public final ClassHierarchy cha;
-	public final LinkedList<Entrypoint> entries;
+    public final AnalysisScope scope;
+    public final ClassHierarchy cha;
+    public final LinkedList<Entrypoint> entries;
 
-	public CallGraph cg;
-	public PointerAnalysis pa;
-	public ISupergraph<BasicBlockInContext<E>, CGNode> graph;
-	public Graph<CGNode> partialGraph;
-	public Graph<CGNode> oneLevelGraph;
-	public Graph<CGNode> systemToApkGraph;
+    public CallGraph cg;
+    public PointerAnalysis pa;
+    public ISupergraph<BasicBlockInContext<E>, CGNode> graph;
+    public Graph<CGNode> partialGraph;
+    public Graph<CGNode> oneLevelGraph;
+    public Graph<CGNode> systemToApkGraph;
+    
+    /**
+     *
+     * @param classpath
+     * @param packagename
+     * @throws IOException
+     * @throws IllegalArgumentException
+     * @throws CancelException
+     * @throws ClassHierarchyException
+     */
+    public AndroidAppLoader(String classpath)
+       throws IOException, IllegalArgumentException,
+              CancelException, ClassHierarchyException
+    {
 
-	public AndroidAppLoader(String classpath) throws IllegalArgumentException,
-			ClassHierarchyException, IOException, CancelException {
-		this(classpath, new JarFile(CLI.getOption("android-lib")));
-	}
+    	//scope = com.ibm.wala.util.config.AnalysisScopeReader.makeJavaBinaryAnalysisScope(classpath, new FileProvider().getFile("conf/Java60RegressionExclusions.txt"));
+    	
+        scope = DexAnalysisScopeReader.makeAndroidBinaryAnalysisScope(classpath, new FileProvider().getFile("conf"+File.separator+"Java60RegressionExclusions.txt"));
 
-	/**
-	 * 
-	 * @param classpath
-	 * @param packagename
-	 * @throws IOException
-	 * @throws IllegalArgumentException
-	 * @throws CancelException
-	 * @throws ClassHierarchyException
-	 */
-	public AndroidAppLoader(String classpath, JarFile androidLib)
-			throws IOException, IllegalArgumentException, CancelException,
-			ClassHierarchyException {
+        scope.setLoaderImpl(ClassLoaderReference.Application, "com.ibm.wala.classLoader.WDexClassLoaderImpl");
+        scope.addToScope(ClassLoaderReference.Primordial, new JarFile(CLI.getOption("android-lib")));
+        
+//		AnalysisScope scope = AnalysisScopeReader.makeJavaBinaryAnalysisScope(
+//				"/Users/ssuh/Documents/projects/SCanDroid/SimpleAnalysisPluginDexLib/scandroid/SimpleAndroidApp.jar",
+//				new FileProvider().getFile("/Users/ssuh/Documents/projects/SCanDroid/SimpleAnalysisPluginDexLib/scandroid/conf/Java60RegressionExclusions.txt"));
+//		scope.addToScope(ClassLoaderReference.Primordial, new JarFile("/Users/ssuh/Documents/projects/SCanDroid/SimpleAnalysisPluginDexLib/scandroid/data/android-2.3.7_r1.jar"));
 
-		// scope =
-		// com.ibm.wala.util.config.AnalysisScopeReader.makeJavaBinaryAnalysisScope(classpath,
-		// new FileProvider().getFile("conf/Java60RegressionExclusions.txt"));
+        cha = ClassHierarchy.make(scope);
 
-		scope = DexAnalysisScopeReader.makeAndroidBinaryAnalysisScope(
-				classpath,
-				new FileProvider().getFile("conf" + File.separator
-						+ "Java60RegressionExclusions.txt"));
+        //log ClassHierarchy warnings
+        for(Iterator<Warning> wi = Warnings.iterator(); wi.hasNext();)
+        {
+            Warning w = wi.next();
+            log(w);
+        }
+        Warnings.clear();
 
-		scope.setLoaderImpl(ClassLoaderReference.Application,
-				"com.ibm.wala.classLoader.WDexClassLoaderImpl");
-		scope.addToScope(ClassLoaderReference.Primordial, androidLib);
+        // Try to look for entry points
+        EntryPoints ep = new EntryPoints(classpath, cha, this);
+        entries = ep.getEntries();
+    }
 
-		// AnalysisScope scope =
-		// AnalysisScopeReader.makeJavaBinaryAnalysisScope(
-		// "/Users/ssuh/Documents/projects/SCanDroid/SimpleAnalysisPluginDexLib/scandroid/SimpleAndroidApp.jar",
-		// new
-		// FileProvider().getFile("/Users/ssuh/Documents/projects/SCanDroid/SimpleAnalysisPluginDexLib/scandroid/conf/Java60RegressionExclusions.txt"));
-		// scope.addToScope(ClassLoaderReference.Primordial, new
-		// JarFile("/Users/ssuh/Documents/projects/SCanDroid/SimpleAnalysisPluginDexLib/scandroid/data/android-2.3.7_r1.jar"));
+    @SuppressWarnings("deprecation")
+    public void buildGraphs(LinkedList<Entrypoint> localEntries) throws CancelException {
 
-		cha = ClassHierarchy.make(scope);
+        AnalysisOptions options = new AnalysisOptions(scope, localEntries);
+        for(Entrypoint e:localEntries)
+        {
+            MyLogger.log(DEBUG,"Entrypoint: "+e);
+        }
 
-		// log ClassHierarchy warnings
-		for (Iterator<Warning> wi = Warnings.iterator(); wi.hasNext();) {
-			Warning w = wi.next();
-			log(w);
-		}
-		Warnings.clear();
+        options.setEntrypoints(localEntries);
+        
+        if(CLI.hasOption("reflection"))
+        	options.setReflectionOptions(ReflectionOptions.valueOf(CLI.getOption("reflection")));
+        else
+        	options.setReflectionOptions(ReflectionOptions.NONE);
+        	
+        
+        AnalysisCache cache = new AnalysisCache((IRFactory<IMethod>)new DexIRFactory());
+        //AnalysisCache cache = new AnalysisCache();
+        
+        //SSAContextInterpreter ci = new DexIContextInterpreter(options.getSSAOptions(), cache);
+        //ci = new DelegatingSSAContextInterpreter(ReflectionContextInterpreter.createReflectionContextInterpreter(cha, options, cache), ci);
+        
+        SSAPropagationCallGraphBuilder zeroxcgb, cgb;
 
-		// Try to look for entry points
-		EntryPoints ep = new EntryPoints(classpath, cha, this);
-		entries = ep.getEntries();
-	}
+//        zeroxcgb = Util.makeZeroCFABuilder(options, cache, cha, scope, new UriPrefixContextSelector(options, cha), null);
+        zeroxcgb = makeVanillaZeroOneCFABuilder(options, cache, cha, scope, new UriPrefixContextSelector(options, cha), null);
+        cgb = new DexSSAPropagationCallGraphBuilder(cha, options, cache, zeroxcgb.getContextSelector(), (SSAContextInterpreter)zeroxcgb.getContextInterpreter(), zeroxcgb.getInstanceKeys());
+//        cgb = zeroxcgb;
+        
 
-	@SuppressWarnings("deprecation")
-	public void buildGraphs(LinkedList<Entrypoint> localEntries)
-			throws CancelException {
+        //CallGraphBuilder construction warnings
+        for(Iterator<Warning> wi = Warnings.iterator(); wi.hasNext();)
+        {
+            Warning w = wi.next();
+            MyLogger.log(w);
+        }
+        Warnings.clear();
 
-		AnalysisOptions options = new AnalysisOptions(scope, localEntries);
-		for (Entrypoint e : localEntries) {
-			MyLogger.log(DEBUG, "Entrypoint: " + e);
-		}
 
-		options.setEntrypoints(localEntries);
+        MyLogger.log(INFO, "*************************");
+        MyLogger.log(INFO, "* Building Call Graph   *");
+        MyLogger.log(INFO, "*************************");
 
-		if (CLI.hasOption("reflection"))
-			options.setReflectionOptions(ReflectionOptions.valueOf(CLI
-					.getOption("reflection")));
-		else
-			options.setReflectionOptions(ReflectionOptions.NONE);
+        cg = cgb.makeCallGraph(options);
 
-		AnalysisCache cache = new AnalysisCache(
-				(IRFactory<IMethod>) new DexIRFactory());
-		// AnalysisCache cache = new AnalysisCache();
+        //makeCallGraph warnings
+        for(Iterator<Warning> wi = Warnings.iterator(); wi.hasNext();)
+        {
+            Warning w = wi.next();
+            MyLogger.log(w);
+        }
+        Warnings.clear();
 
-		// SSAContextInterpreter ci = new
-		// DexIContextInterpreter(options.getSSAOptions(), cache);
-		// ci = new
-		// DelegatingSSAContextInterpreter(ReflectionContextInterpreter.createReflectionContextInterpreter(cha,
-		// options, cache), ci);
+        pa = cgb.getPointerAnalysis();
 
-		SSAPropagationCallGraphBuilder zeroxcgb, cgb;
-
-		// zeroxcgb = Util.makeZeroCFABuilder(options, cache, cha, scope, new
-		// UriPrefixContextSelector(options, cha), null);
-		zeroxcgb = makeVanillaZeroOneCFABuilder(options, cache, cha, scope,
-				new UriPrefixContextSelector(options, cha), null);
-		// cgb = new DexSSAPropagationCallGraphBuilder(cha, options, cache,
-		// zeroxcgb.getContextSelector(),
-		// (SSAContextInterpreter)zeroxcgb.getContextInterpreter(),
-		// zeroxcgb.getInstanceKeys());
-		cgb = zeroxcgb;
-
-		// CallGraphBuilder construction warnings
-		for (Iterator<Warning> wi = Warnings.iterator(); wi.hasNext();) {
-			Warning w = wi.next();
-			MyLogger.log(w);
-		}
-		Warnings.clear();
-
-		MyLogger.log(INFO, "*************************");
-		MyLogger.log(INFO, "* Building Call Graph   *");
-		MyLogger.log(INFO, "*************************");
-
-		cg = cgb.makeCallGraph(options);
-
-		// makeCallGraph warnings
-		for (Iterator<Warning> wi = Warnings.iterator(); wi.hasNext();) {
-			Warning w = wi.next();
-			MyLogger.log(w);
-		}
-		Warnings.clear();
-
-		pa = cgb.getPointerAnalysis();
-
-		// TODO: prune out a lot more stuff
-		partialGraph = GraphSlicer.prune(cg, new Predicate<CGNode>() {
+        // TODO: prune out a lot more stuff
+        partialGraph = GraphSlicer.prune(cg, new Predicate<CGNode> (){
 			@Override
-			// CallGraph composed of APK nodes
+			//CallGraph composed of APK nodes
 			public boolean test(CGNode node) {
 				return fromLoader(node, ClassLoaderReference.Application);
-			}
-		});
+			}        
+        });
 
-		Collection<CGNode> nodes = new HashSet<CGNode>();
+        Collection<CGNode> nodes = new HashSet<CGNode>();
 
-		for (Iterator<CGNode> nIter = partialGraph.iterator(); nIter.hasNext();) {
-			nodes.add(nIter.next());
-		}
+        for (Iterator<CGNode> nIter = partialGraph.iterator(); nIter.hasNext();) {
+            nodes.add(nIter.next());
+        }
 
-		CallGraph pcg = PartialCallGraph.make(cg, cg.getEntrypointNodes(),
-				nodes);
+        CallGraph pcg = PartialCallGraph.make(cg, cg
+                    .getEntrypointNodes(), nodes);
+        
+        if (CLI.hasOption("include-library"))
+        	graph = (ISupergraph) ICFGSupergraph.make(cg, cache);
+        else
+        	graph = (ISupergraph) ICFGSupergraph.make(pcg, cache);
 
-		if (CLI.hasOption("include-library"))
-			graph = (ISupergraph) ICFGSupergraph.make(cg, cache);
-		else
-			graph = (ISupergraph) ICFGSupergraph.make(pcg, cache);
+        oneLevelGraph = GraphSlicer.prune(cg, new Predicate<CGNode>() {
+            @Override
+            public boolean test(CGNode node) {
+                //Node in APK
+                if (fromLoader(node, ClassLoaderReference.Application)) {
+                	return true;
+                } else {
+                    Iterator<CGNode> n = cg.getPredNodes(node);
+                    while(n.hasNext()) {
+                    	//Primordial node has a successor in APK
+                        if (fromLoader(n.next(), ClassLoaderReference.Application))
+                            return true;
+                    }
+                    n = cg.getSuccNodes(node);
+                    while(n.hasNext()) {
+                    	//Primordial node has a predecessor in APK
+                        if (fromLoader(n.next(), ClassLoaderReference.Application))
+                            return true;
+                    }
+                    //Primordial node with no direct successors or predecessors to APK code
+                    return false;
+                }
+            }
+        }); 
 
-		oneLevelGraph = GraphSlicer.prune(cg, new Predicate<CGNode>() {
-			@Override
-			public boolean test(CGNode node) {
-				// Node in APK
-				if (fromLoader(node, ClassLoaderReference.Application)) {
-					return true;
-				} else {
-					Iterator<CGNode> n = cg.getPredNodes(node);
-					while (n.hasNext()) {
-						// Primordial node has a successor in APK
-						if (fromLoader(n.next(),
-								ClassLoaderReference.Application))
-							return true;
-					}
-					n = cg.getSuccNodes(node);
-					while (n.hasNext()) {
-						// Primordial node has a predecessor in APK
-						if (fromLoader(n.next(),
-								ClassLoaderReference.Application))
-							return true;
-					}
-					// Primordial node with no direct successors or predecessors
-					// to APK code
-					return false;
-				}
-			}
-		});
 
-		systemToApkGraph = GraphSlicer.prune(cg, new Predicate<CGNode>() {
-			@Override
-			public boolean test(CGNode node) {
+        systemToApkGraph = GraphSlicer.prune(cg, new Predicate<CGNode>() {
+            @Override
+            public boolean test(CGNode node) {
+                
+                if (fromLoader(node, ClassLoaderReference.Primordial)) {
+                    Iterator<CGNode> succs = cg.getSuccNodes(node);
+                    while(succs.hasNext()) {
+                        CGNode n = succs.next();
+                    
+                        if (fromLoader(n, ClassLoaderReference.Application)) {
+                            return true;
+                        }
+                    }
+                    // Primordial method, with no link to APK code:
+                    return false;
+                } else if (fromLoader(node, ClassLoaderReference.Application)) {
+                    // see if this is an APK method that was 
+                    // invoked by a Primordial method:
+                    Iterator<CGNode> preds = cg.getPredNodes(node);
+                    while(preds.hasNext()) {
+                        CGNode n = preds.next();
+                    
+                        if (fromLoader(n, ClassLoaderReference.Primordial)) {
+                            return true;
+                        }
+                    }
+                    // APK code, no link to Primordial:
+                    return false;
+                }
+                
+                // who knows, not interesting:
+                return false;
+            }
+        });
+        
+        
+        System.out.println("===== Method Summaries =====");
+        for (Entry<MethodReference, MethodSummary> mr:methodSummaryReader.getSummaries().entrySet()) {
+        	System.out.println("MethoReference: " + mr.getKey());
+        	System.out.println("\tMethodSummary: " + mr.getValue());
+        	
+        }
 
-				if (fromLoader(node, ClassLoaderReference.Primordial)) {
-					Iterator<CGNode> succs = cg.getSuccNodes(node);
-					while (succs.hasNext()) {
-						CGNode n = succs.next();
 
-						if (fromLoader(n, ClassLoaderReference.Application)) {
-							return true;
-						}
-					}
-					// Primordial method, with no link to APK code:
-					return false;
-				} else if (fromLoader(node, ClassLoaderReference.Application)) {
-					// see if this is an APK method that was
-					// invoked by a Primordial method:
-					Iterator<CGNode> preds = cg.getPredNodes(node);
-					while (preds.hasNext()) {
-						CGNode n = preds.next();
+        if (CLI.hasOption("c"))
+        	GraphUtil.makeCG(this);
+        if (CLI.hasOption("p"))
+        	GraphUtil.makePCG(this);
+        if (CLI.hasOption("o"))
+        	GraphUtil.makeOneLCG(this);   
+        if (CLI.hasOption("s"))
+        	GraphUtil.makeSystemToAPKCG(this);
 
-						if (fromLoader(n, ClassLoaderReference.Primordial)) {
-							return true;
-						}
-					}
-					// APK code, no link to Primordial:
-					return false;
-				}
+        if (CLI.hasOption("a")) {
+        	for (Iterator<CGNode> nodeI = cg.iterator(); nodeI.hasNext();) {
+        		CGNode node = nodeI.next();        	        	
 
-				// who knows, not interesting:
-				return false;
-			}
-		});
+        		System.out.println("CGNode: " + node);
+        		for (Iterator<CGNode> succI = cg.getSuccNodes(node); succI.hasNext();) {
+        			System.out.println("\tSuccCGNode: " + succI.next().getMethod().getSignature());
+        		}
+        	}
+        }
+    }
+    
+    static boolean fromLoader(CGNode node, ClassLoaderReference clr) {
+        IClass declClass = node.getMethod().getDeclaringClass();
 
-		System.out.println("===== Method Summaries =====");
-		for (Entry<MethodReference, MethodSummary> mr : methodSummaryReader
-				.getSummaries().entrySet()) {
-			System.out.println("MethoReference: " + mr.getKey());
-			System.out.println("\tMethodSummary: " + mr.getValue());
+        ClassLoaderReference nodeClRef =
+                declClass.getClassLoader().getReference();
 
-		}
+        return nodeClRef.equals(clr);
+    }
+    
+    public static SSAPropagationCallGraphBuilder makeVanillaZeroOneCFABuilder(AnalysisOptions options, AnalysisCache cache,
+    		IClassHierarchy cha, AnalysisScope scope, ContextSelector customSelector, SSAContextInterpreter customInterpreter) {
 
-		if (CLI.hasOption("c"))
-			GraphUtil.makeCG(this);
-		if (CLI.hasOption("p"))
-			GraphUtil.makePCG(this);
-		if (CLI.hasOption("o"))
-			GraphUtil.makeOneLCG(this);
-		if (CLI.hasOption("s"))
-			GraphUtil.makeSystemToAPKCG(this);
+    	if (options == null) {
+    		throw new IllegalArgumentException("options is null");
+    	}
+    	Util.addDefaultSelectors(options, cha);
+    	//    	    addDefaultBypassLogic(options, scope, Util.class.getClassLoader(), cha);
+    	//    	    addBypassLogic(options, scope, AndroidAppLoader.class.getClassLoader(), methodSpec, cha);
+    	addBypassLogic(options, scope, methodSpec, cha);
 
-		if (CLI.hasOption("a")) {
-			for (Iterator<CGNode> nodeI = cg.iterator(); nodeI.hasNext();) {
-				CGNode node = nodeI.next();
 
-				System.out.println("CGNode: " + node);
-				for (Iterator<CGNode> succI = cg.getSuccNodes(node); succI
-						.hasNext();) {
-					System.out.println("\tSuccCGNode: "
-							+ succI.next().getMethod().getSignature());
-				}
-			}
-		}
-	}
+    	return ZeroXCFABuilder.make(cha, options, cache, customSelector, customInterpreter, ZeroXInstanceKeys.ALLOCATIONS | ZeroXInstanceKeys.CONSTANT_SPECIFIC);
+    }
 
-	static boolean fromLoader(CGNode node, ClassLoaderReference clr) {
-		IClass declClass = node.getMethod().getDeclaringClass();
+    
+//    public static void addBypassLogic(AnalysisOptions options, AnalysisScope scope, ClassLoader cl, String xmlFile,
+//    	      IClassHierarchy cha) throws IllegalArgumentException {
+    public static void addBypassLogic(AnalysisOptions options, AnalysisScope scope, String xmlFile,
+    		IClassHierarchy cha) throws IllegalArgumentException {
 
-		ClassLoaderReference nodeClRef = declClass.getClassLoader()
-				.getReference();
+    	if (scope == null) {
+    		throw new IllegalArgumentException("scope is null");
+    	}
+    	if (options == null) {
+    		throw new IllegalArgumentException("options is null");
+    	}
+//    	if (cl == null) {
+//    		throw new IllegalArgumentException("cl is null");
+//    	}
+    	if (cha == null) {
+    		throw new IllegalArgumentException("cha cannot be null");
+    	}
 
-		return nodeClRef.equals(clr);
-	}
+    	InputStream s;
+    	try {
+    		s = new FileInputStream(new File(pathToSpec+File.separator+methodSpec));
+    		//    	InputStream s = cl.getResourceAsStream(xmlFile);
+    		methodSummaryReader = new XMLMethodSummaryReader(s, scope);
 
-	public static SSAPropagationCallGraphBuilder makeVanillaZeroOneCFABuilder(
-			AnalysisOptions options, AnalysisCache cache, IClassHierarchy cha,
-			AnalysisScope scope, ContextSelector customSelector,
-			SSAContextInterpreter customInterpreter) {
+    		MethodTargetSelector ms = new BypassMethodTargetSelector(options.getMethodTargetSelector(), methodSummaryReader.getSummaries(),
+    				methodSummaryReader.getIgnoredPackages(), cha);
+    		options.setSelector(ms);
 
-		if (options == null) {
-			throw new IllegalArgumentException("options is null");
-		}
-		Util.addDefaultSelectors(options, cha);
-		// addDefaultBypassLogic(options, scope, Util.class.getClassLoader(),
-		// cha);
-		// addBypassLogic(options, scope,
-		// AndroidAppLoader.class.getClassLoader(), methodSpec, cha);
-		addBypassLogic(options, scope, methodSpec, cha);
+    		ClassTargetSelector cs = new BypassClassTargetSelector(options.getClassTargetSelector(), methodSummaryReader.getAllocatableClasses(), cha,
+    				cha.getLoader(scope.getLoader(Atom.findOrCreateUnicodeAtom("Synthetic"))));
+    		options.setSelector(cs);
+    	} catch (FileNotFoundException e) {
+    		e.printStackTrace();
+    	}
 
-		return ZeroXCFABuilder.make(cha, options, cache, customSelector,
-				customInterpreter, ZeroXInstanceKeys.ALLOCATIONS
-						| ZeroXInstanceKeys.CONSTANT_SPECIFIC);
-	}
-
-	// public static void addBypassLogic(AnalysisOptions options, AnalysisScope
-	// scope, ClassLoader cl, String xmlFile,
-	// IClassHierarchy cha) throws IllegalArgumentException {
-	public static void addBypassLogic(AnalysisOptions options,
-			AnalysisScope scope, String xmlFile, IClassHierarchy cha)
-			throws IllegalArgumentException {
-
-		if (scope == null) {
-			throw new IllegalArgumentException("scope is null");
-		}
-		if (options == null) {
-			throw new IllegalArgumentException("options is null");
-		}
-		// if (cl == null) {
-		// throw new IllegalArgumentException("cl is null");
-		// }
-		if (cha == null) {
-			throw new IllegalArgumentException("cha cannot be null");
-		}
-
-		InputStream s;
-		s = AndroidAppLoader.class.getResourceAsStream("/data/MethodSummaries.xml");
-		// InputStream s = cl.getResourceAsStream(xmlFile);
-		methodSummaryReader = new XMLMethodSummaryReader(s, scope);
-
-		MethodTargetSelector ms = new BypassMethodTargetSelector(
-				options.getMethodTargetSelector(),
-				methodSummaryReader.getSummaries(),
-				methodSummaryReader.getIgnoredPackages(), cha);
-		options.setSelector(ms);
-
-		ClassTargetSelector cs = new BypassClassTargetSelector(
-				options.getClassTargetSelector(),
-				methodSummaryReader.getAllocatableClasses(), cha,
-				cha.getLoader(scope.getLoader(Atom
-						.findOrCreateUnicodeAtom("Synthetic"))));
-		options.setSelector(cs);
-
-	}
+    }
 
 }

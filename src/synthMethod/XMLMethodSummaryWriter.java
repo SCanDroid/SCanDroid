@@ -156,6 +156,9 @@ public class XMLMethodSummaryWriter {
 	
 	public static void createXML() {
 		try {
+			if (MethodAnalysis.newSummaries.isEmpty())
+				return;
+			
 			DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
 			DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
 

@@ -72,6 +72,8 @@ import com.ibm.wala.ipa.callgraph.Entrypoint;
 import com.ibm.wala.ipa.callgraph.propagation.InstanceKey;
 import com.ibm.wala.ipa.callgraph.propagation.LocalPointerKey;
 import com.ibm.wala.ipa.callgraph.propagation.PointerAnalysis;
+import com.ibm.wala.ipa.callgraph.propagation.PointerKey;
+import com.ibm.wala.ipa.callgraph.propagation.StaticFieldKey;
 import com.ibm.wala.ipa.cfg.BasicBlockInContext;
 import com.ibm.wala.ipa.summaries.XMLMethodSummaryReader;
 import com.ibm.wala.ssa.ISSABasicBlock;
@@ -110,6 +112,9 @@ public class MethodAnalysis {
 		
 		if (newSummaries.containsKey(entryMethod))
 			return;
+		Map<FlowType, Set<CodeElement>> methodFlows = new HashMap<FlowType, Set<CodeElement>>();
+		newSummaries.put(entryMethod, methodFlows);
+
 		Map<Integer, OrdinalSet<InstanceKey>> pTaintIKMap = new HashMap<Integer, OrdinalSet<InstanceKey>> ();
 		methodTaints.put(entryMethod, pTaintIKMap);
 		
@@ -138,20 +143,23 @@ public class MethodAnalysis {
 		}
 		//Also taint all field elements
 		for (IField myField : entryMethod.getDeclaringClass().getAllFields()) {
+			PointerKey pk = entryMethod.isStatic()?new StaticFieldKey(myField):
+				new LocalPointerKey(callerBlock.getNode(), invInst.getUse(0));
 //			for (InstanceKey ik: pa.getPointsToSet(new LocalPointerKey(methEntryBlock.getNode(), invInst.getUse(0)))) {
-			for (InstanceKey ik: pa.getPointsToSet(new LocalPointerKey(callerBlock.getNode(), invInst.getUse(0)))) {
-//			DomainElement de = new DomainElement(new FieldElement())
-//			DomainElement de = new DomainElement(new FieldElement(entryMethod.getDeclaringClass().getReference(),
-//					myField.getReference().getSignature()),
-//					new FieldFlow(entryMethod.getDeclaringClass().getReference(),
-//							myField.getReference().getSignature()));
-							
+			for (InstanceKey ik: pa.getPointsToSet(pk)) {
+				//			DomainElement de = new DomainElement(new FieldElement())
+				//			DomainElement de = new DomainElement(new FieldElement(entryMethod.getDeclaringClass().getReference(),
+				//					myField.getReference().getSignature()),
+				//					new FieldFlow(entryMethod.getDeclaringClass().getReference(),
+				//							myField.getReference().getSignature()));
+
 				DomainElement de = new DomainElement(new FieldElement(ik, myField.getReference()), 
 						new FieldFlow(myField.getReference()));
 				initialTaints.add(de);
 				initialEdges.add(PathEdge.createPathEdge(methEntryBlock, 0, methEntryBlock, 
 						domain.getMappedIndex(de)));
 			}
+			
 		}
 
 
@@ -198,10 +206,8 @@ public class MethodAnalysis {
 
 		try {
 			TabulationResult<BasicBlockInContext<E>,CGNode, DomainElement> flowResult = solver.solve();
-			Map<FlowType, Set<CodeElement>> methodFlows = new HashMap<FlowType, Set<CodeElement>>();
 
 			checkResults(domain, flowResult, initialTaints, graph, methEntryBlock, methodFlows);
-			newSummaries.put(entryMethod, methodFlows);
 
 			//       	if (CLI.hasOption("IFDS-Explorer")) {
 			//       		for (int i = 1; i < domain.getSize(); i++) {        			

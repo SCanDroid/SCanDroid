@@ -39,9 +39,7 @@ package com.ibm.wala.classLoader;
 
 import static org.jf.dexlib.ItemType.TYPE_CLASS_DEF_ITEM;
 
-import java.io.File;
 import java.io.IOException;
-import java.net.URISyntaxException;
 
 import org.jf.dexlib.ClassDefItem;
 import org.jf.dexlib.DexFile;
@@ -55,183 +53,170 @@ import util.MyLogger.LogLevel;
 import com.ibm.wala.dex.instructions.Invoke;
 
 public class ActivityModelMethod extends DexIMethod {
-	private static EncodedMethod ActivityModelM;
+    private static EncodedMethod ActivityModelM;
 
 	public ActivityModelMethod(EncodedMethod encodedMethod, DexIClass klass) {
 		super(encodedMethod, klass);
 	}
-
+	
 	public static void loadActivityModel() {
-		if (ActivityModelM == null) {
-			DexFile ActivityModelDF;
-			ClassDefItem ActivityModelCDI = null;
-			try {
-				ActivityModelDF = new DexFile(new File(
-						ActivityModelMethod.class.getClassLoader()
-								.getResource("models/ActivityModel.apk")
-								.toURI()));
-			} catch (Exception e) {
-				throw new IllegalArgumentException(e);
-			}
-			Section<ClassDefItem> cldeff = ActivityModelDF
-					.getSectionForType(TYPE_CLASS_DEF_ITEM);
-			for (ClassDefItem cdefitems : cldeff.getItems()) {
-				if (cdefitems.getClassType().getTypeDescriptor()
-						.equals("Lactivity/model/ActivityModelActivity;")) {
-					ActivityModelCDI = cdefitems;
-				}
-			}
-			assert (ActivityModelCDI != null);
-			// final EncodedMethod[] virtualMethods =
-			// ActivityModelCDI.getClassData().getVirtualMethods();
-			for (EncodedMethod virtualMethod : ActivityModelCDI.getClassData()
-					.getVirtualMethods()) {
-				if (virtualMethod.method.getMethodName().getStringValue()
-						.equals("ActivityModel"))
-					ActivityModelM = virtualMethod;
-			}
-			assert (ActivityModelM != null);
-		}
-	}
+    	if (ActivityModelM == null) {
+            DexFile ActivityModelDF;
+            ClassDefItem ActivityModelCDI = null;
+            try {
+    			ActivityModelDF = new DexFile("models/ActivityModel.apk");
+    		} catch (IOException e) {
+                throw new IllegalArgumentException(e);
+    		}
+            Section<ClassDefItem> cldeff = ActivityModelDF.getSectionForType(TYPE_CLASS_DEF_ITEM);
+            for (ClassDefItem cdefitems : cldeff.getItems()) {
+            	if (cdefitems.getClassType().getTypeDescriptor().equals("Lactivity/model/ActivityModelActivity;")) 
+            	{
+            		ActivityModelCDI = cdefitems;
+            	}
+            }
+            assert (ActivityModelCDI != null);
+            //final EncodedMethod[] virtualMethods = ActivityModelCDI.getClassData().getVirtualMethods();
+            for (EncodedMethod virtualMethod: ActivityModelCDI.getClassData().getVirtualMethods()) {
+            	if (virtualMethod.method.getMethodName().getStringValue().equals("ActivityModel"))
+            		ActivityModelM = virtualMethod;
+            }
+            assert(ActivityModelM != null);
+    	}
+    }
+    
+    public static EncodedMethod getActivityModel() {
+    	if (ActivityModelM == null) {
+    		loadActivityModel();
+    	}
+    	return ActivityModelM;
+    }
 
-	public static EncodedMethod getActivityModel() {
-		if (ActivityModelM == null) {
-			loadActivityModel();
-		}
-		return ActivityModelM;
-	}
-
-	// @Override
-	// public TypeReference[] getDeclaredExceptions() {
-	// return null;
-	// }
-	//
-	// @Override
-	// public MethodReference getReference() {
-	// if (methodReference == null) {
-	// // Set method name
-	// Atom name = Atom.findOrCreateUnicodeAtom("ActivityModel");
-	//
-	// // Set the descriptor
-	// ImmutableByteArray desc = ImmutableByteArray.make("()V");
-	// Descriptor D =
-	// Descriptor.findOrCreate(myClass.getClassLoader().getLanguage(), desc);
-	// methodReference = MethodReference.findOrCreate(myClass.getReference(),
-	// name, D);
-	// }
-	//
-	// return methodReference;
-	// }
-	//
-	// @Override
-	// public boolean hasExceptionHandler() {
-	// return false;
-	// }
-	//
-	// @Override
-	// public boolean isAbstract() {
-	// return false;
-	// }
-	//
-	// @Override
-	// public boolean isBridge() {
-	// return false;
-	// }
-	//
-	// @Override
-	// public boolean isClinit() {
-	// return false;
-	// }
-	//
-	// @Override
-	// public boolean isFinal() {
-	// return false;
-	// }
-	//
-	// @Override
-	// public boolean isInit() {
-	// return false;
-	// }
-	//
-	// @Override
-	// public boolean isNative() {
-	// return false;
-	// }
-	//
-	// @Override
-	// public boolean isPrivate() {
-	// return false;
-	// }
-	//
-	// @Override
-	// public boolean isProtected() {
-	// return false;
-	// }
-	//
-	// @Override
-	// public boolean isPublic() {
-	// return true;
-	// }
-	//
-	// @Override
-	// public boolean isSynchronized() {
-	// return false;
-	// }
-	//
-	// @Override
-	// public boolean isSynthetic() {
-	// return false;
-	// }
-	//
-	// @Override
-	// public boolean isStatic() {
-	// return false;
-	// }
-	//
-	// @Override
-	// public boolean isVolatile() {
-	// return false;
-	// }
-	//
-	// @Override
-	// public ExceptionHandler[][] getHandlers() throws
-	// InvalidClassFileException {
-	// this.handlers = new ExceptionHandler[instructions().size()][];
-	// return handlers;
-	// }
-	//
-	// @Override
-	// public int getMaxLocals() {
-	// return 12;
-	// }
-	//
-	// @Override
-	// public int getReturnReg() {
-	// return 10;
-	// }
-	//
-	// @Override
-	// public int getExceptionReg() {
-	// return 11;
-	// }
-	//
-	// @Override
-	// public int getNumberOfParameterRegisters() {
-	// return 1;
-	// }
-
+	
+	
+//	@Override
+//    public TypeReference[] getDeclaredExceptions() {
+//		return null;
+//	}
+//	
+//	@Override
+//	public MethodReference getReference() {
+//        if (methodReference == null) {
+//            // Set method name
+//            Atom name = Atom.findOrCreateUnicodeAtom("ActivityModel");
+//
+//            // Set the descriptor
+//            ImmutableByteArray desc = ImmutableByteArray.make("()V");
+//            Descriptor D = Descriptor.findOrCreate(myClass.getClassLoader().getLanguage(), desc);
+//            methodReference = MethodReference.findOrCreate(myClass.getReference(), name, D);
+//        }
+//
+//        return methodReference;
+//	}
+//	
+//	@Override
+//	public boolean hasExceptionHandler() {
+//		return false;
+//	}
+//	
+//	@Override
+//	public boolean isAbstract() {
+//		return false;
+//	}
+//	
+//	@Override
+//	public boolean isBridge() {
+//		return false;
+//	}
+//	
+//	@Override
+//	public boolean isClinit() {
+//		return false;
+//	}
+//	
+//	@Override
+//	public boolean isFinal() {
+//		return false;
+//	}
+//	
+//	@Override
+//	public boolean isInit() {
+//		return false;
+//	}
+//
+//	@Override
+//	public boolean isNative() {
+//		return false;
+//	}
+//	
+//	@Override
+//	public boolean isPrivate() {
+//		return false;
+//	}
+//
+//	@Override
+//	public boolean isProtected() {
+//		return false;
+//	}
+//
+//	@Override
+//	public boolean isPublic() {
+//		return true;
+//	}
+//
+//	@Override
+//	public boolean isSynchronized() {
+//		return false;
+//	}
+//
+//	@Override
+//	public boolean isSynthetic() {
+//		return false;
+//	}
+//	
+//	@Override
+//	public boolean isStatic() {
+//		return false;
+//	}
+//	
+//	@Override
+//    public boolean isVolatile() {
+//		return false;
+//	}
+//	
+//	@Override
+//	public ExceptionHandler[][] getHandlers() throws InvalidClassFileException {
+//        this.handlers = new ExceptionHandler[instructions().size()][];
+//        return handlers;
+//	}
+//	
+//	@Override
+//    public int getMaxLocals() {
+//		return 12;
+//	}
+//	
+//	@Override
+//    public int getReturnReg() {
+//		return 10;
+//	}
+//	
+//	@Override
+//    public int getExceptionReg() {
+//		return 11;
+//	}
+//	
+//	@Override
+//    public int getNumberOfParameterRegisters() {
+//		return 1;
+//	}
+	
 	@Override
-	protected void handleINVOKE_VIRTUAL(int instLoc, String cname,
-			String mname, String pname, int[] args, Opcode opcode) {
-		if (cname.equals("Lactivity/model/ActivityModelActivity")) {
-			cname = myClass.getName().toString();
-		}
-		instructions.add(new Invoke.InvokeVirtual(instLoc, cname, mname, pname,
-				args, opcode, this));
-		MyLogger.log(LogLevel.DEBUG,
-				"\tActivityModelMethod " + opcode.toString() + " class: "
-						+ cname + ", method name: " + mname
-						+ ", prototype string: " + pname);
+    protected void handleINVOKE_VIRTUAL(int instLoc, String cname, String mname, String pname, int[] args, Opcode opcode ) {
+    	if (cname.equals("Lactivity/model/ActivityModelActivity")) {
+    		cname = myClass.getName().toString();
+    	}
+    	instructions.add(new Invoke.InvokeVirtual(instLoc, cname, mname, pname, args, opcode, this));
+    	MyLogger.log(LogLevel.DEBUG, "\tActivityModelMethod " + opcode.toString() + " class: "+ cname + ", method name: " + mname + ", prototype string: " + pname);
 
 	}
 }
