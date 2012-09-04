@@ -79,15 +79,35 @@
     <!-- Build the project -->
     <target depends="build-subprojects,build-project" name="build"/>
     <target name="build-subprojects"/>
+	
     <target depends="init" name="build-project">
         <echo message="${ant.project.name}: ${ant.file}"/>
-        <javac debug="true" debuglevel="${debuglevel}" destdir="bin" source="${source}" target="${target}" includeantruntime="false">
+        <javac debug="true" 
+        	debuglevel="${debuglevel}" 
+        	destdir="bin" 
+        	source="${source}" 
+        	target="${target}" includeantruntime="false">
             <src path="${src-dir}"/>
             <classpath refid="SimpleAnalysisPlugin.classpath"/>
         </javac>
     </target>
-    <target description="Build all projects which reference this project. Useful to propagate changes." name="build-refprojects"/>
+	
+    <target description="Build all projects which reference this project. Useful to propagate changes." 
+    	name="build-refprojects"/>
 
+    <target depends="build" name="build-tests">
+        <echo message="${ant.project.name}: ${ant.file}"/>
+        <javac debug="true" 
+            debuglevel="${debuglevel}" 
+            destdir="bin" 
+            source="${source}" 
+            target="${target}" includeantruntime="false">
+            <src path="${src-dir}"/>
+            <src path="${test-src-dir}"/>
+            <classpath refid="SimpleAnalysisPlugin.classpath"/>
+        </javac>
+    </target>
+	
     <!-- Run a default analysis-->
     <target name="run">
         <java classname="CombinedAnalysis" failonerror="true" fork="yes">
@@ -168,7 +188,7 @@
   	</zip>
     </target>
 
-    <target name="test" depends="build">
+    <target name="test" depends="build, build-tests">
         <junit haltonerror="false" haltonfailure="false" fork="yes">
         	<!-- Use the basic SCanDroid classpath: -->
             <classpath refid="SimpleAnalysisPlugin.classpath"/>
