@@ -41,7 +41,7 @@ package spec;
 import spec.ISourceSpec.SourceType;
 import spec.ISinkSpec.SinkType;
 
-public class Specs implements ISpecs {
+public class AndroidSpecs implements ISpecs {
 	static String act = "Landroid/app/Activity";
 	static String svc = "Landroid/app/Service";
 	static String prv = "Landroid/content/ContentProvider";

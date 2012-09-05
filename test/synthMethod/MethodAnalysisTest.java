@@ -13,7 +13,8 @@ import java.util.Set;
 import org.junit.Assert;
 import org.junit.Test;
 
-import spec.Specs;
+import spec.ISpecs;
+import spec.AndroidSpecs;
 import util.AndroidAppLoader;
 import util.LoaderUtils;
 
@@ -182,7 +183,7 @@ public class MethodAnalysisTest {
                CallGraphBuilderCancelException {
         
         // source and sink specifications:
-        Specs specs = new Specs();
+        ISpecs specs = new AndroidSpecs();
         
         MethodAnalysis<IExplodedBasicBlock> methodAnalysis =
                 new MethodAnalysis<IExplodedBasicBlock>();

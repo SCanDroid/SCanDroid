@@ -38,12 +38,12 @@
 
 import java.io.IOException;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
 
-import spec.Specs;
+import spec.ISpecs;
+import spec.AndroidSpecs;
 import synthMethod.MethodAnalysis;
 import synthMethod.XMLMethodSummaryWriter;
 import util.AndroidAppLoader;
@@ -54,8 +54,6 @@ import com.ibm.wala.ipa.callgraph.CGNode;
 import com.ibm.wala.ipa.callgraph.Entrypoint;
 import com.ibm.wala.ipa.callgraph.propagation.InstanceKey;
 import com.ibm.wala.ipa.cfg.BasicBlockInContext;
-import com.ibm.wala.ssa.ISSABasicBlock;
-import com.ibm.wala.ssa.SSAInstruction;
 import com.ibm.wala.ssa.analysis.IExplodedBasicBlock;
 import com.ibm.wala.util.CancelException;
 
@@ -115,7 +113,7 @@ public class SeparateEntryAnalysis {
             System.out.println("Number of prefixes = " + prefixes.values().size());
             
             
-            Specs specs = new Specs();
+            ISpecs specs = new AndroidSpecs();
              
             System.out.println("Running inflow analysis.");
             Map<BasicBlockInContext<IExplodedBasicBlock>, 

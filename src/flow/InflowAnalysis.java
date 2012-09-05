@@ -54,8 +54,9 @@ import java.util.Set;
 import spec.CallArgSourceSpec;
 import spec.CallRetSourceSpec;
 import spec.EntryArgSourceSpec;
+import spec.ISpecs;
 import spec.SourceSpec;
-import spec.Specs;
+import spec.AndroidSpecs;
 import util.AndroidAppLoader;
 
 import com.ibm.wala.classLoader.IMethod;
@@ -186,10 +187,10 @@ public class InflowAnalysis <E extends ISSABasicBlock> {
     public static <E extends ISSABasicBlock>
       Map<BasicBlockInContext<E>,Map<FlowType,Set<CodeElement>>> analyze(
             AndroidAppLoader<E> loader, Map<InstanceKey, String> prefixes,
-            Specs s) {
+            ISpecs s) {
         return analyze(loader.cg, loader.cha, loader.graph, loader.pa, prefixes, s);
     }
-    
+
     public static <E extends ISSABasicBlock>
       Map<BasicBlockInContext<E>,Map<FlowType,Set<CodeElement>>> analyze(
           CallGraph cg, 
@@ -197,7 +198,7 @@ public class InflowAnalysis <E extends ISSABasicBlock> {
           ISupergraph<BasicBlockInContext<E>, CGNode> graph,
           PointerAnalysis pa, 
           Map<InstanceKey, String> prefixes,
-          Specs s) {
+          ISpecs s) {
 
         System.out.println("***************************");
         System.out.println("* Running inflow analysis *");

@@ -40,7 +40,7 @@ package spec;
 
 class ResolvedSpec {
     ResolvedSpec() {
-        Specs spec = new Specs();
+        AndroidSpecs spec = new AndroidSpecs();
         
         for(MethodNamePattern m: spec.getEntrypointSpecs()) {
         }
