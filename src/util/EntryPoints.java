@@ -227,14 +227,14 @@ public class EntryPoints {
 //              , "com.android.server.ServerThread.run()V"
            	//"android.location.LocationManager$ListenerTransport._handleMessage(Landroid/os/Message;)V"
 //           		"android.location.LocationManager$ListenerTransport$1.handleMessage(Landroid/os/Message;)V"
-           		"android.os.Handler.handleMessage(Landroid/os/Message;)V",
-           		"android.os.Handler$Callback.handleMessage(Landroid/os/Message;)Z",
-           		"com.android.internal.os.HandlerCaller$Callback.executeMessage(Landroid/os/Message;)V"
+//           		"android.os.Handler.handleMessage(Landroid/os/Message;)V",
+//           		"android.os.Handler$Callback.handleMessage(Landroid/os/Message;)Z",
+//           		"com.android.internal.os.HandlerCaller$Callback.executeMessage(Landroid/os/Message;)V"
 //           		"android.os.Handler.dispatchMessage(Landroid/os/Message;)V",
 //           		"android.view.View.dispatchTouchEvent(Landroid/view/MotionEvent;)Z",
 //           		"android.view.View.onTouchEvent(Landroid/view/MotionEvent;)Z",
 //           		"android.view.View.setOnClickListener(Landroid/view/View$OnClickListener;)V",
-//           		"com.android.server.ServerThread.run()V",
+           		"com.android.server.ServerThread.run()V"
            		//"android.app.ActivityThread.main([Ljava/lang/String;)V"
            };
 

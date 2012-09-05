@@ -13,6 +13,7 @@ import java.util.Set;
 import org.junit.Assert;
 import org.junit.Test;
 
+import spec.Specs;
 import util.AndroidAppLoader;
 import util.LoaderUtils;
 
@@ -180,6 +181,9 @@ public class MethodAnalysisTest {
         throws IOException, ClassHierarchyException, 
                CallGraphBuilderCancelException {
         
+        // source and sink specifications:
+        Specs specs = new Specs();
+        
         MethodAnalysis<IExplodedBasicBlock> methodAnalysis =
                 new MethodAnalysis<IExplodedBasicBlock>();
         AnalysisScope scope = 
@@ -210,16 +214,18 @@ public class MethodAnalysisTest {
                 ICFGSupergraph.make(cg, builder.getAnalysisCache());
         PointerAnalysis pa = builder.getPointerAnalysis();
         
+        
+        
         Map<BasicBlockInContext<IExplodedBasicBlock>, 
             Map<FlowType, Set<CodeElement>>> initialTaints = 
-              InflowAnalysis.analyze(cg, cha, sg, pa, new HashMap<InstanceKey, String>());
+              InflowAnalysis.analyze(cg, cha, sg, pa, new HashMap<InstanceKey, String>(), specs);
                    
         IFDSTaintDomain<IExplodedBasicBlock> domain = new IFDSTaintDomain<IExplodedBasicBlock>();
         TabulationResult<BasicBlockInContext<IExplodedBasicBlock>, CGNode, DomainElement> 
           flowResult = FlowAnalysis.analyze(sg, cg, pa, initialTaints, domain, methodAnalysis);
 
         Map<FlowType, Set<FlowType>> permissionOutflow = 
-                OutflowAnalysis.analyze(cg, cha, sg, pa, flowResult, domain);
+                OutflowAnalysis.analyze(cg, cha, sg, pa, flowResult, domain, specs);
         
         return permissionOutflow;
     }

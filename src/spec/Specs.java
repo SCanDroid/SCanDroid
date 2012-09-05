@@ -125,7 +125,7 @@ public class Specs implements ISpecs {
 	static MethodNamePattern httpExecute =
 			new MethodNamePattern(http, "execute");
 
-	static MethodNamePattern[] entrypointSpecs = {
+	private static MethodNamePattern[] entrypointSpecs = {
 		actCreate,
 		actStart,
 		actResume,
@@ -147,7 +147,7 @@ public class Specs implements ISpecs {
 	};
 	public MethodNamePattern[] getEntrypointSpecs() { return entrypointSpecs; }
 
-	static SourceSpec[] sourceSpecs = {
+	private static SourceSpec[] sourceSpecs = {
 //		new EntryArgSourceSpec( actCreate, null ),
 		//doesn't have any parameters
 		// new EntryArgSourceSpec( actStart, null ),
@@ -191,7 +191,7 @@ public class Specs implements ISpecs {
 	
 	public SourceSpec[] getSourceSpecs() { return sourceSpecs; }
 
-	static SinkSpec[] sinkSpecs = {
+	private static SinkSpec[] sinkSpecs = {
 		new CallArgSinkSpec(actSetResult, new int[] { 2 }, SinkType.RETURN_SINK),
 //		new CallArgSinkSpec(bndTransact, new int[] { 2 }),
 		

@@ -102,8 +102,8 @@ public class InflowAnalysis <E extends ISSABasicBlock> {
             Map<BasicBlockInContext<E>, Map<FlowType,Set<CodeElement>>> taintMap,
             BasicBlockInContext<E> block,
             FlowType taintType,
-            CodeElement element)
-    {
+            CodeElement element) {
+        
         Set<CodeElement> elements = new HashSet<CodeElement>();
         elements.add(element);
         addDomainElements(taintMap, block, taintType, elements);
@@ -185,8 +185,9 @@ public class InflowAnalysis <E extends ISSABasicBlock> {
 
     public static <E extends ISSABasicBlock>
       Map<BasicBlockInContext<E>,Map<FlowType,Set<CodeElement>>> analyze(
-            AndroidAppLoader<E> loader, Map<InstanceKey, String> prefixes) {
-        return analyze(loader.cg, loader.cha, loader.graph, loader.pa, prefixes);
+            AndroidAppLoader<E> loader, Map<InstanceKey, String> prefixes,
+            Specs s) {
+        return analyze(loader.cg, loader.cha, loader.graph, loader.pa, prefixes, s);
     }
     
     public static <E extends ISSABasicBlock>
@@ -195,7 +196,8 @@ public class InflowAnalysis <E extends ISSABasicBlock> {
           ClassHierarchy cha, 
           ISupergraph<BasicBlockInContext<E>, CGNode> graph,
           PointerAnalysis pa, 
-          Map<InstanceKey, String> prefixes) {
+          Map<InstanceKey, String> prefixes,
+          Specs s) {
 
         System.out.println("***************************");
         System.out.println("* Running inflow analysis *");
@@ -203,8 +205,7 @@ public class InflowAnalysis <E extends ISSABasicBlock> {
 
         Map<BasicBlockInContext<E>,Map<FlowType,Set<CodeElement>>> taintMap =
             new HashMap<BasicBlockInContext<E>,Map<FlowType,Set<CodeElement>>>();
-        
-        Specs s = new Specs();
+
         SourceSpec[] ss = s.getSourceSpecs();
         ArrayList<SourceSpec> ssAL = new ArrayList<SourceSpec>();
         for (int i = 0; i < ss.length; i++) {

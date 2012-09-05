@@ -43,6 +43,7 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
 
+import spec.Specs;
 import synthMethod.MethodAnalysis;
 import synthMethod.XMLMethodSummaryWriter;
 import util.AndroidAppLoader;
@@ -101,21 +102,26 @@ public class SeparateEntryAnalysis {
                  MethodAnalysis<IExplodedBasicBlock> methodAnalysis) {
         try {
             loader.buildGraphs(localEntries);
-    		// load the permissions
-    		Set<String> manifestFilenames = new HashSet<String>();
-    		Permissions perms = Permissions.load(manifestFilenames);
+            // load the permissions
+            Set<String> manifestFilenames = new HashSet<String>();
+            Permissions perms = Permissions.load(manifestFilenames);
 
             System.out.println("Supergraph size = "
                     + loader.graph.getNumberOfNodes());
 
-             System.out.println("Running prefix analysis.");
-             Map<InstanceKey, String> prefixes =
-                 UriPrefixAnalysis.runAnalysisHelper(loader.cg, loader.pa);
-             System.out.println("Number of prefixes = " + prefixes.values().size());
-
+            System.out.println("Running prefix analysis.");
+            Map<InstanceKey, String> prefixes =
+                UriPrefixAnalysis.runAnalysisHelper(loader.cg, loader.pa);
+            System.out.println("Number of prefixes = " + prefixes.values().size());
+            
+            
+            Specs specs = new Specs();
+             
             System.out.println("Running inflow analysis.");
-            Map<BasicBlockInContext<IExplodedBasicBlock>, Map<FlowType, Set<CodeElement>>> initialTaints = InflowAnalysis
-                    .analyze(loader, prefixes);
+            Map<BasicBlockInContext<IExplodedBasicBlock>, 
+                Map<FlowType, Set<CodeElement>>> initialTaints = 
+                  InflowAnalysis.analyze(loader, prefixes, specs);
+            
             System.out.println("  Initial taint size = "
                     + initialTaints.size());
                        
@@ -126,7 +132,7 @@ public class SeparateEntryAnalysis {
 
             System.out.println("Running outflow analysis.");
             Map<FlowType, Set<FlowType>> permissionOutflow = OutflowAnalysis
-                    .analyze(loader, flowResult, domain);
+                    .analyze(loader, flowResult, domain, specs);
             System.out.println("  Permission outflow size = "
                     + permissionOutflow.size());
             

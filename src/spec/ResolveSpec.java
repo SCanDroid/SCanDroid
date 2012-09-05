@@ -40,11 +40,13 @@ package spec;
 
 class ResolvedSpec {
     ResolvedSpec() {
-        for(MethodNamePattern m: Specs.entrypointSpecs) {
+        Specs spec = new Specs();
+        
+        for(MethodNamePattern m: spec.getEntrypointSpecs()) {
         }
-        for(SourceSpec s: Specs.sourceSpecs) {
+        for(SourceSpec s: spec.getSourceSpecs()) {
         }
-        for(ISinkSpec s: Specs.sinkSpecs) {
+        for(ISinkSpec s: spec.getSinkSpecs()) {
         }
     }
 }
