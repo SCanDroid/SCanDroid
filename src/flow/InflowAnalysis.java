@@ -51,14 +51,22 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import spec.*;
+import spec.CallArgSourceSpec;
+import spec.CallRetSourceSpec;
+import spec.EntryArgSourceSpec;
+import spec.SourceSpec;
+import spec.Specs;
 import util.AndroidAppLoader;
 
 import com.ibm.wala.classLoader.IMethod;
+import com.ibm.wala.dataflow.IFDS.ISupergraph;
 import com.ibm.wala.ipa.callgraph.CGNode;
+import com.ibm.wala.ipa.callgraph.CallGraph;
 import com.ibm.wala.ipa.callgraph.impl.Everywhere;
 import com.ibm.wala.ipa.callgraph.propagation.InstanceKey;
+import com.ibm.wala.ipa.callgraph.propagation.PointerAnalysis;
 import com.ibm.wala.ipa.cfg.BasicBlockInContext;
+import com.ibm.wala.ipa.cha.ClassHierarchy;
 import com.ibm.wala.ssa.ISSABasicBlock;
 import com.ibm.wala.ssa.SSAInstruction;
 import com.ibm.wala.ssa.SSAInvokeInstruction;
@@ -94,31 +102,49 @@ public class InflowAnalysis <E extends ISSABasicBlock> {
     }
 
     
-    private static<E extends ISSABasicBlock> void processInputSource(Map<BasicBlockInContext<E>,Map<FlowType,Set<CodeElement>>> taintMap, AndroidAppLoader<E> loader, SourceSpec ss) {
+    private static<E extends ISSABasicBlock> 
+    void processInputSource(Map<BasicBlockInContext<E>,
+                            Map<FlowType,Set<CodeElement>>> taintMap, 
+                            SourceSpec ss, 
+                            CallGraph cg, 
+                            ISupergraph<BasicBlockInContext<E>, CGNode> graph,
+                            ClassHierarchy cha,
+                            PointerAnalysis pa) {
     	int[] newArgNums;    	
-    	for (IMethod im:ss.getNamePattern().getPossibleTargets(loader.cha)) {
-    		CGNode node = loader.cg.getNode(im, Everywhere.EVERYWHERE);
+    	for (IMethod im:ss.getNamePattern().getPossibleTargets(cha)) {
+    		CGNode node = cg.getNode(im, Everywhere.EVERYWHERE);
     		newArgNums = (ss.getArgNums() == null) ? SourceSpec.getNewArgNums((im.isStatic())?im.getNumberOfParameters():im.getNumberOfParameters()-1) : ss.getArgNums();
-    		if (node == null || !loader.partialGraph.containsNode(node))
-    			continue;
-    	    		
-    		ss.addDomainElements(taintMap, im, null, null, loader, newArgNums);    		
 
+    		if (node == null) {
+    		    continue; 
+    		}
+
+    		BasicBlockInContext<E>[] entriesForProcedure = graph.getEntriesForProcedure(node);
+            if (entriesForProcedure == null || 0 == entriesForProcedure.length) {
+    			continue;
+    		}
+            
+            ss.addDomainElements(taintMap, im, null, null, newArgNums, graph, pa, cg);    		
     	}
     }
     
     
-    private static<E extends ISSABasicBlock> void processFunctionCalls(Map<BasicBlockInContext<E>,Map<FlowType,Set<CodeElement>>> taintMap, AndroidAppLoader<E> loader, ArrayList<SourceSpec> ssAL) {
+    private static<E extends ISSABasicBlock> 
+    void processFunctionCalls(Map<BasicBlockInContext<E>,
+                              Map<FlowType,Set<CodeElement>>> taintMap, 
+                              ArrayList<SourceSpec> ssAL, ISupergraph<BasicBlockInContext<E>, CGNode> graph, 
+                              PointerAnalysis pa, 
+                              ClassHierarchy cha, CallGraph cg) {
     	Collection<IMethod> targets = new HashSet<IMethod>();
     	ArrayList<Collection<IMethod>> targetList = new ArrayList<Collection<IMethod>>();
     	
     	for (int i = 0; i < ssAL.size(); i++) {
-    		Collection<IMethod> tempList = ssAL.get(i).getNamePattern().getPossibleTargets(loader.cha);
+    		Collection<IMethod> tempList = ssAL.get(i).getNamePattern().getPossibleTargets(cha);
     		targets.addAll(tempList);
     		targetList.add(tempList);
     	}
     	
-		Iterator<BasicBlockInContext<E>> graphIt = loader.graph.iterator();
+		Iterator<BasicBlockInContext<E>> graphIt = graph.iterator();
 		while (graphIt.hasNext()) {
 			BasicBlockInContext<E> block = graphIt.next();
 			Iterator<SSAInstruction> instructions = block.iterator();
@@ -131,7 +157,7 @@ public class InflowAnalysis <E extends ISSABasicBlock> {
 				}
 
 				SSAInvokeInstruction invInst = (SSAInvokeInstruction) inst;
-				for (IMethod target : loader.cha.getPossibleTargets(invInst.getDeclaredTarget())) {
+				for (IMethod target : cha.getPossibleTargets(invInst.getDeclaredTarget())) {
 					if (targets.contains(target)) {
 						for (int i = 0; i < targetList.size(); i++) {
 							if (targetList.get(i).contains(target)) {
@@ -139,10 +165,10 @@ public class InflowAnalysis <E extends ISSABasicBlock> {
 								int[] argNums = ssAL.get(i).getArgNums();
 								argNums = (argNums == null) ? SourceSpec.getNewArgNums((target.isStatic())?target.getNumberOfParameters():target.getNumberOfParameters()-1) : argNums;
 
-								ssAL.get(i).addDomainElements(taintMap, target, block, invInst, loader, argNums);
+								ssAL.get(i).addDomainElements(taintMap, target, block, invInst, argNums, graph, pa, cg);
 
 							}
-						}									
+						}
 					}
 				}
 			}
@@ -152,6 +178,16 @@ public class InflowAnalysis <E extends ISSABasicBlock> {
     public static <E extends ISSABasicBlock>
       Map<BasicBlockInContext<E>,Map<FlowType,Set<CodeElement>>> analyze(
             AndroidAppLoader<E> loader, Map<InstanceKey, String> prefixes) {
+        return analyze(loader.cg, loader.cha, loader.graph, loader.pa, prefixes);
+    }
+    
+    public static <E extends ISSABasicBlock>
+      Map<BasicBlockInContext<E>,Map<FlowType,Set<CodeElement>>> analyze(
+          CallGraph cg, 
+          ClassHierarchy cha, 
+          ISupergraph<BasicBlockInContext<E>, CGNode> graph,
+          PointerAnalysis pa, 
+          Map<InstanceKey, String> prefixes) {
 
         System.out.println("***************************");
         System.out.println("* Running inflow analysis *");
@@ -165,14 +201,14 @@ public class InflowAnalysis <E extends ISSABasicBlock> {
         ArrayList<SourceSpec> ssAL = new ArrayList<SourceSpec>();
         for (int i = 0; i < ss.length; i++) {
         	if (ss[i] instanceof EntryArgSourceSpec)
-        		processInputSource(taintMap, loader, ss[i]);
+        		processInputSource(taintMap, ss[i], cg, graph, cha, pa);
         	else if (ss[i] instanceof CallRetSourceSpec || ss[i] instanceof CallArgSourceSpec)
         		ssAL.add(ss[i]);
         	else 
         		throw new UnsupportedOperationException("Unrecognized SourceSpec");
         } 
         if (!ssAL.isEmpty())
-        	processFunctionCalls(taintMap, loader, ssAL);
+        	processFunctionCalls(taintMap, ssAL, graph, pa, cha, cg);
 
         System.out.println("************");
         System.out.println("* Results: *");

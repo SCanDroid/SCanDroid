@@ -41,13 +41,14 @@ package spec;
 import java.util.Map;
 import java.util.Set;
 
-import util.AndroidAppLoader;
-
 import com.ibm.wala.classLoader.IMethod;
+import com.ibm.wala.dataflow.IFDS.ISupergraph;
 import com.ibm.wala.ipa.callgraph.CGNode;
+import com.ibm.wala.ipa.callgraph.CallGraph;
 import com.ibm.wala.ipa.callgraph.impl.Everywhere;
 import com.ibm.wala.ipa.callgraph.propagation.InstanceKey;
 import com.ibm.wala.ipa.callgraph.propagation.LocalPointerKey;
+import com.ibm.wala.ipa.callgraph.propagation.PointerAnalysis;
 import com.ibm.wala.ipa.cfg.BasicBlockInContext;
 import com.ibm.wala.ssa.ISSABasicBlock;
 import com.ibm.wala.ssa.SSAInvokeInstruction;
@@ -81,39 +82,40 @@ public class EntryArgSourceSpec extends SourceSpec {
 	public<E extends ISSABasicBlock> void addDomainElements(
 			Map<BasicBlockInContext<E>, Map<FlowType, Set<CodeElement>>> taintMap,
 			IMethod im, BasicBlockInContext<E> block_notused, SSAInvokeInstruction invInst_notused,
-			AndroidAppLoader<E> loader, int[] newArgNums) {
+			int[] newArgNums, 
+			ISupergraph<BasicBlockInContext<E>, CGNode> graph, PointerAnalysis pa, CallGraph cg) {
 
-		CGNode node = loader.cg.getNode(im, Everywhere.EVERYWHERE);
+		CGNode node = cg.getNode(im, Everywhere.EVERYWHERE);
 
 		switch (myType) {
 		case INPUT_SOURCE:
-			for (BasicBlockInContext<E> block : loader.graph.getEntriesForProcedure(node) )
+			for (BasicBlockInContext<E> block : graph.getEntriesForProcedure(node) )
 			{
 //				FlowType flowType = new InputFlow(im.getReference().getDeclaringClass(), node, name);
 				for (int i = 0; i < newArgNums.length; i++) {
 					FlowType flowType = new InputFlow(im.getReference().getDeclaringClass(), node, name, im.getSignature(), newArgNums[i]);
-					InflowAnalysis.addDomainElements(taintMap, block, flowType, CodeElement.valueElements(loader.pa, node, node.getIR().getParameter(newArgNums[i])));
+					InflowAnalysis.addDomainElements(taintMap, block, flowType, CodeElement.valueElements(pa, node, node.getIR().getParameter(newArgNums[i])));
 				}
 			}
 			break;
 		case RETURN_SOURCE:
-			for (BasicBlockInContext<E> block : loader.graph.getEntriesForProcedure(node) )
+			for (BasicBlockInContext<E> block : graph.getEntriesForProcedure(node) )
 			{
 //				FlowType flowType = new ReturnFlow(im.getReference().getDeclaringClass(), node, name);
 				for (int i = 0; i < newArgNums.length; i++) {
 					FlowType flowType = new ReturnFlow(im.getReference().getDeclaringClass(), node, name, im.getSignature(), newArgNums[i]);
-					InflowAnalysis.addDomainElements(taintMap, block, flowType, CodeElement.valueElements(loader.pa, node, node.getIR().getParameter(newArgNums[i])));
+					InflowAnalysis.addDomainElements(taintMap, block, flowType, CodeElement.valueElements(pa, node, node.getIR().getParameter(newArgNums[i])));
 				}
 			}
 			break;			
 		case BINDER_SOURCE:
 			for (int i = 0; i < newArgNums.length; i++) {
 
-				for(InstanceKey ik:loader.pa.getPointsToSet(new LocalPointerKey(node,node.getIR().getParameter(newArgNums[i]))))
+				for(InstanceKey ik: pa.getPointsToSet(new LocalPointerKey(node,node.getIR().getParameter(newArgNums[i]))))
 				{
 					FlowType flow = new BinderFlow(ik, node, name, im.getSignature(), newArgNums[i]);
 
-					for (BasicBlockInContext<E> block : loader.graph.getEntriesForProcedure(node) ){
+					for (BasicBlockInContext<E> block : graph.getEntriesForProcedure(node) ){
 						InflowAnalysis.addDomainElement(taintMap, block, flow, new InstanceKeyElement(ik));
 						InflowAnalysis.addDomainElement(taintMap, block, flow, new LocalElement(node.getIR().getParameter(newArgNums[i])));
 					}

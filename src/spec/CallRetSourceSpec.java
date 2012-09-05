@@ -43,12 +43,13 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import util.AndroidAppLoader;
-
 import com.ibm.wala.classLoader.IMethod;
+import com.ibm.wala.dataflow.IFDS.ISupergraph;
 import com.ibm.wala.ipa.callgraph.CGNode;
+import com.ibm.wala.ipa.callgraph.CallGraph;
 import com.ibm.wala.ipa.callgraph.propagation.InstanceKey;
 import com.ibm.wala.ipa.callgraph.propagation.LocalPointerKey;
+import com.ibm.wala.ipa.callgraph.propagation.PointerAnalysis;
 import com.ibm.wala.ipa.cfg.BasicBlockInContext;
 import com.ibm.wala.ssa.ISSABasicBlock;
 import com.ibm.wala.ssa.SSAInvokeInstruction;
@@ -77,23 +78,24 @@ public class CallRetSourceSpec extends SourceSpec {
 	public<E extends ISSABasicBlock> void addDomainElements(
 			Map<BasicBlockInContext<E>, Map<FlowType, Set<CodeElement>>> taintMap,
 			IMethod im, BasicBlockInContext<E> block, SSAInvokeInstruction invInst,
-			AndroidAppLoader<E> loader, int[] newArgNums) {
+			int[] newArgNums, ISupergraph<BasicBlockInContext<E>, CGNode> graph, PointerAnalysis pa, CallGraph cg) {
 
-		for (FlowType ft:getFlowType(invInst,block.getNode(),loader, im)) {
-			InflowAnalysis.addDomainElements(taintMap, block, ft, CodeElement.valueElements(loader.pa, block.getNode(), invInst.getDef(0)));
+		for (FlowType ft:getFlowType(invInst,block.getNode(), im, pa)) {
+			InflowAnalysis.addDomainElements(taintMap, block, ft, 
+			        CodeElement.valueElements(pa, block.getNode(), invInst.getDef(0)));
 		}
 	}
 
 	public<E extends ISSABasicBlock> Collection<FlowType> getFlowType(SSAInvokeInstruction invInst,
-			CGNode node, AndroidAppLoader<E> loader, IMethod im) {
+			CGNode node, IMethod im, PointerAnalysis pa) {
 
 		HashSet<FlowType> flowSet = new HashSet<FlowType>();
 		flowSet.clear();
 		switch(myType) {
 		case PROVIDER_SOURCE:
-			for(InstanceKey ik:loader.pa.getPointsToSet(new LocalPointerKey(node, invInst.getUse(1))))
+			for(InstanceKey ik:pa.getPointsToSet(new LocalPointerKey(node, invInst.getUse(1))))
 			{
-				flowSet.add(new IKFlow(ik, loader.pa.getInstanceKeyMapping().getMappedIndex(ik), node, sig, im.getSignature()));
+				flowSet.add(new IKFlow(ik, pa.getInstanceKeyMapping().getMappedIndex(ik), node, sig, im.getSignature()));
 			}
 			break;
 		case INPUT_SOURCE:

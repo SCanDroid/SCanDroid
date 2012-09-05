@@ -214,7 +214,7 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
 		// zeroxcgb = Util.makeZeroCFABuilder(options, cache, cha, scope, new
 		// UriPrefixContextSelector(options, cha), null);
 		zeroxcgb = makeVanillaZeroOneCFABuilder(options, cache, cha, scope,
-				new UriPrefixContextSelector(options, cha), null);
+				new UriPrefixContextSelector(options, cha), null, methodSpec);
 		cgb = new DexSSAPropagationCallGraphBuilder(cha, options, cache,
 				zeroxcgb.getContextSelector(),
 				(SSAContextInterpreter) zeroxcgb.getContextInterpreter(),
@@ -369,7 +369,7 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
 	public static SSAPropagationCallGraphBuilder makeVanillaZeroOneCFABuilder(
 			AnalysisOptions options, AnalysisCache cache, IClassHierarchy cha,
 			AnalysisScope scope, ContextSelector customSelector,
-			SSAContextInterpreter customInterpreter) {
+			SSAContextInterpreter customInterpreter, String summariesFile) {
 
 		if (options == null) {
 			throw new IllegalArgumentException("options is null");
@@ -379,7 +379,7 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
 		// cha);
 		// addBypassLogic(options, scope,
 		// AndroidAppLoader.class.getClassLoader(), methodSpec, cha);
-		addBypassLogic(options, scope, methodSpec, cha);
+		addBypassLogic(options, scope, summariesFile, cha);
 
 		return ZeroXCFABuilder.make(cha, options, cache, customSelector,
 				customInterpreter, ZeroXInstanceKeys.ALLOCATIONS

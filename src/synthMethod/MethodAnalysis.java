@@ -261,6 +261,7 @@ public class MethodAnalysis <E extends ISSABasicBlock>  {
 					addToFlow(de.taintSource, de.codeElement, methodFlows);
 				} else if (de.codeElement instanceof ReturnElement) {
 					MyLogger.log(DEBUG,de.taintSource + " FLOWS into RETURNELEMENT " + de.codeElement);
+					
 					addToFlow(de.taintSource, de.codeElement, methodFlows);
 				}
 			}

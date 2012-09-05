@@ -41,8 +41,10 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 
+import com.ibm.wala.dataflow.IFDS.ISupergraph;
 import com.ibm.wala.dataflow.IFDS.TabulationResult;
 import com.ibm.wala.ipa.callgraph.CGNode;
+import com.ibm.wala.ipa.callgraph.CallGraph;
 import com.ibm.wala.ipa.cfg.BasicBlockInContext;
 import com.ibm.wala.ssa.ISSABasicBlock;
 import com.ibm.wala.util.intset.IntSet;
@@ -60,9 +62,10 @@ public class WalaGraphToJGraphT {
 	private DirectedGraph<CGNode, DefaultEdge> jgrapht;
     private DijkstraShortestPath<CGNode, DefaultEdge> shortestpath;
     
-    public <E extends ISSABasicBlock>WalaGraphToJGraphT(AndroidAppLoader<E> loader,
-            TabulationResult<BasicBlockInContext<E>, CGNode, DomainElement> flowResult,
-            IFDSTaintDomain<E> domain, FlowType source) {
+    public <E extends ISSABasicBlock>
+    WalaGraphToJGraphT(TabulationResult<BasicBlockInContext<E>, CGNode, DomainElement> flowResult,
+            IFDSTaintDomain<E> domain,
+            FlowType source, ISupergraph<BasicBlockInContext<E>, CGNode> graph, CallGraph cg) {
 
         //jgrapht = new Pseudograph<CGNode, DefaultEdge>(DefaultEdge.class);
         jgrapht = new DirectedPseudograph<CGNode, DefaultEdge>(DefaultEdge.class);
@@ -75,7 +78,7 @@ public class WalaGraphToJGraphT {
         	}
         }
         
-        Iterator<BasicBlockInContext<E>> bbI = loader.graph.iterator();               
+        Iterator<BasicBlockInContext<E>> bbI = graph.iterator();               
         while (bbI.hasNext()) {
         	BasicBlockInContext<E> block = bbI.next();
             IntSet resultSet = flowResult.getResult(block);
@@ -88,11 +91,11 @@ public class WalaGraphToJGraphT {
         }
         
         
-        Iterator<CGNode>cgI = loader.cg.iterator();
+        Iterator<CGNode>cgI = cg.iterator();
         while (cgI.hasNext()) {
             CGNode currNode = cgI.next();
         	if (jgrapht.containsVertex(currNode)) {
-        		for (Iterator<CGNode> succI = loader.cg.getSuccNodes(currNode); succI.hasNext(); ) {
+        		for (Iterator<CGNode> succI = cg.getSuccNodes(currNode); succI.hasNext(); ) {
         			CGNode succ = succI.next();
         			if (jgrapht.containsVertex(succ)) {
         				jgrapht.addEdge(currNode, succ);

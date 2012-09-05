@@ -46,9 +46,12 @@ import java.util.Set;
 import util.AndroidAppLoader;
 
 import com.ibm.wala.classLoader.IMethod;
+import com.ibm.wala.dataflow.IFDS.ISupergraph;
 import com.ibm.wala.ipa.callgraph.CGNode;
+import com.ibm.wala.ipa.callgraph.CallGraph;
 import com.ibm.wala.ipa.callgraph.propagation.InstanceKey;
 import com.ibm.wala.ipa.callgraph.propagation.LocalPointerKey;
+import com.ibm.wala.ipa.callgraph.propagation.PointerAnalysis;
 import com.ibm.wala.ipa.cfg.BasicBlockInContext;
 import com.ibm.wala.ssa.ISSABasicBlock;
 import com.ibm.wala.ssa.SSAInvokeInstruction;
@@ -77,28 +80,28 @@ public class CallArgSourceSpec extends SourceSpec {
 	public<E extends ISSABasicBlock> void addDomainElements(
 			Map<BasicBlockInContext<E>, Map<FlowType, Set<CodeElement>>> taintMap,
 			IMethod target, BasicBlockInContext<E> block, SSAInvokeInstruction invInst,
-			AndroidAppLoader<E> loader, int[] newArgNums) {
+			int[] newArgNums, ISupergraph<BasicBlockInContext<E>, CGNode> graph, PointerAnalysis pa, CallGraph cg) {
 
-//		for (FlowType ft:getFlowType(invInst,block.getNode(),loader)) {
 		for (int j = 0; j<newArgNums.length; j++) {
-			for (FlowType ft:getFlowType(invInst,block.getNode(),loader, target, newArgNums[j])) {
-				InflowAnalysis.addDomainElements(taintMap, block, ft, CodeElement.valueElements(loader.pa, block.getNode(), invInst.getUse(newArgNums[j])));
+			for (FlowType ft:getFlowType(invInst,block.getNode(), target, newArgNums[j], pa)) {
+				InflowAnalysis.addDomainElements(taintMap, block, ft, 
+				        CodeElement.valueElements(pa, block.getNode(), invInst.getUse(newArgNums[j])));
 			}
 		}
 	}
 
 
 	public<E extends ISSABasicBlock> Collection<FlowType> getFlowType(SSAInvokeInstruction invInst,
-			CGNode node, AndroidAppLoader<E> loader, IMethod target, int argNum) {
+			CGNode node, IMethod target, int argNum, PointerAnalysis pa) {
 		HashSet<FlowType> flowSet = new HashSet<FlowType>();
 		flowSet.clear();
 		switch(myType) {
 		case ARG_SOURCE:
-			for(InstanceKey ik:loader.pa.getPointsToSet(new LocalPointerKey(node, invInst.getReceiver())))
-				flowSet.add(new IKFlow(ik, loader.pa.getInstanceKeyMapping().getMappedIndex(ik), node, name, target.getSignature(), argNum));
+			for(InstanceKey ik:pa.getPointsToSet(new LocalPointerKey(node, invInst.getReceiver())))
+				flowSet.add(new IKFlow(ik, pa.getInstanceKeyMapping().getMappedIndex(ik), node, name, target.getSignature(), argNum));
 			break;
 		case BINDER_SOURCE :
-			for(InstanceKey ik:loader.pa.getPointsToSet(new LocalPointerKey(node, invInst.getReceiver())))
+			for(InstanceKey ik:pa.getPointsToSet(new LocalPointerKey(node, invInst.getReceiver())))
 				flowSet.add(new BinderFlow(ik, node, name, target.getSignature(), argNum));
 			break;
 		default:

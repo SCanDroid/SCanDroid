@@ -44,7 +44,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -59,12 +58,16 @@ import util.AndroidAppLoader;
 import util.WalaGraphToJGraphT;
 
 import com.ibm.wala.classLoader.IMethod;
+import com.ibm.wala.dataflow.IFDS.ISupergraph;
 import com.ibm.wala.dataflow.IFDS.TabulationResult;
 import com.ibm.wala.ipa.callgraph.CGNode;
+import com.ibm.wala.ipa.callgraph.CallGraph;
 import com.ibm.wala.ipa.callgraph.impl.Everywhere;
 import com.ibm.wala.ipa.callgraph.propagation.InstanceKey;
 import com.ibm.wala.ipa.callgraph.propagation.LocalPointerKey;
+import com.ibm.wala.ipa.callgraph.propagation.PointerAnalysis;
 import com.ibm.wala.ipa.cfg.BasicBlockInContext;
+import com.ibm.wala.ipa.cha.ClassHierarchy;
 import com.ibm.wala.ssa.ISSABasicBlock;
 import com.ibm.wala.ssa.SSAInstruction;
 import com.ibm.wala.ssa.SSAInvokeInstruction;
@@ -94,19 +97,20 @@ public class OutflowAnalysis <E extends ISSABasicBlock> {
     
     private static <E extends ISSABasicBlock> void processArgSinks(
             TabulationResult<BasicBlockInContext<E>, CGNode, DomainElement> flowResult,
-            IFDSTaintDomain<E> domain, AndroidAppLoader<E> loader, 
-            Map<FlowType, Set<FlowType>> flowGraph, ArrayList<SinkSpec> ssAL) {
+            IFDSTaintDomain<E> domain, Map<FlowType, Set<FlowType>> flowGraph, 
+            ArrayList<SinkSpec> ssAL, ClassHierarchy cha, PointerAnalysis pa, 
+            ISupergraph<BasicBlockInContext<E>, CGNode> graph, CallGraph cg) {
     	Collection<IMethod> targets = new HashSet<IMethod>();
     	ArrayList<Collection<IMethod>> targetList = new ArrayList<Collection<IMethod>>();
     	
     	for (int i = 0; i < ssAL.size(); i++) {
-    		Collection<IMethod> tempList = ssAL.get(i).getNamePattern().getPossibleTargets(loader.cha);
+    		Collection<IMethod> tempList = ssAL.get(i).getNamePattern().getPossibleTargets(cha);
     		targets.addAll(tempList);
     		targetList.add(tempList);
     	}
     	
         // look for all uses of query function and taint the results with the Uri used in those functions
-        Iterator<BasicBlockInContext<E>> graphIt = loader.graph.iterator();
+        Iterator<BasicBlockInContext<E>> graphIt = graph.iterator();
         while (graphIt.hasNext()) {
             BasicBlockInContext<E> block = graphIt.next();
             Iterator<SSAInstruction> instructions = block.iterator();
@@ -118,7 +122,7 @@ public class OutflowAnalysis <E extends ISSABasicBlock> {
                     continue;
                 }
                 SSAInvokeInstruction invInst = (SSAInvokeInstruction) inst;
-                for(IMethod target:loader.cha.getPossibleTargets(invInst.getDeclaredTarget()))
+                for(IMethod target:cha.getPossibleTargets(invInst.getDeclaredTarget()))
                 {
                 	if (targets.contains(target)) {
                 		for (int i = 0; i < targetList.size(); i++) {
@@ -142,7 +146,7 @@ public class OutflowAnalysis <E extends ISSABasicBlock> {
                 	                    }
                 	                }
 
-                	                for(InstanceKey ik: loader.pa.getPointsToSet(new LocalPointerKey(node,invInst.getUse(argNums[j])))) {
+                	                for(InstanceKey ik: pa.getPointsToSet(new LocalPointerKey(node,invInst.getUse(argNums[j])))) {
                 	                    for(DomainElement de:domain.getPossibleElements(new InstanceKeyElement(ik))) {
                 	                        if(resultSet.contains(domain.getMappedIndex(de))) {
                 	                            taintTypeSet.add(de.taintSource);
@@ -150,7 +154,7 @@ public class OutflowAnalysis <E extends ISSABasicBlock> {
                 	                    }
                 	                }
                 	                
-                    	            for(FlowType dest: ssAL.get(i).getFlowType(loader, target, invInst, node, argNums[j])) {
+                    	            for(FlowType dest: ssAL.get(i).getFlowType(target, invInst, node, argNums[j], pa)) {
                     	                for(FlowType source: taintTypeSet) {
                     	                    // flow taint into uriIK
                     	                    addEdge(flowGraph, source, dest);
@@ -167,31 +171,37 @@ public class OutflowAnalysis <E extends ISSABasicBlock> {
     
     private static <E extends ISSABasicBlock> void processEntryArgs(
     		TabulationResult<BasicBlockInContext<E>, CGNode, DomainElement> flowResult,
-    		IFDSTaintDomain<E> domain, AndroidAppLoader<E> loader, 
-    		Map<FlowType, Set<FlowType>> flowGraph, SinkSpec ss) {
+    		IFDSTaintDomain<E> domain, Map<FlowType, Set<FlowType>> flowGraph, 
+    		SinkSpec ss, CallGraph cg, ISupergraph<BasicBlockInContext<E>, CGNode> graph, PointerAnalysis pa, ClassHierarchy cha) {
 
     	int[] newArgNums;    	
-    	for (IMethod im:ss.getNamePattern().getPossibleTargets(loader.cha)) {
+    	for (IMethod im:ss.getNamePattern().getPossibleTargets(cha)) {
     		// look for a tainted reply
 
-    		CGNode node = loader.cg.getNode(im, Everywhere.EVERYWHERE);
-    		if (node == null || !loader.partialGraph.containsNode(node))
-    			continue;
+    		CGNode node = cg.getNode(im, Everywhere.EVERYWHERE);
+    		if (node == null) {
+    		    continue; 
+    		}
 
+    		BasicBlockInContext<E>[] entriesForProcedure = graph.getEntriesForProcedure(node);
+            if (entriesForProcedure == null || 0 == entriesForProcedure.length) {
+    			continue;
+    		}
+    		
     		newArgNums = (ss.getArgNums() == null) ? SinkSpec.getNewArgNums((im.isStatic())?im.getNumberOfParameters():im.getNumberOfParameters()-1) : ss.getArgNums();
 
     		for (int i = 0; i < newArgNums.length; i++) {
     			
     			for(DomainElement de:domain.getPossibleElements(new LocalElement(node.getIR().getParameter(newArgNums[i])))) {
-    				for (BasicBlockInContext<E> block: loader.graph.getExitsForProcedure(node) ) {
+    				for (BasicBlockInContext<E> block: graph.getExitsForProcedure(node) ) {
     					if(flowResult.getResult(block).contains(domain.getMappedIndex(de))) {
     						addEdge(flowGraph,de.taintSource, new ReturnFlow(im.getDeclaringClass().getReference(), node, "EntryArgSink", im.getSignature(), newArgNums[i]));
     					}
     				}
     			}
-    			for(InstanceKey ik:loader.pa.getPointsToSet(new LocalPointerKey(node,node.getIR().getParameter(newArgNums[i])))) {
+    			for(InstanceKey ik:pa.getPointsToSet(new LocalPointerKey(node,node.getIR().getParameter(newArgNums[i])))) {
     				for(DomainElement de:domain.getPossibleElements(new InstanceKeyElement(ik))) {
-    					for (BasicBlockInContext<E> block : loader.graph.getExitsForProcedure(node)) {
+    					for (BasicBlockInContext<E> block : graph.getExitsForProcedure(node)) {
     						if(flowResult.getResult(block).contains(domain.getMappedIndex(de))) {
     							addEdge(flowGraph,de.taintSource, new ReturnFlow(im.getDeclaringClass().getReference(), node, "EntryArgSink", im.getSignature(), newArgNums[i]));
     						}
@@ -202,11 +212,22 @@ public class OutflowAnalysis <E extends ISSABasicBlock> {
     	}
     }
 
+    
     public static <E extends ISSABasicBlock> Map<FlowType, Set<FlowType>>
       analyze(AndroidAppLoader<E> loader,
             TabulationResult<BasicBlockInContext<E>, CGNode, DomainElement> flowResult,
-            IFDSTaintDomain<E> domain)
-    {
+            IFDSTaintDomain<E> domain) {
+        return analyze(loader.cg, loader.cha, loader.graph, loader.pa, flowResult, domain);
+    }
+     
+     public static <E extends ISSABasicBlock> Map<FlowType, Set<FlowType>>
+     analyze(CallGraph cg, 
+          ClassHierarchy cha, 
+          ISupergraph<BasicBlockInContext<E>, CGNode> graph,
+          PointerAnalysis pa,
+          TabulationResult<BasicBlockInContext<E>, CGNode, DomainElement> flowResult,
+          IFDSTaintDomain<E> domain) {
+         
         System.out.println("****************************");
         System.out.println("* Running outflow analysis *");
         System.out.println("****************************");
@@ -218,14 +239,14 @@ public class OutflowAnalysis <E extends ISSABasicBlock> {
         ArrayList<SinkSpec> ssAL = new ArrayList<SinkSpec>();
         for (int i = 0; i < ss.length; i++) {
         	if (ss[i] instanceof EntryArgSinkSpec)
-        		processEntryArgs(flowResult, domain, loader, taintFlow, ss[i]);
+        		processEntryArgs(flowResult, domain, taintFlow, ss[i], cg, graph, pa, cha);
         	else if (ss[i] instanceof CallArgSinkSpec)
         		ssAL.add(ss[i]);
         	else
         		throw new UnsupportedOperationException("SourceSpec not yet Implemented");
         }
         if (!ssAL.isEmpty())
-        	processArgSinks(flowResult, domain, loader, taintFlow, ssAL);
+        	processArgSinks(flowResult, domain, taintFlow, ssAL, cha, pa, graph, cg);
 
         System.out.println("************");
         System.out.println("* Results: *");
@@ -233,7 +254,7 @@ public class OutflowAnalysis <E extends ISSABasicBlock> {
 
         for(Entry<FlowType,Set<FlowType>> e: taintFlow.entrySet())
         {
-            WalaGraphToJGraphT walaJgraphT = new WalaGraphToJGraphT(loader, flowResult, domain, e.getKey());
+            WalaGraphToJGraphT walaJgraphT = new WalaGraphToJGraphT(flowResult, domain, e.getKey(), graph, cg);
         	System.out.println("Source: " + e.getKey());
             for(FlowType target:e.getValue())
             {

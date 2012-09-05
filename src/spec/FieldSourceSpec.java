@@ -39,12 +39,19 @@
 package spec;
 
 import java.util.Map;
-
-import util.AndroidAppLoader;
+import java.util.Set;
 
 import com.ibm.wala.classLoader.IMethod;
+import com.ibm.wala.dataflow.IFDS.ISupergraph;
+import com.ibm.wala.ipa.callgraph.CGNode;
+import com.ibm.wala.ipa.callgraph.CallGraph;
+import com.ibm.wala.ipa.callgraph.propagation.PointerAnalysis;
 import com.ibm.wala.ipa.cfg.BasicBlockInContext;
+import com.ibm.wala.ssa.ISSABasicBlock;
 import com.ibm.wala.ssa.SSAInvokeInstruction;
+
+import domain.CodeElement;
+import flow.types.FlowType;
 
 class FieldSourceSpec extends SourceSpec {
     final FieldNamePattern namePattern;
@@ -56,11 +63,15 @@ class FieldSourceSpec extends SourceSpec {
 		// TODO Auto-generated method stub
 		return null;
 	}
-	@Override
-	public void addDomainElements(Map taintMap, IMethod im,
-			BasicBlockInContext block, SSAInvokeInstruction invInst,
-			AndroidAppLoader loader, int[] newArgNums) {
-		// TODO Auto-generated method stub
-		
-	}
+    @Override
+    public <E extends ISSABasicBlock> void addDomainElements(
+            Map<BasicBlockInContext<E>, Map<FlowType, Set<CodeElement>>> taintMap,
+            IMethod im, BasicBlockInContext<E> block,
+            SSAInvokeInstruction invInst, int[] newArgNums,
+            ISupergraph<BasicBlockInContext<E>, CGNode> graph,
+            PointerAnalysis pa, CallGraph cg) {
+        // TODO Auto-generated method stub
+        
+    }
+	
 }

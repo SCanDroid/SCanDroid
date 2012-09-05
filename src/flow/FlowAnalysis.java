@@ -43,8 +43,6 @@ import static util.MyLogger.LogLevel.DEBUG;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -65,7 +63,8 @@ import com.ibm.wala.dataflow.IFDS.TabulationProblem;
 import com.ibm.wala.dataflow.IFDS.TabulationResult;
 import com.ibm.wala.dataflow.IFDS.TabulationSolver;
 import com.ibm.wala.ipa.callgraph.CGNode;
-import com.ibm.wala.ipa.callgraph.Entrypoint;
+import com.ibm.wala.ipa.callgraph.CallGraph;
+import com.ibm.wala.ipa.callgraph.propagation.PointerAnalysis;
 import com.ibm.wala.ipa.cfg.BasicBlockInContext;
 import com.ibm.wala.ssa.ISSABasicBlock;
 import com.ibm.wala.util.CancelException;
@@ -79,8 +78,22 @@ import flow.types.FlowType;
 public class FlowAnalysis {
 
     public static <E extends ISSABasicBlock>
+    TabulationResult<BasicBlockInContext<E>, CGNode, DomainElement> 
+    analyze(final AndroidAppLoader<E> loader,
+          Map<BasicBlockInContext<E>,
+          Map<FlowType,Set<CodeElement>>> initialTaints,
+          IFDSTaintDomain<E> d,
+          MethodAnalysis<E> methodAnalysis
+          ) throws CancelRuntimeException {
+        return analyze(loader.graph, loader.cg, loader.pa, initialTaints, d, methodAnalysis);
+    }
+    
+    
+    public static <E extends ISSABasicBlock>
       TabulationResult<BasicBlockInContext<E>, CGNode, DomainElement> 
-      analyze(final AndroidAppLoader<E> loader,
+      analyze(final ISupergraph<BasicBlockInContext<E>, CGNode> graph,
+              CallGraph cg,
+              PointerAnalysis pa,
             Map<BasicBlockInContext<E>,
             Map<FlowType,Set<CodeElement>>> initialTaints,
             IFDSTaintDomain<E> d,
@@ -103,7 +116,7 @@ public class FlowAnalysis {
             {
                 for(CodeElement o:e2.getValue())
                 {
-                	BasicBlockInContext<E>[] bbic = loader.graph.getEntriesForProcedure(e.getKey().getNode());
+                	BasicBlockInContext<E>[] bbic = graph.getEntriesForProcedure(e.getKey().getNode());
                 	for (int i = 0; i < bbic.length; i++) {
                 		//Add PathEdge <s_p,0> -> <n,d1>
                 		initialEdges.add(PathEdge.createPathEdge(bbic[i], 0, e.getKey(), domain.getMappedIndex(new DomainElement(o,e2.getKey()))));
@@ -113,14 +126,14 @@ public class FlowAnalysis {
             }
         }
         //Add PathEdges to the entry points of the supergraph <s_main,0> -> <s_main,0>
-        for (CGNode entry : loader.cg.getEntrypointNodes()) {
-        	BasicBlockInContext<E>[] bbic = loader.graph.getEntriesForProcedure(entry);
+        for (CGNode entry : cg.getEntrypointNodes()) {
+        	BasicBlockInContext<E>[] bbic = graph.getEntriesForProcedure(entry);
         	for (int i = 0; i < bbic.length; i++)
         		initialEdges.add(PathEdge.createPathEdge(bbic[i], 0, bbic[i], 0));
         }
 
         final IFlowFunctionMap<BasicBlockInContext<E>> functionMap =
-            new IFDSTaintFlowFunctionProvider<E>(domain, loader.graph, loader.pa, methodAnalysis);
+            new IFDSTaintFlowFunctionProvider<E>(domain, graph, pa, methodAnalysis);
         
         final TabulationProblem<BasicBlockInContext<E>, CGNode, DomainElement>
           problem =
@@ -139,7 +152,7 @@ public class FlowAnalysis {
             }
 
             public ISupergraph<BasicBlockInContext<E>, CGNode> getSupergraph() {
-                return loader.graph;
+                return graph;
             }
 
             public Collection<PathEdge<BasicBlockInContext<E>>> initialSeeds() {

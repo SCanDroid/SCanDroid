@@ -41,9 +41,11 @@ package spec;
 import java.util.Map;
 import java.util.Set;
 
-import util.AndroidAppLoader;
-
 import com.ibm.wala.classLoader.IMethod;
+import com.ibm.wala.dataflow.IFDS.ISupergraph;
+import com.ibm.wala.ipa.callgraph.CGNode;
+import com.ibm.wala.ipa.callgraph.CallGraph;
+import com.ibm.wala.ipa.callgraph.propagation.PointerAnalysis;
 import com.ibm.wala.ipa.cfg.BasicBlockInContext;
 import com.ibm.wala.ssa.ISSABasicBlock;
 import com.ibm.wala.ssa.SSAInvokeInstruction;
@@ -78,9 +80,10 @@ public abstract class SourceSpec implements ISourceSpec {
 	}
 		
 	abstract public<E extends ISSABasicBlock> void addDomainElements(
-			Map<BasicBlockInContext<E>,Map<FlowType,Set<CodeElement>>> taintMap, 
+			Map<BasicBlockInContext<E>, Map<FlowType,Set<CodeElement>>> taintMap, 
 			IMethod im, BasicBlockInContext<E> block, SSAInvokeInstruction invInst,
-			AndroidAppLoader<E> loader, int[] newArgNums);
+			int[] newArgNums, ISupergraph<BasicBlockInContext<E>, CGNode> graph, 
+			PointerAnalysis pa, CallGraph cg);
 
 	
 }

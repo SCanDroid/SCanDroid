@@ -41,10 +41,10 @@ package spec;
 import java.util.Collection;
 import java.util.HashSet;
 
-import util.AndroidAppLoader;
 
 import com.ibm.wala.classLoader.IMethod;
 import com.ibm.wala.ipa.callgraph.CGNode;
+import com.ibm.wala.ipa.callgraph.propagation.PointerAnalysis;
 import com.ibm.wala.ssa.ISSABasicBlock;
 import com.ibm.wala.ssa.SSAInvokeInstruction;
 
@@ -59,8 +59,8 @@ public class EntryArgSinkSpec extends SinkSpec {
     }
     
     public <E extends ISSABasicBlock> Collection<FlowType> getFlowType(
-    		AndroidAppLoader<E> loader, IMethod im,SSAInvokeInstruction invInst,
-            CGNode node, int argNum) {
+    		IMethod im, SSAInvokeInstruction invInst,CGNode node,
+            int argNum, PointerAnalysis pa) {
     	HashSet<FlowType> flowSet = new HashSet<FlowType>();
     	flowSet.clear();
     	return flowSet;

@@ -41,12 +41,12 @@ package spec;
 import java.util.Collection;
 import java.util.HashSet;
 
-import util.AndroidAppLoader;
 
 import com.ibm.wala.classLoader.IMethod;
 import com.ibm.wala.ipa.callgraph.CGNode;
 import com.ibm.wala.ipa.callgraph.propagation.InstanceKey;
 import com.ibm.wala.ipa.callgraph.propagation.LocalPointerKey;
+import com.ibm.wala.ipa.callgraph.propagation.PointerAnalysis;
 import com.ibm.wala.ssa.ISSABasicBlock;
 import com.ibm.wala.ssa.SSAInvokeInstruction;
 
@@ -74,8 +74,8 @@ public class CallArgSinkSpec extends SinkSpec {
     
 	@Override
     public <E extends ISSABasicBlock> Collection<FlowType> getFlowType(
-    		AndroidAppLoader<E> loader, IMethod target, SSAInvokeInstruction invInst,
-            CGNode node, int argNum) {
+    		IMethod target, SSAInvokeInstruction invInst, CGNode node,
+            int argNum, PointerAnalysis pa) {
     	
     	HashSet<FlowType> flowSet = new HashSet<FlowType>();
     	flowSet.clear();
@@ -93,9 +93,9 @@ public class CallArgSinkSpec extends SinkSpec {
 			flowSet.add(new ReturnFlow(invInst.getDeclaredTarget().getDeclaringClass(), node, name, target.getSignature(), argNum));
 			break;
 		case PROVIDER_SINK:
-            for(InstanceKey ik:loader.pa.getPointsToSet(new LocalPointerKey(node, invInst.getUse(1))))
+            for(InstanceKey ik:pa.getPointsToSet(new LocalPointerKey(node, invInst.getUse(1))))
                 //flowSet.add(new CallArgProviderSinkFlow(ik, invInst, argNum, node));
-            	flowSet.add(new IKFlow(ik, loader.pa.getInstanceKeyMapping().getMappedIndex(ik), node, name, target.getSignature(), argNum));
+            	flowSet.add(new IKFlow(ik, pa.getInstanceKeyMapping().getMappedIndex(ik), node, name, target.getSignature(), argNum));
 			break;
 		default:
     		throw new UnsupportedOperationException("SourceType not yet Implemented");
