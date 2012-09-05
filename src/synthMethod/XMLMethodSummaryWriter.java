@@ -35,6 +35,7 @@ import com.ibm.wala.classLoader.IClass;
 import com.ibm.wala.classLoader.IMethod;
 import com.ibm.wala.ipa.callgraph.propagation.InstanceKey;
 import com.ibm.wala.ssa.analysis.IExplodedBasicBlock;
+import com.ibm.wala.types.FieldReference;
 import com.ibm.wala.util.intset.OrdinalSet;
 
 import domain.CodeElement;
@@ -230,6 +231,27 @@ public class XMLMethodSummaryWriter {
 		return IKMap;
 	}
 
+	private static Element createPutStaticElement(Document doc, FieldReference fr, String value) {
+		Element e = doc.createElement(E_PUTSTATIC);
+		setFieldAttr(e,fr);
+		e.setAttribute(A_VALUE, value);
+		return e;
+	}
+	
+	private static Element createPutFieldElement(Document doc, FieldReference fr, String ref, String value) {
+		Element e = doc.createElement(E_PUTFIELD);
+		setFieldAttr(e,fr);
+		e.setAttribute(A_REF, ref);
+		e.setAttribute(A_VALUE, value);
+		return e;
+	}
+	
+	private static void setFieldAttr(Element e, FieldReference fr) {
+		e.setAttribute(A_CLASS, fr.getDeclaringClass().getName().toString());
+		e.setAttribute(A_FIELD, fr.getName().toString());
+		e.setAttribute(A_FIELD_TYPE, fr.getFieldType().getName().toString());
+	}
+	
 	private static void addFlowsToMethod(Document doc, Element mE,
 			Entry<FlowType, Set<CodeElement>> ftE, Map<InstanceKey, Set<Integer>> IKMap) {
 		FlowType ft = ftE.getKey();
@@ -247,26 +269,15 @@ public class XMLMethodSummaryWriter {
 				else if (ce instanceof FieldElement) {
 					FieldElement fe = (FieldElement)ce;
 					if (fe.isStatic()) {
-						Element e = doc.createElement(E_PUTSTATIC);
-						e.setAttribute(A_CLASS, fe.getRef().getDeclaringClass().getName().toString());
-						e.setAttribute(A_FIELD, fe.getRef().getName().toString());
-						e.setAttribute(A_FIELD_TYPE, fe.getRef().getFieldType().getName().toString());													
-						e.setAttribute(A_VALUE, "arg"+((ParameterFlow)ft).argNum);
-						mE.appendChild(e);
+						mE.appendChild(createPutStaticElement(doc, fe.getRef(), "arg"+((ParameterFlow)ft).argNum));
 					}
 					//field is not static
 					else {
 						//search instance keys of our parameters for instance reference
 						//could be 'this' or any of the parameters
 						if (IKMap.containsKey(fe.getIK())) {						
-							for (Integer i:IKMap.get(fe.getIK())) {						
-								Element e = doc.createElement(E_PUTFIELD);
-								e.setAttribute(A_CLASS, fe.getRef().getDeclaringClass().getName().toString());
-								e.setAttribute(A_FIELD, fe.getRef().getName().toString());
-								e.setAttribute(A_FIELD_TYPE, fe.getRef().getFieldType().getName().toString());													
-								e.setAttribute(A_REF, "arg"+i.intValue());
-								e.setAttribute(A_VALUE, "arg"+((ParameterFlow)ft).argNum);
-								mE.appendChild(e);
+							for (Integer i:IKMap.get(fe.getIK())) {														
+								mE.appendChild(createPutFieldElement(doc, fe.getRef(), "arg"+i.intValue(), "arg"+((ParameterFlow)ft).argNum));
 							}
 						}
 						else
@@ -290,9 +301,7 @@ public class XMLMethodSummaryWriter {
 				e = doc.createElement(E_GETFIELD);
 				e.setAttribute(A_REF, "arg0");
 			}
-			e.setAttribute(A_CLASS, ff.getRef().getDeclaringClass().getName().toString());
-			e.setAttribute(A_FIELD, ff.getRef().getName().toString());
-			e.setAttribute(A_FIELD_TYPE, ff.getRef().getFieldType().getName().toString());
+			setFieldAttr(e, ff.getRef());
 			String localDef = ff.getRef().getName().toString()+"_localDef";
 			e.setAttribute(A_DEF, localDef);
 			mE.appendChild(e);
@@ -310,12 +319,7 @@ public class XMLMethodSummaryWriter {
 					FieldElement fe = (FieldElement)ce;
 					//flows into static field
 					if (fe.isStatic()) {
-						Element pf = doc.createElement(E_PUTSTATIC);
-						pf.setAttribute(A_CLASS, fe.getRef().getDeclaringClass().getName().toString());
-						pf.setAttribute(A_FIELD, fe.getRef().getName().toString());
-						pf.setAttribute(A_FIELD_TYPE, fe.getRef().getFieldType().getName().toString());													
-						pf.setAttribute(A_VALUE, localDef);
-						mE.appendChild(pf);
+						mE.appendChild(createPutStaticElement(doc, fe.getRef(), localDef));
 					}
 					//else flows into non static field
 					else {
@@ -323,13 +327,7 @@ public class XMLMethodSummaryWriter {
 						//could be 'this' or any of the parameters
 						if (IKMap.containsKey(fe.getIK())) {						
 							for (Integer i:IKMap.get(fe.getIK())) {
-								Element pf = doc.createElement(E_PUTFIELD);
-								pf.setAttribute(A_CLASS, fe.getRef().getDeclaringClass().getName().toString());
-								pf.setAttribute(A_FIELD, fe.getRef().getName().toString());
-								pf.setAttribute(A_FIELD_TYPE, fe.getRef().getFieldType().getName().toString());													
-								pf.setAttribute(A_REF, "arg"+i.intValue());
-								pf.setAttribute(A_VALUE, localDef);
-								mE.appendChild(pf);
+								mE.appendChild(createPutFieldElement(doc, fe.getRef(), "arg"+i.intValue(), localDef));
 							}
 						}
 						else
