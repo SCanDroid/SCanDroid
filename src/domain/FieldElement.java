@@ -45,12 +45,14 @@ import com.ibm.wala.types.TypeReference;
 public class FieldElement extends CodeElement {
     private FieldReference fieldRef;
     private InstanceKey object;
+    private boolean isStatic;
 //    private TypeReference object;
 
-    public FieldElement(InstanceKey object, FieldReference fieldRef)
+    public FieldElement(InstanceKey object, FieldReference fieldRef, boolean isStatic)
     {
         this.fieldRef = fieldRef;
         this.object = object;
+        this.isStatic = isStatic;
     }
 //    public FieldElement(TypeReference object, String fieldname)
 //    {
@@ -64,6 +66,10 @@ public class FieldElement extends CodeElement {
     
     public FieldReference getRef() {
     	return fieldRef;
+    }
+    
+    public boolean isStatic() {
+    	return isStatic;
     }
 
     @Override

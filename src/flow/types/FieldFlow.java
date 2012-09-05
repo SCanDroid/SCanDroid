@@ -46,16 +46,22 @@ import com.ibm.wala.types.TypeReference;
 public class FieldFlow implements FlowType {
 
    private FieldReference fieldRef;
+   private boolean isStatic;
    
-   public FieldFlow(FieldReference fieldRef)
+   public FieldFlow(FieldReference fieldRef, boolean isStatic)
    {	   
 	   this.fieldRef = fieldRef;
+	   this.isStatic = isStatic;
 //   	this.classRef = classRef;
 //   	this.fieldname = fieldname;    	
    }
    
    public FieldReference getRef() {
 	   return fieldRef;
+   }
+   
+   public boolean isStatic() {
+	   return isStatic;
    }
 
    @Override

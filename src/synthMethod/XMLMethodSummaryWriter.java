@@ -64,6 +64,7 @@ public class XMLMethodSummaryWriter {
 	private final static String E_SUMMARY_SPEC = "summary-spec";
 	private final static String E_RETURN = "return";
 	private final static String E_PUTSTATIC = "putstatic";
+	private final static String E_GETSTATIC = "getstatic";
 	private final static String E_AASTORE = "aastore";
 	private final static String E_PUTFIELD = "putfield";
 	private final static String E_GETFIELD = "getfield";
@@ -224,66 +225,108 @@ public class XMLMethodSummaryWriter {
 	private static void addFlowsToMethod(Document doc, Element mE,
 			Entry<FlowType, Set<CodeElement>> ftE, Map<InstanceKey, Set<Integer>> IKMap) {
 		FlowType ft = ftE.getKey();
+		//handle parameter flow
 		if (ft instanceof ParameterFlow) {
 			for (CodeElement ce: ftE.getValue()) {
+				//parameter flows to return value
 				if (ce instanceof ReturnElement)
 				{
 					Element e = doc.createElement(E_RETURN);
 					e.setAttribute(A_VALUE, "arg"+((ParameterFlow)ft).argNum);
 					mE.appendChild(e);
 				}
+				//parameter flows into some field
 				else if (ce instanceof FieldElement) {
 					FieldElement fe = (FieldElement)ce;
-					if (IKMap.containsKey(fe.getIK())) {						
-						for (Integer i:IKMap.get(fe.getIK())) {						
-							Element e = doc.createElement(E_PUTFIELD);
-							e.setAttribute(A_CLASS, fe.getRef().getDeclaringClass().getName().toString());
-							e.setAttribute(A_FIELD, fe.getRef().getName().toString());
-							e.setAttribute(A_FIELD_TYPE, fe.getRef().getFieldType().getName().toString());													
-							e.setAttribute(A_REF, "arg"+i.intValue());
-							e.setAttribute(A_VALUE, "arg"+((ParameterFlow)ft).argNum);
-							mE.appendChild(e);
-						}
+					if (fe.isStatic()) {
+						Element e = doc.createElement(E_PUTSTATIC);
+						e.setAttribute(A_CLASS, fe.getRef().getDeclaringClass().getName().toString());
+						e.setAttribute(A_FIELD, fe.getRef().getName().toString());
+						e.setAttribute(A_FIELD_TYPE, fe.getRef().getFieldType().getName().toString());													
+						e.setAttribute(A_VALUE, "arg"+((ParameterFlow)ft).argNum);
+						mE.appendChild(e);
 					}
-					else
-						throw new IllegalArgumentException("FieldElement IK Not Found: " + fe.getIK()+" hash: " + fe.getIK().hashCode());			
+					//field is not static
+					else {
+						//search instance keys of our parameters for instance reference
+						//could be 'this' or any of the parameters
+						if (IKMap.containsKey(fe.getIK())) {						
+							for (Integer i:IKMap.get(fe.getIK())) {						
+								Element e = doc.createElement(E_PUTFIELD);
+								e.setAttribute(A_CLASS, fe.getRef().getDeclaringClass().getName().toString());
+								e.setAttribute(A_FIELD, fe.getRef().getName().toString());
+								e.setAttribute(A_FIELD_TYPE, fe.getRef().getFieldType().getName().toString());													
+								e.setAttribute(A_REF, "arg"+i.intValue());
+								e.setAttribute(A_VALUE, "arg"+((ParameterFlow)ft).argNum);
+								mE.appendChild(e);
+							}
+						}
+						else
+							throw new IllegalArgumentException("FieldElement IK Not Found: " + fe.getIK()+" hash: " + fe.getIK().hashCode());
+					}
 				}
 				else
 					throw new IllegalArgumentException("Invalid CodeElement Type");
 			}		
 		}
+		//handle field flow
 		else if (ft instanceof FieldFlow) {
-			Element e = doc.createElement(E_GETFIELD);
 			FieldFlow ff = (FieldFlow)ft;
+			Element e;
+			//get static field
+			if (ff.isStatic()) {
+				e = doc.createElement(E_GETSTATIC);				
+			}
+			//get non static field
+			else {
+				e = doc.createElement(E_GETFIELD);
+				e.setAttribute(A_REF, "arg0");
+			}
 			e.setAttribute(A_CLASS, ff.getRef().getDeclaringClass().getName().toString());
 			e.setAttribute(A_FIELD, ff.getRef().getName().toString());
 			e.setAttribute(A_FIELD_TYPE, ff.getRef().getFieldType().getName().toString());
 			String localDef = ff.getRef().getName().toString()+"_localDef";
 			e.setAttribute(A_DEF, localDef);
-			e.setAttribute(A_REF, "arg0");
 			mE.appendChild(e);
+			
 
 			for (CodeElement ce: ftE.getValue()) {
+				//field flows to return value
 				if (ce instanceof ReturnElement) {
 					Element re = doc.createElement(E_RETURN);
 					re.setAttribute(A_VALUE, localDef);
 					mE.appendChild(re);
 				}
+				//field flows to another field
 				else if (ce instanceof FieldElement) {
 					FieldElement fe = (FieldElement)ce;
-					if (IKMap.containsKey(fe.getIK())) {						
-						for (Integer i:IKMap.get(fe.getIK())) {
-							Element pf = doc.createElement(E_PUTFIELD);
-							pf.setAttribute(A_CLASS, fe.getRef().getDeclaringClass().getName().toString());
-							pf.setAttribute(A_FIELD, fe.getRef().getName().toString());
-							pf.setAttribute(A_FIELD_TYPE, fe.getRef().getFieldType().getName().toString());													
-							pf.setAttribute(A_REF, "arg"+i.intValue());
-							pf.setAttribute(A_VALUE, localDef);
-							mE.appendChild(pf);
-						}
+					//flows into static field
+					if (fe.isStatic()) {
+						Element pf = doc.createElement(E_PUTSTATIC);
+						pf.setAttribute(A_CLASS, fe.getRef().getDeclaringClass().getName().toString());
+						pf.setAttribute(A_FIELD, fe.getRef().getName().toString());
+						pf.setAttribute(A_FIELD_TYPE, fe.getRef().getFieldType().getName().toString());													
+						pf.setAttribute(A_VALUE, localDef);
+						mE.appendChild(pf);
 					}
-					else
-						throw new IllegalArgumentException("FieldElement IK Not Found");
+					//else flows into non static field
+					else {
+						//search instance keys of our parameters for instance reference
+						//could be 'this' or any of the parameters
+						if (IKMap.containsKey(fe.getIK())) {						
+							for (Integer i:IKMap.get(fe.getIK())) {
+								Element pf = doc.createElement(E_PUTFIELD);
+								pf.setAttribute(A_CLASS, fe.getRef().getDeclaringClass().getName().toString());
+								pf.setAttribute(A_FIELD, fe.getRef().getName().toString());
+								pf.setAttribute(A_FIELD_TYPE, fe.getRef().getFieldType().getName().toString());													
+								pf.setAttribute(A_REF, "arg"+i.intValue());
+								pf.setAttribute(A_VALUE, localDef);
+								mE.appendChild(pf);
+							}
+						}
+						else
+							throw new IllegalArgumentException("FieldElement IK Not Found");
+					}
 				}
 				else
 					throw new IllegalArgumentException("Invalid CodeElement Type");				
