@@ -53,6 +53,12 @@ import com.ibm.wala.ssa.SSAInvokeInstruction;
 import domain.CodeElement;
 import flow.types.FlowType;
 
+/**
+ * Field source specs are object fields.
+ * 
+ * TODO not yet implemented
+ *
+ */
 class FieldSourceSpec extends SourceSpec {
     final FieldNamePattern namePattern;
     FieldSourceSpec(FieldNamePattern name) {

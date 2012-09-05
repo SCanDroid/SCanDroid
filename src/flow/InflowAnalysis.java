@@ -77,24 +77,32 @@ import flow.types.IKFlow;
 
 public class InflowAnalysis <E extends ISSABasicBlock> {
 
-    public static <E extends ISSABasicBlock> void addDomainElements(Map<BasicBlockInContext<E>,Map<FlowType,Set<CodeElement>>> taintMap, BasicBlockInContext<E> block, FlowType taintType, Set<CodeElement> newElements)
-    {
+    public static <E extends ISSABasicBlock>
+    void addDomainElements(
+            Map<BasicBlockInContext<E>, Map<FlowType,Set<CodeElement>>> taintMap, 
+            BasicBlockInContext<E> block, 
+            FlowType taintType, 
+            Set<CodeElement> newElements) {
         Map<FlowType,Set<CodeElement>> blockMap = taintMap.get(block);
-        if(blockMap == null)
-        {
+        if(blockMap == null) {
             blockMap = new HashMap<FlowType,Set<CodeElement>>();
             taintMap.put(block, blockMap);
         }
+        
         Set<CodeElement> elements = blockMap.get(taintType);
-        if(elements == null)
-        {
+        if(elements == null) {
             elements = new HashSet<CodeElement>();
             blockMap.put(taintType, elements);
         }
         elements.addAll(newElements);
     }
 
-    public static <E extends ISSABasicBlock> void addDomainElement(Map<BasicBlockInContext<E>,Map<FlowType,Set<CodeElement>>> taintMap, BasicBlockInContext<E> block, FlowType taintType, CodeElement element)
+    public static <E extends ISSABasicBlock>
+    void addDomainElement(
+            Map<BasicBlockInContext<E>, Map<FlowType,Set<CodeElement>>> taintMap,
+            BasicBlockInContext<E> block,
+            FlowType taintType,
+            CodeElement element)
     {
         Set<CodeElement> elements = new HashSet<CodeElement>();
         elements.add(element);

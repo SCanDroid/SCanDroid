@@ -155,8 +155,22 @@ public class XMLMethodSummaryWriter {
 		return mE;
 		
 	}
-	
-	public static void createXML(MethodAnalysis<IExplodedBasicBlock> methodAnalysis) {
+
+	/**
+     * @deprecated Use {@link #writeXML(MethodAnalysis<IExplodedBasicBlock>,File)} instead.
+     * 
+     * This method writes to a time and date-stamped xml file in data/
+     */
+    public static void writeXML(MethodAnalysis<IExplodedBasicBlock> methodAnalysis) {
+        Calendar cal = new GregorianCalendar();
+        File outFile = 
+                new File(outputPath+File.separator+outputFile+"-"+
+                         cal.getTime().toString().replace(' ', '_')+".xml");
+        
+        writeXML(methodAnalysis, outFile);
+    }
+
+    public static void writeXML(MethodAnalysis<IExplodedBasicBlock> methodAnalysis, File outFile) {
 		try {
 			if (methodAnalysis.newSummaries.isEmpty()) {
 				return;
@@ -184,10 +198,6 @@ public class XMLMethodSummaryWriter {
 				}
 				
 			}
-			
-			
-			Calendar cal = new GregorianCalendar();
-//			cal.get(GregorianCalendar.DATE)
 			// write the content into xml file
 			TransformerFactory transformerFactory = TransformerFactory.newInstance();
 			//transformerFactory.setAttribute("indent-number", new Integer(4));
@@ -196,10 +206,8 @@ public class XMLMethodSummaryWriter {
 			transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
 			DOMSource source = new DOMSource(doc);
 			
-			StreamResult result = new StreamResult(new File(outputPath+File.separator+outputFile+"-"+cal.getTime().toString().replace(' ', '_')+".xml"));
+            StreamResult result = new StreamResult(outFile);
 			transformer.transform(source, result);
-
-
 		}
 		catch (Exception e) {
 			e.printStackTrace();			

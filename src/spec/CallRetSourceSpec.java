@@ -60,6 +60,13 @@ import flow.types.FlowType;
 import flow.types.IKFlow;
 import flow.types.InputFlow;
 
+/**
+ * CallRetSourceSpecs represent sources from invocations of other methods 
+ * (eg: API methods).
+ * 
+ * reading file contents, and returning bytes eg: via {@code int write(...)} is
+ * an example of a call return source.
+ */
 public class CallRetSourceSpec extends SourceSpec {
 	final String sig = "CallRetSource";
 	CallRetSourceSpec(MethodNamePattern name, int[] args) {

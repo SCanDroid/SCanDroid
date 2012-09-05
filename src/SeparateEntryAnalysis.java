@@ -91,7 +91,7 @@ public class SeparateEntryAnalysis {
             }
         } else {
             analyze(loader, loader.entries, methodAnalysis);
-            XMLMethodSummaryWriter.createXML(methodAnalysis);
+            XMLMethodSummaryWriter.writeXML(methodAnalysis);
         }
     }
 

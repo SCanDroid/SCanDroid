@@ -62,6 +62,14 @@ import flow.types.FlowType;
 import flow.types.InputFlow;
 import flow.types.ReturnFlow;
 
+/**
+ * Entry arg source specs reperesent sources that are arguments to methods 
+ * that are entry points.
+ * 
+ * For example, the command line arguments to a {@code main(String[] args)}
+ * are entry arg sources.
+ * 
+ */
 public class EntryArgSourceSpec extends SourceSpec {
 
 	final String name = "EntryArgSource";

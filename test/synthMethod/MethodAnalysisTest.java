@@ -3,6 +3,7 @@ package synthMethod;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -61,11 +62,24 @@ public class MethodAnalysisTest {
             throws IllegalArgumentException, CallGraphBuilderCancelException,
             IOException, ClassHierarchyException {
         
-        String appJar = "/home/creswick/development/fuse/dev/trivialJar1/target/trivialJar1-1.0-SNAPSHOT.jar";
+        String appJar = 
+                "/home/creswick/development/fuse/dev/trivialJar1/target/trivialJar1-1.0-SNAPSHOT.jar";
 
-        runDFAnalysis(appJar, "");
+        String summary = summarize(appJar);
+        checkSummaryProperty(appJar, summary);
     }
 
+    @Test
+    public final void test_fails() 
+            throws IllegalArgumentException, CallGraphBuilderCancelException,
+            IOException, ClassHierarchyException {
+        
+        String appJar = 
+                "/home/creswick/development/fuse/dev/trivialJar1/target/trivialJar1-1.0-SNAPSHOT.jar";
+
+        checkSummaryProperty(appJar, "/home/creswick/development/SCanDroid/brokenSummary.xml");
+    }
+    
     /**
      * Analyze jarFile without any summarization, record the time taken and 
      * the data flows found.
@@ -81,6 +95,7 @@ public class MethodAnalysisTest {
      * @param summaries
      * @throws IOException 
      * @throws CallGraphBuilderCancelException 
+                directResults
      * @throws ClassHierarchyException 
      */
     private void checkSummaryProperty(String jarFile, String summaryFile) 
@@ -88,11 +103,14 @@ public class MethodAnalysisTest {
         Map<FlowType, Set<FlowType>> directResults = 
                 runDFAnalysis(jarFile, WALA_NATIVES_XML);
         
-        Map<FlowType, Set<FlowType>> summarizedResults = 
+        Map<FlowType, Set<FlowType>> summarizedResults =
                 runDFAnalysis(jarFile, summaryFile);
         
-        Assert.assertTrue("Results differed with summaries", 
-                directResults.equals(summarizedResults));
+        
+        Assert.assertNotSame("No flows found in direct results.", 0, directResults.size());
+        Assert.assertNotSame("No flows found in summarized results.", 0, summarizedResults.size());
+        Assert.assertEquals("Results differed with summaries", 
+                directResults, summarizedResults);
     }
     
     /**
@@ -101,10 +119,43 @@ public class MethodAnalysisTest {
      * 
      * @param jarFile
      * @return The filename that the summaries were written to.
+     * @throws IOException 
+     * @throws ClassHierarchyException 
+     * @throws CallGraphBuilderCancelException 
+     * @throws IllegalArgumentException 
      */
-    private String summarize(String jarFile) {
+    private String summarize(String jarFile) 
+        throws IOException, ClassHierarchyException, IllegalArgumentException, 
+               CallGraphBuilderCancelException {
         
-        /*
+        MethodAnalysis<IExplodedBasicBlock> methodAnalysis =
+                new MethodAnalysis<IExplodedBasicBlock>();
+        AnalysisScope scope = 
+                DexAnalysisScopeReader.makeAndroidBinaryAnalysisScope(jarFile, 
+                   new File("conf/Java60RegressionExclusions.txt"));
+        ClassHierarchy cha = ClassHierarchy.make(scope);
+        
+        List<Entrypoint> entrypoints = new ArrayList<Entrypoint>();
+        for (IClass iClass : cha) {
+            for (Iterator<IMethod> itr = iClass.getAllMethods().iterator(); itr.hasNext();) {
+                IMethod iMethod = itr.next();
+                
+                if ( LoaderUtils.fromLoader(iMethod, ClassLoaderReference.Application) ) {
+                    entrypoints.add(new DefaultEntrypoint(iMethod, cha));
+                }
+            }
+        }
+        
+        AnalysisOptions options = new AnalysisOptions(scope, entrypoints);
+        CallGraphBuilder builder = 
+           AndroidAppLoader.makeVanillaZeroOneCFABuilder(
+                   options, new AnalysisCache(), cha, scope, null, null, WALA_NATIVES_XML);
+
+        CallGraph cg = builder.makeCallGraph(options, null);
+        ISupergraph<BasicBlockInContext<IExplodedBasicBlock>, CGNode> sg = 
+                ICFGSupergraph.make(cg, builder.getAnalysisCache());
+        
+        Collection<CGNode> nodes = cg.getEntrypointNodes();
         for (Iterator<CGNode> itr = nodes.iterator(); itr.hasNext();) {
             CGNode cgNode = (CGNode) itr.next();
             
@@ -116,10 +167,11 @@ public class MethodAnalysisTest {
                         entriesForProcedure[i]);
             };
         }
-        
-        XMLMethodSummaryWriter.createXML(methodAnalysis); */
-        
-        return null;
+        File tempFile = File.createTempFile("scandroid-summaries", ".xml");
+        tempFile.deleteOnExit();
+        XMLMethodSummaryWriter.writeXML(methodAnalysis, tempFile);
+
+        return tempFile.getAbsolutePath();
     }
     
     private
@@ -153,21 +205,19 @@ public class MethodAnalysisTest {
         
         CallGraph cg = builder.makeCallGraph(options, null);
 
+        
         ISupergraph<BasicBlockInContext<IExplodedBasicBlock>, CGNode> sg = 
                 ICFGSupergraph.make(cg, builder.getAnalysisCache());
         PointerAnalysis pa = builder.getPointerAnalysis();
         
-        System.out.println("Running inflow analysis.");
         Map<BasicBlockInContext<IExplodedBasicBlock>, 
             Map<FlowType, Set<CodeElement>>> initialTaints = 
               InflowAnalysis.analyze(cg, cha, sg, pa, new HashMap<InstanceKey, String>());
                    
-        System.out.println("Running flow analysis.");
         IFDSTaintDomain<IExplodedBasicBlock> domain = new IFDSTaintDomain<IExplodedBasicBlock>();
         TabulationResult<BasicBlockInContext<IExplodedBasicBlock>, CGNode, DomainElement> 
           flowResult = FlowAnalysis.analyze(sg, cg, pa, initialTaints, domain, methodAnalysis);
 
-        System.out.println("Running outflow analysis.");
         Map<FlowType, Set<FlowType>> permissionOutflow = 
                 OutflowAnalysis.analyze(cg, cha, sg, pa, flowResult, domain);
         

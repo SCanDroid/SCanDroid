@@ -43,8 +43,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import util.AndroidAppLoader;
-
 import com.ibm.wala.classLoader.IMethod;
 import com.ibm.wala.dataflow.IFDS.ISupergraph;
 import com.ibm.wala.ipa.callgraph.CGNode;
@@ -62,6 +60,14 @@ import flow.types.BinderFlow;
 import flow.types.FlowType;
 import flow.types.IKFlow;
 
+
+/**
+ * CallArgSourceSpecs represent sources that are arguments to another function.
+ * 
+ * For example, if code you analyze invokes a function {@code foo(Object obj)}
+ * and foo <em>writes</em> to the argument, then {@code obj} would be a source.
+ * 
+ */
 public class CallArgSourceSpec extends SourceSpec {
 	final String name = "CallArgSource";
 	CallArgSourceSpec(MethodNamePattern name, int[] args) {
