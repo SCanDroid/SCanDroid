@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<summary-spec>
+  <classloader name="Primordial">
+    <package name="java/lang">
+      <class name="Object">
+        <method descriptor="()V" name="&lt;init&gt;"/>
+      </class>
+    </package>
+  </classloader>
+  <classloader name="Application">
+    <package name="com/galois/fuse">
+      <class name="App">
+        <method descriptor="(I)I" name="echo">
+          <return value="arg0"/>
+        </method>
+        <method descriptor="()V" name="&lt;init&gt;"/>
+      </class>
+    </package>
+  </classloader>
+</summary-spec>

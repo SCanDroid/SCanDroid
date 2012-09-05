@@ -64,8 +64,7 @@ public class MethodAnalysisTest {
             throws IllegalArgumentException, CallGraphBuilderCancelException,
             IOException, ClassHierarchyException {
         
-        String appJar = 
-                "/home/creswick/development/fuse/dev/trivialJar1/target/trivialJar1-1.0-SNAPSHOT.jar";
+        String appJar = "data/testdata/trivialJar1-1.0-SNAPSHOT.jar";
 
         String summary = summarize(appJar);
         checkSummaryProperty(appJar, summary);
@@ -76,10 +75,9 @@ public class MethodAnalysisTest {
             throws IllegalArgumentException, CallGraphBuilderCancelException,
             IOException, ClassHierarchyException {
         
-        String appJar = 
-                "/home/creswick/development/fuse/dev/trivialJar1/target/trivialJar1-1.0-SNAPSHOT.jar";
+        String appJar = "data/testdata/trivialJar1-1.0-SNAPSHOT.jar";
 
-        checkSummaryProperty(appJar, "/home/creswick/development/SCanDroid/brokenSummary.xml");
+        checkSummaryProperty(appJar, "data/testdata/brokenSummary.xml");
     }
     
     /**
