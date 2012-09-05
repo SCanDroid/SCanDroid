@@ -115,7 +115,6 @@ import com.ibm.wala.util.warnings.Warnings;
 public class AndroidAppLoader<E extends ISSABasicBlock> {
 	public static final String methodSpec = "MethodSummaries.xml";
 	public static final String pathToSpec = "data";
-	public static XMLMethodSummaryReader methodSummaryReader;
 
 	public final AnalysisScope scope;
 	public final ClassHierarchy cha;
@@ -335,14 +334,6 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
 			}
 		});
 
-		System.out.println("===== Method Summaries =====");
-		for (Entry<MethodReference, MethodSummary> mr : methodSummaryReader
-				.getSummaries().entrySet()) {
-			System.out.println("MethoReference: " + mr.getKey());
-			System.out.println("\tMethodSummary: " + mr.getValue());
-
-		}
-
 		if (CLI.hasOption("c"))
 			GraphUtil.makeCG(this);
 		if (CLI.hasOption("p"))
@@ -411,17 +402,17 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
 			s = new FileInputStream(new File(pathToSpec + File.separator
 					+ methodSpec));
 			// InputStream s = cl.getResourceAsStream(xmlFile);
-			methodSummaryReader = new XMLMethodSummaryReader(s, scope);
+		    XMLMethodSummaryReader summary = new XMLMethodSummaryReader(s, scope);
 
 			MethodTargetSelector ms = new BypassMethodTargetSelector(
 					options.getMethodTargetSelector(),
-					methodSummaryReader.getSummaries(),
-					methodSummaryReader.getIgnoredPackages(), cha);
+					summary.getSummaries(),
+					summary.getIgnoredPackages(), cha);
 			options.setSelector(ms);
 
 			ClassTargetSelector cs = new BypassClassTargetSelector(
 					options.getClassTargetSelector(),
-					methodSummaryReader.getAllocatableClasses(), cha,
+					summary.getAllocatableClasses(), cha,
 					cha.getLoader(scope.getLoader(Atom
 							.findOrCreateUnicodeAtom("Synthetic"))));
 			options.setSelector(cs);

@@ -177,15 +177,18 @@ implements IFlowFunctionMap<BasicBlockInContext<E>> {
 						SSAGetInstruction gi = (SSAGetInstruction)instruction;
 						
 						PointerKey pk;
+						boolean isStatic;
 						FieldReference declaredField = gi.getDeclaredField();
                         if ( gi.isStatic()) {
 						    IField staticField =
                                     getStaticIField(ch, declaredField);
 
 						    pk = new StaticFieldKey(staticField);
+						    isStatic = true;
 						} else {
 						    int valueNumber = instruction.getUse(0);
 						    pk = new LocalPointerKey(bb.getNode(), valueNumber);
+						    isStatic = false;
 						}
 						
 						Set<CodeElement> elements = new HashSet<CodeElement>();
@@ -193,7 +196,7 @@ implements IFlowFunctionMap<BasicBlockInContext<E>> {
 						if(m != null) {
 							for(Iterator<InstanceKey> keyIter = m.iterator();keyIter.hasNext();) {
 								elements.add(
-								        new FieldElement(keyIter.next(), declaredField));
+								        new FieldElement(keyIter.next(), declaredField, isStatic));
 							}
 						}
 						p.uses.addAll(elements);
@@ -216,24 +219,26 @@ implements IFlowFunctionMap<BasicBlockInContext<E>> {
 					if (instruction instanceof SSAPutInstruction) {
 						SSAPutInstruction pi = (SSAPutInstruction)instruction;
 						PointerKey pk;
-
+						boolean isStatic;
 						Set<CodeElement> elements = new HashSet<CodeElement>();
 						if (pi.isStatic()) {
 						    p.uses.addAll(CodeElement.valueElements(pa, bb.getNode(), instruction.getUse(0)));
 						    FieldReference declaredField = pi.getDeclaredField();
                             IField staticField = getStaticIField(ch, declaredField);
 						    pk = new StaticFieldKey(staticField);
+						    isStatic = true;
 						} else {
 						    p.uses.addAll(CodeElement.valueElements(pa, bb.getNode(), instruction.getUse(1)));
 							int valueNumber = instruction.getUse(0);
 							pk = new LocalPointerKey(bb.getNode(), valueNumber);
+							isStatic = false;
 						}	
                         OrdinalSet<InstanceKey> m = pa.getPointsToSet(pk);
                         if (m != null) {
                             for (Iterator<InstanceKey> keyIter = m.iterator(); keyIter
                                     .hasNext();) {
                                 elements.add(new FieldElement(keyIter.next(),
-                                        pi.getDeclaredField()));
+                                        pi.getDeclaredField(), isStatic));
                             }
                         }
 						p.defs.addAll(elements);

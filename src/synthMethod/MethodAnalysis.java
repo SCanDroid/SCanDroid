@@ -153,11 +153,14 @@ public class MethodAnalysis <E extends ISSABasicBlock>  {
 		// Also taint all field elements
 		for (IField myField : entryMethod.getDeclaringClass().getAllFields()) {
 		    PointerKey pk;
+		    boolean isStatic;
 		    if (myField.isStatic()) {
 		        pk = new StaticFieldKey(myField);
+		        isStatic = true;
 		    } else if (!entryMethod.isStatic()) {
 		        pk = new LocalPointerKey(methEntryBlock.getNode(),
 		                methEntryBlock.getNode().getIR().getParameter(0));
+		        isStatic = false;
 		    } else {
 		        /* do nothing if the method is static and the field is not --
 		         * static methods can't access non-static fields.
@@ -167,8 +170,8 @@ public class MethodAnalysis <E extends ISSABasicBlock>  {
 		    
 		    for (InstanceKey ik: pa.getPointsToSet(pk)) {
 				DomainElement de = new DomainElement(
-				        new FieldElement(ik, myField.getReference()), 
-						new FieldFlow(myField.getReference()));
+				        new FieldElement(ik, myField.getReference(), isStatic), 
+						new FieldFlow(myField.getReference(), isStatic));
 				initialTaints.add(de);
 				initialEdges.add(PathEdge.createPathEdge(methEntryBlock, 0, methEntryBlock, 
 						domain.getMappedIndex(de)));
