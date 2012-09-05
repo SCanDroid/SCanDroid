@@ -195,7 +195,7 @@ public class XMLMethodSummaryWriter {
 			transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
 			DOMSource source = new DOMSource(doc);
 			
-			StreamResult result = new StreamResult(new File("data"+File.separator+"MethodSummary-"+cal.getTime().toString().replace(' ', '_')+".xml"));
+			StreamResult result = new StreamResult(new File(outputPath+File.separator+outputFile+"-"+cal.getTime().toString().replace(' ', '_')+".xml"));
 			transformer.transform(source, result);
 
 
