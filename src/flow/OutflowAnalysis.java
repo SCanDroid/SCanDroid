@@ -53,7 +53,7 @@ import org.jgrapht.graph.DefaultEdge;
 import spec.CallArgSinkSpec;
 import spec.EntryArgSinkSpec;
 import spec.SinkSpec;
-import spec.Specs;
+import spec.ISpecs;
 import util.AndroidAppLoader;
 import util.WalaGraphToJGraphT;
 
@@ -212,12 +212,13 @@ public class OutflowAnalysis <E extends ISSABasicBlock> {
     	}
     }
 
-    
     public static <E extends ISSABasicBlock> Map<FlowType, Set<FlowType>>
       analyze(AndroidAppLoader<E> loader,
             TabulationResult<BasicBlockInContext<E>, CGNode, DomainElement> flowResult,
-            IFDSTaintDomain<E> domain) {
-        return analyze(loader.cg, loader.cha, loader.graph, loader.pa, flowResult, domain);
+            IFDSTaintDomain<E> domain,
+            ISpecs s) {
+        return analyze(loader.cg, loader.cha, loader.graph, loader.pa, 
+                flowResult, domain, s);
     }
      
      public static <E extends ISSABasicBlock> Map<FlowType, Set<FlowType>>
@@ -226,7 +227,8 @@ public class OutflowAnalysis <E extends ISSABasicBlock> {
           ISupergraph<BasicBlockInContext<E>, CGNode> graph,
           PointerAnalysis pa,
           TabulationResult<BasicBlockInContext<E>, CGNode, DomainElement> flowResult,
-          IFDSTaintDomain<E> domain) {
+          IFDSTaintDomain<E> domain,
+          ISpecs s) {
          
         System.out.println("****************************");
         System.out.println("* Running outflow analysis *");
@@ -234,8 +236,8 @@ public class OutflowAnalysis <E extends ISSABasicBlock> {
 
         Map<FlowType, Set<FlowType>> taintFlow = new HashMap<FlowType,Set<FlowType>>();
 
-        Specs s = new Specs();
         SinkSpec[] ss = s.getSinkSpecs();
+        
         ArrayList<SinkSpec> ssAL = new ArrayList<SinkSpec>();
         for (int i = 0; i < ss.length; i++) {
         	if (ss[i] instanceof EntryArgSinkSpec)

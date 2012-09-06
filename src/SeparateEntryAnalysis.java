@@ -38,11 +38,12 @@
 
 import java.io.IOException;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
 
+import spec.ISpecs;
+import spec.AndroidSpecs;
 import synthMethod.MethodAnalysis;
 import synthMethod.XMLMethodSummaryWriter;
 import util.AndroidAppLoader;
@@ -53,8 +54,6 @@ import com.ibm.wala.ipa.callgraph.CGNode;
 import com.ibm.wala.ipa.callgraph.Entrypoint;
 import com.ibm.wala.ipa.callgraph.propagation.InstanceKey;
 import com.ibm.wala.ipa.cfg.BasicBlockInContext;
-import com.ibm.wala.ssa.ISSABasicBlock;
-import com.ibm.wala.ssa.SSAInstruction;
 import com.ibm.wala.ssa.analysis.IExplodedBasicBlock;
 import com.ibm.wala.util.CancelException;
 
@@ -91,7 +90,7 @@ public class SeparateEntryAnalysis {
             }
         } else {
             analyze(loader, loader.entries, methodAnalysis);
-            XMLMethodSummaryWriter.createXML(methodAnalysis);
+            XMLMethodSummaryWriter.writeXML(methodAnalysis);
         }
     }
 
@@ -101,21 +100,26 @@ public class SeparateEntryAnalysis {
                  MethodAnalysis<IExplodedBasicBlock> methodAnalysis) {
         try {
             loader.buildGraphs(localEntries);
-    		// load the permissions
-    		Set<String> manifestFilenames = new HashSet<String>();
-    		Permissions perms = Permissions.load(manifestFilenames);
+            // load the permissions
+            Set<String> manifestFilenames = new HashSet<String>();
+            Permissions perms = Permissions.load(manifestFilenames);
 
             System.out.println("Supergraph size = "
                     + loader.graph.getNumberOfNodes());
 
-             System.out.println("Running prefix analysis.");
-             Map<InstanceKey, String> prefixes =
-                 UriPrefixAnalysis.runAnalysisHelper(loader.cg, loader.pa);
-             System.out.println("Number of prefixes = " + prefixes.values().size());
-
+            System.out.println("Running prefix analysis.");
+            Map<InstanceKey, String> prefixes =
+                UriPrefixAnalysis.runAnalysisHelper(loader.cg, loader.pa);
+            System.out.println("Number of prefixes = " + prefixes.values().size());
+            
+            
+            ISpecs specs = new AndroidSpecs();
+             
             System.out.println("Running inflow analysis.");
-            Map<BasicBlockInContext<IExplodedBasicBlock>, Map<FlowType, Set<CodeElement>>> initialTaints = InflowAnalysis
-                    .analyze(loader, prefixes);
+            Map<BasicBlockInContext<IExplodedBasicBlock>, 
+                Map<FlowType, Set<CodeElement>>> initialTaints = 
+                  InflowAnalysis.analyze(loader, prefixes, specs);
+            
             System.out.println("  Initial taint size = "
                     + initialTaints.size());
                        
@@ -126,7 +130,7 @@ public class SeparateEntryAnalysis {
 
             System.out.println("Running outflow analysis.");
             Map<FlowType, Set<FlowType>> permissionOutflow = OutflowAnalysis
-                    .analyze(loader, flowResult, domain);
+                    .analyze(loader, flowResult, domain, specs);
             System.out.println("  Permission outflow size = "
                     + permissionOutflow.size());
             

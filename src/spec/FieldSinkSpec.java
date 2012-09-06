@@ -50,9 +50,9 @@ import com.ibm.wala.ssa.SSAInvokeInstruction;
 
 import flow.types.FlowType;
 
-class FieldSinkSpec extends SinkSpec {
+public class FieldSinkSpec extends SinkSpec {
     final FieldNamePattern namePattern;
-    FieldSinkSpec(FieldNamePattern name) {
+    public FieldSinkSpec(FieldNamePattern name) {
         namePattern = name;
     }
     

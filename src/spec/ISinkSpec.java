@@ -38,7 +38,7 @@
 
 package spec;
 
-interface ISinkSpec {
+public interface ISinkSpec {
     public enum SinkType {
         INPUT_SINK,         /* Arguments to entry points. */
     	CALL_SINK,			/* For default unspecified calls */

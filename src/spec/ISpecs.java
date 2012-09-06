@@ -49,5 +49,5 @@ public interface ISpecs {
     public SourceSpec[] getSourceSpecs();
 
     /* Methods that sink data supplied by some of their parameters. */
-    public ISinkSpec[] getSinkSpecs();
+    public SinkSpec[] getSinkSpecs();
 }
