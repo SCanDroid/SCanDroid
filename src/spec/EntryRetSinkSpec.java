@@ -59,7 +59,7 @@ public class EntryRetSinkSpec extends SinkSpec {
     
     @Override
     public <E extends ISSABasicBlock> Collection<FlowType> getFlowType(
-    		IMethod im, SSAInvokeInstruction invInst, CGNode node,
+    		IMethod im, BasicBlockInContext<E> block, CGNode node,
             int argNum, PointerAnalysis pa) {
     	HashSet<FlowType> flowSet = new HashSet<FlowType>();
     	flowSet.clear();

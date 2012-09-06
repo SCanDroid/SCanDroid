@@ -41,12 +41,11 @@ package spec;
 import java.util.Collection;
 import java.util.HashSet;
 
-
 import com.ibm.wala.classLoader.IMethod;
 import com.ibm.wala.ipa.callgraph.CGNode;
 import com.ibm.wala.ipa.callgraph.propagation.PointerAnalysis;
+import com.ibm.wala.ipa.cfg.BasicBlockInContext;
 import com.ibm.wala.ssa.ISSABasicBlock;
-import com.ibm.wala.ssa.SSAInvokeInstruction;
 
 import flow.types.FlowType;
 
@@ -59,8 +58,9 @@ public class EntryArgSinkSpec extends SinkSpec {
     }
     
     public <E extends ISSABasicBlock> Collection<FlowType> getFlowType(
-    		IMethod im, SSAInvokeInstruction invInst,CGNode node,
+    		IMethod im, BasicBlockInContext<E> block,CGNode node,
             int argNum, PointerAnalysis pa) {
+        
     	HashSet<FlowType> flowSet = new HashSet<FlowType>();
     	flowSet.clear();
     	return flowSet;

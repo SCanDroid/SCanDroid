@@ -58,7 +58,7 @@ public class FieldSinkSpec extends SinkSpec {
     
     @Override
     public <E extends ISSABasicBlock> Collection<FlowType> getFlowType(
-    		IMethod im, SSAInvokeInstruction invInst, CGNode node,
+    		IMethod im, BasicBlockInContext<E> invInst, CGNode node,
             int argNum, PointerAnalysis pa) {
     	HashSet<FlowType> flowSet = new HashSet<FlowType>();
     	flowSet.clear();
