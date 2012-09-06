@@ -8,12 +8,18 @@ import com.ibm.wala.ipa.callgraph.CGNode;
 
 import spec.*;
 
-public class testSpecs implements ISpecs {
+public class TestSpecs implements ISpecs {
 	
 	private SourceSpec[] sources;
 	private SinkSpec[] sinks;
 	
-	public testSpecs(Collection<CGNode> nodes) {
+	public TestSpecs(Collection<CGNode> nodes) {
+	    
+	    // Just create EntryArgSourceSpecs for a specific method,
+	    // and CallArgSourceSpecs for a different method.
+	    // Those should be sufficient to establish a data flow we can use for 
+	    /// testing.
+	    
 		ArrayList<SourceSpec> sourcesAL = new ArrayList<SourceSpec>();
 		ArrayList<SinkSpec> sinksAL = new ArrayList<SinkSpec>();
 
@@ -30,7 +36,7 @@ public class testSpecs implements ISpecs {
 
         }        
         sources = sourcesAL.toArray(new SourceSpec[sourcesAL.size()]);        
-        sinks = sourcesAL.toArray(new SinkSpec[sinksAL.size()]);
+        sinks = sinksAL.toArray(new SinkSpec[sinksAL.size()]);
 
 	}
 	
@@ -40,11 +46,20 @@ public class testSpecs implements ISpecs {
 	}
 	@Override
 	public SourceSpec[] getSourceSpecs() {
-		return sources;
+		return new SourceSpec[] {
+		        new EntryArgSourceSpec(
+		                new MethodNamePattern("Lorg/scandroid/testing/ISinkSource", "source"),
+		                new int[]{})
+		};
 	}
+	
 	@Override
 	public SinkSpec[] getSinkSpecs() {
-		return sinks;
+	    return new SinkSpec[] {
+	            new CallArgSinkSpec(
+	                    new MethodNamePattern("Lorg/scandroid/testing/ISinkSource", "sink"), 
+	                    new int[]{})
+	    };
 	}
 
 }

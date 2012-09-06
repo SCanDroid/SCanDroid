@@ -60,13 +60,13 @@ public class CallArgSinkSpec extends SinkSpec {
 
 	final String name = "CallArgSink";
 	
-    CallArgSinkSpec(MethodNamePattern name, int[] args) {
+    public CallArgSinkSpec(MethodNamePattern name, int[] args) {
         namePattern = name;
         argNums = args;
         myType = SinkType.CALL_SINK; 
     }
     
-    CallArgSinkSpec(MethodNamePattern name, int[] args, SinkType type) {
+    public CallArgSinkSpec(MethodNamePattern name, int[] args, SinkType type) {
         namePattern = name;
         argNums = args;
         myType = type;
