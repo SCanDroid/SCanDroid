@@ -40,6 +40,15 @@ package flow.types;
 
 import com.ibm.wala.ipa.callgraph.CGNode;
 
+/**
+ * Flow types represent specific instances of sources or sinks.
+ * 
+ * In contrast to the Source/Sink specs, these have ties to specific locations
+ * in the source.
+ * 
+ * @author creswick
+ *
+ */
 public interface FlowType {
 	public CGNode getRelevantNode();
 }
