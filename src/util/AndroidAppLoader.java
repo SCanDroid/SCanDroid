@@ -43,7 +43,6 @@ import static util.MyLogger.log;
 import static util.MyLogger.LogLevel.DEBUG;
 import static util.MyLogger.LogLevel.INFO;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -58,10 +57,7 @@ import java.util.jar.JarFile;
 
 import prefixTransfer.UriPrefixContextSelector;
 
-import com.ibm.wala.analysis.reflection.ReflectionContextInterpreter;
-import com.ibm.wala.classLoader.DexIContextInterpreter;
 import com.ibm.wala.classLoader.DexIRFactory;
-import com.ibm.wala.classLoader.IClass;
 import com.ibm.wala.classLoader.IMethod;
 import com.ibm.wala.dataflow.IFDS.ICFGSupergraph;
 import com.ibm.wala.dataflow.IFDS.ISupergraph;
@@ -78,14 +74,12 @@ import com.ibm.wala.ipa.callgraph.Entrypoint;
 import com.ibm.wala.ipa.callgraph.MethodTargetSelector;
 import com.ibm.wala.ipa.callgraph.impl.PartialCallGraph;
 import com.ibm.wala.ipa.callgraph.impl.Util;
-import com.ibm.wala.ipa.callgraph.propagation.cfa.DefaultSSAInterpreter;
-import com.ibm.wala.ipa.callgraph.propagation.cfa.DelegatingSSAContextInterpreter;
-import com.ibm.wala.ipa.callgraph.propagation.cfa.DexSSAPropagationCallGraphBuilder;
-import com.ibm.wala.ipa.callgraph.propagation.cfa.ZeroXCFABuilder;
-import com.ibm.wala.ipa.callgraph.propagation.cfa.ZeroXInstanceKeys;
 import com.ibm.wala.ipa.callgraph.propagation.PointerAnalysis;
 import com.ibm.wala.ipa.callgraph.propagation.SSAContextInterpreter;
 import com.ibm.wala.ipa.callgraph.propagation.SSAPropagationCallGraphBuilder;
+import com.ibm.wala.ipa.callgraph.propagation.cfa.DexSSAPropagationCallGraphBuilder;
+import com.ibm.wala.ipa.callgraph.propagation.cfa.ZeroXCFABuilder;
+import com.ibm.wala.ipa.callgraph.propagation.cfa.ZeroXInstanceKeys;
 import com.ibm.wala.ipa.cfg.BasicBlockInContext;
 import com.ibm.wala.ipa.cha.ClassHierarchy;
 import com.ibm.wala.ipa.cha.ClassHierarchyException;
@@ -94,17 +88,12 @@ import com.ibm.wala.ipa.summaries.BypassClassTargetSelector;
 import com.ibm.wala.ipa.summaries.BypassMethodTargetSelector;
 import com.ibm.wala.ipa.summaries.MethodSummary;
 import com.ibm.wala.ipa.summaries.XMLMethodSummaryReader;
-import com.ibm.wala.ssa.IR;
 import com.ibm.wala.ssa.IRFactory;
 import com.ibm.wala.ssa.ISSABasicBlock;
-import com.ibm.wala.ssa.SSAInstruction;
-import com.ibm.wala.ssa.analysis.IExplodedBasicBlock;
 import com.ibm.wala.types.ClassLoaderReference;
 import com.ibm.wala.types.MethodReference;
 import com.ibm.wala.util.CancelException;
 import com.ibm.wala.util.Predicate;
-import com.ibm.wala.util.collections.Filter;
-import com.ibm.wala.util.config.AnalysisScopeReader;
 import com.ibm.wala.util.graph.Graph;
 import com.ibm.wala.util.graph.GraphSlicer;
 import com.ibm.wala.util.io.FileProvider;
@@ -145,7 +134,6 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
 	public AndroidAppLoader(String classpath, JarFile androidLib)
 			throws IOException, IllegalArgumentException, CancelException,
 			ClassHierarchyException {
-
 
 		// scope =
 		// com.ibm.wala.util.config.AnalysisScopeReader.makeJavaBinaryAnalysisScope(classpath,
@@ -408,8 +396,14 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
 
 		InputStream s;
 		try {
-			s = new FileInputStream(new File(pathToSpec + File.separator
-					+ methodSpec));
+			File summaryXml = new File(pathToSpec + File.separator + methodSpec);
+			if (summaryXml.exists()) {
+				s = new FileInputStream(summaryXml);
+			} else {
+				s = AndroidAppLoader.class.getClassLoader()
+						.getResourceAsStream(
+								"/" + pathToSpec + File.separator + methodSpec);
+			}
 			// InputStream s = cl.getResourceAsStream(xmlFile);
 			methodSummaryReader = new XMLMethodSummaryReader(s, scope);
 
@@ -430,5 +424,4 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
 		}
 
 	}
-
 }
