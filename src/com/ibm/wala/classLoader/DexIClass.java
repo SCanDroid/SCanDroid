@@ -47,6 +47,8 @@ import static util.MyLogger.LogLevel.DEBUG;
 import java.util.ArrayList;
 import java.util.List;
 
+import model.ActivityModelMethod;
+
 import org.jf.dexlib.AnnotationDirectoryItem;
 import org.jf.dexlib.ClassDataItem;
 import org.jf.dexlib.ClassDataItem.EncodedField;
@@ -297,6 +299,9 @@ public class DexIClass extends BytecodeClass<IClassLoader> {
                 MyLogger.log(DEBUG, "virtual method return type: " + virtualMethods.get(i).method.getPrototype().getReturnType().getTypeDescriptor());
                 //methods[dSize+i] = new DexIMethod(virtualMethods[i],this);
                 methodsAL.add(new DexIMethod(virtualMethods.get(i),this));
+                //is this enough to determine if the class is an activity?
+                //maybe check superclass?  -- but that may also not be enough
+                //may need to keep checking superclass of superclass, etc.
                 if (virtualMethods.get(i).method.getMethodName().getStringValue().equals("onCreate") 
                 		&& virtualMethods.get(i).method.getPrototype().getPrototypeString().equals("(Landroid/os/Bundle;)V"))
                 	isActivity = true;

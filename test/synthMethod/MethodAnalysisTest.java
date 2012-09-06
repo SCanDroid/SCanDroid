@@ -156,6 +156,7 @@ public class MethodAnalysisTest {
                 ICFGSupergraph.make(cg, builder.getAnalysisCache());
         
         Collection<CGNode> nodes = cg.getEntrypointNodes();
+        ISpecs ts = new testSpecs(nodes);
         for (Iterator<CGNode> itr = nodes.iterator(); itr.hasNext();) {
             CGNode cgNode = (CGNode) itr.next();
             
