@@ -9,10 +9,11 @@ import com.ibm.wala.ipa.callgraph.CGNode;
 import spec.*;
 
 public class TestSpecs implements ISpecs {
-	
+	/*
 	private SourceSpec[] sources;
 	private SinkSpec[] sinks;
 	
+
 	public TestSpecs(Collection<CGNode> nodes) {
 	    
 	    // Just create EntryArgSourceSpecs for a specific method,
@@ -39,27 +40,25 @@ public class TestSpecs implements ISpecs {
         sinks = sinksAL.toArray(new SinkSpec[sinksAL.size()]);
 
 	}
-	
-	@Override
-	public MethodNamePattern[] getEntrypointSpecs() {
-		return null;
-	}
-	@Override
-	public SourceSpec[] getSourceSpecs() {
-		return new SourceSpec[] {
-		        new EntryArgSourceSpec(
-		                new MethodNamePattern("Lorg/scandroid/testing/ISinkSource", "source"),
-		                new int[]{})
-		};
-	}
-	
-	@Override
-	public SinkSpec[] getSinkSpecs() {
-	    return new SinkSpec[] {
-	            new CallArgSinkSpec(
-	                    new MethodNamePattern("Lorg/scandroid/testing/ISinkSource", "sink"), 
-	                    new int[]{})
-	    };
-	}
+	*/
+
+    @Override
+    public MethodNamePattern[] getEntrypointSpecs() {
+        return null;
+    }
+
+    @Override
+    public SourceSpec[] getSourceSpecs() {
+        return new SourceSpec[] { 
+                 new EntryArgSourceSpec(new MethodNamePattern(
+                   "Lorg/scandroid/testing/SourceSink", "source"), new int[] { 1 }) };
+    }
+
+    @Override
+    public SinkSpec[] getSinkSpecs() {
+        return new SinkSpec[] { 
+                new CallArgSinkSpec(new MethodNamePattern(
+                  "Lorg/scandroid/testing/SourceSink", "sink"), new int[] { 1 }) };
+    }
 
 }

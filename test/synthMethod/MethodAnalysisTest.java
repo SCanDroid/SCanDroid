@@ -168,7 +168,7 @@ public class MethodAnalysisTest {
                 ICFGSupergraph.make(cg, builder.getAnalysisCache());
         
         Collection<CGNode> nodes = cg.getEntrypointNodes();
-        ISpecs ts = new TestSpecs(nodes);
+        
         for (Iterator<CGNode> itr = nodes.iterator(); itr.hasNext();) {
             CGNode cgNode = (CGNode) itr.next();
             
@@ -194,7 +194,7 @@ public class MethodAnalysisTest {
                CallGraphBuilderCancelException {
         
         // source and sink specifications:
-        ISpecs specs = new AndroidSpecs();
+        ISpecs specs = new TestSpecs();
         
         MethodAnalysis<IExplodedBasicBlock> methodAnalysis =
                 new MethodAnalysis<IExplodedBasicBlock>();
