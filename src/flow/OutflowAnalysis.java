@@ -154,7 +154,7 @@ public class OutflowAnalysis <E extends ISSABasicBlock> {
                 	                    }
                 	                }
                 	                
-                    	            for(FlowType dest: ssAL.get(i).getFlowType(target, invInst, node, argNums[j], pa)) {
+                    	            for(FlowType dest: ssAL.get(i).getFlowType(target, block, node, argNums[j], pa)) {
                     	                for(FlowType source: taintTypeSet) {
                     	                    // flow taint into uriIK
                     	                    addEdge(flowGraph, source, dest);

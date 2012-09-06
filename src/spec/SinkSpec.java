@@ -44,6 +44,7 @@ import java.util.Collection;
 import com.ibm.wala.classLoader.IMethod;
 import com.ibm.wala.ipa.callgraph.CGNode;
 import com.ibm.wala.ipa.callgraph.propagation.PointerAnalysis;
+import com.ibm.wala.ipa.cfg.BasicBlockInContext;
 import com.ibm.wala.ssa.ISSABasicBlock;
 import com.ibm.wala.ssa.SSAInvokeInstruction;
 
@@ -76,7 +77,7 @@ public abstract class SinkSpec implements ISinkSpec {
 	}
 	
     abstract public <E extends ISSABasicBlock> Collection<FlowType> getFlowType(
-    		IMethod im,SSAInvokeInstruction invInst, CGNode node,
+    		IMethod im, BasicBlockInContext<E> block, CGNode node,
             int argNum, PointerAnalysis pa);
 	
 }

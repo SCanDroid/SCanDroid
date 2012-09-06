@@ -39,42 +39,45 @@ package flow.types;
 
 import java.util.Set;
 
+import com.ibm.wala.classLoader.IMethod;
 import com.ibm.wala.ipa.callgraph.CGNode;
 import com.ibm.wala.ipa.callgraph.propagation.InstanceKey;
+import com.ibm.wala.ipa.cfg.BasicBlockInContext;
+import com.ibm.wala.ssa.ISSABasicBlock;
 import com.ibm.wala.types.MethodReference;
 import com.ibm.wala.types.TypeReference;
 import com.ibm.wala.util.intset.OrdinalSet;
 
 import domain.CodeElement;
 
-public class ParameterFlow implements FlowType {
+public class ParameterFlow <E extends ISSABasicBlock> implements FlowType {
 
-    public final MethodReference methodRef;
+    public final BasicBlockInContext<E> block;
     public final int argNum;
     
-    public ParameterFlow(MethodReference methodRef, int argNum)
+    public ParameterFlow(BasicBlockInContext<E> block, int argNum)
     {
-    	this.methodRef = methodRef;
+    	this.block = block;
     	this.argNum = argNum;    	
     }
 
     @Override
     public int hashCode()
     {
-        return methodRef.hashCode()*argNum;
+        return block.hashCode()*argNum;
     }
 
     @Override
     public boolean equals(Object other)
     {
     	return other != null & other instanceof ParameterFlow && 
-    			((ParameterFlow)other).methodRef.equals(methodRef) && ((ParameterFlow)other).argNum == argNum;
+    			((ParameterFlow)other).block.equals(block) && ((ParameterFlow)other).argNum == argNum;
     }
 
     @Override
     public String toString()
     {
-    	return "ParameterFlow("+argNum+", "+methodRef+")";
+    	return "ParameterFlow("+argNum+", "+block+")";
     }
 
     @Override
