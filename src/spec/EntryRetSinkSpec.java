@@ -50,9 +50,10 @@ import com.ibm.wala.ssa.SSAInvokeInstruction;
 
 import flow.types.FlowType;
 
-class EntryRetSinkSpec extends SinkSpec {
+public class EntryRetSinkSpec extends SinkSpec {
     final MethodNamePattern namePattern;
-    EntryRetSinkSpec(MethodNamePattern name) {
+    
+    public EntryRetSinkSpec(MethodNamePattern name) {
         namePattern = name;
     }
     

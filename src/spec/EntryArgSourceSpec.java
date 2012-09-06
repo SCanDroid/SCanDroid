@@ -74,13 +74,13 @@ public class EntryArgSourceSpec extends SourceSpec {
 
 	final String name = "EntryArgSource";
 	
-	EntryArgSourceSpec(MethodNamePattern name, int[] args) {
+	public EntryArgSourceSpec(MethodNamePattern name, int[] args) {
         namePattern = name;
         argNums = args;
         myType = SourceType.INPUT_SOURCE;
     }
     
-	EntryArgSourceSpec(MethodNamePattern name, int[] args, SourceType type) {
+	public EntryArgSourceSpec(MethodNamePattern name, int[] args, SourceType type) {
         namePattern = name;
         argNums = args;
         myType = type;

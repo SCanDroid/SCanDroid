@@ -58,13 +58,13 @@ public class MethodNamePattern {
 
     final String descriptor;  // null = match any types
 
-    MethodNamePattern(String c, String m, String d) {
+    public MethodNamePattern(String c, String m, String d) {
         className = c;
         memberName = m;
         descriptor = d;
     }
 
-    MethodNamePattern(String c, String m) {
+    public MethodNamePattern(String c, String m) {
         className = c;
         memberName = m;
         descriptor = null;

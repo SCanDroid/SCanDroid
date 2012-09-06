@@ -46,12 +46,12 @@ import com.ibm.wala.classLoader.IClassLoader;
 import com.ibm.wala.types.TypeName;
 import com.ibm.wala.util.strings.Atom;
 
-class FieldNamePattern {
+public class FieldNamePattern {
     final String className;   // null = match any class
 
     final String memberName;  // null = match any method
                               // * used to match arbitrary substrings
-    FieldNamePattern(String c, String m) {
+    public FieldNamePattern(String c, String m) {
         className = c;
         memberName = m;
     }

@@ -47,8 +47,6 @@ import static util.MyLogger.LogLevel.DEBUG;
 import java.util.ArrayList;
 import java.util.List;
 
-import model.ActivityModelMethod;
-
 import org.jf.dexlib.AnnotationDirectoryItem;
 import org.jf.dexlib.ClassDataItem;
 import org.jf.dexlib.ClassDataItem.EncodedField;

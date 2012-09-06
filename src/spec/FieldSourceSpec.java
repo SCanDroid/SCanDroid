@@ -59,9 +59,9 @@ import flow.types.FlowType;
  * TODO not yet implemented
  *
  */
-class FieldSourceSpec extends SourceSpec {
+public class FieldSourceSpec extends SourceSpec {
     final FieldNamePattern namePattern;
-    FieldSourceSpec(FieldNamePattern name) {
+    public FieldSourceSpec(FieldNamePattern name) {
         namePattern = name;
     }
 	@Override
