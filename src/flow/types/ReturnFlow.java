@@ -41,6 +41,15 @@ package flow.types;
 import com.ibm.wala.ipa.callgraph.CGNode;
 import com.ibm.wala.types.TypeReference;
 
+
+/**
+ * 
+ * A return flow represents either a flow from a method that was just invoked
+ * if this points to an invoke instruction (in which case this is a source) or
+ * a method return, if this points to a return instruction (in which case it is
+ * a sink).
+ *
+ */
 public class ReturnFlow implements FlowType {
 
     public final TypeReference activityClass;
