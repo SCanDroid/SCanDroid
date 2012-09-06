@@ -64,8 +64,20 @@ public class MethodAnalysisTest {
             throws IllegalArgumentException, CallGraphBuilderCancelException,
             IOException, ClassHierarchyException {
         
-        String appJar = "data/testdata/trivialJar1-1.0-SNAPSHOT.jar";
+        String testDataDir = "data/testdata/";
+        
+        String[] jars = { "trivialJar1-1.0-SNAPSHOT.jar"
+                        , "trivialJar2-1.0-SNAPSHOT.jar"
+                        };
 
+        for (String jar : jars ){
+            runOnJar(testDataDir + File.separator + jar);
+        }
+        
+    }
+
+    private void runOnJar(String appJar) throws IOException,
+            ClassHierarchyException, CallGraphBuilderCancelException {
         String summary = summarize(appJar);
         checkSummaryProperty(appJar, summary);
     }
