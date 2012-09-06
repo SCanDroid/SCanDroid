@@ -100,18 +100,21 @@ public class EntryPoints {
 //      else
 //          defaultEntryPoints(cha, loader);
 
-//        defaultEntryPoints(cha, loader);
-//        activityModelEntry(cha,loader);
-        systemEntry(cha, loader);
-//        addTestEntry(cha,loader);
-        
-        if (CLI.hasOption("main-entrypoint")) {
+        if(CLI.hasOption("thread-run-main")) {
+            systemEntry(cha, loader);
+        } else if (CLI.hasOption("main-entrypoint")) {
         	Iterable<Entrypoint> mainEntrypoints = Util.makeMainEntrypoints(cha.getScope(), cha);
         	//add main entry point -- however usually used for test suites?  android don't have mains
         	for (Entrypoint entry: mainEntrypoints) {
         		entries.add(entry);
         	}
+        }  else {
+            defaultEntryPoints(cha, loader);
         }
+
+//      activityModelEntry(cha,loader);
+//      addTestEntry(cha,loader);
+
 
     }
 

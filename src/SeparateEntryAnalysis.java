@@ -37,6 +37,7 @@
  */
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Map;
@@ -77,7 +78,9 @@ public class SeparateEntryAnalysis {
         }
         MethodAnalysis<IExplodedBasicBlock> methodAnalysis =
            new MethodAnalysis<IExplodedBasicBlock>();
-        
+        for (Entrypoint entry : loader.entries) {
+            System.out.println("Entry point: " + entry);
+        }
         if(CLI.hasOption("separate-entries")) {
             int i = 1;
             for (Entrypoint entry : loader.entries) {
@@ -90,7 +93,8 @@ public class SeparateEntryAnalysis {
             }
         } else {
             analyze(loader, loader.entries, methodAnalysis);
-            XMLMethodSummaryWriter.writeXML(methodAnalysis);
+            if(CLI.hasOption("write-summaries"))
+                XMLMethodSummaryWriter.writeXML(methodAnalysis);
         }
     }
 
@@ -107,10 +111,14 @@ public class SeparateEntryAnalysis {
             System.out.println("Supergraph size = "
                     + loader.graph.getNumberOfNodes());
 
-            System.out.println("Running prefix analysis.");
-            Map<InstanceKey, String> prefixes =
-                UriPrefixAnalysis.runAnalysisHelper(loader.cg, loader.pa);
-            System.out.println("Number of prefixes = " + prefixes.values().size());
+            Map<InstanceKey, String> prefixes;
+            if(CLI.hasOption("prefix-analysis")) {
+                System.out.println("Running prefix analysis.");
+                prefixes = UriPrefixAnalysis.runAnalysisHelper(loader.cg, loader.pa);
+                System.out.println("Number of prefixes = " + prefixes.values().size());
+            } else {
+                prefixes = new HashMap<InstanceKey, String>();
+            }
             
             
             ISpecs specs = new AndroidSpecs();
