@@ -47,64 +47,39 @@ import com.ibm.wala.ipa.callgraph.CGNode;
 import com.ibm.wala.ipa.callgraph.propagation.InstanceKey;
 import com.ibm.wala.ipa.callgraph.propagation.LocalPointerKey;
 import com.ibm.wala.ipa.callgraph.propagation.PointerAnalysis;
+import com.ibm.wala.ipa.cfg.BasicBlockInContext;
 import com.ibm.wala.ssa.ISSABasicBlock;
 import com.ibm.wala.ssa.SSAInvokeInstruction;
 
 import flow.types.ActivityCallFlow;
 import flow.types.FlowType;
 import flow.types.IKFlow;
-import flow.types.ReturnFlow;
+import flow.types.ParameterFlow;
 import flow.types.ServiceCallFlow;
 
 public class CallArgSinkSpec extends SinkSpec {
 
-	final String name = "CallArgSink";
-	
     public CallArgSinkSpec(MethodNamePattern name, int[] args) {
         namePattern = name;
         argNums = args;
         myType = SinkType.CALL_SINK; 
     }
-    
+
     public CallArgSinkSpec(MethodNamePattern name, int[] args, SinkType type) {
         namePattern = name;
         argNums = args;
         myType = type;
     }
-    
-	@Override
+
+    @Override
     public <E extends ISSABasicBlock> Collection<FlowType> getFlowType(
-    		IMethod target, SSAInvokeInstruction invInst, CGNode node,
+            IMethod target, BasicBlockInContext<E> block, CGNode node,
             int argNum, PointerAnalysis pa) {
-    	
-    	HashSet<FlowType> flowSet = new HashSet<FlowType>();
-    	flowSet.clear();
-    	
-    	switch(myType) {
-		case CALL_SINK:
-		case ACTIVITY_SINK:
-			flowSet.add(new ActivityCallFlow(invInst.getDeclaredTarget().getDeclaringClass(), node, name, target.getSignature(), argNum));
-			break;
-		case SERVICE_SINK:
-            //flowSet.add(new CallArgSinkFlow(invInst,argNum, node));
-            flowSet.add(new ServiceCallFlow(invInst.getDeclaredTarget().getDeclaringClass(), node, name, target.getSignature(), argNum));
-            break;
-		case RETURN_SINK:
-			flowSet.add(new ReturnFlow(invInst.getDeclaredTarget().getDeclaringClass(), node, name, target.getSignature(), argNum));
-			break;
-		case PROVIDER_SINK:
-            for(InstanceKey ik:pa.getPointsToSet(new LocalPointerKey(node, invInst.getUse(1))))
-                //flowSet.add(new CallArgProviderSinkFlow(ik, invInst, argNum, node));
-            	flowSet.add(new IKFlow(ik, pa.getInstanceKeyMapping().getMappedIndex(ik), node, name, target.getSignature(), argNum));
-			break;
-		default:
-    		throw new UnsupportedOperationException("SourceType not yet Implemented");
-    	}
-    	
-    	return flowSet;
-    	
+
+        HashSet<FlowType> flowSet = new HashSet<FlowType>();
+        for(int arg: argNums) {
+            flowSet.add(new ParameterFlow(block, arg));
+        }
+        return flowSet;
     }
-
-
-    
 }
