@@ -47,8 +47,6 @@ import com.ibm.wala.classLoader.IMethod;
 import com.ibm.wala.dataflow.IFDS.ISupergraph;
 import com.ibm.wala.ipa.callgraph.CGNode;
 import com.ibm.wala.ipa.callgraph.CallGraph;
-import com.ibm.wala.ipa.callgraph.propagation.InstanceKey;
-import com.ibm.wala.ipa.callgraph.propagation.LocalPointerKey;
 import com.ibm.wala.ipa.callgraph.propagation.PointerAnalysis;
 import com.ibm.wala.ipa.cfg.BasicBlockInContext;
 import com.ibm.wala.ssa.ISSABasicBlock;
@@ -56,9 +54,8 @@ import com.ibm.wala.ssa.SSAInvokeInstruction;
 
 import domain.CodeElement;
 import flow.InflowAnalysis;
-import flow.types.BinderFlow;
 import flow.types.FlowType;
-import flow.types.IKFlow;
+import flow.types.ParameterFlow;
 
 
 /**
@@ -73,23 +70,16 @@ public class CallArgSourceSpec extends SourceSpec {
 	CallArgSourceSpec(MethodNamePattern name, int[] args) {
 		namePattern = name;
 		argNums = args;
-		myType = SourceType.ARG_SOURCE;
-	}
-
-	CallArgSourceSpec(MethodNamePattern name, int[] args, SourceType type) {
-		namePattern = name;
-		argNums = args;
-		myType = type;
 	}
 
 	@Override
 	public<E extends ISSABasicBlock> void addDomainElements(
-			Map<BasicBlockInContext<E>, Map<FlowType, Set<CodeElement>>> taintMap,
+			Map<BasicBlockInContext<E>, Map<FlowType<E>, Set<CodeElement>>> taintMap,
 			IMethod target, BasicBlockInContext<E> block, SSAInvokeInstruction invInst,
 			int[] newArgNums, ISupergraph<BasicBlockInContext<E>, CGNode> graph, PointerAnalysis pa, CallGraph cg) {
 
 		for (int j = 0; j<newArgNums.length; j++) {
-			for (FlowType ft:getFlowType(invInst,block.getNode(), target, newArgNums[j], pa)) {
+			for (FlowType ft:getFlowType(block,invInst,block.getNode(), target, newArgNums[j], pa)) {
 				InflowAnalysis.addDomainElements(taintMap, block, ft, 
 				        CodeElement.valueElements(pa, block.getNode(), invInst.getUse(newArgNums[j])));
 			}
@@ -97,23 +87,15 @@ public class CallArgSourceSpec extends SourceSpec {
 	}
 
 
-	public<E extends ISSABasicBlock> Collection<FlowType> getFlowType(SSAInvokeInstruction invInst,
+	public<E extends ISSABasicBlock> Collection<FlowType<E>> getFlowType(
+	        BasicBlockInContext<E> block,
+	        SSAInvokeInstruction invInst,
 			CGNode node, IMethod target, int argNum, PointerAnalysis pa) {
-		HashSet<FlowType> flowSet = new HashSet<FlowType>();
+		HashSet<FlowType<E>> flowSet = new HashSet<FlowType<E>>();
 		flowSet.clear();
-		switch(myType) {
-		case ARG_SOURCE:
-			for(InstanceKey ik:pa.getPointsToSet(new LocalPointerKey(node, invInst.getReceiver())))
-				flowSet.add(new IKFlow(ik, pa.getInstanceKeyMapping().getMappedIndex(ik), node, name, target.getSignature(), argNum));
-			break;
-		case BINDER_SOURCE :
-			for(InstanceKey ik:pa.getPointsToSet(new LocalPointerKey(node, invInst.getReceiver())))
-				flowSet.add(new BinderFlow(ik, node, name, target.getSignature(), argNum));
-			break;
-		default:
-			throw new UnsupportedOperationException("SourceType not yet Implemented");        			
+		for(int i: argNums) {
+		    flowSet.add(new ParameterFlow<E>(block, i));
 		}
 		return flowSet;
-
 	}
 }

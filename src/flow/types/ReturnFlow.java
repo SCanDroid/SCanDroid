@@ -31,16 +31,17 @@
  * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
  *
+ * POSSIBILITY OF SUCH DAMAGE.
  *
  */
 
 package flow.types;
 
 import com.ibm.wala.ipa.callgraph.CGNode;
+import com.ibm.wala.ipa.cfg.BasicBlockInContext;
+import com.ibm.wala.ssa.ISSABasicBlock;
 import com.ibm.wala.types.TypeReference;
-
 
 /**
  * 
@@ -50,70 +51,35 @@ import com.ibm.wala.types.TypeReference;
  * a sink).
  *
  */
-public class ReturnFlow implements FlowType {
+public class ReturnFlow <E extends ISSABasicBlock> implements FlowType {
 
-    public final TypeReference activityClass;
-    private final CGNode inNode;
-    final String type;
-    final int argNum;
-    final String callee;
+    public final BasicBlockInContext<E> block;
 
-    public ReturnFlow(TypeReference activityClass)
+    public ReturnFlow(BasicBlockInContext<E> block)
     {
-        this.activityClass = activityClass;
-        inNode = null;
-        argNum = 0;
-        type = "";
-        callee = "";
+        this.block = block;
     }
-    
-    public ReturnFlow(TypeReference activityClass, CGNode node, String type, String callee)
-    {
-        this.activityClass = activityClass;
-        inNode = node;
-        this.type = type;
-        argNum = 0;
-        this.callee = callee;
-    }
-    
-    public ReturnFlow(TypeReference activityClass, CGNode node, String type, String callee, int argNum)
-    {
-        this.activityClass = activityClass;
-        this.inNode = node;
-        this.type = type;
-        this.argNum = argNum;
-        this.callee = callee;
-    }
-    
+        
     @Override
     public int hashCode()
     {
-        return activityClass.hashCode();
+        return block.hashCode();
     }
 
     @Override
     public boolean equals(Object other)
     {
 //        return other != null && other instanceof ReturnFlow && ((ReturnFlow)other).activityClass.equals(activityClass);
-    	return other != null && other instanceof ReturnFlow && ((ReturnFlow)other).inNode.equals(inNode)
-    			&& ((ReturnFlow)other).argNum == argNum;
+    	return other != null && other instanceof ReturnFlow && ((ReturnFlow)other).block.equals(block);
     }
 
     @Override
     public String toString()
     {
-    	if (argNum == 0)
-    		return type+" - ReturnFlow(Caller:"+inNode.getMethod().getSignature()+" ==> Callee:"+callee+")";
-    	else
-    		return type+" - ReturnFlow(Caller:"+inNode.getMethod().getSignature()+" ==> Callee:"+callee+", Parameter:"+argNum+")";
-
-//        return "ReturnFlow("+activityClass+")";
-    	
+        return "ReturnFlow(" + block.toString() + ")";    	
     }
-
-	@Override
-	public CGNode getRelevantNode() {
-		return inNode;
-	}
-
+    
+    public BasicBlockInContext<E> getBlock() {
+        return block;
+    }
 }

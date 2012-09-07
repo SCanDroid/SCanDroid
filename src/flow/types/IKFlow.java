@@ -40,74 +40,59 @@ package flow.types;
 
 import com.ibm.wala.ipa.callgraph.CGNode;
 import com.ibm.wala.ipa.callgraph.propagation.InstanceKey;
+import com.ibm.wala.ipa.cfg.BasicBlockInContext;
+import com.ibm.wala.ssa.ISSABasicBlock;
 
-public class IKFlow implements FlowType {
-    public final InstanceKey ik;
-    private final CGNode inNode;
-    private final int argNum;
-    private final String type;
-    private final String callee;
-    private final int ikIndex;
+public class IKFlow <E extends ISSABasicBlock>implements FlowType {
+    private final InstanceKey ik;
+    private final BasicBlockInContext<E> block;
 
-    public IKFlow(InstanceKey ik)
+    public IKFlow(InstanceKey ik, BasicBlockInContext<E> block)
     {
         this.ik = ik;
-        inNode = null;
-        type = "";
-        argNum = 0;
-        callee = "";
-        ikIndex = -1;
+        this.block = block;
     }
     
-    public IKFlow(InstanceKey ik, int index, CGNode node, String type, String callee)
-    {
-        this.ik = ik;
-        this.inNode = node;
-        this.type = type;
-        this.argNum = 0;
-        this.callee = callee;
-        this.ikIndex = index;
-    }
-    
-    public IKFlow(InstanceKey ik, int index, CGNode node, String type, String callee, int argNum)
-    {
-        this.ik = ik;
-        this.inNode = node;
-        this.type = type;
-        this.argNum = argNum;
-        this.callee = callee;
-        this.ikIndex = index;
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((block == null) ? 0 : block.hashCode());
+        result = prime * result + ((ik == null) ? 0 : ik.hashCode());
+        return result;
     }
 
     @Override
-    public int hashCode()
-    {
-        return ik.hashCode();
-    }
-
-    @Override
-    public boolean equals(Object other)
-    {
-        if(other == null)
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
             return false;
-        if(other instanceof IKFlow)
-            return ((IKFlow)other).ik.equals(ik);
-        return false;
+        if (getClass() != obj.getClass())
+            return false;
+        IKFlow other = (IKFlow) obj;
+        if (block == null) {
+            if (other.block != null)
+                return false;
+        } else if (!block.equals(other.block))
+            return false;
+        if (ik == null) {
+            if (other.ik != null)
+                return false;
+        } else if (!ik.equals(other.ik))
+            return false;
+        return true;
     }
 
     @Override
     public String toString()
     {
-    	if (argNum == 0)
-    		return type+" - IKFlow(Caller:"+inNode.getMethod().getSignature()+" ==> Callee:"+callee+") IK: " + ik + " index: " + ikIndex;
-    	else
-    		return type+" - IKFlow(Caller:"+inNode.getMethod().getSignature()+" ==> Callee:"+callee+", Parameter:"+argNum+") IK: " + ik + " index: " + ikIndex;
-//        return "IKFlow("+ik+")";
+    	return "IKFlow("+ik.toString()+")";
     }
 
 	@Override
-	public CGNode getRelevantNode() {
-		return inNode;
+	public BasicBlockInContext<E> getBlock() {
+		return block;
 	}
 	
 	public InstanceKey getIK() {

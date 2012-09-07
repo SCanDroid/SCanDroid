@@ -38,9 +38,6 @@
 
 package spec;
 
-import spec.ISourceSpec.SourceType;
-import spec.ISinkSpec.SinkType;
-
 public class AndroidSpecs implements ISpecs {
 	static String act = "Landroid/app/Activity";
 	static String svc = "Landroid/app/Service";
@@ -156,16 +153,16 @@ public class AndroidSpecs implements ISpecs {
 		// new EntryArgSourceSpec( actRestart, null ),
 		// new EntryArgSourceSpec( actDestroy, null ),
 		//track all parameters?  or just the Intent data(3)
-		new EntryArgSourceSpec( actOnActivityResult, new int[] {3}, SourceType.RETURN_SOURCE),
+		new EntryArgSourceSpec( actOnActivityResult, new int[] {3}),
 //		new EntryArgSourceSpec( actOnRestoreInstanceState, null ),
 //		new EntryArgSourceSpec( actOnSaveInstanceState, null ),
 
 //		new EntryArgSourceSpec( svcCreate, null ),
-		new EntryArgSourceSpec( svcStart, new int[] {1} ),
-		new EntryArgSourceSpec( svcStartCommand, new int[] {1} ),
+		new EntryArgSourceSpec( svcStart, new int[] { 1 } ),
+		new EntryArgSourceSpec( svcStartCommand, new int[] { 1 } ),
 		new EntryArgSourceSpec( svcBind, new int[] {1} ),
 		
-		new EntryArgSourceSpec(bndOnTransact, new int[] { 2 }, SourceType.BINDER_SOURCE),
+		new EntryArgSourceSpec(bndOnTransact, new int[] { 2 }),
 
 		//doesn't exist
 		// new EntryArgSourceSpec( svcTransact, null ),
@@ -176,9 +173,9 @@ public class AndroidSpecs implements ISpecs {
 //		new CallArgSourceSpec( prvInsert, new int[] { 2 }, SourceType.PROVIDER_SOURCE),
 //		new CallArgSourceSpec( prvUpdate, new int[] { 2, 3, 4 }, SourceType.PROVIDER_SOURCE),
 				
-		new CallArgSourceSpec(bndTransact, new int[] { 3 }, SourceType.BINDER_SOURCE),
+		new CallArgSourceSpec(bndTransact, new int[] { 3 }),
 		
-		new CallRetSourceSpec(rslvQuery, new int[] {}, SourceType.PROVIDER_SOURCE),
+		new CallRetSourceSpec(rslvQuery, new int[] {}),
 //		new CallRetSourceSpec(httpExecute, new int[] {}),
 		new CallRetSourceSpec(actGetIntent, new int[] {}),
 		
@@ -192,21 +189,21 @@ public class AndroidSpecs implements ISpecs {
 	public SourceSpec[] getSourceSpecs() { return sourceSpecs; }
 
 	private static SinkSpec[] sinkSpecs = {
-		new CallArgSinkSpec(actSetResult, new int[] { 2 }, SinkType.RETURN_SINK),
+		new CallArgSinkSpec(actSetResult, new int[] { 2 }),
 //		new CallArgSinkSpec(bndTransact, new int[] { 2 }),
 		
-		new CallArgSinkSpec(rslvQuery, new int[] { 2, 3, 4, 5 }, SinkType.PROVIDER_SINK),
-		new CallArgSinkSpec(rslvInsert, new int[] { 2 }, SinkType.PROVIDER_SINK),
-//		new CallArgSinkSpec(rslvUpdate, new int[] { 2, 3, 4 }, SinkType.PROVIDER_SINK),
+		new CallArgSinkSpec(rslvQuery, new int[] { 2, 3, 4, 5 }),
+		new CallArgSinkSpec(rslvInsert, new int[] { 2 }),
+//		new CallArgSinkSpec(rslvUpdate, new int[] { 2, 3, 4 }),
 		
-		new CallArgSinkSpec(ctxBindService, new int[] { 1 }, SinkType.SERVICE_SINK),
-		new CallArgSinkSpec(ctxStartService, new int[] { 1 }, SinkType.SERVICE_SINK),
+		new CallArgSinkSpec(ctxBindService, new int[] { 1 }),
+		new CallArgSinkSpec(ctxStartService, new int[] { 1 }),
 		
-		new CallArgSinkSpec(ctxStartActivity, new int[] { 1 }, SinkType.ACTIVITY_SINK),
-		new CallArgSinkSpec(actStartActivityForResult, new int[] { 1 }, SinkType.ACTIVITY_SINK),
-		new CallArgSinkSpec(actStartActivityIfNeeded, new int[] { 1 }, SinkType.ACTIVITY_SINK),		
-		new CallArgSinkSpec(actStartNextMatchingActivity, new int[] { 1 }, SinkType.ACTIVITY_SINK),
-		new CallArgSinkSpec(actStartActivityFromChild, new int[] { 2 }, SinkType.ACTIVITY_SINK),		
+		new CallArgSinkSpec(ctxStartActivity, new int[] { 1 }),
+		new CallArgSinkSpec(actStartActivityForResult, new int[] { 1 }),
+		new CallArgSinkSpec(actStartActivityIfNeeded, new int[] { 1 }),		
+		new CallArgSinkSpec(actStartNextMatchingActivity, new int[] { 1 }),
+		new CallArgSinkSpec(actStartActivityFromChild, new int[] { 2 }),		
 
 		
 		new EntryArgSinkSpec( bndOnTransact, new int[] { 3 } ),

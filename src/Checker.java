@@ -46,13 +46,8 @@ import com.ibm.wala.ipa.callgraph.propagation.InstanceKey;
 import com.ibm.wala.ipa.callgraph.propagation.NormalAllocationInNode;
 import com.ibm.wala.ipa.callgraph.propagation.PointerAnalysis;
 
-import flow.types.ActivityCallFlow;
-import flow.types.BinderFlow;
 import flow.types.FlowType;
 import flow.types.IKFlow;
-import flow.types.InputFlow;
-import flow.types.ReturnFlow;
-import flow.types.ServiceCallFlow;
 
 
 public class Checker {
@@ -95,6 +90,7 @@ public class Checker {
                 {
                     for(FlowType v:e.getValue())
                     {
+                        /*
                         if(v instanceof IKFlow)
                             addFlow((IKFlow)e.getKey(),(IKFlow)v,uriFlow);
                         else
@@ -141,6 +137,7 @@ public class Checker {
                                 }
                             }
                         }
+                        */
                     }
                 }
             }
@@ -181,6 +178,7 @@ public class Checker {
         System.out.println("*    Constraints    *");
         System.out.println("*********************");
 
+        /*
         for (Entry<IKFlow, Set<IKFlow>> e: uriFlow.entrySet()) {
             if(e.getKey() instanceof IKFlow)
             {
@@ -202,6 +200,7 @@ public class Checker {
                 }
             }
         }
+        */
     }
 
     private static Map<InstanceKey, Set<InstanceKey>> fake(PointerAnalysis pa) {

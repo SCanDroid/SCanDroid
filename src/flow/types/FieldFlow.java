@@ -38,56 +38,66 @@
 
 package flow.types;
 
+import com.ibm.wala.classLoader.IField;
 import com.ibm.wala.ipa.callgraph.CGNode;
+import com.ibm.wala.ipa.cfg.BasicBlockInContext;
+import com.ibm.wala.ssa.ISSABasicBlock;
 import com.ibm.wala.types.FieldReference;
 import com.ibm.wala.types.MethodReference;
 import com.ibm.wala.types.TypeReference;
 
-public class FieldFlow implements FlowType {
+public class FieldFlow <E extends ISSABasicBlock> implements FlowType {
 
-   private FieldReference fieldRef;
-   private boolean isStatic;
+   private final BasicBlockInContext<E> block;
+   private final IField field;
    
-   public FieldFlow(FieldReference fieldRef, boolean isStatic)
-   {	   
-	   this.fieldRef = fieldRef;
-	   this.isStatic = isStatic;
-//   	this.classRef = classRef;
-//   	this.fieldname = fieldname;    	
+   
+   public FieldFlow(BasicBlockInContext<E> block)
+   {
+       this.block = block;
+       this.field = null;
    }
-   
-   public FieldReference getRef() {
-	   return fieldRef;
-   }
-   
-   public boolean isStatic() {
-	   return isStatic;
+
+   public FieldFlow(IField field)
+   {
+       this.block = null;
+       this.field = field;
    }
 
    @Override
    public int hashCode()
    {
-       return fieldRef.hashCode();
+       if(block != null)
+           return block.hashCode();
+       else
+           return field.hashCode();
    }
 
    @Override
    public boolean equals(Object other)
    {
    	return other != null & other instanceof FieldFlow && 
-//   			((FieldFlow)other).classRef.equals(classRef) && ((FieldFlow)other).fieldname.equals(fieldname);
-   			((FieldFlow)other).fieldRef.equals(fieldRef);
+   			((FieldFlow)other).block.equals(block) &&
+   	        ((FieldFlow)other).field.equals(field);
+
    }
 
    @Override
    public String toString()
    {
-   	return "FieldFlow("+fieldRef.getName()+", "+fieldRef.getDeclaringClass().getName()+")";
+       if(block != null)
+           return "FieldFlow("+block.toString()+")";
+       else
+           return "FieldFlow("+field.toString()+")";
    }
 
    @Override
-   public CGNode getRelevantNode()
+   public BasicBlockInContext<E> getBlock()
    {
-   	return null;
+   	return block;
    }
    
+   public IField getField() {
+       return field;
+   }
 }

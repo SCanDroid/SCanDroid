@@ -48,21 +48,24 @@ import com.ibm.wala.ipa.cfg.BasicBlockInContext;
 import com.ibm.wala.ssa.ISSABasicBlock;
 
 import flow.types.FlowType;
+import flow.types.ParameterFlow;
 
 public class EntryArgSinkSpec extends SinkSpec {
 
     EntryArgSinkSpec(MethodNamePattern name, int[] args) {
         namePattern = name;
         argNums = args;
-        myType = SinkType.INPUT_SINK;
     }
     
-    public <E extends ISSABasicBlock> Collection<FlowType> getFlowType(
+    public <E extends ISSABasicBlock> Collection<FlowType<E>> getFlowType(
     		IMethod im, BasicBlockInContext<E> block,CGNode node,
             int argNum, PointerAnalysis pa) {
         
-    	HashSet<FlowType> flowSet = new HashSet<FlowType>();
+    	HashSet<FlowType<E>> flowSet = new HashSet<FlowType<E>>();
     	flowSet.clear();
+    	for(int i: argNums) {
+    	    flowSet.add(new ParameterFlow<E>(node, i));
+    	}
     	return flowSet;
     }
 }

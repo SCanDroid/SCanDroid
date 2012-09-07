@@ -57,7 +57,6 @@ public abstract class SourceSpec implements ISourceSpec {
 
     protected MethodNamePattern namePattern;
     protected int[] argNums; // null = all arguments, empty = no arguments?
-    protected SourceType myType;
 
 	public static int[] getNewArgNums(int n) {
 		int[] newArgNums = new int[n];
@@ -74,13 +73,9 @@ public abstract class SourceSpec implements ISourceSpec {
 	public int[] getArgNums() {
 		return argNums;
 	}
-	
-	public SourceType getType() {
-		return myType;
-	}
-		
+			
 	abstract public<E extends ISSABasicBlock> void addDomainElements(
-			Map<BasicBlockInContext<E>, Map<FlowType,Set<CodeElement>>> taintMap, 
+			Map<BasicBlockInContext<E>, Map<FlowType<E>,Set<CodeElement>>> taintMap, 
 			IMethod im, BasicBlockInContext<E> block, SSAInvokeInstruction invInst,
 			int[] newArgNums, ISupergraph<BasicBlockInContext<E>, CGNode> graph, 
 			PointerAnalysis pa, CallGraph cg);

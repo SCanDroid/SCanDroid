@@ -80,13 +80,13 @@ public class InflowAnalysis <E extends ISSABasicBlock> {
 
     public static <E extends ISSABasicBlock>
     void addDomainElements(
-            Map<BasicBlockInContext<E>, Map<FlowType,Set<CodeElement>>> taintMap, 
+            Map<BasicBlockInContext<E>, Map<FlowType<E>,Set<CodeElement>>> taintMap, 
             BasicBlockInContext<E> block, 
             FlowType taintType, 
             Set<CodeElement> newElements) {
-        Map<FlowType,Set<CodeElement>> blockMap = taintMap.get(block);
+        Map<FlowType<E>,Set<CodeElement>> blockMap = taintMap.get(block);
         if(blockMap == null) {
-            blockMap = new HashMap<FlowType,Set<CodeElement>>();
+            blockMap = new HashMap<FlowType<E>,Set<CodeElement>>();
             taintMap.put(block, blockMap);
         }
         
@@ -100,7 +100,7 @@ public class InflowAnalysis <E extends ISSABasicBlock> {
 
     public static <E extends ISSABasicBlock>
     void addDomainElement(
-            Map<BasicBlockInContext<E>, Map<FlowType,Set<CodeElement>>> taintMap,
+            Map<BasicBlockInContext<E>, Map<FlowType<E>,Set<CodeElement>>> taintMap,
             BasicBlockInContext<E> block,
             FlowType taintType,
             CodeElement element) {
@@ -113,7 +113,7 @@ public class InflowAnalysis <E extends ISSABasicBlock> {
     
     private static<E extends ISSABasicBlock> 
     void processInputSource(Map<BasicBlockInContext<E>,
-                            Map<FlowType,Set<CodeElement>>> taintMap, 
+                            Map<FlowType<E>,Set<CodeElement>>> taintMap, 
                             SourceSpec ss, 
                             CallGraph cg, 
                             ISupergraph<BasicBlockInContext<E>, CGNode> graph,
@@ -140,7 +140,7 @@ public class InflowAnalysis <E extends ISSABasicBlock> {
     
     private static<E extends ISSABasicBlock> 
     void processFunctionCalls(Map<BasicBlockInContext<E>,
-                              Map<FlowType,Set<CodeElement>>> taintMap, 
+                              Map<FlowType<E>,Set<CodeElement>>> taintMap, 
                               ArrayList<SourceSpec> ssAL, ISupergraph<BasicBlockInContext<E>, CGNode> graph, 
                               PointerAnalysis pa, 
                               ClassHierarchy cha, CallGraph cg) {
@@ -185,14 +185,14 @@ public class InflowAnalysis <E extends ISSABasicBlock> {
     }
 
     public static <E extends ISSABasicBlock>
-      Map<BasicBlockInContext<E>,Map<FlowType,Set<CodeElement>>> analyze(
+      Map<BasicBlockInContext<E>,Map<FlowType<E>,Set<CodeElement>>> analyze(
             AndroidAppLoader<E> loader, Map<InstanceKey, String> prefixes,
             ISpecs s) {
         return analyze(loader.cg, loader.cha, loader.graph, loader.pa, prefixes, s);
     }
 
     public static <E extends ISSABasicBlock>
-      Map<BasicBlockInContext<E>,Map<FlowType,Set<CodeElement>>> analyze(
+      Map<BasicBlockInContext<E>,Map<FlowType<E>,Set<CodeElement>>> analyze(
           CallGraph cg, 
           ClassHierarchy cha, 
           ISupergraph<BasicBlockInContext<E>, CGNode> graph,
@@ -204,8 +204,8 @@ public class InflowAnalysis <E extends ISSABasicBlock> {
         System.out.println("* Running inflow analysis *");
         System.out.println("***************************");
 
-        Map<BasicBlockInContext<E>,Map<FlowType,Set<CodeElement>>> taintMap =
-            new HashMap<BasicBlockInContext<E>,Map<FlowType,Set<CodeElement>>>();
+        Map<BasicBlockInContext<E>,Map<FlowType<E>,Set<CodeElement>>> taintMap =
+            new HashMap<BasicBlockInContext<E>,Map<FlowType<E>,Set<CodeElement>>>();
 
         SourceSpec[] ss = s.getSourceSpecs();
         ArrayList<SourceSpec> ssAL = new ArrayList<SourceSpec>();
@@ -223,9 +223,9 @@ public class InflowAnalysis <E extends ISSABasicBlock> {
         System.out.println("************");
         System.out.println("* Results: *");
         System.out.println("************");
-        for(Entry<BasicBlockInContext<E>, Map<FlowType,Set<CodeElement>>> e:taintMap.entrySet())
+        for(Entry<BasicBlockInContext<E>, Map<FlowType<E>,Set<CodeElement>>> e:taintMap.entrySet())
         {
-            for(Entry<FlowType,Set<CodeElement>> e2:e.getValue().entrySet())
+            for(Entry<FlowType<E>,Set<CodeElement>> e2:e.getValue().entrySet())
             {
                 for(CodeElement o:e2.getValue())
                 {

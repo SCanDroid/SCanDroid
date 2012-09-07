@@ -54,7 +54,6 @@ public abstract class SinkSpec implements ISinkSpec {
     protected MethodNamePattern namePattern;
     // Zero-based arguments, but 0 is 'this'
     protected int[] argNums; // null = all arguments, empty = no arguments?
-    protected SinkType myType;
     
 	public static int[] getNewArgNums(int n) {
 		int[] newArgNums = new int[n];
@@ -71,12 +70,8 @@ public abstract class SinkSpec implements ISinkSpec {
 	public int[] getArgNums() {
 		return argNums;
 	}
-	
-	public SinkType getType() {
-		return myType;
-	}
-	
-    abstract public <E extends ISSABasicBlock> Collection<FlowType> getFlowType(
+		
+    abstract public <E extends ISSABasicBlock> Collection<FlowType<E>> getFlowType(
     		IMethod im, BasicBlockInContext<E> block, CGNode node,
             int argNum, PointerAnalysis pa);
 	

@@ -50,15 +50,23 @@ import com.ibm.wala.util.intset.OrdinalSet;
 
 import domain.CodeElement;
 
-public class ParameterFlow <E extends ISSABasicBlock> implements FlowType {
+public class ParameterFlow <E extends ISSABasicBlock> implements FlowType<E> {
 
     public final BasicBlockInContext<E> block;
+    public final CGNode node;
     public final int argNum;
     
     public ParameterFlow(BasicBlockInContext<E> block, int argNum)
     {
     	this.block = block;
-    	this.argNum = argNum;    	
+    	this.argNum = argNum;
+    	this.node = null;
+    }
+    public ParameterFlow(CGNode node, int argNum)
+    {
+        this.node = node;
+        this.argNum = argNum;
+        this.block = null;
     }
 
     @Override
@@ -71,7 +79,7 @@ public class ParameterFlow <E extends ISSABasicBlock> implements FlowType {
     public boolean equals(Object other)
     {
     	return other != null & other instanceof ParameterFlow && 
-    			((ParameterFlow)other).block.equals(block) && ((ParameterFlow)other).argNum == argNum;
+    			((ParameterFlow<E>)other).block.equals(block) && ((ParameterFlow<E>)other).argNum == argNum;
     }
 
     @Override
@@ -81,9 +89,9 @@ public class ParameterFlow <E extends ISSABasicBlock> implements FlowType {
     }
 
     @Override
-    public CGNode getRelevantNode()
+    public BasicBlockInContext<E> getBlock()
     {
-    	return null;
+    	return block;
     }
     
 }

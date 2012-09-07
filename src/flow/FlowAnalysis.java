@@ -81,7 +81,7 @@ public class FlowAnalysis {
     TabulationResult<BasicBlockInContext<E>, CGNode, DomainElement> 
     analyze(final AndroidAppLoader<E> loader,
           Map<BasicBlockInContext<E>,
-          Map<FlowType,Set<CodeElement>>> initialTaints,
+          Map<FlowType<E>,Set<CodeElement>>> initialTaints,
           IFDSTaintDomain<E> d,
           MethodAnalysis<E> methodAnalysis
           ) throws CancelRuntimeException {
@@ -95,7 +95,7 @@ public class FlowAnalysis {
               CallGraph cg,
               PointerAnalysis pa,
             Map<BasicBlockInContext<E>,
-            Map<FlowType,Set<CodeElement>>> initialTaints,
+            Map<FlowType<E>,Set<CodeElement>>> initialTaints,
             IFDSTaintDomain<E> d,
             MethodAnalysis<E> methodAnalysis
             ) throws CancelRuntimeException {
@@ -110,9 +110,9 @@ public class FlowAnalysis {
            initialEdges = new ArrayList();
 
         //Add PathEdges to the taints
-        for(Entry<BasicBlockInContext<E>, Map<FlowType,Set<CodeElement>>> e:initialTaints.entrySet())
+        for(Entry<BasicBlockInContext<E>, Map<FlowType<E>,Set<CodeElement>>> e:initialTaints.entrySet())
         {
-            for(Entry<FlowType,Set<CodeElement>> e2:e.getValue().entrySet())
+            for(Entry<FlowType<E>,Set<CodeElement>> e2:e.getValue().entrySet())
             {
                 for(CodeElement o:e2.getValue())
                 {

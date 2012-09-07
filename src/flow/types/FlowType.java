@@ -39,6 +39,8 @@
 package flow.types;
 
 import com.ibm.wala.ipa.callgraph.CGNode;
+import com.ibm.wala.ipa.cfg.BasicBlockInContext;
+import com.ibm.wala.ssa.ISSABasicBlock;
 
 /**
  * Flow types represent specific instances of sources or sinks.
@@ -49,6 +51,6 @@ import com.ibm.wala.ipa.callgraph.CGNode;
  * @author creswick
  *
  */
-public interface FlowType {
-	public CGNode getRelevantNode();
+public interface FlowType <E extends ISSABasicBlock> {
+	public BasicBlockInContext<E> getBlock();
 }

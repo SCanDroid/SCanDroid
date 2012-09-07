@@ -55,6 +55,7 @@ import com.ibm.wala.ipa.callgraph.CGNode;
 import com.ibm.wala.ipa.callgraph.Entrypoint;
 import com.ibm.wala.ipa.callgraph.propagation.InstanceKey;
 import com.ibm.wala.ipa.cfg.BasicBlockInContext;
+import com.ibm.wala.ssa.ISSABasicBlock;
 import com.ibm.wala.ssa.analysis.IExplodedBasicBlock;
 import com.ibm.wala.util.CancelException;
 
@@ -125,7 +126,7 @@ public class SeparateEntryAnalysis {
              
             System.out.println("Running inflow analysis.");
             Map<BasicBlockInContext<IExplodedBasicBlock>, 
-                Map<FlowType, Set<CodeElement>>> initialTaints = 
+                Map<FlowType<IExplodedBasicBlock>, Set<CodeElement>>> initialTaints = 
                   InflowAnalysis.analyze(loader, prefixes, specs);
             
             System.out.println("  Initial taint size = "
@@ -137,13 +138,13 @@ public class SeparateEntryAnalysis {
               flowResult = FlowAnalysis.analyze(loader, initialTaints, domain, methodAnalysis);
 
             System.out.println("Running outflow analysis.");
-            Map<FlowType, Set<FlowType>> permissionOutflow = OutflowAnalysis
+            Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> permissionOutflow = OutflowAnalysis
                     .analyze(loader, flowResult, domain, specs);
             System.out.println("  Permission outflow size = "
                     + permissionOutflow.size());
             
-            System.out.println("Running Checker.");
-    		Checker.check(permissionOutflow, perms, prefixes);
+            //System.out.println("Running Checker.");
+    		//Checker.check(permissionOutflow, perms, prefixes);
 
             
             System.out.println();
@@ -151,16 +152,16 @@ public class SeparateEntryAnalysis {
                     .println("================================================================");
             System.out.println();
 
-            for (Map.Entry<BasicBlockInContext<IExplodedBasicBlock>, Map<FlowType, Set<CodeElement>>> e : initialTaints
+            for (Map.Entry<BasicBlockInContext<IExplodedBasicBlock>, Map<FlowType<IExplodedBasicBlock>, Set<CodeElement>>> e : initialTaints
                     .entrySet()) {
                 System.out.println(e.getKey());
-                for (Map.Entry<FlowType, Set<CodeElement>> e2 : e.getValue()
+                for (Map.Entry<FlowType<IExplodedBasicBlock>, Set<CodeElement>> e2 : e.getValue()
                         .entrySet()) {
                     System.out
                             .println(e2.getKey() + " <- " + e2.getValue());
                 }
             }
-            for (Map.Entry<FlowType, Set<FlowType>> e : permissionOutflow
+            for (Map.Entry<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> e : permissionOutflow
                     .entrySet()) {
                 System.out.println(e.getKey());
                 for (FlowType t : e.getValue()) {

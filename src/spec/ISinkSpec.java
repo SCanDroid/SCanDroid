@@ -39,15 +39,4 @@
 package spec;
 
 public interface ISinkSpec {
-    public enum SinkType {
-        INPUT_SINK,         /* Arguments to entry points. */
-    	CALL_SINK,			/* For default unspecified calls */
-
-    	ACTIVITY_SINK,      /* For activity calls */
-        SERVICE_SINK,       /* For service calls */
-        PROVIDER_SINK,      /* For content provider calls */
-        RETURN_SINK         /* For onTransact and setResult calls */
-    }
-    
-    public SinkType getType();
 }

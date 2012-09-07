@@ -45,9 +45,11 @@ import java.util.HashSet;
 import com.ibm.wala.classLoader.IMethod;
 import com.ibm.wala.ipa.callgraph.CGNode;
 import com.ibm.wala.ipa.callgraph.propagation.PointerAnalysis;
+import com.ibm.wala.ipa.cfg.BasicBlockInContext;
 import com.ibm.wala.ssa.ISSABasicBlock;
 import com.ibm.wala.ssa.SSAInvokeInstruction;
 
+import flow.types.FieldFlow;
 import flow.types.FlowType;
 
 public class FieldSinkSpec extends SinkSpec {
@@ -57,11 +59,12 @@ public class FieldSinkSpec extends SinkSpec {
     }
     
     @Override
-    public <E extends ISSABasicBlock> Collection<FlowType> getFlowType(
+    public <E extends ISSABasicBlock> Collection<FlowType<E>> getFlowType(
     		IMethod im, BasicBlockInContext<E> invInst, CGNode node,
             int argNum, PointerAnalysis pa) {
-    	HashSet<FlowType> flowSet = new HashSet<FlowType>();
+    	HashSet<FlowType<E>> flowSet = new HashSet<FlowType<E>>();
     	flowSet.clear();
+    	flowSet.add(new FieldFlow<E>(invInst));
     	return flowSet;
     }
 }

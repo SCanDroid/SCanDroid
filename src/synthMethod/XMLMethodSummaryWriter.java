@@ -293,7 +293,7 @@ public class XMLMethodSummaryWriter {
 			FieldFlow ff = (FieldFlow)ft;
 			Element e;
 			//get static field
-			if (ff.isStatic()) {
+			if (ff.getField().isStatic()) {
 				e = doc.createElement(E_GETSTATIC);				
 			}
 			//get non static field
@@ -301,8 +301,8 @@ public class XMLMethodSummaryWriter {
 				e = doc.createElement(E_GETFIELD);
 				e.setAttribute(A_REF, "arg0");
 			}
-			setFieldAttr(e, ff.getRef());
-			String localDef = ff.getRef().getName().toString()+"_localDef";
+			setFieldAttr(e, ff.getField().getReference());
+			String localDef = ff.getField().getReference().getName().toString()+"_localDef";
 			e.setAttribute(A_DEF, localDef);
 			mE.appendChild(e);
 			

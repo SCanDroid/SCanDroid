@@ -51,6 +51,8 @@ import com.ibm.wala.ssa.ISSABasicBlock;
 import com.ibm.wala.ssa.SSAInvokeInstruction;
 
 import domain.CodeElement;
+import flow.InflowAnalysis;
+import flow.types.FieldFlow;
 import flow.types.FlowType;
 
 /**
@@ -64,20 +66,15 @@ public class FieldSourceSpec extends SourceSpec {
     public FieldSourceSpec(FieldNamePattern name) {
         namePattern = name;
     }
-	@Override
-	public SourceType getType() {
-		// TODO Auto-generated method stub
-		return null;
-	}
+
     @Override
     public <E extends ISSABasicBlock> void addDomainElements(
-            Map<BasicBlockInContext<E>, Map<FlowType, Set<CodeElement>>> taintMap,
+            Map<BasicBlockInContext<E>, Map<FlowType<E>, Set<CodeElement>>> taintMap,
             IMethod im, BasicBlockInContext<E> block,
             SSAInvokeInstruction invInst, int[] newArgNums,
             ISupergraph<BasicBlockInContext<E>, CGNode> graph,
             PointerAnalysis pa, CallGraph cg) {
-        // TODO Auto-generated method stub
-        
+        InflowAnalysis.addDomainElements(taintMap, block, new FieldFlow<E>(block), 
+                CodeElement.valueElements(pa, block.getNode(), invInst.getDef(0)));
     }
-	
 }
