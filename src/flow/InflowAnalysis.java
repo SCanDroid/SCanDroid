@@ -133,7 +133,10 @@ public class InflowAnalysis <E extends ISSABasicBlock> {
     			continue;
     		}
             
-            ss.addDomainElements(taintMap, im, null, null, newArgNums, graph, pa, cg);    		
+            for (BasicBlockInContext<E> bb:entriesForProcedure) {
+            	ss.addDomainElements(taintMap, im, bb, null, newArgNums, graph, pa, cg);
+            }
+            
     	}
     }
     

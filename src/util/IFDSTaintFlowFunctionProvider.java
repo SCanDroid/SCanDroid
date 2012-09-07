@@ -47,6 +47,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+import spec.AndroidSpecs;
 import synthMethod.MethodAnalysis;
 
 import com.ibm.wala.classLoader.IClass;
@@ -284,12 +285,11 @@ implements IFlowFunctionMap<BasicBlockInContext<E>> {
         private IField getStaticIField(IClassHierarchy ch,
                 FieldReference declaredField) {
             TypeReference staticTypeRef = declaredField.getDeclaringClass();
-            Set<IClass> classes = ch.getImplementors(staticTypeRef);
             
-            assert classes.size() == 1 : 
-                "Too many classes found for static ref.";
-            
-            IClass staticClass = classes.iterator().next();
+            IClass staticClass = ch.lookupClass(staticTypeRef);
+            assert staticClass != null : 
+            	"Class not found in ClassHierchy for static field";
+
             IField staticField = 
                     staticClass.getField(declaredField.getName());
             return staticField;

@@ -116,12 +116,6 @@ public class FlowAnalysis {
             {
                 for(CodeElement o:e2.getValue())
                 {
-                	if (e.getKey() == null) {
-                		System.out.println("oink");
-                	}
-                	if (e.getKey().getNode() == null) {
-                		System.out.println("mooo");
-                	}
                 	BasicBlockInContext<E>[] bbic = graph.getEntriesForProcedure(e.getKey().getNode());
                 	for (int i = 0; i < bbic.length; i++) {
                 		//Add PathEdge <s_p,0> -> <n,d1>
