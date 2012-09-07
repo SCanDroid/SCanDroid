@@ -211,11 +211,11 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
 		// UriPrefixContextSelector(options, cha), null);
 		zeroxcgb = makeVanillaZeroOneCFABuilder(options, cache, cha, scope,
 				new UriPrefixContextSelector(options, cha), null, methodSpec);
-		cgb = new DexSSAPropagationCallGraphBuilder(cha, options, cache,
-				zeroxcgb.getContextSelector(),
-				(SSAContextInterpreter) zeroxcgb.getContextInterpreter(),
-				zeroxcgb.getInstanceKeys());
-		// cgb = zeroxcgb;
+//		cgb = new DexSSAPropagationCallGraphBuilder(cha, options, cache,
+//				zeroxcgb.getContextSelector(),
+//				(SSAContextInterpreter) zeroxcgb.getContextInterpreter(),
+//				zeroxcgb.getInstanceKeys());
+		 cgb = zeroxcgb;
 
 		// CallGraphBuilder construction warnings
 		for (Iterator<Warning> wi = Warnings.iterator(); wi.hasNext();) {
