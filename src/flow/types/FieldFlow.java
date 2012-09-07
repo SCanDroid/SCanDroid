@@ -46,40 +46,61 @@ import com.ibm.wala.types.FieldReference;
 import com.ibm.wala.types.MethodReference;
 import com.ibm.wala.types.TypeReference;
 
+/** A flow to or from a field. The associated block represents
+ * either the location of the get or put instruction, or the
+ * entry or exit block of a method which is reading or writing
+ * the field. In the former case, the associate field is redundant,
+ * but potentially convenient. In the latter case, it's necessary.
+ *
+ * @author atomb
+ *
+ * @param <E>
+ */
 public class FieldFlow <E extends ISSABasicBlock> implements FlowType {
 
    private final BasicBlockInContext<E> block;
    private final IField field;
+   private final boolean source;
    
-   
-   public FieldFlow(BasicBlockInContext<E> block)
+   public FieldFlow(BasicBlockInContext<E> block, IField field, boolean source)
    {
        this.block = block;
-       this.field = null;
-   }
-
-   public FieldFlow(IField field)
-   {
-       this.block = null;
        this.field = field;
+       this.source = source;
    }
 
    @Override
-   public int hashCode()
-   {
-       if(block != null)
-           return block.hashCode();
-       else
-           return field.hashCode();
+   public int hashCode() {
+       final int prime = 31;
+       int result = 1;
+       result = prime * result + ((block == null) ? 0 : block.hashCode());
+       result = prime * result + ((field == null) ? 0 : field.hashCode());
+       result = prime * result + (source ? 1231 : 1237);
+       return result;
    }
 
    @Override
-   public boolean equals(Object other)
-   {
-   	return other != null & other instanceof FieldFlow && 
-   			((FieldFlow)other).block.equals(block) &&
-   	        ((FieldFlow)other).field.equals(field);
-
+   public boolean equals(Object obj) {
+       if (this == obj)
+           return true;
+       if (obj == null)
+           return false;
+       if (getClass() != obj.getClass())
+           return false;
+       FieldFlow other = (FieldFlow) obj;
+       if (block == null) {
+           if (other.block != null)
+               return false;
+       } else if (!block.equals(other.block))
+           return false;
+       if (field == null) {
+           if (other.field != null)
+               return false;
+       } else if (!field.equals(other.field))
+           return false;
+       if (source != other.source)
+           return false;
+       return true;
    }
 
    @Override
@@ -94,10 +115,15 @@ public class FieldFlow <E extends ISSABasicBlock> implements FlowType {
    @Override
    public BasicBlockInContext<E> getBlock()
    {
-   	return block;
+       return block;
    }
    
    public IField getField() {
        return field;
+   }
+
+   @Override
+   public boolean isSource() {
+       return source;
    }
 }

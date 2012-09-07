@@ -50,42 +50,64 @@ import com.ibm.wala.util.intset.OrdinalSet;
 
 import domain.CodeElement;
 
+/** A flow to or from the parameter of a method. This can represent formal
+ * parameters of methods being analyzed, or actual parameters of methods
+ * being called. In the former case, the associated block is the entry
+ * block of the method. In the latter case, the block is the block containing
+ * the invoke instruction.
+ *
+ * @author atomb
+ *
+ * @param <E>
+ */
 public class ParameterFlow <E extends ISSABasicBlock> implements FlowType<E> {
 
-    public final BasicBlockInContext<E> block;
-    public final CGNode node;
+    private final BasicBlockInContext<E> block;
     public final int argNum;
+    private final boolean source;
     
-    public ParameterFlow(BasicBlockInContext<E> block, int argNum)
+    public ParameterFlow(BasicBlockInContext<E> block, int argNum, boolean source)
     {
     	this.block = block;
     	this.argNum = argNum;
-    	this.node = null;
-    }
-    public ParameterFlow(CGNode node, int argNum)
-    {
-        this.node = node;
-        this.argNum = argNum;
-        this.block = null;
+        this.source = source;
     }
 
     @Override
-    public int hashCode()
-    {
-        return block.hashCode()*argNum;
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + argNum;
+        result = prime * result + ((block == null) ? 0 : block.hashCode());
+        result = prime * result + (source ? 1231 : 1237);
+        return result;
     }
 
     @Override
-    public boolean equals(Object other)
-    {
-    	return other != null & other instanceof ParameterFlow && 
-    			((ParameterFlow<E>)other).block.equals(block) && ((ParameterFlow<E>)other).argNum == argNum;
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        ParameterFlow other = (ParameterFlow) obj;
+        if (argNum != other.argNum)
+            return false;
+        if (block == null) {
+            if (other.block != null)
+                return false;
+        } else if (!block.equals(other.block))
+            return false;
+        if (source != other.source)
+            return false;
+        return true;
     }
 
     @Override
     public String toString()
     {
-    	return "ParameterFlow("+argNum+", "+block+")";
+        return "ParameterFlow("+argNum+", "+block+","+source+")";
     }
 
     @Override
@@ -93,5 +115,9 @@ public class ParameterFlow <E extends ISSABasicBlock> implements FlowType<E> {
     {
     	return block;
     }
-    
+
+    @Override
+    public boolean isSource() {
+        return source;
+    }
 }

@@ -46,11 +46,13 @@ import com.ibm.wala.ssa.ISSABasicBlock;
 public class IKFlow <E extends ISSABasicBlock>implements FlowType {
     private final InstanceKey ik;
     private final BasicBlockInContext<E> block;
+    private final boolean source;
 
-    public IKFlow(InstanceKey ik, BasicBlockInContext<E> block)
+    public IKFlow(InstanceKey ik, BasicBlockInContext<E> block, boolean source)
     {
         this.ik = ik;
         this.block = block;
+        this.source = source;
     }
     
     @Override
@@ -97,5 +99,10 @@ public class IKFlow <E extends ISSABasicBlock>implements FlowType {
 	
 	public InstanceKey getIK() {
 		return ik;
+	}
+
+	@Override
+	public boolean isSource() {
+	    return source;
 	}
 }

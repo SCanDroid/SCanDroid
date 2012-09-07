@@ -72,7 +72,5 @@ public abstract class SinkSpec implements ISinkSpec {
 	}
 		
     abstract public <E extends ISSABasicBlock> Collection<FlowType<E>> getFlowType(
-    		IMethod im, BasicBlockInContext<E> block, CGNode node,
-            int argNum, PointerAnalysis pa);
-	
+        BasicBlockInContext<E> block);
 }

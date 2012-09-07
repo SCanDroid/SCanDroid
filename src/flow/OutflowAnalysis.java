@@ -155,8 +155,8 @@ public class OutflowAnalysis <E extends ISSABasicBlock> {
                 	                    }
                 	                }
                 	                
-                    	            for(FlowType<E> dest: ssAL.get(i).getFlowType(target, block, node, argNums[j], pa)) {
-                    	                for(FlowType<E> source: taintTypeSet) {
+                                    for(FlowType<E> dest: ssAL.get(i).getFlowType(block)) {
+                                        for(FlowType<E> source: taintTypeSet) {
                     	                    // flow taint into uriIK
                     	                    addEdge(flowGraph, source, dest);
                     	                }
@@ -191,20 +191,20 @@ public class OutflowAnalysis <E extends ISSABasicBlock> {
     		
     		newArgNums = (ss.getArgNums() == null) ? SinkSpec.getNewArgNums((im.isStatic())?im.getNumberOfParameters():im.getNumberOfParameters()-1) : ss.getArgNums();
 
-    		for (int i = 0; i < newArgNums.length; i++) {
+            for (int i = 0; i < newArgNums.length; i++) {
     			
     			for(DomainElement de:domain.getPossibleElements(new LocalElement(node.getIR().getParameter(newArgNums[i])))) {
-    				for (BasicBlockInContext<E> block: graph.getExitsForProcedure(node) ) {
+                    for (BasicBlockInContext<E> block: graph.getEntriesForProcedure(node) ) {
     					if(flowResult.getResult(block).contains(domain.getMappedIndex(de))) {
-    						addEdge(flowGraph,de.taintSource, new ParameterFlow<E>(node, newArgNums[i]));
+                            addEdge(flowGraph,de.taintSource, new ParameterFlow<E>(block, newArgNums[i], true));
     					}
     				}
     			}
     			for(InstanceKey ik:pa.getPointsToSet(new LocalPointerKey(node,node.getIR().getParameter(newArgNums[i])))) {
     				for(DomainElement de:domain.getPossibleElements(new InstanceKeyElement(ik))) {
-    					for (BasicBlockInContext<E> block : graph.getExitsForProcedure(node)) {
+                        for (BasicBlockInContext<E> block : graph.getEntriesForProcedure(node)) {
     						if(flowResult.getResult(block).contains(domain.getMappedIndex(de))) {
-    							addEdge(flowGraph,de.taintSource, new ParameterFlow<E>(node, newArgNums[i]));
+                                addEdge(flowGraph,de.taintSource, new ParameterFlow<E>(block, newArgNums[i], true));
     						}
     					}
     				}

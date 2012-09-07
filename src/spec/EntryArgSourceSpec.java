@@ -73,13 +73,13 @@ public class EntryArgSourceSpec extends SourceSpec {
 	@Override
 	public<E extends ISSABasicBlock> void addDomainElements(
 			Map<BasicBlockInContext<E>, Map<FlowType<E>, Set<CodeElement>>> taintMap,
-			IMethod im, BasicBlockInContext<E> block, SSAInvokeInstruction invInst_notused,
+			IMethod im, BasicBlockInContext<E> block, SSAInvokeInstruction invInst,
 			int[] newArgNums, 
 			ISupergraph<BasicBlockInContext<E>, CGNode> graph, PointerAnalysis pa, CallGraph cg) {
 
 		CGNode node = cg.getNode(im, Everywhere.EVERYWHERE);
 		for(int i: newArgNums) {
-		    FlowType<E> flow = new ParameterFlow<E>(node, i);
+		    FlowType<E> flow = new ParameterFlow<E>(block, i, true);
 		    InflowAnalysis.addDomainElements(taintMap, block, flow, CodeElement.valueElements(pa, node, node.getIR().getParameter(i)));
 		}
 	}

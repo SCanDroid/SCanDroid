@@ -94,7 +94,7 @@ public class CallArgSourceSpec extends SourceSpec {
 		HashSet<FlowType<E>> flowSet = new HashSet<FlowType<E>>();
 		flowSet.clear();
 		for(int i: argNums) {
-		    flowSet.add(new ParameterFlow<E>(block, i));
+		    flowSet.add(new ParameterFlow<E>(block, i, true));
 		}
 		return flowSet;
 	}

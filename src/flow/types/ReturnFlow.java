@@ -53,24 +53,41 @@ import com.ibm.wala.types.TypeReference;
  */
 public class ReturnFlow <E extends ISSABasicBlock> implements FlowType {
 
-    public final BasicBlockInContext<E> block;
+    private final BasicBlockInContext<E> block;
+    private final boolean source;
 
-    public ReturnFlow(BasicBlockInContext<E> block)
+    public ReturnFlow(BasicBlockInContext<E> block, boolean source)
     {
         this.block = block;
-    }
-        
-    @Override
-    public int hashCode()
-    {
-        return block.hashCode();
+        this.source = source;
     }
 
     @Override
-    public boolean equals(Object other)
-    {
-//        return other != null && other instanceof ReturnFlow && ((ReturnFlow)other).activityClass.equals(activityClass);
-    	return other != null && other instanceof ReturnFlow && ((ReturnFlow)other).block.equals(block);
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((block == null) ? 0 : block.hashCode());
+        result = prime * result + (source ? 1231 : 1237);
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        ReturnFlow other = (ReturnFlow) obj;
+        if (block == null) {
+            if (other.block != null)
+                return false;
+        } else if (!block.equals(other.block))
+            return false;
+        if (source != other.source)
+            return false;
+        return true;
     }
 
     @Override
@@ -79,7 +96,13 @@ public class ReturnFlow <E extends ISSABasicBlock> implements FlowType {
         return "ReturnFlow(" + block.toString() + ")";    	
     }
     
+    @Override
     public BasicBlockInContext<E> getBlock() {
         return block;
+    }
+
+    @Override
+    public boolean isSource() {
+        return source;
     }
 }

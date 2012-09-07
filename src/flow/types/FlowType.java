@@ -53,4 +53,5 @@ import com.ibm.wala.ssa.ISSABasicBlock;
  */
 public interface FlowType <E extends ISSABasicBlock> {
 	public BasicBlockInContext<E> getBlock();
+	public boolean isSource();
 }

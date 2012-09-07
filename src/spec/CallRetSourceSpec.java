@@ -90,7 +90,7 @@ public class CallRetSourceSpec extends SourceSpec {
 
 		HashSet<FlowType<E>> flowSet = new HashSet<FlowType<E>>();
 		flowSet.clear();
-		flowSet.add(new ReturnFlow<E>(block));
+		flowSet.add(new ReturnFlow<E>(block, true));
 		return flowSet;
 	}
 

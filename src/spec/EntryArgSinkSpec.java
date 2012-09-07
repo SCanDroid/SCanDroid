@@ -58,13 +58,12 @@ public class EntryArgSinkSpec extends SinkSpec {
     }
     
     public <E extends ISSABasicBlock> Collection<FlowType<E>> getFlowType(
-    		IMethod im, BasicBlockInContext<E> block,CGNode node,
-            int argNum, PointerAnalysis pa) {
+            BasicBlockInContext<E> block) {
         
     	HashSet<FlowType<E>> flowSet = new HashSet<FlowType<E>>();
     	flowSet.clear();
     	for(int i: argNums) {
-    	    flowSet.add(new ParameterFlow<E>(node, i));
+            flowSet.add(new ParameterFlow<E>(block, i, false));
     	}
     	return flowSet;
     }
