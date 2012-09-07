@@ -52,55 +52,72 @@ import com.ibm.wala.util.collections.HashSetFactory;
 import com.ibm.wala.util.strings.Atom;
 
 public class MethodNamePattern {
-    final String className;
+	final String className;
 
-    final String memberName;
+	final String memberName;
 
-    final String descriptor;  // null = match any types
+	final String descriptor;  // null = match any types
 
-    public MethodNamePattern(String c, String m, String d) {
-        className = c;
-        memberName = m;
-        descriptor = d;
-    }
+	public MethodNamePattern(String c, String m, String d) {
+		className = c;
+		memberName = m;
+		descriptor = d;
+	}
 
-    public MethodNamePattern(String c, String m) {
-        className = c;
-        memberName = m;
-        descriptor = null;
-    }
+	public MethodNamePattern(String c, String m) {
+		className = c;
+		memberName = m;
+		descriptor = null;
+	}
 
-    private Collection<IMethod> lookupMethods(IClass c) {
-        Collection<IMethod> matching = new LinkedList<IMethod>();
-        Atom atom = Atom.findOrCreateUnicodeAtom(memberName);
-        Descriptor desc = descriptor == null ? null : Descriptor.findOrCreateUTF8(descriptor);
-        Collection<IMethod> allMethods = c.getAllMethods();
-        for(IMethod m: allMethods) {
-            if(m.getName().equals(atom) && (desc == null || m.getDescriptor().equals(desc))) {
-                matching.add(m);
-            }
-        }
-        return matching;
-    }
+	private Collection<IMethod> lookupMethods(IClass c) {
+		Collection<IMethod> matching = new LinkedList<IMethod>();
+		Atom atom = Atom.findOrCreateUnicodeAtom(memberName);
+		Descriptor desc = descriptor == null ? null : Descriptor.findOrCreateUTF8(descriptor);
+		Collection<IMethod> allMethods = c.getAllMethods();
+		for(IMethod m: allMethods) {
+			if(m.getName().equals(atom) && (desc == null || m.getDescriptor().equals(desc))) {
+				matching.add(m);
+			}
+		}
+		return matching;
+	}
 
-    public Collection<IMethod> getPossibleTargets(IClassHierarchy cha) {
-    	Collection<IMethod> matching = new LinkedList<IMethod>();
-    	IClass c;
-    	c = cha.lookupClass(TypeReference.findOrCreate(ClassLoaderReference.Application, className));
-    	if (c != null)
-    		matching.addAll(lookupMethods(c));
-    	c = cha.lookupClass(TypeReference.findOrCreate(ClassLoaderReference.Primordial, className));
-    	if (c != null)
-    		matching.addAll(lookupMethods(c));
-    	c = cha.lookupClass(TypeReference.findOrCreate(ClassLoaderReference.Extension, className));
-    	if (c != null)
-    		matching.addAll(lookupMethods(c));
+	/**
+	 * Returns a Collection of IMethods which are found in the following 
+	 * ClassLoaders: Application, Primordial, Extension
+	 * @param cha
+	 * @return
+	 */
+	public Collection<IMethod> getPossibleTargets(IClassHierarchy cha) {
+		Collection<IMethod> matching = new LinkedList<IMethod>();
+		IClass c;
+		c = cha.lookupClass(TypeReference.findOrCreate(ClassLoaderReference.Application, className));
+		if (c != null)
+			matching.addAll(lookupMethods(c));
+		c = cha.lookupClass(TypeReference.findOrCreate(ClassLoaderReference.Primordial, className));
+		if (c != null)
+			matching.addAll(lookupMethods(c));
+		c = cha.lookupClass(TypeReference.findOrCreate(ClassLoaderReference.Extension, className));
+		if (c != null)
+			matching.addAll(lookupMethods(c));
 
-        
-        Set<IMethod> targets = HashSetFactory.make();
-        for(IMethod im:matching) {
-        	targets.addAll(cha.getPossibleTargets(im.getReference()));
-        }
-        return targets;
-    }
+
+		Set<IMethod> targets = HashSetFactory.make();
+		for(IMethod im:matching) {
+			targets.addAll(cha.getPossibleTargets(im.getReference()));
+		}
+
+		return targets;
+	}
+
+	@Override
+	public String toString() {
+		String returnString = "MethodNamePattern (Class: "+className+
+				" - Method: "+memberName; 
+		if (descriptor == null)
+			return returnString+")";
+		return returnString+" - Descriptor: "+descriptor+")";
+
+	}
 }

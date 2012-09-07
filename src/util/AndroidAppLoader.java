@@ -56,6 +56,7 @@ import java.util.Map.Entry;
 import java.util.jar.JarFile;
 
 import prefixTransfer.UriPrefixContextSelector;
+import spec.AndroidSpecs;
 
 import com.ibm.wala.classLoader.DexIRFactory;
 import com.ibm.wala.classLoader.IMethod;
@@ -108,6 +109,7 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
 	public final AnalysisScope scope;
 	public final ClassHierarchy cha;
 	public final LinkedList<Entrypoint> entries;
+	public final AndroidSpecs specs;
 
 	public CallGraph cg;
 	public PointerAnalysis pa;
@@ -155,7 +157,7 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
 		// scope.addToScope(ClassLoaderReference.Primordial, new
 		// JarFile("/Users/ssuh/Documents/projects/SCanDroid/SimpleAnalysisPluginDexLib/scandroid/data/android-2.3.7_r1.jar"));
 
-		cha = ClassHierarchy.make(scope);
+		cha = ClassHierarchy.make(scope);			
 
 		// log ClassHierarchy warnings
 		for (Iterator<Warning> wi = Warnings.iterator(); wi.hasNext();) {
@@ -164,6 +166,13 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
 		}
 		Warnings.clear();
 
+		specs = new AndroidSpecs();
+		AnalysisScope tempAndroidScope =
+				DexAnalysisScopeReader.makeAndroidBinaryAnalysisScope(CLI.getOption("android-lib"),
+				            new FileProvider().getFile("conf" + File.separator
+						                     + "Java60RegressionExclusions.txt"));
+		specs.addPossibleListeners(ClassHierarchy.make(tempAndroidScope));
+		
 		// Try to look for entry points
 		EntryPoints ep = new EntryPoints(classpath, cha, this);
 		entries = ep.getEntries();

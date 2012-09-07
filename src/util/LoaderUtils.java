@@ -24,4 +24,11 @@ public class LoaderUtils {
 
         return nodeClRef.equals(clr);
     }
+    
+    public static boolean fromLoader(IClass declClass, ClassLoaderReference clr) {
+        ClassLoaderReference nodeClRef =
+                declClass.getClassLoader().getReference();
+
+        return nodeClRef.equals(clr);
+    }
 }

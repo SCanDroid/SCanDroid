@@ -38,6 +38,18 @@
 
 package spec;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import util.LoaderUtils;
+
+import com.ibm.wala.classLoader.IClass;
+import com.ibm.wala.classLoader.IMethod;
+import com.ibm.wala.ipa.cha.ClassHierarchy;
+import com.ibm.wala.types.ClassLoaderReference;
+
 public class AndroidSpecs implements ISpecs {
 	static String act = "Landroid/app/Activity";
 	static String svc = "Landroid/app/Service";
@@ -217,4 +229,58 @@ public class AndroidSpecs implements ISpecs {
 	};
 
 	public SinkSpec[] getSinkSpecs() { return sinkSpecs; }
+
+	public void addPossibleListeners(ClassHierarchy cha) {
+		Set<String> ignoreMethods = new HashSet<String>();
+		ignoreMethods.add("<init>");
+		ignoreMethods.add("<clinit>");
+		ignoreMethods.add("registerNatives");
+		ignoreMethods.add("getClass");
+		ignoreMethods.add("hashCode");
+		ignoreMethods.add("equals");
+		ignoreMethods.add("clone");
+		ignoreMethods.add("toString");
+		ignoreMethods.add("notify");
+		ignoreMethods.add("notifyAll");
+		ignoreMethods.add("finalize");
+		ignoreMethods.add("wait");
+
+		List<MethodNamePattern> moreEntryPointSpecs = new ArrayList<MethodNamePattern> ();
+		for (MethodNamePattern mnp: getEntrypointSpecs()) {
+			moreEntryPointSpecs.add(mnp);
+		}
+
+		for (IClass ic:cha) {
+			if (!LoaderUtils.fromLoader(ic, ClassLoaderReference.Application)) {
+				continue;
+			}
+
+			//finds all *Listener classes and fetches all methods for the listener
+			if (ic.getName().getClassName().toString().endsWith("Listener")) {
+				for (IMethod im: ic.getAllMethods()) {
+					//TODO: add isAbstract()?
+					if (!ignoreMethods.contains(im.getName().toString()) && !im.isPrivate()) {
+						moreEntryPointSpecs.add(
+								new MethodNamePattern(ic.getName().toString(), 
+										im.getName().toString()));
+					}
+				}
+			}
+			//not a listener, just find all the methods that start with "on____"
+			else {
+				for (IMethod im:ic.getAllMethods()) {
+					//TODO: add isAbstract()?
+					if (im.getName().toString().startsWith("on") && !im.isPrivate()) {
+						moreEntryPointSpecs.add(new MethodNamePattern(ic.getName().toString(),
+								im.getName().toString()));
+					}
+				}
+			}
+		}
+
+		entrypointSpecs = 
+				moreEntryPointSpecs.toArray(new MethodNamePattern[moreEntryPointSpecs.size()]);
+
+
+	}
 }

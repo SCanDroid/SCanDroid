@@ -56,6 +56,8 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+import spec.MethodNamePattern;
+
 import com.ibm.wala.classLoader.IMethod;
 import com.ibm.wala.ipa.callgraph.Entrypoint;
 import com.ibm.wala.ipa.callgraph.impl.ArgumentTypeEntrypoint;
@@ -138,57 +140,17 @@ public class EntryPoints {
     }
 
     public void defaultEntryPoints(ClassHierarchy cha, AndroidAppLoader loader) {
-
-
-           ArrayList<MethodReference> entryPointMRs = new ArrayList<MethodReference>();
-            //ACTIVITY ENTRY POINTS
-            // Activity.onCreate
-            entryPointMRs.add(StringStuff.makeMethodReference("android.app.Activity.onCreate(Landroid/os/Bundle;)V"));
-            // Activity.onStart
-            entryPointMRs.add(StringStuff.makeMethodReference("android.app.Activity.onStart()V"));
-            // Activity.onResume
-            entryPointMRs.add(StringStuff.makeMethodReference("android.app.Activity.onResume()V"));
-            // Activity.onPause
-            entryPointMRs.add(StringStuff.makeMethodReference("android.app.Activity.onPause()V"));
-            // Activity.onStop
-            entryPointMRs.add(StringStuff.makeMethodReference("android.app.Activity.onStop()V"));
-            // Activity.onRestart
-            entryPointMRs.add(StringStuff.makeMethodReference("android.app.Activity.onRestart()V"));
-            // onDestroy?
-            // find all onActivityResult functions and add them as entry points
-            entryPointMRs.add(StringStuff.makeMethodReference("android.app.Activity.onActivityResult(IILandroid/content/Intent;)V"));
-
-            //SERVICE ENTRY POINTS
-            // onCreate
-            entryPointMRs.add(StringStuff.makeMethodReference("android.app.Service.onCreate()V"));
-            // onStart
-            entryPointMRs.add(StringStuff.makeMethodReference("android.app.Service.onStart(Landroid/content/Intent;I)V"));
-            // onStartCommand
-            entryPointMRs.add(StringStuff.makeMethodReference("android.app.Service.onStartCommand(Landroid/content/Intent;II)I"));
-            // onBind
-            entryPointMRs.add(StringStuff.makeMethodReference("android.app.Service.onBind(Landroid/content/Intent;)Landroid/os/IBinder;"));
-            // onTransact
-            // no such method exists?
-            entryPointMRs.add(StringStuff.makeMethodReference("android.app.Service.onTransact(ILandroid/os/Parcel;Landroid/os/Parcel;I)B"));
-            // onDestroy?
-
-            // onLocationChanged
-//            entryPointMRs.add(StringStuff.makeMethodReference("android.location.LocationListener.onLocationChanged(Landroid/location/Location;)V"));
-
-
-            for(MethodReference mr:entryPointMRs)
-            for(IMethod im:cha.getPossibleTargets(mr))
-            {
-                log(DEBUG,"Considering target "+im.getSignature());
-
-                // limit to functions defined within the application
-                if(im.getReference().getDeclaringClass().getClassLoader().
-                                        equals(ClassLoaderReference.Application))
-                {
-                    log(DEBUG,"Adding entry point: "+im.getSignature());
-                    entries.add(new DefaultEntrypoint(im, cha));
-                }
-            }
+    	for (MethodNamePattern mnp:loader.specs.getEntrypointSpecs()) {
+    		for (IMethod im: mnp.getPossibleTargets(cha)) {
+    			log(DEBUG,"Considering target "+im.getSignature());
+    			// limit to functions defined within the application
+    			if(LoaderUtils.fromLoader(im, ClassLoaderReference.Application))
+    			{
+    				log(DEBUG,"Adding entry point: "+im.getSignature());
+    				entries.add(new DefaultEntrypoint(im, cha));
+    			}
+    		}
+    	}
     }
     
     public void activityModelEntry(ClassHierarchy cha, AndroidAppLoader loader) {
