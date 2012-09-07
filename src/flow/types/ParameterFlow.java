@@ -37,18 +37,8 @@
 
 package flow.types;
 
-import java.util.Set;
-
-import com.ibm.wala.classLoader.IMethod;
-import com.ibm.wala.ipa.callgraph.CGNode;
-import com.ibm.wala.ipa.callgraph.propagation.InstanceKey;
 import com.ibm.wala.ipa.cfg.BasicBlockInContext;
 import com.ibm.wala.ssa.ISSABasicBlock;
-import com.ibm.wala.types.MethodReference;
-import com.ibm.wala.types.TypeReference;
-import com.ibm.wala.util.intset.OrdinalSet;
-
-import domain.CodeElement;
 
 /** A flow to or from the parameter of a method. This can represent formal
  * parameters of methods being analyzed, or actual parameters of methods
@@ -60,64 +50,41 @@ import domain.CodeElement;
  *
  * @param <E>
  */
-public class ParameterFlow <E extends ISSABasicBlock> implements FlowType<E> {
+public class ParameterFlow <E extends ISSABasicBlock> extends FlowType<E> {
 
-    private final BasicBlockInContext<E> block;
     public final int argNum;
-    private final boolean source;
     
-    public ParameterFlow(BasicBlockInContext<E> block, int argNum, boolean source)
-    {
-    	this.block = block;
+    public ParameterFlow(BasicBlockInContext<E> block, 
+            int argNum, boolean source) {
+        super(block, source);
     	this.argNum = argNum;
-        this.source = source;
     }
-
+    
     @Override
     public int hashCode() {
         final int prime = 31;
-        int result = 1;
+        int result = super.hashCode();
         result = prime * result + argNum;
-        result = prime * result + ((block == null) ? 0 : block.hashCode());
-        result = prime * result + (source ? 1231 : 1237);
         return result;
     }
-
+    
     @Override
     public boolean equals(Object obj) {
         if (this == obj)
             return true;
-        if (obj == null)
+        if (!super.equals(obj))
             return false;
         if (getClass() != obj.getClass())
             return false;
-        ParameterFlow other = (ParameterFlow) obj;
+        @SuppressWarnings("unchecked")
+        ParameterFlow<E> other = (ParameterFlow<E>) obj;
         if (argNum != other.argNum)
-            return false;
-        if (block == null) {
-            if (other.block != null)
-                return false;
-        } else if (!block.equals(other.block))
-            return false;
-        if (source != other.source)
             return false;
         return true;
     }
 
     @Override
-    public String toString()
-    {
-        return "ParameterFlow("+argNum+", "+block+","+source+")";
-    }
-
-    @Override
-    public BasicBlockInContext<E> getBlock()
-    {
-    	return block;
-    }
-
-    @Override
-    public boolean isSource() {
-        return source;
+    public String toString() {
+        return "ParameterFlow( argNum="+argNum+" "+super.toString()+")";
     }
 }

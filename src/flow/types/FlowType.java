@@ -1,4 +1,4 @@
-/*
+/**
  *
  * Copyright (c) 2009-2012,
  *
@@ -38,7 +38,6 @@
 
 package flow.types;
 
-import com.ibm.wala.ipa.callgraph.CGNode;
 import com.ibm.wala.ipa.cfg.BasicBlockInContext;
 import com.ibm.wala.ssa.ISSABasicBlock;
 
@@ -49,9 +48,86 @@ import com.ibm.wala.ssa.ISSABasicBlock;
  * in the source.
  * 
  * @author creswick
- *
  */
-public interface FlowType <E extends ISSABasicBlock> {
-	public BasicBlockInContext<E> getBlock();
-	public boolean isSource();
+public abstract class FlowType<E extends ISSABasicBlock> {
+    private final BasicBlockInContext<E> block;
+    private final boolean source;
+
+    protected FlowType(BasicBlockInContext<E> block, boolean source) {
+        this.block = block;
+        this.source = source;
+    }
+    
+    public final BasicBlockInContext<E> getBlock() {
+        return block;
+    }
+
+    public final boolean isSource() {
+        return source;
+    }
+    
+    @Override
+    public String toString() {
+        return "block=" + block + ", source=" + source;
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((block == null) ? 0 : block.hashCode());
+        result = prime * result + (source ? 1231 : 1237);
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        @SuppressWarnings("unchecked")
+        FlowType<E> other = (FlowType<E>) obj;
+        if (block == null) {
+            if (other.block != null)
+                return false;
+        } else if (!compareBlocks(block, other.block)) {
+            return false;
+        }
+        if (source != other.source)
+            return false;
+        return true;
+    }
+
+    /**
+     * custom comparison for BasicBlockInContext.  The WALA .equals() 
+     * implementation eventually delegates to pointer equality, which is too 
+     * specific for our needs. 
+     * 
+     * @param a
+     * @param b
+     * @return
+     */
+    private boolean compareBlocks(BasicBlockInContext<E> a,
+            BasicBlockInContext<E> b) {
+        // delegate to the defined implementation, but only if it's true.
+        if (a.equals(b)) {
+            return true;
+        }
+
+        if (null == a || null == b) {
+            return false;
+        }
+
+        if (a.getNumber() != b.getNumber()) {
+            return false;
+        }
+
+        if (!a.getMethod().getSignature().equals(b.getMethod().getSignature())) {
+            return false;
+        }
+        return true;
+    }
 }

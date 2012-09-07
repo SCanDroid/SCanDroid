@@ -1,4 +1,4 @@
-/*
+/**
  *
  * Copyright (c) 2009-2012,
  *
@@ -38,28 +38,22 @@
 
 package flow.types;
 
-import com.ibm.wala.ipa.callgraph.CGNode;
 import com.ibm.wala.ipa.callgraph.propagation.InstanceKey;
 import com.ibm.wala.ipa.cfg.BasicBlockInContext;
 import com.ibm.wala.ssa.ISSABasicBlock;
 
-public class IKFlow <E extends ISSABasicBlock>implements FlowType {
+public class IKFlow<E extends ISSABasicBlock> extends FlowType<E> {
     private final InstanceKey ik;
-    private final BasicBlockInContext<E> block;
-    private final boolean source;
 
-    public IKFlow(InstanceKey ik, BasicBlockInContext<E> block, boolean source)
-    {
+    public IKFlow(InstanceKey ik, BasicBlockInContext<E> block, boolean source) {
+        super(block, source);
         this.ik = ik;
-        this.block = block;
-        this.source = source;
     }
-    
+
     @Override
     public int hashCode() {
         final int prime = 31;
-        int result = 1;
-        result = prime * result + ((block == null) ? 0 : block.hashCode());
+        int result = super.hashCode();
         result = prime * result + ((ik == null) ? 0 : ik.hashCode());
         return result;
     }
@@ -68,41 +62,26 @@ public class IKFlow <E extends ISSABasicBlock>implements FlowType {
     public boolean equals(Object obj) {
         if (this == obj)
             return true;
-        if (obj == null)
+        if (!super.equals(obj))
             return false;
         if (getClass() != obj.getClass())
             return false;
-        IKFlow other = (IKFlow) obj;
-        if (block == null) {
-            if (other.block != null)
-                return false;
-        } else if (!block.equals(other.block))
-            return false;
+        @SuppressWarnings("unchecked")
+        IKFlow<E> other = (IKFlow<E>) obj;
         if (ik == null) {
             if (other.ik != null)
                 return false;
-        } else if (!ik.equals(other.ik))
+        } else if (!ik.equals(other.ik)) // TODO InstanceKey may not supply equals()
             return false;
         return true;
     }
-
+    
     @Override
-    public String toString()
-    {
-    	return "IKFlow("+ik.toString()+")";
+    public String toString() {
+        return "IKFlow(ik=" + ik + " " + super.toString() + ")";
     }
 
-	@Override
-	public BasicBlockInContext<E> getBlock() {
-		return block;
-	}
-	
-	public InstanceKey getIK() {
-		return ik;
-	}
-
-	@Override
-	public boolean isSource() {
-	    return source;
-	}
+    public InstanceKey getIK() {
+        return ik;
+    }
 }

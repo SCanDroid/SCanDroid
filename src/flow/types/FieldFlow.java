@@ -39,12 +39,8 @@
 package flow.types;
 
 import com.ibm.wala.classLoader.IField;
-import com.ibm.wala.ipa.callgraph.CGNode;
 import com.ibm.wala.ipa.cfg.BasicBlockInContext;
 import com.ibm.wala.ssa.ISSABasicBlock;
-import com.ibm.wala.types.FieldReference;
-import com.ibm.wala.types.MethodReference;
-import com.ibm.wala.types.TypeReference;
 
 /** A flow to or from a field. The associated block represents
  * either the location of the get or put instruction, or the
@@ -56,74 +52,49 @@ import com.ibm.wala.types.TypeReference;
  *
  * @param <E>
  */
-public class FieldFlow <E extends ISSABasicBlock> implements FlowType {
+public class FieldFlow<E extends ISSABasicBlock> extends FlowType<E> {
 
-   private final BasicBlockInContext<E> block;
-   private final IField field;
-   private final boolean source;
-   
-   public FieldFlow(BasicBlockInContext<E> block, IField field, boolean source)
-   {
-       this.block = block;
-       this.field = field;
-       this.source = source;
-   }
+    private final IField field;
 
-   @Override
-   public int hashCode() {
-       final int prime = 31;
-       int result = 1;
-       result = prime * result + ((block == null) ? 0 : block.hashCode());
-       result = prime * result + ((field == null) ? 0 : field.hashCode());
-       result = prime * result + (source ? 1231 : 1237);
-       return result;
-   }
+    public FieldFlow(BasicBlockInContext<E> block, IField field, boolean source) {
+        super(block, source);
 
-   @Override
-   public boolean equals(Object obj) {
-       if (this == obj)
-           return true;
-       if (obj == null)
-           return false;
-       if (getClass() != obj.getClass())
-           return false;
-       FieldFlow other = (FieldFlow) obj;
-       if (block == null) {
-           if (other.block != null)
-               return false;
-       } else if (!block.equals(other.block))
-           return false;
-       if (field == null) {
-           if (other.field != null)
-               return false;
-       } else if (!field.equals(other.field))
-           return false;
-       if (source != other.source)
-           return false;
-       return true;
-   }
+        this.field = field;
+    }
 
-   @Override
-   public String toString()
-   {
-       if(block != null)
-           return "FieldFlow("+block.toString()+")";
-       else
-           return "FieldFlow("+field.toString()+")";
-   }
+    @Override
+    public String toString() {
+        return "FieldFlow( field=" + field + " "+ super.toString() + ")";
+    }
 
-   @Override
-   public BasicBlockInContext<E> getBlock()
-   {
-       return block;
-   }
-   
-   public IField getField() {
-       return field;
-   }
+    public IField getField() {
+        return field;
+    }
 
-   @Override
-   public boolean isSource() {
-       return source;
-   }
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = super.hashCode();
+        result = prime * result + ((field == null) ? 0 : field.hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (!super.equals(obj))
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        @SuppressWarnings("unchecked")
+        FieldFlow<E> other = (FieldFlow<E>) obj;
+        if (field == null) {
+            if (other.field != null)
+                return false;
+        } else if (!field.equals(other.field))
+            return false;
+        return true;
+    }
+
 }
