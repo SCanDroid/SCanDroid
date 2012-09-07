@@ -14,9 +14,9 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import spec.ISpecs;
-import spec.AndroidSpecs;
 import util.AndroidAppLoader;
 import util.LoaderUtils;
+import synthMethod.TestSpecs; 
 
 import com.ibm.wala.classLoader.IClass;
 import com.ibm.wala.classLoader.IMethod;
@@ -112,12 +112,11 @@ public class MethodAnalysisTest {
      */
     private void checkSummaryProperty(String jarFile, String summaryFile) 
             throws ClassHierarchyException, CallGraphBuilderCancelException, IOException {
-        Map<FlowType, Set<FlowType>> directResults = 
-                runDFAnalysis(jarFile, WALA_NATIVES_XML);
+        Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>>
+          directResults = runDFAnalysis(jarFile, WALA_NATIVES_XML);
         
-        Map<FlowType, Set<FlowType>> summarizedResults =
-                runDFAnalysis(jarFile, summaryFile);
-        
+        Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>>
+          summarizedResults = runDFAnalysis(jarFile, summaryFile);
         
         Assert.assertNotSame("No flows found in direct results.", 0, directResults.size());
         Assert.assertNotSame("No flows found in summarized results.", 0, summarizedResults.size());
@@ -188,7 +187,7 @@ public class MethodAnalysisTest {
     }
     
     private
-    Map<FlowType, Set<FlowType>> 
+    Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> 
     runDFAnalysis(String appJar, String methodSummariesFile) 
         throws IOException, ClassHierarchyException, 
                CallGraphBuilderCancelException {
@@ -229,15 +228,15 @@ public class MethodAnalysisTest {
         
         
         Map<BasicBlockInContext<IExplodedBasicBlock>, 
-            Map<FlowType, Set<CodeElement>>> initialTaints = 
+            Map<FlowType<IExplodedBasicBlock>, Set<CodeElement>>> initialTaints = 
               InflowAnalysis.analyze(cg, cha, sg, pa, new HashMap<InstanceKey, String>(), specs);
                    
         IFDSTaintDomain<IExplodedBasicBlock> domain = new IFDSTaintDomain<IExplodedBasicBlock>();
         TabulationResult<BasicBlockInContext<IExplodedBasicBlock>, CGNode, DomainElement> 
           flowResult = FlowAnalysis.analyze(sg, cg, pa, initialTaints, domain, methodAnalysis);
 
-        Map<FlowType, Set<FlowType>> permissionOutflow = 
-                OutflowAnalysis.analyze(cg, cha, sg, pa, flowResult, domain, specs);
+        Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>>
+          permissionOutflow = OutflowAnalysis.analyze(cg, cha, sg, pa, flowResult, domain, specs);
         
         return permissionOutflow;
     }

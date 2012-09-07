@@ -1,12 +1,11 @@
 package synthMethod;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
-
-import com.ibm.wala.ipa.callgraph.CGNode;
-
-import spec.*;
+import spec.CallArgSinkSpec;
+import spec.EntryArgSourceSpec;
+import spec.ISpecs;
+import spec.MethodNamePattern;
+import spec.SinkSpec;
+import spec.SourceSpec;
 
 public class TestSpecs implements ISpecs {
 	/*
