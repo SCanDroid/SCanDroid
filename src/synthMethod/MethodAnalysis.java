@@ -111,7 +111,7 @@ public class MethodAnalysis <E extends ISSABasicBlock>  {
         final IFDSTaintDomain<E> domain = new IFDSTaintDomain<E>();
     
         IMethod entryMethod = methEntryBlock.getMethod();
-        CGNode node = methEntryBlock.getNode();
+
 		if (newSummaries.containsKey(entryMethod)) {
 			return;
 		}
@@ -130,9 +130,9 @@ public class MethodAnalysis <E extends ISSABasicBlock>  {
 		// Add PathEdges to the initial taints.  
 		// In this case, taint all parameters into the method call
 		for (int i = 0; i < entryMethod.getNumberOfParameters(); i++) {
-//			int id = entryMethod.isStatic()?i:i+1;
+			//int id = entryMethod.isStatic()?i:i+1;
 
-			DomainElement de = new DomainElement(new LocalElement(i+1),
+			DomainElement de = new DomainElement(new LocalElement(i),
 			                         new ParameterFlow(methEntryBlock, i, true));
 			
 			OrdinalSet<InstanceKey> pointsToSet = 

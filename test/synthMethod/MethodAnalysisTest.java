@@ -58,31 +58,31 @@ public class MethodAnalysisTest {
      */
     public static final String WALA_NATIVES_XML = 
             "wala/wala-src/com.ibm.wala.core/dat/natives.xml";
+    private static final String TEST_DATA_DIR = "data/testdata/";
     
-    @Test
-    public final void test() 
+//    @Test
+    public final void test_trivialJar1() 
             throws IllegalArgumentException, CallGraphBuilderCancelException,
             IOException, ClassHierarchyException {
-        
-        String testDataDir = "data/testdata/";
-        
-        String[] jars = { "trivialJar1-1.0-SNAPSHOT.jar"
-                        , "trivialJar2-1.0-SNAPSHOT.jar"
-                        };
 
-        for (String jar : jars ){
-            runOnJar(testDataDir + File.separator + jar);
-        }
-        
+        runOnJar(TEST_DATA_DIR + File.separator + "trivialJar1-1.0-SNAPSHOT.jar");
     }
 
+    @Test
+    public final void test_trivialJar2() 
+            throws IllegalArgumentException, CallGraphBuilderCancelException,
+            IOException, ClassHierarchyException {
+
+        runOnJar(TEST_DATA_DIR + File.separator + "trivialJar2-1.0-SNAPSHOT.jar");
+    }
+    
     private void runOnJar(String appJar) throws IOException,
             ClassHierarchyException, CallGraphBuilderCancelException {
         String summary = summarize(appJar);
         checkSummaryProperty(appJar, summary);
     }
 
-    @Test
+//    @Test(expected=AssertionError.class)
     public final void test_fails() 
             throws IllegalArgumentException, CallGraphBuilderCancelException,
             IOException, ClassHierarchyException {

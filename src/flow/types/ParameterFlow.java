@@ -52,12 +52,16 @@ import com.ibm.wala.ssa.ISSABasicBlock;
  */
 public class ParameterFlow <E extends ISSABasicBlock> extends FlowType<E> {
 
-    public final int argNum;
+    private final int argNum;
     
     public ParameterFlow(BasicBlockInContext<E> block, 
             int argNum, boolean source) {
         super(block, source);
     	this.argNum = argNum;
+    }
+    
+    public int getArgNum() {
+        return argNum;
     }
     
     @Override

@@ -15,6 +15,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
@@ -26,6 +27,7 @@ import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
 import org.w3c.dom.Attr;
+import org.w3c.dom.DOMException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -44,9 +46,6 @@ import domain.ReturnElement;
 import flow.types.FieldFlow;
 import flow.types.FlowType;
 import flow.types.ParameterFlow;
-
-
-
 
 public class XMLMethodSummaryWriter {
 	public static String outputFile = "newMethodSummaries.xml";
@@ -98,27 +97,29 @@ public class XMLMethodSummaryWriter {
 	private final static String V_NULL = "null";
 	private final static String V_TRUE = "true";
 	  
+    private static Element getElement(Document doc, XPathExpression e,
+            Element parent, String child, String[] attrNs, String[] attrVs)
+            throws XPathExpressionException {
 
-	private static Element getElement(Document doc, XPathExpression e, Element parent, String child, String[] attrNs, String[] attrVs) throws XPathExpressionException {
-		assert (attrNs.length == attrVs.length);
-		Object result;
-		result = e.evaluate(doc, XPathConstants.NODESET);
+        assert (attrNs.length == attrVs.length);
+        Object result;
+        result = e.evaluate(doc, XPathConstants.NODESET);
 
-		NodeList myNL = (NodeList)result;
-		Element myE;
-		if (myNL.getLength() != 0) {
-			assert(myNL.getLength() == 1);
-			myE = (Element)myNL.item(0);
-		}
-		else {
-			myE = doc.createElement(child);
-			parent.appendChild(myE);
-			for (int i = 0; i < attrNs.length; i++)
-				myE.setAttribute(attrNs[i], attrVs[i]);
-		}		
-		return myE;
-	}
-	
+        NodeList myNL = (NodeList) result;
+        Element myE;
+        if (myNL.getLength() != 0) {
+            assert (myNL.getLength() == 1);
+            myE = (Element) myNL.item(0);
+        } else {
+            myE = doc.createElement(child);
+            parent.appendChild(myE);
+            for (int i = 0; i < attrNs.length; i++) {
+                myE.setAttribute(attrNs[i], attrVs[i]);
+            }
+        }
+        return myE;
+    }
+
 	private static String addAttrP(String base, String childE, String attrN, String attrV) {
 		return addToBase(base, childE, attrN, attrV)+"']";
 	}
@@ -128,7 +129,9 @@ public class XMLMethodSummaryWriter {
 	}
 		
 	
-	private static Element getMethodElement(Document doc, XPath xpath, IMethod im, Element rootElement) throws XPathExpressionException {
+	private static Element getMethodElement(Document doc, XPath xpath, 
+	        IMethod im, Element rootElement) 
+	        throws XPathExpressionException {
 		IClass myClass = im.getDeclaringClass();
 
 		String classloadername = myClass.getReference().getClassLoader().getName().toString();
@@ -171,54 +174,90 @@ public class XMLMethodSummaryWriter {
         writeXML(methodAnalysis, outFile);
     }
 
-    public static void writeXML(MethodAnalysis<IExplodedBasicBlock> methodAnalysis, File outFile) {
-		try {
-			if (methodAnalysis.newSummaries.isEmpty()) {
-				return;
-			}
-			
-			DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
-			DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
+    public static void writeXML(
+            MethodAnalysis<IExplodedBasicBlock> methodAnalysis, File outFile) {
+        if (methodAnalysis.newSummaries.isEmpty()) {
+            return;
+        }
 
-			Document doc = docBuilder.newDocument();
-			XPath xpath = XPathFactory.newInstance().newXPath();
+        Document doc;
+        try {
+            doc = createXML(methodAnalysis);
+        } catch (ParserConfigurationException e) {
+            System.err.println("Could not create XML: ");
+            e.printStackTrace();
+            return;
+        }
+        
+        // write the content into xml file
+        TransformerFactory transformerFactory =
+                TransformerFactory.newInstance();
+        // transformerFactory.setAttribute("indent-number", new Integer(4));
+        try {
+            Transformer transformer = transformerFactory.newTransformer();
+            transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+            transformer.setOutputProperty(
+                    "{http://xml.apache.org/xslt}indent-amount", "2");
+            DOMSource source = new DOMSource(doc);
 
-			// root elements
-			Element rootElement = doc.createElement(E_SUMMARY_SPEC);
-			doc.appendChild(rootElement);
-						
-
-			for (Entry<IMethod, Map<FlowType, Set<CodeElement>>> imE:methodAnalysis.newSummaries.entrySet()) {
-				IMethod im = imE.getKey();				
-				Element mE = getMethodElement(doc, xpath, im, rootElement);
-				if (im.isStatic())
-					mE.setAttribute(A_STATIC, V_TRUE);
-											
-				for (Entry<FlowType, Set<CodeElement>> ftE:imE.getValue().entrySet()) {
-					addFlowsToMethod(doc, mE, ftE, buildIKParamMap(im, methodAnalysis));
-				}
-				
-			}
-			// write the content into xml file
-			TransformerFactory transformerFactory = TransformerFactory.newInstance();
-			//transformerFactory.setAttribute("indent-number", new Integer(4));
-			Transformer transformer = transformerFactory.newTransformer();
-			transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-			transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
-			DOMSource source = new DOMSource(doc);
-			
             StreamResult result = new StreamResult(outFile);
-			transformer.transform(source, result);
-		}
-		catch (Exception e) {
-			e.printStackTrace();			
-		}
-	}
-	
+            transformer.transform(source, result);
+        } catch (TransformerConfigurationException e) {
+            e.printStackTrace();
+        } catch (IllegalArgumentException e) {
+            e.printStackTrace();
+        } catch (TransformerException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static Document createXML(
+            MethodAnalysis<IExplodedBasicBlock> methodAnalysis)
+            throws ParserConfigurationException {
+        DocumentBuilderFactory docFactory =
+                DocumentBuilderFactory.newInstance();
+        DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
+
+        Document doc = docBuilder.newDocument();
+        XPath xpath = XPathFactory.newInstance().newXPath();
+
+        // root elements
+        Element rootElement = doc.createElement(E_SUMMARY_SPEC);
+        doc.appendChild(rootElement);
+
+        for (Entry<IMethod, Map<FlowType, Set<CodeElement>>> imE : 
+              methodAnalysis.newSummaries.entrySet()) {
+            IMethod im = imE.getKey();
+            
+            try {
+                Element mE = getMethodElement(doc, xpath, im, rootElement);
+                if (im.isStatic())
+                    mE.setAttribute(A_STATIC, V_TRUE);
+
+                for (Entry<FlowType, Set<CodeElement>> ftE : imE.getValue()
+                        .entrySet()) {
+                    addFlowsToMethod(doc, mE, ftE,
+                            buildIKParamMap(im, methodAnalysis));
+                }
+            } catch (XPathExpressionException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            } catch (DOMException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        }
+        return doc;
+    }
+
 	private static Map<InstanceKey, Set<Integer>> buildIKParamMap(IMethod im,
                            MethodAnalysis<IExplodedBasicBlock> methodAnalysis) {
-		Map<InstanceKey, Set<Integer>> IKMap = new HashMap<InstanceKey, Set<Integer>>();
-		for (Entry<Integer, OrdinalSet<InstanceKey>> entry:methodAnalysis.methodTaints.get(im).entrySet()) {
+		Map<InstanceKey, Set<Integer>> IKMap =
+		        new HashMap<InstanceKey, Set<Integer>>();
+		
+		for (Entry<Integer, OrdinalSet<InstanceKey>> entry : 
+		     methodAnalysis.methodTaints.get(im).entrySet()) {
+		    
 			for (InstanceKey ik:entry.getValue()) {
 				Set<Integer> intSet = IKMap.get(ik);
 				if (intSet == null) {
@@ -231,118 +270,132 @@ public class XMLMethodSummaryWriter {
 		return IKMap;
 	}
 
-	private static Element createPutStaticElement(Document doc, FieldReference fr, String value) {
-		Element e = doc.createElement(E_PUTSTATIC);
-		setFieldAttr(e,fr);
-		e.setAttribute(A_VALUE, value);
-		return e;
-	}
-	
-	private static Element createPutFieldElement(Document doc, FieldReference fr, String ref, String value) {
-		Element e = doc.createElement(E_PUTFIELD);
-		setFieldAttr(e,fr);
-		e.setAttribute(A_REF, ref);
-		e.setAttribute(A_VALUE, value);
-		return e;
-	}
-	
-	private static void setFieldAttr(Element e, FieldReference fr) {
-		e.setAttribute(A_CLASS, fr.getDeclaringClass().getName().toString());
-		e.setAttribute(A_FIELD, fr.getName().toString());
-		e.setAttribute(A_FIELD_TYPE, fr.getFieldType().getName().toString());
-	}
-	
-	private static void addFlowsToMethod(Document doc, Element mE,
-			Entry<FlowType, Set<CodeElement>> ftE, Map<InstanceKey, Set<Integer>> IKMap) {
-		FlowType ft = ftE.getKey();
-		//handle parameter flow
-		if (ft instanceof ParameterFlow) {
-			for (CodeElement ce: ftE.getValue()) {
-				//parameter flows to return value
-				if (ce instanceof ReturnElement)
-				{
-					Element e = doc.createElement(E_RETURN);
-					e.setAttribute(A_VALUE, "arg"+((ParameterFlow)ft).argNum);
-					mE.appendChild(e);
-				}
-				//parameter flows into some field
-				else if (ce instanceof FieldElement) {
-					FieldElement fe = (FieldElement)ce;
-					if (fe.isStatic()) {
-						mE.appendChild(createPutStaticElement(doc, fe.getRef(), "arg"+((ParameterFlow)ft).argNum));
-					}
-					//field is not static
-					else {
-						//search instance keys of our parameters for instance reference
-						//could be 'this' or any of the parameters
-						if (IKMap.containsKey(fe.getIK())) {						
-							for (Integer i:IKMap.get(fe.getIK())) {														
-								mE.appendChild(createPutFieldElement(doc, fe.getRef(), "arg"+i.intValue(), "arg"+((ParameterFlow)ft).argNum));
-							}
-						}
-						else
-							throw new IllegalArgumentException("FieldElement IK Not Found: " + fe.getIK()+" hash: " + fe.getIK().hashCode());
-					}
-				}
-				else
-					throw new IllegalArgumentException("Invalid CodeElement Type");
-			}		
-		}
-		//handle field flow
-		else if (ft instanceof FieldFlow) {
-			FieldFlow ff = (FieldFlow)ft;
-			Element e;
-			//get static field
-			if (ff.getField().isStatic()) {
-				e = doc.createElement(E_GETSTATIC);				
-			}
-			//get non static field
-			else {
-				e = doc.createElement(E_GETFIELD);
-				e.setAttribute(A_REF, "arg0");
-			}
-			setFieldAttr(e, ff.getField().getReference());
-			String localDef = ff.getField().getReference().getName().toString()+"_localDef";
-			e.setAttribute(A_DEF, localDef);
-			mE.appendChild(e);
-			
+    private static Element createPutStaticElement(Document doc,
+            FieldReference fr, String value) {
+        Element e = doc.createElement(E_PUTSTATIC);
+        setFieldAttr(e, fr);
+        e.setAttribute(A_VALUE, value);
+        return e;
+    }
 
-			for (CodeElement ce: ftE.getValue()) {
-				//field flows to return value
-				if (ce instanceof ReturnElement) {
-					Element re = doc.createElement(E_RETURN);
-					re.setAttribute(A_VALUE, localDef);
-					mE.appendChild(re);
-				}
-				//field flows to another field
-				else if (ce instanceof FieldElement) {
-					FieldElement fe = (FieldElement)ce;
-					//flows into static field
-					if (fe.isStatic()) {
-						mE.appendChild(createPutStaticElement(doc, fe.getRef(), localDef));
-					}
-					//else flows into non static field
-					else {
-						//search instance keys of our parameters for instance reference
-						//could be 'this' or any of the parameters
-						if (IKMap.containsKey(fe.getIK())) {						
-							for (Integer i:IKMap.get(fe.getIK())) {
-								mE.appendChild(createPutFieldElement(doc, fe.getRef(), "arg"+i.intValue(), localDef));
-							}
-						}
-						else
-							throw new IllegalArgumentException("FieldElement IK Not Found");
-					}
-				}
-				else
-					throw new IllegalArgumentException("Invalid CodeElement Type");				
-			}
-		}
-	
-				
+    private static Element createPutFieldElement(Document doc,
+            FieldReference fr, String ref, String value) {
+        Element e = doc.createElement(E_PUTFIELD);
+        setFieldAttr(e, fr);
+        e.setAttribute(A_REF, ref);
+        e.setAttribute(A_VALUE, value);
+        return e;
+    }
 
-	}
+    private static void setFieldAttr(Element e, FieldReference fr) {
+        e.setAttribute(A_CLASS, fr.getDeclaringClass().getName().toString());
+        e.setAttribute(A_FIELD, fr.getName().toString());
+        e.setAttribute(A_FIELD_TYPE, fr.getFieldType().getName().toString());
+    }
 
-	
-	
+    private static void addFlowsToMethod(Document doc, Element mE,
+            Entry<FlowType, Set<CodeElement>> ftE,
+            Map<InstanceKey, Set<Integer>> IKMap) {
+        FlowType ft = ftE.getKey();
+        if (ft instanceof ParameterFlow) {
+            // handle parameter flow
+            addParameterFlow(doc, mE, ftE, IKMap, (ParameterFlow) ft);
+        } else if (ft instanceof FieldFlow) {
+            // handle field flow
+            addFieldFlow(doc, mE, ftE, IKMap, (FieldFlow) ft);
+        }
+    }
+
+    private static void addFieldFlow(Document doc, Element mE,
+            Entry<FlowType, Set<CodeElement>> ftE,
+            Map<InstanceKey, Set<Integer>> IKMap, FieldFlow ff) {
+        Element e;
+        //get static field
+        if (ff.getField().isStatic()) {
+        	e = doc.createElement(E_GETSTATIC);				
+        }
+        //get non static field
+        else {
+        	e = doc.createElement(E_GETFIELD);
+        	e.setAttribute(A_REF, "arg0");
+        }
+        setFieldAttr(e, ff.getField().getReference());
+        String localDef = ff.getField().getReference().getName().toString()+"_localDef";
+        e.setAttribute(A_DEF, localDef);
+        mE.appendChild(e);
+        
+
+        for (CodeElement ce: ftE.getValue()) {
+        	//field flows to return value
+        	if (ce instanceof ReturnElement) {
+        		Element re = doc.createElement(E_RETURN);
+        		re.setAttribute(A_VALUE, localDef);
+        		mE.appendChild(re);
+        	}
+        	//field flows to another field
+        	else if (ce instanceof FieldElement) {
+        		FieldElement fe = (FieldElement)ce;
+        		//flows into static field
+        		if (fe.isStatic()) {
+        			mE.appendChild(createPutStaticElement(doc, fe.getRef(), localDef));
+        		}
+        		//else flows into non static field
+        		else {
+        			//search instance keys of our parameters for instance reference
+        			//could be 'this' or any of the parameters
+        			if (IKMap.containsKey(fe.getIK())) {						
+        				for (Integer i:IKMap.get(fe.getIK())) {
+        					mE.appendChild(createPutFieldElement(doc, fe.getRef(), "arg"+i.intValue(), localDef));
+        				}
+        			}
+        			else {
+                        System.out.println("Method: "+ ff.getBlock().getMethod());
+                        System.out.println(ff);
+                        System.out.println("Field: "+fe);
+                        throw new IllegalArgumentException("FieldElement IK Not Found: " + fe.getIK()+" hash: " + fe.getIK().hashCode());
+        			}
+        		}
+        	}
+        	else
+        		throw new IllegalArgumentException("Invalid CodeElement Type");				
+        }
+    }
+
+    private static void addParameterFlow(Document doc, Element mE,
+            Entry<FlowType, Set<CodeElement>> ftE,
+            Map<InstanceKey, Set<Integer>> IKMap, 
+            ParameterFlow pf) {
+        
+        for (CodeElement ce: ftE.getValue()) {
+        	//parameter flows to return value
+        	if (ce instanceof ReturnElement) {
+        		Element e = doc.createElement(E_RETURN);
+        		e.setAttribute(A_VALUE, "arg"+pf.getArgNum());
+        		mE.appendChild(e);
+        	}
+        	//parameter flows into some field
+        	else if (ce instanceof FieldElement) {
+        		FieldElement fe = (FieldElement)ce;
+        		if (fe.isStatic()) {
+        			mE.appendChild(createPutStaticElement(doc, fe.getRef(), "arg"+pf.getArgNum()));
+        		} else { //field is not static
+        			//search instance keys of our parameters for instance reference
+        			//could be 'this' or any of the parameters
+        			if (IKMap.containsKey(fe.getIK())) {
+        				for (Integer i:IKMap.get(fe.getIK())) {
+        					mE.appendChild(createPutFieldElement(doc, fe.getRef(), 
+        					        "arg"+i.intValue(), "arg"+pf.getArgNum()));
+        				}
+        			} else {
+        			    System.out.println("Method: "+ pf.getBlock().getMethod());
+        			    System.out.println(pf);
+        			    System.out.println("Field: "+fe);
+        				throw new IllegalArgumentException("FieldElement IK Not Found: " + fe.getIK()+" hash: " + fe.getIK().hashCode());
+        			}
+        		}
+        	} else {
+        		throw new IllegalArgumentException("Invalid CodeElement Type");
+        	}
+        }
+    }
 }
