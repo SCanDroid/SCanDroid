@@ -56,7 +56,6 @@ import spec.CallRetSourceSpec;
 import spec.EntryArgSourceSpec;
 import spec.ISpecs;
 import spec.SourceSpec;
-import spec.AndroidSpecs;
 import util.AndroidAppLoader;
 
 import com.ibm.wala.classLoader.IMethod;
