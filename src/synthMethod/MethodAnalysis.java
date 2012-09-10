@@ -97,8 +97,12 @@ import flow.types.ParameterFlow;
 
 
 public class MethodAnalysis <E extends ISSABasicBlock>  {
+	//contains a mapping from an IMethod to a mapping of flows
+	//parameters and fields to returns or other fields.
 	public final Map<IMethod, Map<FlowType, Set<CodeElement>>> newSummaries =
 	        new HashMap<IMethod, Map<FlowType, Set<CodeElement>>>();
+	//contains a mapping from an IMethod to a mapping of Integers
+	//(which represent the parameter #) to their respective instancekey set
 	public final Map<IMethod, Map<Integer, OrdinalSet<InstanceKey>>> methodTaints = 
 	        new HashMap<IMethod, Map<Integer, OrdinalSet<InstanceKey>>>();
 	
@@ -125,7 +129,7 @@ public class MethodAnalysis <E extends ISSABasicBlock>  {
 		final ArrayList<PathEdge<BasicBlockInContext<E>>>
 		         initialEdges = new ArrayList();
 		
-		Set<DomainElement> initialTaints = new HashSet<DomainElement> ();
+		Set<DomainElement> initialTaints = new HashSet<DomainElement> ();		
 
 		// Add PathEdges to the initial taints.  
 		// In this case, taint all parameters into the method call
@@ -245,16 +249,28 @@ public class MethodAnalysis <E extends ISSABasicBlock>  {
 		MyLogger.log(DEBUG,"***************");
 
 
+		Set<FlowType> initialFlowSet = new HashSet<FlowType> ();
+		for (DomainElement de:initialTaints) {
+			initialFlowSet.add(de.taintSource);
+		}
+				
+		
 		BasicBlockInContext<E> exitBlocks[] = graph.getExitsForProcedure(methEntryBlock.getNode());
 		for (BasicBlockInContext<E> exitBlock:exitBlocks) {
 			IntSet exitResults = flowResult.getResult(exitBlock);
 			for (IntIterator intI = exitResults.intIterator(); intI.hasNext();) {
 				int i = intI.next();
 				DomainElement de = domain.getMappedObject(i);
-				if (initialTaints.contains(de)) {
+				
+				//Ignore parameters flowing to itself.  And Fields flowing to itself.
+				//Also only take into consideration flows which originate from the current 
+				//method we are summarizing
+				if (initialTaints.contains(de) || !initialFlowSet.contains(de.taintSource)) {
 					continue;
 				}
-				assert (de!=null);
+				
+				assert (de!=null);							
+				
 				
 				if (de.codeElement instanceof FieldElement) {
 				    // TODO make sure this covers static fields too.

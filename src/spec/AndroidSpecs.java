@@ -243,9 +243,13 @@ public class AndroidSpecs implements ISpecs {
 		ignoreMethods.add("notify");
 		ignoreMethods.add("notifyAll");
 		ignoreMethods.add("finalize");
-		ignoreMethods.add("wait");
+		ignoreMethods.add("wait");		
 
 		List<MethodNamePattern> moreEntryPointSpecs = new ArrayList<MethodNamePattern> ();
+		
+		//add default entrypoints from AndroidSpecs.entrypointSpecs
+		//Currently adds methods even if they exist in the ignnoreMethods
+		//set.
 		for (MethodNamePattern mnp: getEntrypointSpecs()) {
 			moreEntryPointSpecs.add(mnp);
 		}
@@ -270,7 +274,8 @@ public class AndroidSpecs implements ISpecs {
 			else {
 				for (IMethod im:ic.getAllMethods()) {
 					//TODO: add isAbstract()?
-					if (im.getName().toString().startsWith("on") && !im.isPrivate()) {
+					if (!ignoreMethods.contains(im.getName().toString()) &&
+							im.getName().toString().startsWith("on") && !im.isPrivate()) {
 						moreEntryPointSpecs.add(new MethodNamePattern(ic.getName().toString(),
 								im.getName().toString()));
 					}
