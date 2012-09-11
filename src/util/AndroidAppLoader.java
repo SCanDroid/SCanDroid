@@ -55,6 +55,8 @@ import java.util.LinkedList;
 import java.util.Map.Entry;
 import java.util.jar.JarFile;
 
+import model.AppModelMethod;
+
 import prefixTransfer.UriPrefixContextSelector;
 import spec.AndroidSpecs;
 
@@ -93,8 +95,10 @@ import com.ibm.wala.ssa.IRFactory;
 import com.ibm.wala.ssa.ISSABasicBlock;
 import com.ibm.wala.types.ClassLoaderReference;
 import com.ibm.wala.types.MethodReference;
+import com.ibm.wala.types.TypeReference;
 import com.ibm.wala.util.CancelException;
 import com.ibm.wala.util.Predicate;
+import com.ibm.wala.util.collections.HashSetFactory;
 import com.ibm.wala.util.graph.Graph;
 import com.ibm.wala.util.graph.GraphSlicer;
 import com.ibm.wala.util.io.FileProvider;
@@ -157,7 +161,7 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
 		// scope.addToScope(ClassLoaderReference.Primordial, new
 		// JarFile("/Users/ssuh/Documents/projects/SCanDroid/SimpleAnalysisPluginDexLib/scandroid/data/android-2.3.7_r1.jar"));
 
-		cha = ClassHierarchy.make(scope);			
+		cha = ClassHierarchy.make(scope);
 
 		// log ClassHierarchy warnings
 		for (Iterator<Warning> wi = Warnings.iterator(); wi.hasNext();) {
@@ -210,7 +214,7 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
 		// zeroxcgb = Util.makeZeroCFABuilder(options, cache, cha, scope, new
 		// UriPrefixContextSelector(options, cha), null);
 		zeroxcgb = makeVanillaZeroOneCFABuilder(options, cache, cha, scope,
-				new UriPrefixContextSelector(options, cha), null, methodSpec);
+				new UriPrefixContextSelector(options, cha), null, methodSpec, specs);
 //		cgb = new DexSSAPropagationCallGraphBuilder(cha, options, cache,
 //				zeroxcgb.getContextSelector(),
 //				(SSAContextInterpreter) zeroxcgb.getContextInterpreter(),
@@ -357,7 +361,7 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
 	public static SSAPropagationCallGraphBuilder makeVanillaZeroOneCFABuilder(
 			AnalysisOptions options, AnalysisCache cache, IClassHierarchy cha,
 			AnalysisScope scope, ContextSelector customSelector,
-			SSAContextInterpreter customInterpreter, String summariesFile) {
+			SSAContextInterpreter customInterpreter, String summariesFile, AndroidSpecs specs) {
 
 		if (options == null) {
 			throw new IllegalArgumentException("options is null");
@@ -367,7 +371,7 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
 		// cha);
 		// addBypassLogic(options, scope,
 		// AndroidAppLoader.class.getClassLoader(), methodSpec, cha);
-		addBypassLogic(options, scope, summariesFile, cha);
+		addBypassLogic(options, scope, summariesFile, cha, specs);
 
 		return ZeroXCFABuilder.make(cha, options, cache, customSelector,
 				customInterpreter, ZeroXInstanceKeys.ALLOCATIONS
@@ -378,7 +382,8 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
 	// scope, ClassLoader cl, String xmlFile,
 	// IClassHierarchy cha) throws IllegalArgumentException {
 	public static void addBypassLogic(AnalysisOptions options,
-			AnalysisScope scope, String xmlFile, IClassHierarchy cha)
+			AnalysisScope scope, String xmlFile, IClassHierarchy cha, 
+			AndroidSpecs specs)
 			throws IllegalArgumentException {
 
 		if (scope == null) {
@@ -407,12 +412,16 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
 			// InputStream s = cl.getResourceAsStream(xmlFile);
 		    XMLMethodSummaryReader summary = new XMLMethodSummaryReader(s, scope);
 
+		    //Application callbacks model
+		    AppModelMethod amm = new AppModelMethod(cha, scope, specs);
+		    
 			MethodTargetSelector ms = new BypassMethodTargetSelector(
 					options.getMethodTargetSelector(),
 					summary.getSummaries(),
 					summary.getIgnoredPackages(), cha);
 			options.setSelector(ms);
 
+			
 			ClassTargetSelector cs = new BypassClassTargetSelector(
 					options.getClassTargetSelector(),
 					summary.getAllocatableClasses(), cha,
