@@ -83,8 +83,16 @@ public class MethodAnalysisTest {
         runOnJar(appJar, new TestSpecs());
     }
 
-   // @Test
-    public final void test_trivialJar2() 
+    /**
+     * Trivial Jar 2 uses simple cons-style lists to experiment with recursion and field access on objects.
+     * 
+     * @throws IllegalArgumentException
+     * @throws CallGraphBuilderCancelException
+     * @throws IOException
+     * @throws ClassHierarchyException
+     */
+    @Test
+    public final void test_consCellRecursion() 
             throws IllegalArgumentException, CallGraphBuilderCancelException,
             IOException, ClassHierarchyException {
 
