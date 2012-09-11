@@ -64,8 +64,6 @@ public class AppModelMethod {
     
     private Map<ConstantValue, Integer> constant2ValueNumber = HashMapFactory.make();
     
-    private final AndroidSpecs specs;
-
     SSAInstructionFactory insts;
 
     
@@ -74,10 +72,9 @@ public class AppModelMethod {
 	//innerclass dependencies
 	private Map<TypeReference, LinkedList<TypeReference>> icDependencies = new HashMap<TypeReference, LinkedList<TypeReference>> ();
     
-	public AppModelMethod(IClassHierarchy cha, AnalysisScope scope, AndroidSpecs specs) {
+	public AppModelMethod(IClassHierarchy cha, AnalysisScope scope) {
     	this.cha = cha;
-    	this.scope = scope;
-    	this.specs = specs;
+    	this.scope = scope;    	
 	    Language lang = scope.getLanguage(ClassLoaderReference.Application.getLanguage());
 	    insts = lang.instructionFactory();
 		
@@ -117,7 +114,7 @@ public class AppModelMethod {
 		//Go through all possible callbacks found in Application code
 		//Add their TypeReference with a unique variable name to typeToID.
 		//Also keep track of all innerclasses found.
-    	for (MethodNamePattern mnp:specs.getEntrypointSpecs()) {
+    	for (MethodNamePattern mnp:AndroidSpecs.callBacks) {
     		for (IMethod im: mnp.getPossibleTargets(cha)) {
     			// limit to functions defined within the application
     			if(LoaderUtils.fromLoader(im, ClassLoaderReference.Application))

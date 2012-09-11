@@ -52,7 +52,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.Map.Entry;
+import java.util.List;
 import java.util.jar.JarFile;
 
 import model.AppModelMethod;
@@ -80,7 +80,6 @@ import com.ibm.wala.ipa.callgraph.impl.Util;
 import com.ibm.wala.ipa.callgraph.propagation.PointerAnalysis;
 import com.ibm.wala.ipa.callgraph.propagation.SSAContextInterpreter;
 import com.ibm.wala.ipa.callgraph.propagation.SSAPropagationCallGraphBuilder;
-import com.ibm.wala.ipa.callgraph.propagation.cfa.DexSSAPropagationCallGraphBuilder;
 import com.ibm.wala.ipa.callgraph.propagation.cfa.ZeroXCFABuilder;
 import com.ibm.wala.ipa.callgraph.propagation.cfa.ZeroXInstanceKeys;
 import com.ibm.wala.ipa.cfg.BasicBlockInContext;
@@ -89,7 +88,6 @@ import com.ibm.wala.ipa.cha.ClassHierarchyException;
 import com.ibm.wala.ipa.cha.IClassHierarchy;
 import com.ibm.wala.ipa.summaries.BypassClassTargetSelector;
 import com.ibm.wala.ipa.summaries.BypassMethodTargetSelector;
-import com.ibm.wala.ipa.summaries.MethodSummary;
 import com.ibm.wala.ipa.summaries.XMLMethodSummaryReader;
 import com.ibm.wala.ssa.IRFactory;
 import com.ibm.wala.ssa.ISSABasicBlock;
@@ -183,7 +181,7 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
 	}
 
 	@SuppressWarnings("deprecation")
-	public void buildGraphs(LinkedList<Entrypoint> localEntries)
+	public void buildGraphs(List<Entrypoint> localEntries)
 			throws CancelException {
 
 		AnalysisOptions options = new AnalysisOptions(scope, localEntries);
@@ -214,7 +212,7 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
 		// zeroxcgb = Util.makeZeroCFABuilder(options, cache, cha, scope, new
 		// UriPrefixContextSelector(options, cha), null);
 		zeroxcgb = makeVanillaZeroOneCFABuilder(options, cache, cha, scope,
-				new UriPrefixContextSelector(options, cha), null, methodSpec, specs);
+				new UriPrefixContextSelector(options, cha), null, methodSpec);
 //		cgb = new DexSSAPropagationCallGraphBuilder(cha, options, cache,
 //				zeroxcgb.getContextSelector(),
 //				(SSAContextInterpreter) zeroxcgb.getContextInterpreter(),
@@ -361,7 +359,7 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
 	public static SSAPropagationCallGraphBuilder makeVanillaZeroOneCFABuilder(
 			AnalysisOptions options, AnalysisCache cache, IClassHierarchy cha,
 			AnalysisScope scope, ContextSelector customSelector,
-			SSAContextInterpreter customInterpreter, String summariesFile, AndroidSpecs specs) {
+			SSAContextInterpreter customInterpreter, String summariesFile) {
 
 		if (options == null) {
 			throw new IllegalArgumentException("options is null");
@@ -371,7 +369,7 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
 		// cha);
 		// addBypassLogic(options, scope,
 		// AndroidAppLoader.class.getClassLoader(), methodSpec, cha);
-		addBypassLogic(options, scope, summariesFile, cha, specs);
+		addBypassLogic(options, scope, summariesFile, cha);
 
 		return ZeroXCFABuilder.make(cha, options, cache, customSelector,
 				customInterpreter, ZeroXInstanceKeys.ALLOCATIONS
@@ -382,8 +380,7 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
 	// scope, ClassLoader cl, String xmlFile,
 	// IClassHierarchy cha) throws IllegalArgumentException {
 	public static void addBypassLogic(AnalysisOptions options,
-			AnalysisScope scope, String xmlFile, IClassHierarchy cha, 
-			AndroidSpecs specs)
+					  AnalysisScope scope, String xmlFile, IClassHierarchy cha)
 			throws IllegalArgumentException {
 
 		if (scope == null) {
@@ -413,7 +410,7 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
 		    XMLMethodSummaryReader summary = new XMLMethodSummaryReader(s, scope);
 
 		    //Application callbacks model
-		    AppModelMethod amm = new AppModelMethod(cha, scope, specs);
+		    AppModelMethod amm = new AppModelMethod(cha, scope);
 		    
 			MethodTargetSelector ms = new BypassMethodTargetSelector(
 					options.getMethodTargetSelector(),

@@ -230,6 +230,12 @@ public class AndroidSpecs implements ISpecs {
 
 	public SinkSpec[] getSinkSpecs() { return sinkSpecs; }
 
+	public static MethodNamePattern[] callBacks;
+//	public MethodNamePattern[] getCallBacks() {
+//		if (callBacks == null)
+//			callBacks = new MethodNamePattern[] {};
+//		return callBacks;
+//	}
 	public void addPossibleListeners(ClassHierarchy cha) {
 		Set<String> ignoreMethods = new HashSet<String>();
 		ignoreMethods.add("<init>");
@@ -283,7 +289,8 @@ public class AndroidSpecs implements ISpecs {
 			}
 		}
 
-		entrypointSpecs = 
+//		entrypointSpecs =
+		callBacks = 
 				moreEntryPointSpecs.toArray(new MethodNamePattern[moreEntryPointSpecs.size()]);
 
 
