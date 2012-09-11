@@ -209,10 +209,10 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
 
 		SSAPropagationCallGraphBuilder zeroxcgb, cgb;
 
-		// zeroxcgb = Util.makeZeroCFABuilder(options, cache, cha, scope, new
-		// UriPrefixContextSelector(options, cha), null);
-		zeroxcgb = makeVanillaZeroOneCFABuilder(options, cache, cha, scope,
-				new UriPrefixContextSelector(options, cha), null, methodSpec);
+		zeroxcgb = Util.makeZeroCFABuilder(options, cache, cha, scope, new
+		               UriPrefixContextSelector(options, cha), null);
+//		zeroxcgb = makeVanillaZeroOneCFABuilder(options, cache, cha, scope,
+	//			new UriPrefixContextSelector(options, cha), null, methodSpec);
 //		cgb = new DexSSAPropagationCallGraphBuilder(cha, options, cache,
 //				zeroxcgb.getContextSelector(),
 //				(SSAContextInterpreter) zeroxcgb.getContextInterpreter(),
@@ -410,7 +410,7 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
 		    XMLMethodSummaryReader summary = new XMLMethodSummaryReader(s, scope);
 
 		    //Application callbacks model
-		    AppModelMethod amm = new AppModelMethod(cha, scope);
+		    //AppModelMethod amm = new AppModelMethod(cha, scope);
 		    
 			MethodTargetSelector ms = new BypassMethodTargetSelector(
 					options.getMethodTargetSelector(),
