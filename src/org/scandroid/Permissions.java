@@ -1,3 +1,4 @@
+package org.scandroid;
 /*
  *
  * Copyright (c) 2009-2012,
