@@ -305,7 +305,8 @@ public class StringBuilderUseAnalysis {
 					}
 				}
 			}
-			else if(iNext.getDeclaredTarget().getName().toString().equals("<init>"))
+			else if(iNext.getDeclaredTarget().getName().toString().equals("<init>") &&
+					iNext.getDeclaredTarget().getDescriptor().getNumberOfParameters() != 0)
 			{
 				lpk = new LocalPointerKey(node, iNext.getUse(1));
 				for (InstanceKey ikey: pa.getPointsToSet(lpk)) {
