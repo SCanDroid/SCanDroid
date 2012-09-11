@@ -288,7 +288,7 @@ implements IFlowFunctionMap<BasicBlockInContext<E>> {
             
             IClass staticClass = ch.lookupClass(staticTypeRef);
             assert staticClass != null : 
-            	"Class not found in ClassHierchy for static field";
+            	"Class not found in ClassHierchy for static field: " + staticTypeRef;
 
             IField staticField = 
                     staticClass.getField(declaredField.getName());
