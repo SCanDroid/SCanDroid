@@ -54,6 +54,7 @@ import util.AndroidAppLoader;
 import util.CLI;
 import util.GraphUtil;
 import util.IFDSTaintFlowFunctionProvider;
+import util.LoaderUtils;
 import util.MyLogger;
 
 import com.ibm.wala.classLoader.IClass;
@@ -79,8 +80,11 @@ import com.ibm.wala.ipa.summaries.XMLMethodSummaryReader;
 import com.ibm.wala.ssa.ISSABasicBlock;
 import com.ibm.wala.ssa.SSAInvokeInstruction;
 import com.ibm.wala.ssa.analysis.IExplodedBasicBlock;
+import com.ibm.wala.types.ClassLoaderReference;
+import com.ibm.wala.types.MethodReference;
 import com.ibm.wala.util.CancelException;
 import com.ibm.wala.util.CancelRuntimeException;
+import com.ibm.wala.util.Predicate;
 import com.ibm.wala.util.intset.IntIterator;
 import com.ibm.wala.util.intset.IntSet;
 import com.ibm.wala.util.intset.OrdinalSet;
@@ -106,9 +110,36 @@ public class MethodAnalysis <E extends ISSABasicBlock>  {
 	public final Map<IMethod, Map<Integer, OrdinalSet<InstanceKey>>> methodTaints = 
 	        new HashMap<IMethod, Map<Integer, OrdinalSet<InstanceKey>>>();
 	
+	private final Set<MethodReference> blacklist = new HashSet<MethodReference>();
+	
+	private Predicate<IMethod> p;
+	
+	private ClassLoaderReference clr;
+	
+	public MethodAnalysis() {
+		p = new Predicate<IMethod>(){
+			@Override
+			public boolean test(IMethod im) {
+				return LoaderUtils.fromLoader(im, ClassLoaderReference.Primordial);			
+			}
+		};		
+	}
+	
+	public MethodAnalysis(Predicate<IMethod> p) {
+		this.p = p;
+	}
+	
+	private boolean shouldSummarize(IMethod entryMethod) {
+		if (newSummaries.containsKey(entryMethod))
+			return false;
+		return p.test(entryMethod);
+	}
+	
+	
 	public void analyze(
             final ISupergraph<BasicBlockInContext<E>, CGNode> graph,
             final PointerAnalysis pa,
+            final BasicBlockInContext<E> callerBlock,
             final BasicBlockInContext<E> methEntryBlock // TODO make this into a node or IMethod
             ) throws CancelRuntimeException {
 
@@ -116,7 +147,7 @@ public class MethodAnalysis <E extends ISSABasicBlock>  {
     
         IMethod entryMethod = methEntryBlock.getMethod();
 
-		if (newSummaries.containsKey(entryMethod)) {
+		if (!shouldSummarize(entryMethod)) {
 			return;
 		}
 
@@ -224,8 +255,10 @@ public class MethodAnalysis <E extends ISSABasicBlock>  {
 
 		try {
 			TabulationResult<BasicBlockInContext<E>,CGNode, DomainElement> flowResult = solver.solve();
-
-			checkResults(domain, flowResult, initialTaints, graph, methEntryBlock, methodFlows);
+			if (blacklist.contains(methEntryBlock.getMethod().getReference()))
+				blacklist.add(callerBlock.getMethod().getReference());
+			else
+				checkResults(domain, flowResult, initialTaints, graph, methEntryBlock, methodFlows);
 
 			//       	if (CLI.hasOption("IFDS-Explorer")) {
 			//       		for (int i = 1; i < domain.getSize(); i++) {        			
