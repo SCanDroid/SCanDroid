@@ -227,6 +227,8 @@ public class XMLMethodSummaryWriter {
 
         for (Entry<IMethod, Map<FlowType, Set<CodeElement>>> imE : 
               methodAnalysis.newSummaries.entrySet()) {
+        	if (imE.getValue().isEmpty())
+        		continue;
             IMethod im = imE.getKey();
             
             try {

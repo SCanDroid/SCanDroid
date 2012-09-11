@@ -125,7 +125,7 @@ public class AppModelMethod {
     					if (tr.getName().getClassName().toString().contains("$")) {
     						addDependencies(tr);
     					}
-    					log(DEBUG,"AppModelMakeSource Mapping type "+tr.getName()+" to name " + nextLocal);
+    					log(DEBUG,"AppModel Mapping type "+tr.getName()+" to name " + nextLocal);
     					typeToID.put(tr, nextLocal++);        				
     				}
     			}
@@ -137,7 +137,7 @@ public class AppModelMethod {
     	for (Entry<TypeReference, LinkedList<TypeReference>> trE:icDependencies.entrySet()) {
     		for (TypeReference trS: trE.getValue()) {
         		if (!typeToID.containsKey(trS)) {
-					log(DEBUG,"AppModelMakeSource Mapping type "+trS.getName()+" to name " + nextLocal);
+					log(DEBUG,"AppModel Mapping type "+trS.getName()+" to name " + nextLocal);
         			typeToID.put(trS, nextLocal++);
         		}
     		}    		

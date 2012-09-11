@@ -183,8 +183,11 @@ implements IFlowFunctionMap<BasicBlockInContext<E>> {
                         if ( gi.isStatic()) {
 						    IField staticField =
                                     getStaticIField(ch, declaredField);
-
-						    pk = new StaticFieldKey(staticField);
+						    
+						    if (staticField == null)
+						    	pk = null;
+						    else
+						    	pk = new StaticFieldKey(staticField);
 						    isStatic = true;
 						} else {
 						    int valueNumber = instruction.getUse(0);
@@ -192,17 +195,19 @@ implements IFlowFunctionMap<BasicBlockInContext<E>> {
 						    isStatic = false;
 						}
 						
-						Set<CodeElement> elements = new HashSet<CodeElement>();
-						OrdinalSet<InstanceKey> m = pa.getPointsToSet(pk);
-						if(m != null) {
-							for(Iterator<InstanceKey> keyIter = m.iterator();keyIter.hasNext();) {
-								elements.add(
-								        new FieldElement(keyIter.next(), declaredField, isStatic));
-							}
-						}
-						p.uses.addAll(elements);
-						//getinstruction only has 1 def
-						p.defs.add(new LocalElement(instruction.getDef(0)));
+                        if (pk!=null) {
+                        	Set<CodeElement> elements = new HashSet<CodeElement>();
+                        	OrdinalSet<InstanceKey> m = pa.getPointsToSet(pk);
+                        	if(m != null) {
+                        		for(Iterator<InstanceKey> keyIter = m.iterator();keyIter.hasNext();) {
+                        			elements.add(
+                        					new FieldElement(keyIter.next(), declaredField, isStatic));
+                        		}
+                        	}
+                        	p.uses.addAll(elements);
+                        	//getinstruction only has 1 def
+                        	p.defs.add(new LocalElement(instruction.getDef(0)));
+                        }
 					}
 					else {
 						//getuse() is result value for getfield.  arrayref for arrayload
@@ -226,7 +231,10 @@ implements IFlowFunctionMap<BasicBlockInContext<E>> {
 						    p.uses.addAll(CodeElement.valueElements(pa, bb.getNode(), instruction.getUse(0)));
 						    FieldReference declaredField = pi.getDeclaredField();
                             IField staticField = getStaticIField(ch, declaredField);
-						    pk = new StaticFieldKey(staticField);
+                            if (staticField == null)
+                            	pk = null;
+                            else
+                            	pk = new StaticFieldKey(staticField);
 						    isStatic = true;
 						} else {
 						    p.uses.addAll(CodeElement.valueElements(pa, bb.getNode(), instruction.getUse(1)));
@@ -234,15 +242,17 @@ implements IFlowFunctionMap<BasicBlockInContext<E>> {
 							pk = new LocalPointerKey(bb.getNode(), valueNumber);
 							isStatic = false;
 						}	
-                        OrdinalSet<InstanceKey> m = pa.getPointsToSet(pk);
-                        if (m != null) {
-                            for (Iterator<InstanceKey> keyIter = m.iterator(); keyIter
-                                    .hasNext();) {
-                                elements.add(new FieldElement(keyIter.next(),
-                                        pi.getDeclaredField(), isStatic));
-                            }
-                        }
-						p.defs.addAll(elements);
+						if (pk!=null) {
+							OrdinalSet<InstanceKey> m = pa.getPointsToSet(pk);
+							if (m != null) {
+								for (Iterator<InstanceKey> keyIter = m.iterator(); keyIter
+										.hasNext();) {
+									elements.add(new FieldElement(keyIter.next(),
+											pi.getDeclaredField(), isStatic));
+								}
+							}
+							p.defs.addAll(elements);
+						}
 					}
 					else if (instruction instanceof SSAArrayStoreInstruction){						
 						p.uses.addAll(CodeElement.valueElements(pa, bb.getNode(), instruction.getUse(2)));
@@ -287,8 +297,11 @@ implements IFlowFunctionMap<BasicBlockInContext<E>> {
             TypeReference staticTypeRef = declaredField.getDeclaringClass();
             
             IClass staticClass = ch.lookupClass(staticTypeRef);
-            assert staticClass != null : 
-            	"Class not found in ClassHierchy for static field: " + staticTypeRef;
+            
+            //referring to a static field which we don't have loaded in the class hierarchy
+            //possibly ignored in the exclusions file or just not included in the scope
+            if (staticClass == null)
+            	return null;
 
             IField staticField = 
                     staticClass.getField(declaredField.getName());
@@ -330,13 +343,12 @@ implements IFlowFunctionMap<BasicBlockInContext<E>> {
 
 		final SSAInvokeInstruction instruction = (SSAInvokeInstruction) src.getLastInstruction();
 
-		if (! dest.getMethod().isSynthetic() 
-		    && LoaderUtils.fromLoader(dest.getNode(), ClassLoaderReference.Primordial)) {
-		    
-            MyLogger.log(DEBUG,"Primordial and No Summary! (getCallFlowFunction) - " + dest.getMethod().getReference());
-            methodAnalysis.analyze(graph, pa, dest);
-            dest.getMethod().isSynthetic();
-		}
+//		if (! dest.getMethod().isSynthetic() 
+//		    && LoaderUtils.fromLoader(dest.getNode(), ClassLoaderReference.Primordial)) {
+//		    
+//            MyLogger.log(DEBUG,"Primordial and No Summary! (getCallFlowFunction) - " + dest.getMethod().getReference());
+		methodAnalysis.analyze(graph, pa, src, dest);
+//		}
 		
 
 		final Map<CodeElement,CodeElement> parameterMap = new HashMap<CodeElement,CodeElement>();
@@ -375,7 +387,7 @@ implements IFlowFunctionMap<BasicBlockInContext<E>> {
 		
 		final SSAInvokeInstruction instruction = (SSAInvokeInstruction) src.getLastInstruction();
 
-		System.out.println("call to return(no callee) method inside call graph: " + src.getNode()+"--" + instruction.getDeclaredTarget());
+//		System.out.println("call to return(no callee) method inside call graph: " + src.getNode()+"--" + instruction.getDeclaredTarget());
 		return new DefUse(dest);
 	}
 
