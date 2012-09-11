@@ -67,6 +67,7 @@ import com.ibm.wala.ipa.cha.IClassHierarchy;
 import com.ibm.wala.ipa.summaries.XMLMethodSummaryReader;
 import com.ibm.wala.ssa.ISSABasicBlock;
 import com.ibm.wala.ssa.SSAArrayLoadInstruction;
+import com.ibm.wala.ssa.SSAArrayLengthInstruction;
 import com.ibm.wala.ssa.SSAArrayStoreInstruction;
 import com.ibm.wala.ssa.SSAGetInstruction;
 import com.ibm.wala.ssa.SSAInstruction;
@@ -110,7 +111,7 @@ implements IFlowFunctionMap<BasicBlockInContext<E>> {
 
 	// instruction has a valid def set
 	private static boolean inFlow(SSAInstruction instruction) {
-		return
+		return  (instruction instanceof SSAArrayLengthInstruction ) || 
 				(instruction instanceof SSAArrayLoadInstruction) ||
 				(instruction instanceof SSAGetInstruction);
 	}
