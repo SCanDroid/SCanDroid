@@ -137,7 +137,18 @@ public class MethodAnalysis <E extends ISSABasicBlock>  {
 		return p.test(entryMethod);
 	}
 	
-	
+	/**
+	 * Summarize a method.
+	 * 
+	 * @param graph
+	 * @param pa
+	 * @param callerBlock The block where this method is *invoked*.  This should
+	 *        be set to null if you are invoking this method directly -- the mutual recursion 
+	 *        that causes subsequent invocations will provide caller blocks for the
+	 *        purposes of tracking the blacklist. 
+	 * @param methEntryBlock  The entry block for the method that is to be summarized.
+	 * @throws CancelRuntimeException
+	 */
 	public void analyze(
             final ISupergraph<BasicBlockInContext<E>, CGNode> graph,
             final PointerAnalysis pa,

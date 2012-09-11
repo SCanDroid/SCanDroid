@@ -103,7 +103,7 @@ public class MethodAnalysisTest {
      * @throws ClassHierarchyException
      */
     @Test
-    public final void test_trivialJar3() 
+    public final void test_flowFromInputParameter() 
             throws IllegalArgumentException, CallGraphBuilderCancelException,
             IOException, ClassHierarchyException {
 
@@ -258,6 +258,7 @@ public class MethodAnalysisTest {
             for (int i = 0; i < entriesForProcedure.length; i++) {
                 methodAnalysis.analyze(sg, 
                         builder.getPointerAnalysis(),
+                        null,
                         entriesForProcedure[i]);
             };
         }
