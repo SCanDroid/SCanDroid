@@ -120,9 +120,13 @@ public class MethodAnalysis <E extends ISSABasicBlock>  {
 		p = new Predicate<IMethod>(){
 			@Override
 			public boolean test(IMethod im) {
+				if (im.isSynthetic())
+					return false;
+				if (newSummaries.containsKey(im))
+					return false;
 				return LoaderUtils.fromLoader(im, ClassLoaderReference.Primordial);			
 			}
-		};		
+		};
 	}
 	
 	public MethodAnalysis(Predicate<IMethod> p) {
@@ -130,8 +134,6 @@ public class MethodAnalysis <E extends ISSABasicBlock>  {
 	}
 	
 	private boolean shouldSummarize(IMethod entryMethod) {
-		if (newSummaries.containsKey(entryMethod))
-			return false;
 		return p.test(entryMethod);
 	}
 	
