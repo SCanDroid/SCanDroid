@@ -45,19 +45,20 @@ public class TestSpecs implements ISpecs {
     public MethodNamePattern[] getEntrypointSpecs() {
         return null;
     }
-
     @Override
     public SourceSpec[] getSourceSpecs() {
         return new SourceSpec[] { 
                  new EntryArgSourceSpec(new MethodNamePattern(
-                   "Lorg/scandroid/testing/SourceSink", "source"), new int[] { 1 }) };
+                   "Lorg/scandroid/testing/App", "main"),
+                   new int[] { 0 })
+                 };
     }
 
     @Override
     public SinkSpec[] getSinkSpecs() {
         return new SinkSpec[] { 
                 new CallArgSinkSpec(new MethodNamePattern(
-                  "Lorg/scandroid/testing/SourceSink", "sink"), new int[] { 1 }) };
+                  "Lorg/scandroid/testing/SourceSink", "sink"), new int[] {0}) };
     }
 
 }

@@ -8,15 +8,20 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import org.junit.Assert;
 import org.junit.Test;
 
+import spec.CallArgSinkSpec;
+import spec.EntryArgSourceSpec;
 import spec.ISpecs;
+import spec.MethodNamePattern;
+import spec.SinkSpec;
+import spec.SourceSpec;
 import util.AndroidAppLoader;
 import util.LoaderUtils;
-import synthMethod.TestSpecs; 
 
 import com.ibm.wala.classLoader.IClass;
 import com.ibm.wala.classLoader.IMethod;
@@ -33,6 +38,7 @@ import com.ibm.wala.ipa.callgraph.CallGraphBuilder;
 import com.ibm.wala.ipa.callgraph.CallGraphBuilderCancelException;
 import com.ibm.wala.ipa.callgraph.Entrypoint;
 import com.ibm.wala.ipa.callgraph.impl.DefaultEntrypoint;
+import com.ibm.wala.ipa.callgraph.impl.Util;
 import com.ibm.wala.ipa.callgraph.propagation.InstanceKey;
 import com.ibm.wala.ipa.callgraph.propagation.PointerAnalysis;
 import com.ibm.wala.ipa.cfg.BasicBlockInContext;
@@ -60,38 +66,122 @@ public class MethodAnalysisTest {
             "wala/wala-src/com.ibm.wala.core/dat/natives.xml";
     private static final String TEST_DATA_DIR = "data/testdata/";
     
-//    @Test
+    /**
+     * Simple, direct data flow through a few methods.
+     * 
+     * @throws IllegalArgumentException
+     * @throws CallGraphBuilderCancelException
+     * @throws IOException
+     * @throws ClassHierarchyException
+     */
+    @Test
     public final void test_trivialJar1() 
             throws IllegalArgumentException, CallGraphBuilderCancelException,
             IOException, ClassHierarchyException {
 
-        runOnJar(TEST_DATA_DIR + File.separator + "trivialJar1-1.0-SNAPSHOT.jar");
+        String appJar = TEST_DATA_DIR + File.separator + "trivialJar1-1.0-SNAPSHOT.jar";
+        runOnJar(appJar, new TestSpecs());
     }
 
-    @Test
+   // @Test
     public final void test_trivialJar2() 
             throws IllegalArgumentException, CallGraphBuilderCancelException,
             IOException, ClassHierarchyException {
 
-        runOnJar(TEST_DATA_DIR + File.separator + "trivialJar2-1.0-SNAPSHOT.jar");
+        String appJar = TEST_DATA_DIR + File.separator + "trivialJar2-1.0-SNAPSHOT.jar";
+        runOnJar(appJar, new TestSpecs());
     }
     
-    private void runOnJar(String appJar) throws IOException,
-            ClassHierarchyException, CallGraphBuilderCancelException {
-        String summary = summarize(appJar);
-        checkSummaryProperty(appJar, summary);
-    }
+    /**
+     * TrivialJar3 uses .length on an array (incoming params to main(String[] args))
+     * as a source, but this is tracked differently than using a param value directly (or, eg. args[0])
+     * 
+     * 
+     * @throws IllegalArgumentException
+     * @throws CallGraphBuilderCancelException
+     * @throws IOException
+     * @throws ClassHierarchyException
+     */
+    @Test
+    public final void test_trivialJar3() 
+            throws IllegalArgumentException, CallGraphBuilderCancelException,
+            IOException, ClassHierarchyException {
 
-//    @Test(expected=AssertionError.class)
+        String appJar = TEST_DATA_DIR + File.separator + "trivialJar3-1.0-SNAPSHOT.jar";
+        runOnJar(appJar, new TestSpecs());
+    }
+    
+    //@Test
+    public final void test_paramsforstaticMethod() throws IOException, ClassHierarchyException {
+        AnalysisScope scope = 
+                DexAnalysisScopeReader.makeAndroidBinaryAnalysisScope(
+                   TEST_DATA_DIR + File.separator + "sap.jar", 
+                   new File("conf/Java60RegressionExclusions.txt"));
+        ClassHierarchy cha = ClassHierarchy.make(scope);
+        
+        String scandroidMain = "org.scandroid.SeparateEntryAnalysis.main([Ljava/lang/String;)V";
+        
+        for (IClass iClass : cha) {
+            for (Iterator<IMethod> itr = iClass.getAllMethods().iterator(); itr.hasNext();) {
+                IMethod iMethod = itr.next();
+                
+                if (iMethod.getSignature().equals(scandroidMain)) {
+                    System.out.println("method sig: "+ iMethod.getSignature());
+                    Entrypoint e = new DefaultEntrypoint(iMethod, cha);
+                    System.out.println(e);
+                    System.out.println("getParameterTypes(0): "+ e.getParameterTypes(0));
+                    System.out.println("getParameterTypes(0)[0]: "+ e.getParameterTypes(0)[0]);
+                }
+            }
+        }
+    }
+    
+   // @Test
+    public final void test_summarizeScandroid() 
+            throws IllegalArgumentException, CallGraphBuilderCancelException,
+            IOException, ClassHierarchyException {
+
+        String appJar = TEST_DATA_DIR + File.separator + "sap.jar";
+        runOnJar(appJar, new ISpecs() {
+            @Override
+            public MethodNamePattern[] getEntrypointSpecs() {
+                return null;
+            }
+            
+            @Override
+            public SourceSpec[] getSourceSpecs() {
+                return new SourceSpec[] { 
+                         new EntryArgSourceSpec(new MethodNamePattern(
+                           "Lorg/scandroid/SeparateEntryAnalysis", "main"),
+                           new int[] { })
+                         };
+            }
+
+            @Override
+            public SinkSpec[] getSinkSpecs() {
+                return new SinkSpec[] { 
+                        new CallArgSinkSpec(new MethodNamePattern(
+                          "Ljava/io/PrintStream", "println"), new int[] { }) };
+            }
+        });
+    }
+    
+    @Test(expected=AssertionError.class)
     public final void test_fails() 
             throws IllegalArgumentException, CallGraphBuilderCancelException,
             IOException, ClassHierarchyException {
         
         String appJar = "data/testdata/trivialJar1-1.0-SNAPSHOT.jar";
 
-        checkSummaryProperty(appJar, "data/testdata/brokenSummary.xml");
+        checkSummaryProperty(appJar, new TestSpecs(), "data/testdata/brokenSummary.xml");
     }
     
+    private void runOnJar(String appJar, ISpecs specs) throws IOException,
+            ClassHierarchyException, CallGraphBuilderCancelException {
+        String summary = summarize(appJar);
+        checkSummaryProperty(appJar, specs, summary);
+    }
+
     /**
      * Analyze jarFile without any summarization, record the time taken and 
      * the data flows found.
@@ -110,13 +200,13 @@ public class MethodAnalysisTest {
                 directResults
      * @throws ClassHierarchyException 
      */
-    private void checkSummaryProperty(String jarFile, String summaryFile) 
+    private void checkSummaryProperty(String jarFile, ISpecs specs, String summaryFile) 
             throws ClassHierarchyException, CallGraphBuilderCancelException, IOException {
         Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>>
-          directResults = runDFAnalysis(jarFile, WALA_NATIVES_XML);
+          directResults = runDFAnalysis(jarFile, specs, WALA_NATIVES_XML);
         
         Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>>
-          summarizedResults = runDFAnalysis(jarFile, summaryFile);
+          summarizedResults = runDFAnalysis(jarFile, specs, summaryFile);
         
         Assert.assertNotSame("No flows found in direct results.", 0, directResults.size());
         Assert.assertNotSame("No flows found in summarized results.", 0, summarizedResults.size());
@@ -146,17 +236,9 @@ public class MethodAnalysisTest {
                    new File("conf/Java60RegressionExclusions.txt"));
         ClassHierarchy cha = ClassHierarchy.make(scope);
         
-        List<Entrypoint> entrypoints = new ArrayList<Entrypoint>();
-        for (IClass iClass : cha) {
-            for (Iterator<IMethod> itr = iClass.getAllMethods().iterator(); itr.hasNext();) {
-                IMethod iMethod = itr.next();
-                
-                if ( LoaderUtils.fromLoader(iMethod, ClassLoaderReference.Application) ) {
-                    entrypoints.add(new DefaultEntrypoint(iMethod, cha));
-                }
-            }
-        }
+        Iterable<Entrypoint> entrypoints = getEntrypoints(scope, cha);
         
+        //Iterable<Entrypoint> entrypoints = Util.makeMainEntrypoints(scope, cha);
         AnalysisOptions options = new AnalysisOptions(scope, entrypoints);
         CallGraphBuilder builder = 
            AndroidAppLoader.makeVanillaZeroOneCFABuilder(
@@ -185,23 +267,8 @@ public class MethodAnalysisTest {
 
         return tempFile.getAbsolutePath();
     }
-    
-    private
-    Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> 
-    runDFAnalysis(String appJar, String methodSummariesFile) 
-        throws IOException, ClassHierarchyException, 
-               CallGraphBuilderCancelException {
-        
-        // source and sink specifications:
-        ISpecs specs = new TestSpecs();
-        
-        MethodAnalysis<IExplodedBasicBlock> methodAnalysis =
-                new MethodAnalysis<IExplodedBasicBlock>();
-        AnalysisScope scope = 
-                DexAnalysisScopeReader.makeAndroidBinaryAnalysisScope(appJar, 
-                   new File("conf/Java60RegressionExclusions.txt"));
-        ClassHierarchy cha = ClassHierarchy.make(scope);
-        
+
+    private Iterable<Entrypoint> getEntrypoints(AnalysisScope scope, ClassHierarchy cha) {
         List<Entrypoint> entrypoints = new ArrayList<Entrypoint>();
         for (IClass iClass : cha) {
             for (Iterator<IMethod> itr = iClass.getAllMethods().iterator(); itr.hasNext();) {
@@ -212,11 +279,30 @@ public class MethodAnalysisTest {
                 }
             }
         }
+        //return entrypoints;
+        return Util.makeMainEntrypoints(scope, cha);
+    }
+    
+    private
+    Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> 
+    runDFAnalysis(String appJar, ISpecs specs, String methodSummariesFile) 
+        throws IOException, ClassHierarchyException, 
+               CallGraphBuilderCancelException {
+
+        MethodAnalysis<IExplodedBasicBlock> methodAnalysis =
+                new MethodAnalysis<IExplodedBasicBlock>();
+        AnalysisScope scope = 
+                DexAnalysisScopeReader.makeAndroidBinaryAnalysisScope(appJar, 
+                   new File("conf/Java60RegressionExclusions.txt"));
+        ClassHierarchy cha = ClassHierarchy.make(scope);
+        
+        Iterable<Entrypoint> entrypoints = getEntrypoints(scope, cha);
         
         AnalysisOptions options = new AnalysisOptions(scope, entrypoints);
         CallGraphBuilder builder = 
            AndroidAppLoader.makeVanillaZeroOneCFABuilder(
                    options, new AnalysisCache(), cha, scope, null, null, methodSummariesFile);
+
         
         CallGraph cg = builder.makeCallGraph(options, null);
 
@@ -224,8 +310,6 @@ public class MethodAnalysisTest {
         ISupergraph<BasicBlockInContext<IExplodedBasicBlock>, CGNode> sg = 
                 ICFGSupergraph.make(cg, builder.getAnalysisCache());
         PointerAnalysis pa = builder.getPointerAnalysis();
-        
-        
         
         Map<BasicBlockInContext<IExplodedBasicBlock>, 
             Map<FlowType<IExplodedBasicBlock>, Set<CodeElement>>> initialTaints = 
@@ -241,5 +325,21 @@ public class MethodAnalysisTest {
         return permissionOutflow;
     }
     
+    public static String flowMapToString(Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> flowMap) {
+        StringBuilder builder = new StringBuilder();
+        
+        for (Entry<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> e : flowMap.entrySet()) {
+            FlowType<IExplodedBasicBlock> source = e.getKey();
+
+            for (FlowType<IExplodedBasicBlock> sink : e.getValue()) {
+                builder.append("source: " + source);
+                builder.append(" ->> ");
+                builder.append("sink: " + sink);
+                builder.append("\n");
+            }
+        }
+        
+        return builder.toString();
+    }
 
 }
