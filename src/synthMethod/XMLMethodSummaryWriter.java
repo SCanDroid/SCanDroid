@@ -349,9 +349,9 @@ public class XMLMethodSummaryWriter {
         				}
         			}
         			else {
-                        System.out.println("Method: "+ ff.getBlock().getMethod());
-                        System.out.println(ff);
-                        System.out.println("Field: "+fe);
+//                        System.out.println("Method: "+ ff.getBlock().getMethod());
+//                        System.out.println(ff);
+//                        System.out.println("Field: "+fe);
                         throw new IllegalArgumentException("FieldElement IK Not Found: " + fe.getIK()+" hash: " + fe.getIK().hashCode());
         			}
         		}
@@ -387,9 +387,9 @@ public class XMLMethodSummaryWriter {
         					        "arg"+i.intValue(), "arg"+pf.getArgNum()));
         				}
         			} else {
-        			    System.out.println("Method: "+ pf.getBlock().getMethod());
-        			    System.out.println(pf);
-        			    System.out.println("Field: "+fe);
+//        			    System.out.println("Method: "+ pf.getBlock().getMethod());
+//        			    System.out.println(pf);
+//        			    System.out.println("Field: "+fe);
         				throw new IllegalArgumentException("FieldElement IK Not Found: " + fe.getIK()+" hash: " + fe.getIK().hashCode());
         			}
         		}
