@@ -150,7 +150,7 @@
     <target depends="build" name="jar">
         <jar destfile="sap.jar" filesetmanifest="mergewithoutmain">
             <manifest>
-                <attribute name="Main-Class" value="SeparateEntryAnalysis"/>
+                <attribute name="Main-Class" value="org.scandroid.SeparateEntryAnalysis"/>
                 <attribute name="Class-Path" value="."/>
             </manifest>
             <fileset dir="${HOME}/bin"/>
