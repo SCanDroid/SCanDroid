@@ -3,12 +3,14 @@ package model;
 import static util.MyLogger.log;
 import static util.MyLogger.LogLevel.DEBUG;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -64,6 +66,8 @@ public class AppModelMethod {
     
     private Map<ConstantValue, Integer> constant2ValueNumber = HashMapFactory.make();
     
+    
+    
     SSAInstructionFactory insts;
 
     
@@ -71,7 +75,26 @@ public class AppModelMethod {
 	private Map<TypeReference, Integer> typeToID = new HashMap<TypeReference, Integer> ();    
 	//innerclass dependencies
 	private Map<TypeReference, LinkedList<TypeReference>> icDependencies = new HashMap<TypeReference, LinkedList<TypeReference>> ();
-    
+    //all callbacks to consider
+	private List<MethodParams> callBacks = new ArrayList<MethodParams>();
+	
+	private class MethodParams{
+		public IMethod im;
+		public int params[];
+		private MethodParams(IMethod method) {
+			im = method;
+		}
+		private void setParams(int p[]) {
+			params = p;
+		}
+		private IMethod getIMethod() {
+			return im;
+		}
+		private int[] getParams() {
+			return params;
+		}
+	}
+	
 	public AppModelMethod(IClassHierarchy cha, AnalysisScope scope) {
     	this.cha = cha;
     	this.scope = scope;    	
@@ -81,6 +104,7 @@ public class AppModelMethod {
 		startMethod();
     	buildTypeMap();
 		processTypeMap();
+		processCallBackParams();
 //		createWhileLoop();
 //		createSwitch();
 //		processCases();
@@ -118,7 +142,8 @@ public class AppModelMethod {
     		for (IMethod im: mnp.getPossibleTargets(cha)) {
     			// limit to functions defined within the application
     			if(LoaderUtils.fromLoader(im, ClassLoaderReference.Application))
-    			{    			
+    			{   
+    				callBacks.add(new MethodParams(im));
     				TypeReference tr = im.getDeclaringClass().getReference(); 
     				if (!typeToID.containsKey(tr)) {
     					//class is an innerclass
@@ -155,7 +180,7 @@ public class AppModelMethod {
         		Integer i = eSet.getValue();
         		if (createdIDs.contains(i))
         			continue;
-    			processAllocation(tr, i);
+    			processAllocation(tr, i, false);
     			createdIDs.add(i);
     		}
     		//Is an anonymous innerclass
@@ -163,7 +188,7 @@ public class AppModelMethod {
     			for (TypeReference trD:icDependencies.get(tr)) {
     				Integer i = typeToID.get(trD);
     				if (!createdIDs.contains(i)) {
-    					processAllocation(trD,i);
+    					processAllocation(trD,i, true);
     					createdIDs.add(i);
     				}
     			}
@@ -173,7 +198,38 @@ public class AppModelMethod {
     	assert(createdIDs.size() == typeToID.size()):"typeToID and createdID size do not match";    	
     }
     
-    private void processAllocation (TypeReference tr, Integer i) {
+    private void processCallBackParams() {
+    	for (MethodParams mp:callBacks) {
+    		int params[] = new int[mp.getIMethod().getNumberOfParameters()];
+    		int startPos;
+    		if (mp.getIMethod().isStatic()) {
+    			startPos = 0;
+    		}
+    		else {
+    			params[0] = typeToID.get(mp.getIMethod().getDeclaringClass().getReference());
+    			startPos = 1;    			
+    		}
+    		for (int i = startPos; i < params.length; i++) {
+    			params[i] = makeArgument(mp.getIMethod().getParameterType(i));
+    		}
+    		mp.setParams(params);    		
+    	}
+    }
+    
+    private int makeArgument(TypeReference tr) {
+    	if (tr.isPrimitiveType())
+    		return addLocal();
+    	else {
+    		SSANewInstruction n = processAllocation(tr, nextLocal++, false);
+    		return (n == null) ? -1 : n.getDef();
+    	}
+    }   
+    
+    private int addLocal() {
+    	return nextLocal++;
+    }
+    
+    private SSANewInstruction processAllocation (TypeReference tr, Integer i, boolean isInner) {
         // create the allocation statement and add it to the method summary
         NewSiteReference ref = NewSiteReference.make(methodSummary.getNextProgramCounter(), tr);
 
@@ -191,7 +247,7 @@ public class AppModelMethod {
         
         IClass klass = cha.lookupClass(tr);
         if (klass == null) {
-          return;
+          return null;
         }
         
         if (klass.isArrayClass()) {
@@ -223,10 +279,9 @@ public class AppModelMethod {
         //invoke constructor 
         IMethod ctor = cha.resolveMethod(klass, MethodReference.initSelector);
         
-        System.out.println("type reference: "+tr.getName());
-        System.out.println("constructor found: " + ctor.getSignature());
         if (ctor != null) {
-			if (!ctor.getDeclaringClass().getName().toString().equals(klass.getName().toString())) {
+        	//only check for more constructors when we're looking through the inner classes?
+			if (isInner && !ctor.getDeclaringClass().getName().toString().equals(klass.getName().toString())) {
 				boolean foundValidCtor = false;
 				for (IMethod im: klass.getAllMethods()) {
 					if (im.getDeclaringClass().getName().toString().equals(klass.getName().toString()) && 
@@ -252,7 +307,7 @@ public class AppModelMethod {
         			IInvokeInstruction.Dispatch.SPECIAL));
         }
 
-
+        return a;
     }
         
     public SSAInvokeInstruction addInvocation(int[] params, CallSiteReference site) {
