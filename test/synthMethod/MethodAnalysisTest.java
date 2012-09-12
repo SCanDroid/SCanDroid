@@ -198,7 +198,6 @@ public class MethodAnalysisTest {
     private void runOnJar(String appJar, ISpecs specs) throws IOException,
             ClassHierarchyException, CallGraphBuilderCancelException {
         String summary = summarize(appJar);
-        System.out.println("******** Summary: "+summary);
         checkSummaryProperty(appJar, specs, summary);
     }
 
