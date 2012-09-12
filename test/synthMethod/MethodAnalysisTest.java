@@ -1,7 +1,11 @@
 package synthMethod;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -46,6 +50,7 @@ import com.ibm.wala.ipa.cha.ClassHierarchy;
 import com.ibm.wala.ipa.cha.ClassHierarchyException;
 import com.ibm.wala.ssa.analysis.IExplodedBasicBlock;
 import com.ibm.wala.types.ClassLoaderReference;
+import com.ibm.wala.util.Predicate;
 
 import domain.CodeElement;
 import domain.DomainElement;
@@ -65,6 +70,21 @@ public class MethodAnalysisTest {
     public static final String WALA_NATIVES_XML = 
             "wala/wala-src/com.ibm.wala.core/dat/natives.xml";
     private static final String TEST_DATA_DIR = "data/testdata/";
+
+    @Test
+    public final void test_summarizeProducesOutput() 
+            throws IllegalArgumentException, CallGraphBuilderCancelException,
+            IOException, ClassHierarchyException {
+
+        String appJar = TEST_DATA_DIR + File.separator + "trivialJar1-1.0-SNAPSHOT.jar";
+        String filename = summarize(appJar);
+        
+        String contents = readFile(filename);
+        System.out.println("-----     Summary File: -------");
+        System.out.println(contents);
+        System.out.println("-----   End Summary File -------");
+        Assert.assertTrue("contents not long enough.", 80 <= contents.length());
+    }
     
     /**
      * Simple, direct data flow through a few methods.
@@ -178,6 +198,7 @@ public class MethodAnalysisTest {
     private void runOnJar(String appJar, ISpecs specs) throws IOException,
             ClassHierarchyException, CallGraphBuilderCancelException {
         String summary = summarize(appJar);
+        System.out.println("******** Summary: "+summary);
         checkSummaryProperty(appJar, specs, summary);
     }
 
@@ -229,7 +250,7 @@ public class MethodAnalysisTest {
                CallGraphBuilderCancelException {
         
         MethodAnalysis<IExplodedBasicBlock> methodAnalysis =
-                new MethodAnalysis<IExplodedBasicBlock>();
+                new MethodAnalysis<IExplodedBasicBlock>(Predicate.TRUE);
         AnalysisScope scope = 
                 DexAnalysisScopeReader.makeAndroidBinaryAnalysisScope(jarFile, 
                    new File("conf/Java60RegressionExclusions.txt"));
@@ -342,4 +363,17 @@ public class MethodAnalysisTest {
         return builder.toString();
     }
 
+    public String readFile( String file ) throws IOException {
+        BufferedReader reader = new BufferedReader( new FileReader (file));
+        String         line = null;
+        StringBuilder  stringBuilder = new StringBuilder();
+        String         ls = System.getProperty("line.separator");
+
+        while( ( line = reader.readLine() ) != null ) {
+            stringBuilder.append( line );
+            stringBuilder.append( ls );
+        }
+
+        return stringBuilder.toString();
+    }
 }

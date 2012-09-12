@@ -8,7 +8,7 @@
     </package>
   </classloader>
   <classloader name="Application">
-    <package name="com/galois/fuse">
+    <package name="org/scandroid/testing">
       <class name="App">
         <method descriptor="(I)I" name="echo">
           <return value="arg0"/>
