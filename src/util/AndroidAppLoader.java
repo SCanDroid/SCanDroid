@@ -399,6 +399,10 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
 		InputStream s;
 		try {
 			File summaryXml = new File(pathToSpec + File.separator + methodSpec);
+			if (null != xmlFile) {
+				summaryXml = new File(xmlFile);
+			}
+			
 			if (summaryXml.exists()) {
 				s = new FileInputStream(summaryXml);
 			} else {
