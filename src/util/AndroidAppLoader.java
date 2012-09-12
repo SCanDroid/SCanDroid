@@ -53,13 +53,15 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.jar.JarFile;
-
-import model.AppModelMethod;
 
 import prefixTransfer.UriPrefixContextSelector;
 import spec.AndroidSpecs;
 
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.ibm.wala.classLoader.DexIRFactory;
 import com.ibm.wala.classLoader.IMethod;
 import com.ibm.wala.dataflow.IFDS.ICFGSupergraph;
@@ -88,6 +90,7 @@ import com.ibm.wala.ipa.cha.ClassHierarchyException;
 import com.ibm.wala.ipa.cha.IClassHierarchy;
 import com.ibm.wala.ipa.summaries.BypassClassTargetSelector;
 import com.ibm.wala.ipa.summaries.BypassMethodTargetSelector;
+import com.ibm.wala.ipa.summaries.MethodSummary;
 import com.ibm.wala.ipa.summaries.XMLMethodSummaryReader;
 import com.ibm.wala.ssa.IRFactory;
 import com.ibm.wala.ssa.ISSABasicBlock;
@@ -96,7 +99,6 @@ import com.ibm.wala.types.MethodReference;
 import com.ibm.wala.types.TypeReference;
 import com.ibm.wala.util.CancelException;
 import com.ibm.wala.util.Predicate;
-import com.ibm.wala.util.collections.HashSetFactory;
 import com.ibm.wala.util.graph.Graph;
 import com.ibm.wala.util.graph.GraphSlicer;
 import com.ibm.wala.util.io.FileProvider;
@@ -398,34 +400,35 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
 
 		InputStream s;
 		try {
-			File summaryXml = new File(pathToSpec + File.separator + methodSpec);
+			Set<TypeReference> summaryClasses = Sets.newHashSet();
+			Map<MethodReference, MethodSummary> summaries = Maps.newHashMap();
+			
 			if (null != xmlFile) {
-				summaryXml = new File(xmlFile);
+				XMLMethodSummaryReader newSummaryXML = 
+						loadMethodSummaries(scope, xmlFile);
+					summaryClasses.addAll(newSummaryXML.getAllocatableClasses());
+					summaries.putAll(newSummaryXML.getSummaries());
 			}
 			
-			if (summaryXml.exists()) {
-				s = new FileInputStream(summaryXml);
-			} else {
-				s = AndroidAppLoader.class.getClassLoader()
-						.getResourceAsStream(
-								"/" + pathToSpec + File.separator + methodSpec);
-			}
-			// InputStream s = cl.getResourceAsStream(xmlFile);
-		    XMLMethodSummaryReader summary = new XMLMethodSummaryReader(s, scope);
-
+			XMLMethodSummaryReader nativeSummaries = 
+					loadMethodSummaries(scope, pathToSpec + File.separator + methodSpec);
+		    
+			summaries.putAll(nativeSummaries.getSummaries());
+			summaryClasses.addAll(nativeSummaries.getAllocatableClasses());
+			
 		    //Application callbacks model
 		    //AppModelMethod amm = new AppModelMethod(cha, scope);
-		    
+			
 			MethodTargetSelector ms = new BypassMethodTargetSelector(
 					options.getMethodTargetSelector(),
-					summary.getSummaries(),
-					summary.getIgnoredPackages(), cha);
+					summaries,
+					nativeSummaries.getIgnoredPackages(), cha);
 			options.setSelector(ms);
 
 			
 			ClassTargetSelector cs = new BypassClassTargetSelector(
 					options.getClassTargetSelector(),
-					summary.getAllocatableClasses(), cha,
+					summaryClasses, cha,
 					cha.getLoader(scope.getLoader(Atom
 							.findOrCreateUnicodeAtom("Synthetic"))));
 			options.setSelector(cs);
@@ -433,5 +436,32 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
 			e.printStackTrace();
 		}
 
+	}
+
+	private static XMLMethodSummaryReader loadMethodSummaries(
+			AnalysisScope scope, String xmlFile) throws FileNotFoundException {
+		InputStream s = null;
+    	File summaryXml = new File(xmlFile);
+		XMLMethodSummaryReader summary = null;
+		
+		try {
+			if (summaryXml.exists()) {
+				s = new FileInputStream(summaryXml);
+			} else {
+				s = AndroidAppLoader.class.getClassLoader()
+						.getResourceAsStream(
+								"/" + pathToSpec + File.separator + methodSpec);
+			}
+		    summary = new XMLMethodSummaryReader(s, scope);
+		} finally {
+			try {
+				if ( null != s) {
+					s.close();
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		return summary;
 	}
 }

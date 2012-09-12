@@ -229,6 +229,12 @@ public class XMLMethodSummaryWriter {
               methodAnalysis.newSummaries.entrySet()) {
         	if (imE.getValue().isEmpty())
         		continue;
+        	
+        	// TODO this is a bit ugly. should not persist for long.
+        	if (imE.getKey().getSignature().contains(".main(")) {
+        		continue;
+        	}
+        	
             IMethod im = imE.getKey();
             
             try {

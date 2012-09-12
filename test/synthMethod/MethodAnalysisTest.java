@@ -72,6 +72,20 @@ public class MethodAnalysisTest {
             "wala/wala-src/com.ibm.wala.core/dat/natives.xml";
     private static final String TEST_DATA_DIR = "data/testdata/";
 
+    @Test
+    public final void test_dataFlowThroughConstructor() 
+    		throws ClassHierarchyException, IllegalArgumentException, 
+    		       CallGraphBuilderCancelException, IOException {
+    	String appJar = TEST_DATA_DIR + File.separator + "trivialJar5-1.0-SNAPSHOT.jar";
+    	
+    	Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>>
+          directResults = runDFAnalysis(appJar, new TestSpecs(), WALA_NATIVES_XML);
+    	
+    	System.out.println("direct results: "+ flowMapToString(directResults));
+    	
+    	Assert.assertEquals("Exactly one flow needed", 1, directResults.size());
+    }
+    
     //@Ignore
     @Test
     public final void test_summarizeProducesOutput() 
@@ -87,6 +101,27 @@ public class MethodAnalysisTest {
         System.out.println("-----   End Summary File -------");
         Assert.assertTrue("contents not long enough.", 80 <= contents.length());
     }
+    
+    /**
+     * Tests that changing the value of a field taints the object the field is in.
+     * 
+     * This test specifically exercises the situation where a this object is 
+     * modified and returned.
+     * 
+     * @throws IllegalArgumentException
+     * @throws CallGraphBuilderCancelException
+     * @throws IOException
+     * @throws ClassHierarchyException
+     */
+    @Test
+    public final void test_fieldTaintTaintsThisObject() 
+            throws IllegalArgumentException, CallGraphBuilderCancelException,
+            IOException, ClassHierarchyException {
+
+        String appJar = TEST_DATA_DIR + File.separator + "trivialJar6-1.0-SNAPSHOT.jar";
+        runOnJar(appJar, new TestSpecs());
+    }
+
     
     /**
      * Simple, direct data flow through a few methods.
@@ -140,7 +175,7 @@ public class MethodAnalysisTest {
             throws IllegalArgumentException, CallGraphBuilderCancelException,
             IOException, ClassHierarchyException {
 
-        String appJar = TEST_DATA_DIR + File.separator + "trivialJar3-1.0-SNAPSHOT.jar";
+    	String appJar = TEST_DATA_DIR + File.separator + "trivialJar3-1.0-SNAPSHOT.jar";
         runOnJar(appJar, new TestSpecs());
     }
     
@@ -259,14 +294,28 @@ public class MethodAnalysisTest {
         Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>>
           directResults = runDFAnalysis(jarFile, specs, WALA_NATIVES_XML);
         
+        System.out.println(" ----------------------------------------  ");
+        System.out.println(" ---  DIRECT RESULTS DONE             ---  ");
+        System.out.println(" ----------------------------------------  ");
+        
         Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>>
           summarizedResults = runDFAnalysis(jarFile, specs, summaryFile);
         
         Assert.assertNotSame("No flows found in direct results.", 0, directResults.size());
+        System.out.println("Actual Flows: \n"+flowMapToString(directResults));
+        
         Assert.assertNotSame("No flows found in summarized results.", 0, summarizedResults.size());
+        System.out.println("Summary Flows: \n"+flowMapToString(summarizedResults));
         Assert.assertEquals("Results differed with summaries", 
                 directResults, summarizedResults);
     }
+    
+    private static Predicate<IMethod> isMain = new Predicate<IMethod>() {
+		@Override
+		public boolean test(IMethod t) {
+			return t.getSignature().contains(".main(");
+		}
+	};
     
     /**
      * Generate summaries for all the entry points in a jar file, write the 
@@ -348,7 +397,7 @@ public class MethodAnalysisTest {
                CallGraphBuilderCancelException {
 
         MethodAnalysis<IExplodedBasicBlock> methodAnalysis =
-                new MethodAnalysis<IExplodedBasicBlock>();
+                new MethodAnalysis<IExplodedBasicBlock>(Predicate.TRUE);
         AnalysisScope scope = 
                 DexAnalysisScopeReader.makeAndroidBinaryAnalysisScope(appJar, 
                    new File("conf/Java60RegressionExclusions.txt"));

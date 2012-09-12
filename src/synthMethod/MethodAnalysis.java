@@ -100,8 +100,16 @@ public class MethodAnalysis <E extends ISSABasicBlock>  {
 	public final Map<IMethod, Map<Integer, OrdinalSet<InstanceKey>>> methodTaints = 
 	        new HashMap<IMethod, Map<Integer, OrdinalSet<InstanceKey>>>();
 	
-	private final Set<MethodReference> blacklist = new HashSet<MethodReference>();
-	    
+	private final Set<MethodReference> blacklist =
+			new HashSet<MethodReference>();
+	
+	private Predicate<IMethod> isConstructor = new Predicate<IMethod>() {
+		@Override
+		public boolean test(IMethod t) {
+			return t.isInit();
+		}
+	};
+	
 	private Predicate<IMethod> p = new Predicate<IMethod>(){
 			@Override
 			public boolean test(IMethod im) {
@@ -111,7 +119,7 @@ public class MethodAnalysis <E extends ISSABasicBlock>  {
 					return false;
 				return true;
 			}
-		};
+		}.and(isConstructor.not());
 	
 	private ClassLoaderReference clr;
 	

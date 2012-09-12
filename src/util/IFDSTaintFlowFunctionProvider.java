@@ -38,20 +38,19 @@
  */
 
 package util;
-import static util.MyLogger.LogLevel.DEBUG;
-
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-import spec.AndroidSpecs;
 import synthMethod.MethodAnalysis;
 
 import com.ibm.wala.classLoader.IClass;
 import com.ibm.wala.classLoader.IField;
+import com.ibm.wala.classLoader.IMethod;
 import com.ibm.wala.dataflow.IFDS.IFlowFunction;
 import com.ibm.wala.dataflow.IFDS.IFlowFunctionMap;
 import com.ibm.wala.dataflow.IFDS.ISupergraph;
@@ -64,18 +63,17 @@ import com.ibm.wala.ipa.callgraph.propagation.PointerKey;
 import com.ibm.wala.ipa.callgraph.propagation.StaticFieldKey;
 import com.ibm.wala.ipa.cfg.BasicBlockInContext;
 import com.ibm.wala.ipa.cha.IClassHierarchy;
-import com.ibm.wala.ipa.summaries.XMLMethodSummaryReader;
 import com.ibm.wala.ssa.ISSABasicBlock;
-import com.ibm.wala.ssa.SSAArrayLoadInstruction;
 import com.ibm.wala.ssa.SSAArrayLengthInstruction;
+import com.ibm.wala.ssa.SSAArrayLoadInstruction;
 import com.ibm.wala.ssa.SSAArrayStoreInstruction;
 import com.ibm.wala.ssa.SSAGetInstruction;
 import com.ibm.wala.ssa.SSAInstruction;
 import com.ibm.wala.ssa.SSAInvokeInstruction;
 import com.ibm.wala.ssa.SSAPutInstruction;
 import com.ibm.wala.ssa.SSAReturnInstruction;
-import com.ibm.wala.types.ClassLoaderReference;
 import com.ibm.wala.types.FieldReference;
+import com.ibm.wala.types.MethodReference;
 import com.ibm.wala.types.TypeReference;
 import com.ibm.wala.util.intset.BitVectorIntSet;
 import com.ibm.wala.util.intset.IntSet;
@@ -85,7 +83,6 @@ import domain.CodeElement;
 import domain.DomainElement;
 import domain.FieldElement;
 import domain.IFDSTaintDomain;
-import domain.InstanceKeyElement;
 import domain.LocalElement;
 import domain.ReturnElement;
 import flow.types.FlowType;
@@ -239,9 +236,13 @@ implements IFlowFunctionMap<BasicBlockInContext<E>> {
 						    isStatic = true;
 						} else {
 						    p.uses.addAll(CodeElement.valueElements(pa, bb.getNode(), instruction.getUse(1)));
+						    // the value number is the "right hand side" of the write statement.
 							int valueNumber = instruction.getUse(0);
 							pk = new LocalPointerKey(bb.getNode(), valueNumber);
 							isStatic = false;
+							// add the object that holds the field that was modified
+							// to the list of things tainted by this flow:
+							p.defs.addAll(CodeElement.valueElements(pa, bb.getNode(), valueNumber));
 						}	
 						if (pk!=null) {
 							OrdinalSet<InstanceKey> m = pa.getPointsToSet(pk);
@@ -259,12 +260,24 @@ implements IFlowFunctionMap<BasicBlockInContext<E>> {
 						p.uses.addAll(CodeElement.valueElements(pa, bb.getNode(), instruction.getUse(2)));
 						p.defs.addAll(CodeElement.valueElements(pa, bb.getNode(), instruction.getUse(0)));
 					}
-					else {
-						for (int i = 1; i < instruction.getNumberOfUses(); i++) {
-							p.uses.addAll(CodeElement.valueElements(pa, bb.getNode(), instruction.getUse(i)));
-						}
-						if (instruction.getNumberOfUses() > 0) {
-							p.defs.addAll(CodeElement.valueElements(pa, bb.getNode(), instruction.getUse(0)));
+					else if (instruction instanceof SSAInvokeInstruction){
+						
+						MethodReference targetMethod = ((SSAInvokeInstruction) instruction).getCallSite().getDeclaredTarget();
+						if (methodExcluded(targetMethod)) {
+							// TODO make all parameters flow into all other 
+							// parameters, which could happen in the static case as well.
+							if (!((SSAInvokeInstruction) instruction).isStatic()) {
+								// These loops cause all parameters flow into the 
+								// 'this' param (due to instruction.getUse(0))
+								for (int i = 1; i < instruction.getNumberOfUses(); i++) {
+									p.uses.addAll(CodeElement.valueElements(pa, bb.getNode(), instruction.getUse(i)));
+								}
+							
+	
+								if (instruction.getNumberOfUses() > 0) {
+									p.defs.addAll(CodeElement.valueElements(pa, bb.getNode(), instruction.getUse(0)));
+								}
+							}
 						}
 					}
 				}
@@ -274,11 +287,13 @@ implements IFlowFunctionMap<BasicBlockInContext<E>> {
 					if(retInst.getNumberOfUses() > 0)
 					{
 						/* TODO: why not add instance keys, too? */
-								for(int i = 0; i < instruction.getNumberOfUses(); i++)
-								{
-									p.uses.add(new LocalElement(instruction.getUse(i)));
-								}
-								p.defs.add(new ReturnElement());
+						for(int i = 0; i < instruction.getNumberOfUses(); i++)
+						{
+							//p.uses.add(new LocalElement(instruction.getUse(i)));
+							p.uses.addAll(CodeElement.valueElements(pa, bb.getNode(), instruction.getUse(i)));
+							
+						}
+						p.defs.add(new ReturnElement());
 					}
 					else
 					{
@@ -293,7 +308,17 @@ implements IFlowFunctionMap<BasicBlockInContext<E>> {
 			}
 		}
 
-        private IField getStaticIField(IClassHierarchy ch,
+		/**
+		 * Determines if the provide method is in the exclusions by checking the supergraph.
+		 * @param method
+		 * @return True if the method can not be found in the supergraph.
+		 */
+        private boolean methodExcluded(MethodReference method) {
+        	Collection<IMethod> iMethods = pa.getClassHierarchy().getPossibleTargets(method);
+			return 0 == iMethods.size();
+		}
+
+		private IField getStaticIField(IClassHierarchy ch,
                 FieldReference declaredField) {
             TypeReference staticTypeRef = declaredField.getDeclaringClass();
             
@@ -432,7 +457,8 @@ implements IFlowFunctionMap<BasicBlockInContext<E>> {
 						callSet = new LocalElement(invInst.getReturnValue(0));
 
 						//used to be invInst.getReceiver(), but I believe that was incorrect.
-						receivers.addAll(CodeElement.valueElements(pa, call.getNode(), invInst.getReturnValue(0)));
+						receivers.addAll(CodeElement.valueElements(pa, call.getNode(), invInst.getReceiver()));
+						//receivers.addAll(CodeElement.valueElements(pa, call.getNode(), invInst.getReturnValue(0)));
 					}
 				}				
 			}
