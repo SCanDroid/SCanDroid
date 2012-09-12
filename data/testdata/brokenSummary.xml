@@ -6,7 +6,6 @@
         <method descriptor="(Ljava/lang/Object;)Ljava/lang/Object;" name="echo">
           <return value="arg0"/>
         </method>
-        <method descriptor="([Ljava/lang/String;)V" name="main" static="true"/>
       </class>
     </package>
   </classloader>
