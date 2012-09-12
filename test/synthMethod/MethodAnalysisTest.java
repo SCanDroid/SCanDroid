@@ -72,6 +72,7 @@ public class MethodAnalysisTest {
             "wala/wala-src/com.ibm.wala.core/dat/natives.xml";
     private static final String TEST_DATA_DIR = "data/testdata/";
 
+    @Ignore
     @Test
     public final void test_summarizeProducesOutput() 
             throws IllegalArgumentException, CallGraphBuilderCancelException,
@@ -95,7 +96,7 @@ public class MethodAnalysisTest {
      * @throws IOException
      * @throws ClassHierarchyException
      */
-    //@Ignore
+    @Ignore
     @Test
     public final void test_trivialJar1() 
             throws IllegalArgumentException, CallGraphBuilderCancelException,
@@ -113,7 +114,7 @@ public class MethodAnalysisTest {
      * @throws IOException
      * @throws ClassHierarchyException
      */
-    //@Ignore
+    @Ignore
     @Test
     public final void test_consCellRecursion() 
             throws IllegalArgumentException, CallGraphBuilderCancelException,
@@ -133,7 +134,7 @@ public class MethodAnalysisTest {
      * @throws IOException
      * @throws ClassHierarchyException
      */
-    //@Ignore
+    @Ignore
     @Test
     public final void test_flowFromInputParameter() 
             throws IllegalArgumentException, CallGraphBuilderCancelException,
@@ -142,6 +143,26 @@ public class MethodAnalysisTest {
         String appJar = TEST_DATA_DIR + File.separator + "trivialJar3-1.0-SNAPSHOT.jar";
         runOnJar(appJar, new TestSpecs());
     }
+    
+    /**
+     * TrivialJar5 constructs an Integer object via new to test a dataflow problem.
+     * 
+     * 
+     * @throws IllegalArgumentException
+     * @throws CallGraphBuilderCancelException
+     * @throws IOException
+     * @throws ClassHierarchyException
+     */
+    //@Ignore
+    @Test
+    public final void test_flowViaNewInteger() 
+            throws IllegalArgumentException, CallGraphBuilderCancelException,
+            IOException, ClassHierarchyException {
+
+        String appJar = TEST_DATA_DIR + File.separator + "trivialJar5-1.0-SNAPSHOT.jar";
+        runOnJar(appJar, new TestSpecs());
+    }
+    
     /**
      * Trivial Jar 4 uses a static field in data flow.
      * 
@@ -150,7 +171,7 @@ public class MethodAnalysisTest {
      * @throws IOException
      * @throws ClassHierarchyException
      */
-    //@Ignore
+    @Ignore
     @Test
     public final void test_staticFieldsinDataFlow() 
             throws IllegalArgumentException, CallGraphBuilderCancelException,
@@ -191,7 +212,7 @@ public class MethodAnalysisTest {
         });
     }
     
-    //@Ignore
+    @Ignore
     @Test(expected=AssertionError.class)
     public final void test_brokensummaryBreaksDataFlow() 
             throws IllegalArgumentException, CallGraphBuilderCancelException,
@@ -291,6 +312,7 @@ public class MethodAnalysisTest {
             BasicBlockInContext<IExplodedBasicBlock>[] entriesForProcedure =
                     sg.getEntriesForProcedure(cgNode);
             for (int i = 0; i < entriesForProcedure.length; i++) {
+            	
                 methodAnalysis.analyze(sg, 
                         builder.getPointerAnalysis(),
                         null,
