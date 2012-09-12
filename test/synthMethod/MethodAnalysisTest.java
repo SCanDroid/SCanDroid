@@ -1,11 +1,11 @@
 package synthMethod;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
+import java.nio.MappedByteBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -364,17 +364,16 @@ public class MethodAnalysisTest {
         return builder.toString();
     }
 
-    public String readFile( String file ) throws IOException {
-        BufferedReader reader = new BufferedReader( new FileReader (file));
-        String         line = null;
-        StringBuilder  stringBuilder = new StringBuilder();
-        String         ls = System.getProperty("line.separator");
-
-        while( ( line = reader.readLine() ) != null ) {
-            stringBuilder.append( line );
-            stringBuilder.append( ls );
+    public String readFile( String path ) throws IOException {
+        FileInputStream stream = new FileInputStream(new File(path));
+        try {
+          FileChannel fc = stream.getChannel();
+          MappedByteBuffer bb = fc.map(FileChannel.MapMode.READ_ONLY, 0, fc.size());
+          /* Instead of using default, pass in a decoder. */
+          return Charset.defaultCharset().decode(bb).toString();
         }
-
-        return stringBuilder.toString();
+        finally {
+          stream.close();
+        }
     }
 }
