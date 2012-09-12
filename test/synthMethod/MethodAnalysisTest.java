@@ -118,30 +118,21 @@ public class MethodAnalysisTest {
         String appJar = TEST_DATA_DIR + File.separator + "trivialJar3-1.0-SNAPSHOT.jar";
         runOnJar(appJar, new TestSpecs());
     }
-    
-    //@Test
-    public final void test_paramsforstaticMethod() throws IOException, ClassHierarchyException {
-        AnalysisScope scope = 
-                DexAnalysisScopeReader.makeAndroidBinaryAnalysisScope(
-                   TEST_DATA_DIR + File.separator + "sap.jar", 
-                   new File("conf/Java60RegressionExclusions.txt"));
-        ClassHierarchy cha = ClassHierarchy.make(scope);
-        
-        String scandroidMain = "org.scandroid.SeparateEntryAnalysis.main([Ljava/lang/String;)V";
-        
-        for (IClass iClass : cha) {
-            for (Iterator<IMethod> itr = iClass.getAllMethods().iterator(); itr.hasNext();) {
-                IMethod iMethod = itr.next();
-                
-                if (iMethod.getSignature().equals(scandroidMain)) {
-                    System.out.println("method sig: "+ iMethod.getSignature());
-                    Entrypoint e = new DefaultEntrypoint(iMethod, cha);
-                    System.out.println(e);
-                    System.out.println("getParameterTypes(0): "+ e.getParameterTypes(0));
-                    System.out.println("getParameterTypes(0)[0]: "+ e.getParameterTypes(0)[0]);
-                }
-            }
-        }
+    /**
+     * Trivial Jar 4 uses a static field in data flow.
+     * 
+     * @throws IllegalArgumentException
+     * @throws CallGraphBuilderCancelException
+     * @throws IOException
+     * @throws ClassHierarchyException
+     */
+    @Test
+    public final void test_staticFieldsinDataFlow() 
+            throws IllegalArgumentException, CallGraphBuilderCancelException,
+            IOException, ClassHierarchyException {
+
+        String appJar = TEST_DATA_DIR + File.separator + "trivialJar4-1.0-SNAPSHOT.jar";
+        runOnJar(appJar, new TestSpecs());
     }
     
    // @Test
@@ -175,7 +166,7 @@ public class MethodAnalysisTest {
     }
     
     @Test(expected=AssertionError.class)
-    public final void test_fails() 
+    public final void test_brokensummaryBreaksDataFlow() 
             throws IllegalArgumentException, CallGraphBuilderCancelException,
             IOException, ClassHierarchyException {
         
