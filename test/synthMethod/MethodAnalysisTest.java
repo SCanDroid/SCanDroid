@@ -16,6 +16,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import spec.CallArgSinkSpec;
@@ -94,6 +95,7 @@ public class MethodAnalysisTest {
      * @throws IOException
      * @throws ClassHierarchyException
      */
+    //@Ignore
     @Test
     public final void test_trivialJar1() 
             throws IllegalArgumentException, CallGraphBuilderCancelException,
@@ -111,6 +113,7 @@ public class MethodAnalysisTest {
      * @throws IOException
      * @throws ClassHierarchyException
      */
+    //@Ignore
     @Test
     public final void test_consCellRecursion() 
             throws IllegalArgumentException, CallGraphBuilderCancelException,
@@ -130,6 +133,7 @@ public class MethodAnalysisTest {
      * @throws IOException
      * @throws ClassHierarchyException
      */
+    //@Ignore
     @Test
     public final void test_flowFromInputParameter() 
             throws IllegalArgumentException, CallGraphBuilderCancelException,
@@ -146,6 +150,7 @@ public class MethodAnalysisTest {
      * @throws IOException
      * @throws ClassHierarchyException
      */
+    //@Ignore
     @Test
     public final void test_staticFieldsinDataFlow() 
             throws IllegalArgumentException, CallGraphBuilderCancelException,
@@ -155,7 +160,8 @@ public class MethodAnalysisTest {
         runOnJar(appJar, new TestSpecs());
     }
     
-   // @Test
+    @Ignore("Runs too long")
+    @Test
     public final void test_summarizeScandroid() 
             throws IllegalArgumentException, CallGraphBuilderCancelException,
             IOException, ClassHierarchyException {
@@ -185,6 +191,7 @@ public class MethodAnalysisTest {
         });
     }
     
+    //@Ignore
     @Test(expected=AssertionError.class)
     public final void test_brokensummaryBreaksDataFlow() 
             throws IllegalArgumentException, CallGraphBuilderCancelException,
@@ -198,6 +205,13 @@ public class MethodAnalysisTest {
     private void runOnJar(String appJar, ISpecs specs) throws IOException,
             ClassHierarchyException, CallGraphBuilderCancelException {
         String summary = summarize(appJar);
+        
+        String contents = readFile(summary);
+        System.out.println("-----     Summary File: -------");
+        System.out.println(contents);
+        System.out.println("-----   End Summary File -------");
+        Assert.assertTrue("contents not long enough.", 80 <= contents.length());
+        
         checkSummaryProperty(appJar, specs, summary);
     }
 
@@ -364,7 +378,7 @@ public class MethodAnalysisTest {
         return builder.toString();
     }
 
-    public String readFile( String path ) throws IOException {
+    public static String readFile( String path ) throws IOException {
         FileInputStream stream = new FileInputStream(new File(path));
         try {
           FileChannel fc = stream.getChannel();

@@ -290,9 +290,12 @@ public class MethodAnalysis <E extends ISSABasicBlock>  {
 		}
 	}
 
-	static<E extends ISSABasicBlock> void checkResults(IFDSTaintDomain<E> domain,
-			TabulationResult<BasicBlockInContext<E>,CGNode, DomainElement> flowResult, Set<DomainElement> initialTaints,
-			ISupergraph<BasicBlockInContext<E>, CGNode> graph, BasicBlockInContext<E> methEntryBlock, 
+	private static<E extends ISSABasicBlock> void checkResults(
+	        IFDSTaintDomain<E> domain,
+			TabulationResult<BasicBlockInContext<E>,CGNode, DomainElement> flowResult, 
+			Set<DomainElement> initialTaints,
+			ISupergraph<BasicBlockInContext<E>, CGNode> graph, 
+			BasicBlockInContext<E> methEntryBlock, 
 			Map<FlowType<E>, Set<CodeElement>> methodFlows) {
 		MyLogger.log(DEBUG,"***************");	 
 		MyLogger.log(DEBUG,"Method Analysis");
@@ -322,15 +325,15 @@ public class MethodAnalysis <E extends ISSABasicBlock>  {
 				
 				assert (de!=null);							
 				
+				System.out.println(de.taintSource + " FLOWS into " + de.codeElement);
 				
 				if (de.codeElement instanceof FieldElement) {
 				    // TODO make sure this covers static fields too.
-				    
 					MyLogger.log(DEBUG,de.taintSource +" FLOWS into FIELD " + de.codeElement);
 					addToFlow(de.taintSource, de.codeElement, methodFlows);
 				} else if (de.codeElement instanceof ReturnElement) {
+				    
 					MyLogger.log(DEBUG,de.taintSource + " FLOWS into RETURNELEMENT " + de.codeElement);
-					
 					addToFlow(de.taintSource, de.codeElement, methodFlows);
 				}
 			}
@@ -352,7 +355,8 @@ public class MethodAnalysis <E extends ISSABasicBlock>  {
 	}
 
 	public static <E extends ISSABasicBlock> 
-	void addToFlow (FlowType<E> ft, CodeElement ce,  
+	void addToFlow (FlowType<E> ft, 
+	                CodeElement ce,  
 	                Map<FlowType<E>, Set<CodeElement>> methodFlows) {
 		Set<CodeElement> ceSet = methodFlows.get(ft);
 		if (ceSet == null) {
