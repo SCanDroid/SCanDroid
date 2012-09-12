@@ -111,26 +111,31 @@ public class MethodAnalysis <E extends ISSABasicBlock>  {
 	        new HashMap<IMethod, Map<Integer, OrdinalSet<InstanceKey>>>();
 	
 	private final Set<MethodReference> blacklist = new HashSet<MethodReference>();
-	
-	private Predicate<IMethod> p;
-	
-	private ClassLoaderReference clr;
-	
-	public MethodAnalysis() {
-		p = new Predicate<IMethod>(){
+	    
+	private Predicate<IMethod> p = new Predicate<IMethod>(){
 			@Override
 			public boolean test(IMethod im) {
 				if (im.isSynthetic())
 					return false;
 				if (newSummaries.containsKey(im))
 					return false;
-				return LoaderUtils.fromLoader(im, ClassLoaderReference.Primordial);			
+				return true;
 			}
 		};
+	
+	private ClassLoaderReference clr;
+	
+	public MethodAnalysis() {
+	    this.p = this.p.and(new Predicate<IMethod>() {
+            @Override
+            public boolean test(IMethod im) {
+                return LoaderUtils.fromLoader(im, ClassLoaderReference.Primordial);
+            }
+	    });
 	}
 	
-	public MethodAnalysis(Predicate<IMethod> p) {
-		this.p = p;
+	public MethodAnalysis(Predicate<IMethod> pred) {
+		this.p = this.p.and(pred);
 	}
 	
 	private boolean shouldSummarize(IMethod entryMethod) {
