@@ -44,20 +44,14 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
-import util.AndroidAppLoader;
-import util.CLI;
-import util.GraphUtil;
 import util.IFDSTaintFlowFunctionProvider;
 import util.LoaderUtils;
 import util.MyLogger;
 
-import com.ibm.wala.classLoader.IClass;
 import com.ibm.wala.classLoader.IField;
 import com.ibm.wala.classLoader.IMethod;
 import com.ibm.wala.dataflow.IFDS.IFlowFunctionMap;
@@ -69,17 +63,13 @@ import com.ibm.wala.dataflow.IFDS.TabulationProblem;
 import com.ibm.wala.dataflow.IFDS.TabulationResult;
 import com.ibm.wala.dataflow.IFDS.TabulationSolver;
 import com.ibm.wala.ipa.callgraph.CGNode;
-import com.ibm.wala.ipa.callgraph.Entrypoint;
 import com.ibm.wala.ipa.callgraph.propagation.InstanceKey;
 import com.ibm.wala.ipa.callgraph.propagation.LocalPointerKey;
 import com.ibm.wala.ipa.callgraph.propagation.PointerAnalysis;
 import com.ibm.wala.ipa.callgraph.propagation.PointerKey;
 import com.ibm.wala.ipa.callgraph.propagation.StaticFieldKey;
 import com.ibm.wala.ipa.cfg.BasicBlockInContext;
-import com.ibm.wala.ipa.summaries.XMLMethodSummaryReader;
 import com.ibm.wala.ssa.ISSABasicBlock;
-import com.ibm.wala.ssa.SSAInvokeInstruction;
-import com.ibm.wala.ssa.analysis.IExplodedBasicBlock;
 import com.ibm.wala.types.ClassLoaderReference;
 import com.ibm.wala.types.MethodReference;
 import com.ibm.wala.util.CancelException;
@@ -160,13 +150,25 @@ public class MethodAnalysis <E extends ISSABasicBlock>  {
             final BasicBlockInContext<E> callerBlock,
             final BasicBlockInContext<E> methEntryBlock // TODO make this into a node or IMethod
             ) throws CancelRuntimeException {
-
+		
+		boolean DEBUG = false;
+		if (DEBUG) {
+			String signature = methEntryBlock.getMethod().getSignature();
+			System.out.print("   Method Analysis working on: "+signature);
+		}
         final IFDSTaintDomain<E> domain = new IFDSTaintDomain<E>();
     
         IMethod entryMethod = methEntryBlock.getMethod();
 
 		if (!shouldSummarize(entryMethod)) {
+			if (DEBUG) {
+				System.out.println(" (but not summarizing)");
+			}
 			return;
+		} else {
+			if (DEBUG) {
+				System.out.println();
+			}
 		}
 
 		Map<FlowType<E>, Set<CodeElement>> methodFlows = new HashMap<FlowType<E>, Set<CodeElement>>();
@@ -175,8 +177,8 @@ public class MethodAnalysis <E extends ISSABasicBlock>  {
 		Map<Integer, OrdinalSet<InstanceKey>> pTaintIKMap = new HashMap<Integer, OrdinalSet<InstanceKey>> ();
 		methodTaints.put(entryMethod, pTaintIKMap);
 
-		final ArrayList<PathEdge<BasicBlockInContext<E>>>
-		         initialEdges = new ArrayList();
+		final List<PathEdge<BasicBlockInContext<E>>>
+		         initialEdges = new ArrayList<PathEdge<BasicBlockInContext<E>>>();
 		
 		Set<DomainElement> initialTaints = new HashSet<DomainElement> ();		
 
@@ -185,7 +187,7 @@ public class MethodAnalysis <E extends ISSABasicBlock>  {
 		for (int i = 0; i < entryMethod.getNumberOfParameters(); i++) {
 			//int id = entryMethod.isStatic()?i:i+1;
 
-			DomainElement de = new DomainElement(new LocalElement(i),
+			DomainElement de = new DomainElement(new LocalElement(i + 1),
 			                         new ParameterFlow<E>(methEntryBlock, i, true));
 			
 			OrdinalSet<InstanceKey> pointsToSet = 
@@ -197,7 +199,7 @@ public class MethodAnalysis <E extends ISSABasicBlock>  {
             pTaintIKMap.put(i, pointsToSet);
 			
 //							CodeElement.valueElements(pa, methEntryBlock.getNode(), invInst.getUse(i))));
-			initialTaints.add(de);			
+			initialTaints.add(de);
 			initialEdges.add(PathEdge.createPathEdge(methEntryBlock, 0, methEntryBlock, 
 					domain.getMappedIndex(de)));
 		}
@@ -223,7 +225,7 @@ public class MethodAnalysis <E extends ISSABasicBlock>  {
 		    for (InstanceKey ik: pa.getPointsToSet(pk)) {
 				DomainElement de = new DomainElement(
 				        new FieldElement(ik, myField.getReference(), isStatic), 
-						new FieldFlow(methEntryBlock, myField, true));
+						new FieldFlow<E>(methEntryBlock, myField, true));
 				initialTaints.add(de);
 				initialEdges.add(PathEdge.createPathEdge(methEntryBlock, 0, methEntryBlock, 
 						domain.getMappedIndex(de)));
@@ -256,17 +258,7 @@ public class MethodAnalysis <E extends ISSABasicBlock>  {
 
 			public Collection<PathEdge<BasicBlockInContext<E>>> initialSeeds() {
 				return initialEdges;
-				//             CGNode entryProc = cfg.getCallGraph().getEntrypointNodes()
-						//                     .iterator().next();
-				//             BasicBlockInContext<ISSABasicBlock> entryBlock = cfg
-				//                     .getEntry(entryProc);
-				//             for (int i = 0; i < entryProc.getIR().getNumberOfParameters(); i++) {
-				//                 list.add(PathEdge.createPathEdge(entryBlock, 0, entryBlock,
-				//                         domain.getMappedIndex(new LocalElement(i + 1))));
-				//             }
-				//             return list;
 			}
-
 		};
 		TabulationSolver<BasicBlockInContext<E>, CGNode, DomainElement> solver =
 				TabulationSolver.make(problem);
@@ -310,20 +302,29 @@ public class MethodAnalysis <E extends ISSABasicBlock>  {
 				
 		
 		BasicBlockInContext<E> exitBlocks[] = graph.getExitsForProcedure(methEntryBlock.getNode());
+		
+		System.out.println("     exitBlock count: "+exitBlocks.length);
 		for (BasicBlockInContext<E> exitBlock:exitBlocks) {
 			IntSet exitResults = flowResult.getResult(exitBlock);
+			
+//			System.out.println("     exitResult count: "+exitResults.size());
+			
 			for (IntIterator intI = exitResults.intIterator(); intI.hasNext();) {
 				int i = intI.next();
 				DomainElement de = domain.getMappedObject(i);
+				assert (de != null);
 				
 				//Ignore parameters flowing to itself.  And Fields flowing to itself.
 				//Also only take into consideration flows which originate from the current 
 				//method we are summarizing
-				if (initialTaints.contains(de) || !initialFlowSet.contains(de.taintSource)) {
+				if (initialTaints.contains(de)) {
+//					System.out.println("     initialTaints contains domain element: "+de);
 					continue;
 				}
-				
-				assert (de!=null);							
+				if (!initialFlowSet.contains(de.taintSource)) {
+//					System.out.println("     initialFlowSet does not contain domain element: "+de);
+					continue;
+				}
 				
 				System.out.println(de.taintSource + " FLOWS into " + de.codeElement);
 				

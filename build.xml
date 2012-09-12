@@ -190,7 +190,10 @@
     </target>
 
     <target name="test" depends="build, build-tests">
-        <junit haltonerror="false" haltonfailure="false" fork="no">
+        <junit haltonerror="false" 
+        	   haltonfailure="false" 
+        	   fork="no" 
+        	   printsummary="withOutAndErr">
         	<!-- Use the basic SCanDroid classpath: -->
             <classpath refid="SimpleAnalysisPlugin.classpath"/>
         	

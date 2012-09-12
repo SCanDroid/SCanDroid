@@ -72,7 +72,7 @@ public class MethodAnalysisTest {
             "wala/wala-src/com.ibm.wala.core/dat/natives.xml";
     private static final String TEST_DATA_DIR = "data/testdata/";
 
-    @Ignore
+    //@Ignore
     @Test
     public final void test_summarizeProducesOutput() 
             throws IllegalArgumentException, CallGraphBuilderCancelException,
@@ -96,7 +96,7 @@ public class MethodAnalysisTest {
      * @throws IOException
      * @throws ClassHierarchyException
      */
-    @Ignore
+    //@Ignore
     @Test
     public final void test_trivialJar1() 
             throws IllegalArgumentException, CallGraphBuilderCancelException,
@@ -114,7 +114,7 @@ public class MethodAnalysisTest {
      * @throws IOException
      * @throws ClassHierarchyException
      */
-    @Ignore
+    //@Ignore
     @Test
     public final void test_consCellRecursion() 
             throws IllegalArgumentException, CallGraphBuilderCancelException,
@@ -134,7 +134,7 @@ public class MethodAnalysisTest {
      * @throws IOException
      * @throws ClassHierarchyException
      */
-    @Ignore
+    //@Ignore
     @Test
     public final void test_flowFromInputParameter() 
             throws IllegalArgumentException, CallGraphBuilderCancelException,
@@ -171,7 +171,7 @@ public class MethodAnalysisTest {
      * @throws IOException
      * @throws ClassHierarchyException
      */
-    @Ignore
+    //@Ignore
     @Test
     public final void test_staticFieldsinDataFlow() 
             throws IllegalArgumentException, CallGraphBuilderCancelException,
@@ -212,7 +212,7 @@ public class MethodAnalysisTest {
         });
     }
     
-    @Ignore
+    //@Ignore
     @Test(expected=AssertionError.class)
     public final void test_brokensummaryBreaksDataFlow() 
             throws IllegalArgumentException, CallGraphBuilderCancelException,
