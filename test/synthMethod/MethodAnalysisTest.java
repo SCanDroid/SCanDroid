@@ -248,8 +248,10 @@ public class MethodAnalysisTest {
         throws IOException, ClassHierarchyException, IllegalArgumentException, 
                CallGraphBuilderCancelException {
         
+        @SuppressWarnings("unchecked")
         MethodAnalysis<IExplodedBasicBlock> methodAnalysis =
                 new MethodAnalysis<IExplodedBasicBlock>(Predicate.TRUE);
+
         AnalysisScope scope = 
                 DexAnalysisScopeReader.makeAndroidBinaryAnalysisScope(jarFile, 
                    new File("conf/Java60RegressionExclusions.txt"));

@@ -225,7 +225,7 @@ public class XMLMethodSummaryWriter {
         Element rootElement = doc.createElement(E_SUMMARY_SPEC);
         doc.appendChild(rootElement);
 
-        for (Entry<IMethod, Map<FlowType, Set<CodeElement>>> imE : 
+        for (Entry<IMethod, Map<FlowType<IExplodedBasicBlock>, Set<CodeElement>>> imE : 
               methodAnalysis.newSummaries.entrySet()) {
         	if (imE.getValue().isEmpty())
         		continue;
@@ -236,7 +236,7 @@ public class XMLMethodSummaryWriter {
                 if (im.isStatic())
                     mE.setAttribute(A_STATIC, V_TRUE);
 
-                for (Entry<FlowType, Set<CodeElement>> ftE : imE.getValue()
+                for (Entry<FlowType<IExplodedBasicBlock>, Set<CodeElement>> ftE : imE.getValue()
                         .entrySet()) {
                     addFlowsToMethod(doc, mE, ftE,
                             buildIKParamMap(im, methodAnalysis));
@@ -296,21 +296,21 @@ public class XMLMethodSummaryWriter {
     }
 
     private static void addFlowsToMethod(Document doc, Element mE,
-            Entry<FlowType, Set<CodeElement>> ftE,
+            Entry<FlowType<IExplodedBasicBlock>, Set<CodeElement>> ftE,
             Map<InstanceKey, Set<Integer>> IKMap) {
-        FlowType ft = ftE.getKey();
+        FlowType<IExplodedBasicBlock> ft = ftE.getKey();
         if (ft instanceof ParameterFlow) {
             // handle parameter flow
-            addParameterFlow(doc, mE, ftE, IKMap, (ParameterFlow) ft);
+            addParameterFlow(doc, mE, ftE, IKMap, (ParameterFlow<IExplodedBasicBlock>) ft);
         } else if (ft instanceof FieldFlow) {
             // handle field flow
-            addFieldFlow(doc, mE, ftE, IKMap, (FieldFlow) ft);
+            addFieldFlow(doc, mE, ftE, IKMap, (FieldFlow<IExplodedBasicBlock>) ft);
         }
     }
 
     private static void addFieldFlow(Document doc, Element mE,
-            Entry<FlowType, Set<CodeElement>> ftE,
-            Map<InstanceKey, Set<Integer>> IKMap, FieldFlow ff) {
+            Entry<FlowType<IExplodedBasicBlock>, Set<CodeElement>> ftE,
+            Map<InstanceKey, Set<Integer>> IKMap, FieldFlow<IExplodedBasicBlock> ff) {
         Element e;
         //get static field
         if (ff.getField().isStatic()) {
@@ -364,9 +364,9 @@ public class XMLMethodSummaryWriter {
     }
 
     private static void addParameterFlow(Document doc, Element mE,
-            Entry<FlowType, Set<CodeElement>> ftE,
+            Entry<FlowType<IExplodedBasicBlock>, Set<CodeElement>> ftE,
             Map<InstanceKey, Set<Integer>> IKMap, 
-            ParameterFlow pf) {
+            ParameterFlow<IExplodedBasicBlock> pf) {
         
         for (CodeElement ce: ftE.getValue()) {
         	//parameter flows to return value

@@ -103,8 +103,8 @@ import flow.types.ParameterFlow;
 public class MethodAnalysis <E extends ISSABasicBlock>  {
 	//contains a mapping from an IMethod to a mapping of flows
 	//parameters and fields to returns or other fields.
-	public final Map<IMethod, Map<FlowType, Set<CodeElement>>> newSummaries =
-	        new HashMap<IMethod, Map<FlowType, Set<CodeElement>>>();
+	public final Map<IMethod, Map<FlowType<E>, Set<CodeElement>>> newSummaries =
+	        new HashMap<IMethod, Map<FlowType<E>, Set<CodeElement>>>();
 	//contains a mapping from an IMethod to a mapping of Integers
 	//(which represent the parameter #) to their respective instancekey set
 	public final Map<IMethod, Map<Integer, OrdinalSet<InstanceKey>>> methodTaints = 
@@ -169,7 +169,7 @@ public class MethodAnalysis <E extends ISSABasicBlock>  {
 			return;
 		}
 
-		Map<FlowType, Set<CodeElement>> methodFlows = new HashMap<FlowType, Set<CodeElement>>();
+		Map<FlowType<E>, Set<CodeElement>> methodFlows = new HashMap<FlowType<E>, Set<CodeElement>>();
 		newSummaries.put(entryMethod, methodFlows);
 
 		Map<Integer, OrdinalSet<InstanceKey>> pTaintIKMap = new HashMap<Integer, OrdinalSet<InstanceKey>> ();
@@ -186,7 +186,7 @@ public class MethodAnalysis <E extends ISSABasicBlock>  {
 			//int id = entryMethod.isStatic()?i:i+1;
 
 			DomainElement de = new DomainElement(new LocalElement(i),
-			                         new ParameterFlow(methEntryBlock, i, true));
+			                         new ParameterFlow<E>(methEntryBlock, i, true));
 			
 			OrdinalSet<InstanceKey> pointsToSet = 
 			        pa.getPointsToSet(
@@ -293,14 +293,14 @@ public class MethodAnalysis <E extends ISSABasicBlock>  {
 	static<E extends ISSABasicBlock> void checkResults(IFDSTaintDomain<E> domain,
 			TabulationResult<BasicBlockInContext<E>,CGNode, DomainElement> flowResult, Set<DomainElement> initialTaints,
 			ISupergraph<BasicBlockInContext<E>, CGNode> graph, BasicBlockInContext<E> methEntryBlock, 
-			Map<FlowType, Set<CodeElement>> methodFlows) {
+			Map<FlowType<E>, Set<CodeElement>> methodFlows) {
 		MyLogger.log(DEBUG,"***************");	 
 		MyLogger.log(DEBUG,"Method Analysis");
 		MyLogger.log(DEBUG,methEntryBlock.getMethod().getSignature());
 		MyLogger.log(DEBUG,"***************");
 
 
-		Set<FlowType> initialFlowSet = new HashSet<FlowType> ();
+		Set<FlowType<E>> initialFlowSet = new HashSet<FlowType<E>> ();
 		for (DomainElement de:initialTaints) {
 			initialFlowSet.add(de.taintSource);
 		}
@@ -351,7 +351,9 @@ public class MethodAnalysis <E extends ISSABasicBlock>  {
 
 	}
 
-	static void addToFlow (FlowType ft, CodeElement ce,  Map<FlowType, Set<CodeElement>> methodFlows) {
+	public static <E extends ISSABasicBlock> 
+	void addToFlow (FlowType<E> ft, CodeElement ce,  
+	                Map<FlowType<E>, Set<CodeElement>> methodFlows) {
 		Set<CodeElement> ceSet = methodFlows.get(ft);
 		if (ceSet == null) {
 			ceSet = new HashSet<CodeElement>();
