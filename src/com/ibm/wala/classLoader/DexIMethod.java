@@ -995,6 +995,8 @@ public class DexIMethod implements IBytecodeMethod {
 			case CONST:
 				instructions.add(new Constant.IntConstant(instLoc,
 						(int)((Instruction31i)inst).getLiteral(), ((Instruction31i)inst).getRegisterA(), inst.opcode, this));
+				MyLogger.log(LogLevel.DEBUG, "\tRegister: " + ((Instruction31i)inst).getRegisterA() + ", Value: " + ((Instruction31i)inst).getLiteral());
+
 				break;
 			case CONST_HIGH16:
 				instructions.add(new Constant.IntConstant(instLoc,

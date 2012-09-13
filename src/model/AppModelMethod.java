@@ -29,6 +29,7 @@ import com.ibm.wala.ipa.callgraph.impl.Everywhere;
 import com.ibm.wala.ipa.cha.IClassHierarchy;
 import com.ibm.wala.ipa.summaries.MethodSummary;
 import com.ibm.wala.shrikeBT.IInvokeInstruction;
+import com.ibm.wala.shrikeBT.IInvokeInstruction.IDispatch;
 import com.ibm.wala.ssa.ConstantValue;
 import com.ibm.wala.ssa.SSAArrayStoreInstruction;
 import com.ibm.wala.ssa.SSAInstructionFactory;
@@ -105,12 +106,52 @@ public class AppModelMethod {
     	buildTypeMap();
 		processTypeMap();
 		processCallBackParams();
-//		createWhileLoop();
-//		createSwitch();
-//		processCases();
-//		endWhileLoop();
+		createLoopAndSwitch();
     }
 
+	private void createLoopAndSwitch() {
+		int callbackSize = callBacks.size();
+		//start of while loop
+		int loopLabel = methodSummary.getStatements().length;
+		int switchValue = nextLocal++;
+		//default label, for now same as case1
+		int defLabel = loopLabel+1;
+		int[] casesAndLabels = new int[2*callbackSize];
+        
+        for (int i = 0; i < callbackSize; i++) {
+        	casesAndLabels[i*2] = i+1;
+        	casesAndLabels[i*2+1] = defLabel+i*2;
+        }
+        
+        methodSummary.addStatement(
+        		insts.SwitchInstruction(switchValue, defLabel, casesAndLabels));
+        
+        for (int i = 0; i < callbackSize; i++) {
+        	MethodParams mp = callBacks.get(i);
+        	IMethod im = mp.getIMethod();
+        	IDispatch dispatch;
+        	if (im.isInit()) {
+        		dispatch = IInvokeInstruction.Dispatch.SPECIAL;
+        	}
+        	else if (im.isAbstract()) {
+        		dispatch = IInvokeInstruction.Dispatch.INTERFACE;
+        	}
+        	else if (im.isStatic()) {
+        		dispatch = IInvokeInstruction.Dispatch.STATIC;
+        	}
+        	else
+        		dispatch = IInvokeInstruction.Dispatch.VIRTUAL;
+        	addInvocation(mp.getParams(), 
+        			CallSiteReference.make(methodSummary.getStatements().length, 
+        					mp.getIMethod().getReference(), 
+        					dispatch));        	
+        	methodSummary.addStatement(insts.GotoInstruction(loopLabel));
+        }
+
+		
+		
+	}
+	
 	private void startMethod() {
     	String className = "Lcom/SCanDroid/AppModel";
     	String methodName = "entry";
@@ -213,7 +254,7 @@ public class AppModelMethod {
     			params[i] = makeArgument(mp.getIMethod().getParameterType(i));
     		}
     		mp.setParams(params);    		
-    	}
+    	}    	    
     }
     
     private int makeArgument(TypeReference tr) {
@@ -231,8 +272,7 @@ public class AppModelMethod {
     
     private SSANewInstruction processAllocation (TypeReference tr, Integer i, boolean isInner) {
         // create the allocation statement and add it to the method summary
-        NewSiteReference ref = NewSiteReference.make(methodSummary.getNextProgramCounter(), tr);
-
+        NewSiteReference ref = NewSiteReference.make(methodSummary.getStatements().length, tr);        
         SSANewInstruction a = null;
         
         if (tr.isArrayType()) {
@@ -255,7 +295,7 @@ public class AppModelMethod {
         	TypeReference e = klass.getReference().getArrayElementType();
         	while (e != null && !e.isPrimitiveType()) {
         		// allocate an instance for the array contents
-        		NewSiteReference n = NewSiteReference.make(methodSummary.getNextProgramCounter(), e);
+        		NewSiteReference n = NewSiteReference.make(methodSummary.getStatements().length, e);
         		int alloc = nextLocal++;
         		SSANewInstruction ni = null;
         		if (e.isArrayType()) {
@@ -303,7 +343,7 @@ public class AppModelMethod {
 			else {
 				params = new int[] {i, typeToID.get(icDependencies.get(tr).get(icDependencies.get(tr).size()-2))};
 			}
-        	addInvocation(params, CallSiteReference.make(methodSummary.getNextProgramCounter(), ctor.getReference(),
+        	addInvocation(params, CallSiteReference.make(methodSummary.getStatements().length, ctor.getReference(),
         			IInvokeInstruction.Dispatch.SPECIAL));
         }
 
@@ -314,7 +354,7 @@ public class AppModelMethod {
     	if (site == null) {
     		throw new IllegalArgumentException("site is null");
     	}
-    	CallSiteReference newSite = CallSiteReference.make(methodSummary.getNextProgramCounter(), site.getDeclaredTarget(), site.getInvocationCode());
+    	CallSiteReference newSite = CallSiteReference.make(methodSummary.getStatements().length, site.getDeclaredTarget(), site.getInvocationCode());
     	SSAInvokeInstruction s = null;
     	if (newSite.getDeclaredTarget().getReturnType().equals(TypeReference.Void)) {
     		s = insts.InvokeInstruction(params, nextLocal++, newSite);

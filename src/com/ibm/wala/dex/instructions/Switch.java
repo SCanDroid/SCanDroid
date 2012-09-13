@@ -41,6 +41,9 @@ package com.ibm.wala.dex.instructions;
 
 import org.jf.dexlib.Code.Opcode;
 
+import util.MyLogger;
+import util.MyLogger.LogLevel;
+
 import com.ibm.wala.classLoader.DexIMethod;
 
 public class Switch extends Instruction {
@@ -70,6 +73,12 @@ public class Switch extends Instruction {
             casesAndLabels[i] = method.getInstructionIndex(pc+casesAndLabels[i]);
 
         defaultLabel = method.getInstructionIndex(pc + pad.getDefaultOffset());
+        MyLogger.log(LogLevel.DEBUG, "SwitchInstruction");
+        for (int i = 0; i < casesAndLabels.length; i+=2) {
+        	MyLogger.log(LogLevel.DEBUG, "\tcase: " + casesAndLabels[i] + 
+        			" label: "+casesAndLabels[i+1]);
+        }
+        MyLogger.log(LogLevel.DEBUG, "\tdefaultLabel: " + defaultLabel);
     }
 
     public int[] getOffsets()
