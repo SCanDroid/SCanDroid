@@ -67,6 +67,7 @@ import com.ibm.wala.ssa.ISSABasicBlock;
 import com.ibm.wala.ssa.SSAArrayLengthInstruction;
 import com.ibm.wala.ssa.SSAArrayLoadInstruction;
 import com.ibm.wala.ssa.SSAArrayStoreInstruction;
+import com.ibm.wala.ssa.SSABinaryOpInstruction;
 import com.ibm.wala.ssa.SSAGetInstruction;
 import com.ibm.wala.ssa.SSAInstruction;
 import com.ibm.wala.ssa.SSAInvokeInstruction;
@@ -108,7 +109,7 @@ implements IFlowFunctionMap<BasicBlockInContext<E>> {
 
 	// instruction has a valid def set
 	private static boolean inFlow(SSAInstruction instruction) {
-		return  (instruction instanceof SSAArrayLengthInstruction ) || 
+		return  
 				(instruction instanceof SSAArrayLoadInstruction) ||
 				(instruction instanceof SSAGetInstruction);
 	}
@@ -207,16 +208,9 @@ implements IFlowFunctionMap<BasicBlockInContext<E>> {
                         	p.defs.add(new LocalElement(instruction.getDef(0)));
                         }
 					}
-					else {
-						//getuse() is result value for getfield.  arrayref for arrayload
-						for (int i = 0; i < instruction.getNumberOfUses(); i++) {
-							p.uses.addAll(CodeElement.valueElements(pa, bb.getNode(), instruction.getUse(i)));
-						}
-						//getdef() is result value
-						for (int j = 0; j < instruction.getNumberOfDefs(); j++) {
-							/* TODO: why not add instance keys, too? */
-							p.defs.add(new LocalElement(instruction.getDef(j)));
-						}
+					else if (instruction instanceof SSAArrayLoadInstruction){
+						p.uses.addAll(CodeElement.valueElements(pa, bb.getNode(), instruction.getUse(0)));
+						p.defs.addAll(CodeElement.valueElements(pa, bb.getNode(),instruction.getDef()));
 					}
 				}
 				else if (outFlow(instruction)) {
@@ -295,15 +289,17 @@ implements IFlowFunctionMap<BasicBlockInContext<E>> {
 						}
 						p.defs.add(new ReturnElement());
 					}
-					else
-					{
-						continue;
-					}
 				}
 				else
 				{
-					continue;
+					for (int i = 0; i < instruction.getNumberOfUses(); i++) {
+						p.uses.addAll(CodeElement.valueElements(pa, bb.getNode(), instruction.getUse(i)));
+					}
+					for (int j = 0; j < instruction.getNumberOfDefs(); j++) {
+						p.defs.addAll(CodeElement.valueElements(pa, bb.getNode(), instruction.getDef(j)));
+					}
 				}
+				
 				useToDefList.add(p);
 			}
 		}
