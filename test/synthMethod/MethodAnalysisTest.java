@@ -158,6 +158,24 @@ public class MethodAnalysisTest {
         String appJar = TEST_DATA_DIR + File.separator + "trivialJar2-1.0-SNAPSHOT.jar";
         runOnJar(appJar, new TestSpecs());
     }
+
+    /**
+     * Trivial Jar 8 uses simple cons-style lists to experiment with looping and field access on objects.
+     *
+     * @throws IllegalArgumentException
+     * @throws CallGraphBuilderCancelException
+     * @throws IOException
+     * @throws ClassHierarchyException
+     */
+    //@Ignore
+    @Test
+    public final void test_consCellLooping()
+            throws IllegalArgumentException, CallGraphBuilderCancelException,
+            IOException, ClassHierarchyException {
+
+        String appJar = TEST_DATA_DIR + File.separator + "trivialJar8-1.0-SNAPSHOT.jar";
+        runOnJar(appJar, new TestSpecs());
+    }
     
     /**
      * TrivialJar3 uses .length on an array (incoming params to main(String[] args))
