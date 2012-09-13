@@ -449,22 +449,24 @@ implements IFlowFunctionMap<BasicBlockInContext<E>> {
 			// TODO: look into exception handling through getDef(1)
 			if(call.getLastInstruction() instanceof SSAInvokeInstruction) {
 				SSAInvokeInstruction invInst = (SSAInvokeInstruction) call.getLastInstruction();
-				if(!invInst.isSpecial() && !invInst.isStatic()) {
+				if(!invInst.isSpecial()) {// && !invInst.isStatic()) {
 //					for (int i = 0; i < invInst.getNumberOfReturnValues(); i++) {
 //						
 //					}
 					if (invInst.hasDef()) {
 						callSet = new LocalElement(invInst.getReturnValue(0));
 
-						//used to be invInst.getReceiver(), but I believe that was incorrect.
-						receivers.addAll(CodeElement.valueElements(pa, call.getNode(), invInst.getReceiver()));
-						//receivers.addAll(CodeElement.valueElements(pa, call.getNode(), invInst.getReturnValue(0)));
+						if ( !invInst.isStatic() ) {
+							//used to be invInst.getReceiver(), but I believe that was incorrect.
+							receivers.addAll(CodeElement.valueElements(pa, call.getNode(), invInst.getReceiver()));
+							//receivers.addAll(CodeElement.valueElements(pa, call.getNode(), invInst.getReturnValue(0)));
+						}
 					}
 				}				
 			}
-			else
+			else {
 				callSet = null;
-			
+			}
 //			// TODO: look into exception handling through getDef(1)
 //			if(call.getLastInstruction().getNumberOfDefs() == 1)
 //			{

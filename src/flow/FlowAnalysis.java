@@ -41,8 +41,8 @@ package flow;
 
 import static util.MyLogger.LogLevel.DEBUG;
 
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -54,6 +54,7 @@ import util.GraphUtil;
 import util.IFDSTaintFlowFunctionProvider;
 import util.MyLogger;
 
+import com.google.common.collect.Lists;
 import com.ibm.wala.dataflow.IFDS.IFlowFunctionMap;
 import com.ibm.wala.dataflow.IFDS.IMergeFunction;
 import com.ibm.wala.dataflow.IFDS.ISupergraph;
@@ -94,10 +95,10 @@ public class FlowAnalysis {
       analyze(final ISupergraph<BasicBlockInContext<E>, CGNode> graph,
               CallGraph cg,
               PointerAnalysis pa,
-            Map<BasicBlockInContext<E>,
-            Map<FlowType<E>,Set<CodeElement>>> initialTaints,
-            IFDSTaintDomain<E> d,
-            MethodAnalysis<E> methodAnalysis
+              Map<BasicBlockInContext<E>,
+              Map<FlowType<E>,Set<CodeElement>>> initialTaints,
+              IFDSTaintDomain<E> d,
+              MethodAnalysis<E> methodAnalysis
             ) throws CancelRuntimeException {
 
         System.out.println("*************************");
@@ -106,8 +107,8 @@ public class FlowAnalysis {
 
         final IFDSTaintDomain<E> domain = d;
 
-        final ArrayList<PathEdge<BasicBlockInContext<E>>>
-           initialEdges = new ArrayList();
+        final List<PathEdge<BasicBlockInContext<E>>>
+           initialEdges = Lists.newArrayList();
 
         //Add PathEdges to the taints
         for(Entry<BasicBlockInContext<E>, Map<FlowType<E>,Set<CodeElement>>> e:initialTaints.entrySet())
