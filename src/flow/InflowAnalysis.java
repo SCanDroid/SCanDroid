@@ -57,6 +57,8 @@ import spec.EntryArgSourceSpec;
 import spec.ISpecs;
 import spec.SourceSpec;
 import util.AndroidAppLoader;
+import util.MyLogger;
+import util.MyLogger.LogLevel;
 
 import com.ibm.wala.classLoader.IMethod;
 import com.ibm.wala.dataflow.IFDS.ISupergraph;
@@ -118,7 +120,7 @@ public class InflowAnalysis <E extends ISSABasicBlock> {
                             ISupergraph<BasicBlockInContext<E>, CGNode> graph,
                             ClassHierarchy cha,
                             PointerAnalysis pa) {
-    	int[] newArgNums;    	
+    	int[] newArgNums;
     	for (IMethod im:ss.getNamePattern().getPossibleTargets(cha)) {
     		CGNode node = cg.getNode(im, Everywhere.EVERYWHERE);
     		newArgNums = (ss.getArgNums() == null) ? SourceSpec.getNewArgNums((im.isStatic())?im.getNumberOfParameters():im.getNumberOfParameters()-1) : ss.getArgNums();
@@ -194,8 +196,8 @@ public class InflowAnalysis <E extends ISSABasicBlock> {
     }
 
     public static <E extends ISSABasicBlock>
-      Map<BasicBlockInContext<E>,Map<FlowType<E>,Set<CodeElement>>> analyze(
-          CallGraph cg, 
+      Map<BasicBlockInContext<E>,Map<FlowType<E>,Set<CodeElement>>> 
+    analyze(CallGraph cg, 
           ClassHierarchy cha, 
           ISupergraph<BasicBlockInContext<E>, CGNode> graph,
           PointerAnalysis pa, 
@@ -210,6 +212,8 @@ public class InflowAnalysis <E extends ISSABasicBlock> {
             new HashMap<BasicBlockInContext<E>,Map<FlowType<E>,Set<CodeElement>>>();
 
         SourceSpec[] ss = s.getSourceSpecs();
+        MyLogger.log(LogLevel.DEBUG, ss.length + " Source Specs. ");
+        
         ArrayList<SourceSpec> ssAL = new ArrayList<SourceSpec>();
         for (int i = 0; i < ss.length; i++) {
         	if (ss[i] instanceof EntryArgSourceSpec)

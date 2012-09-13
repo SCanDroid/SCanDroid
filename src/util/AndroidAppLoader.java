@@ -59,6 +59,7 @@ import java.util.jar.JarFile;
 
 import prefixTransfer.UriPrefixContextSelector;
 import spec.AndroidSpecs;
+import util.MyLogger.LogLevel;
 
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -409,10 +410,14 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
 					summaryClasses.addAll(newSummaryXML.getAllocatableClasses());
 					summaries.putAll(newSummaryXML.getSummaries());
 			}
+			MyLogger.log(LogLevel.DEBUG, "loaded "+summaries.size()+" new summaries");
 			
 			XMLMethodSummaryReader nativeSummaries = 
 					loadMethodSummaries(scope, pathToSpec + File.separator + methodSpec);
-		    
+			
+			MyLogger.log(LogLevel.DEBUG, "loaded "
+					+nativeSummaries.getSummaries().size()+" native summaries");
+			
 			summaries.putAll(nativeSummaries.getSummaries());
 			summaryClasses.addAll(nativeSummaries.getAllocatableClasses());
 			

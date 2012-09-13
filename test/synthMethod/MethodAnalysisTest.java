@@ -422,10 +422,12 @@ public class MethodAnalysisTest {
             Map<FlowType<IExplodedBasicBlock>, Set<CodeElement>>> initialTaints = 
               InflowAnalysis.analyze(cg, cha, sg, pa, new HashMap<InstanceKey, String>(), specs);
                    
+        System.out.println("  InitialTaints count: "+initialTaints.size());
+        
         IFDSTaintDomain<IExplodedBasicBlock> domain = new IFDSTaintDomain<IExplodedBasicBlock>();
         TabulationResult<BasicBlockInContext<IExplodedBasicBlock>, CGNode, DomainElement> 
           flowResult = FlowAnalysis.analyze(sg, cg, pa, initialTaints, domain, methodAnalysis);
-
+        
         Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>>
           permissionOutflow = OutflowAnalysis.analyze(cg, cha, sg, pa, flowResult, domain, specs);
         

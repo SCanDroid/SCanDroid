@@ -44,19 +44,23 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
-
-import org.jgrapht.graph.DefaultEdge;
 
 import spec.CallArgSinkSpec;
 import spec.EntryArgSinkSpec;
-import spec.SinkSpec;
 import spec.ISpecs;
+import spec.SinkSpec;
 import util.AndroidAppLoader;
-import util.WalaGraphToJGraphT;
+import util.MyLogger;
+import util.MyLogger.LogLevel;
 
+import com.google.common.collect.Collections2;
+import com.google.common.collect.Iterators;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.ibm.wala.classLoader.IMethod;
 import com.ibm.wala.dataflow.IFDS.ISupergraph;
 import com.ibm.wala.dataflow.IFDS.TabulationResult;
@@ -79,7 +83,6 @@ import domain.InstanceKeyElement;
 import domain.LocalElement;
 import flow.types.FlowType;
 import flow.types.ParameterFlow;
-import flow.types.ReturnFlow;
 
 
 public class OutflowAnalysis <E extends ISSABasicBlock> {
@@ -96,17 +99,20 @@ public class OutflowAnalysis <E extends ISSABasicBlock> {
         dests.add(dest);
     }
     
-    private static <E extends ISSABasicBlock> void processArgSinks(
-            TabulationResult<BasicBlockInContext<E>, CGNode, DomainElement> flowResult,
-            IFDSTaintDomain<E> domain, Map<FlowType<E>, Set<FlowType<E>>> flowGraph, 
-            ArrayList<SinkSpec> ssAL, ClassHierarchy cha, PointerAnalysis pa, 
-            ISupergraph<BasicBlockInContext<E>, CGNode> graph, CallGraph cg) {
-    	Collection<IMethod> targets = new HashSet<IMethod>();
-    	ArrayList<Collection<IMethod>> targetList = new ArrayList<Collection<IMethod>>();
+    private static <E extends ISSABasicBlock> 
+    void processArgSinks(
+      TabulationResult<BasicBlockInContext<E>, CGNode, DomainElement> flowResult,
+      IFDSTaintDomain<E> domain,
+      Map<FlowType<E>, Set<FlowType<E>>> flowGraph, 
+      List<SinkSpec> sinkSpecs,
+      ClassHierarchy cha,
+      PointerAnalysis pa, 
+      ISupergraph<BasicBlockInContext<E>, CGNode> graph,
+      CallGraph cg) {
+    	List<Collection<IMethod>> targetList = Lists.newArrayList();
     	
-    	for (int i = 0; i < ssAL.size(); i++) {
-    		Collection<IMethod> tempList = ssAL.get(i).getNamePattern().getPossibleTargets(cha);
-    		targets.addAll(tempList);
+    	for (int i = 0; i < sinkSpecs.size(); i++) {
+    		Collection<IMethod> tempList = sinkSpecs.get(i).getNamePattern().getPossibleTargets(cha);
     		targetList.add(tempList);
     	}
     	
@@ -114,56 +120,72 @@ public class OutflowAnalysis <E extends ISSABasicBlock> {
         Iterator<BasicBlockInContext<E>> graphIt = graph.iterator();
         while (graphIt.hasNext()) {
             BasicBlockInContext<E> block = graphIt.next();
-            Iterator<SSAInstruction> instructions = block.iterator();
 
-            while (instructions.hasNext()) {
-                SSAInstruction inst = instructions.next();
+            Iterator<SSAInvokeInstruction> invokeInstrs =
+                Iterators.filter(block.iterator(), SSAInvokeInstruction.class);
+            
+            while (invokeInstrs.hasNext()) {
+                SSAInvokeInstruction invInst = invokeInstrs.next();
+                
+                for(IMethod target : cha.getPossibleTargets(invInst.getDeclaredTarget())) {
 
-                if (!(inst instanceof SSAInvokeInstruction)) {
-                    continue;
-                }
-                SSAInvokeInstruction invInst = (SSAInvokeInstruction) inst;
-                for(IMethod target:cha.getPossibleTargets(invInst.getDeclaredTarget()))
-                {
-                	if (targets.contains(target)) {
-                		for (int i = 0; i < targetList.size(); i++) {
-                			if (targetList.get(i).contains(target)) {
-                				int[] argNums = ssAL.get(i).getArgNums();
-                				argNums = (argNums == null) ? SinkSpec.getNewArgNums((target.isStatic())?target.getNumberOfParameters():target.getNumberOfParameters()-1) : argNums;
-                				
-                	            CGNode node = block.getNode();
+            		for (int i = 0; i < targetList.size(); i++) {
+            			if (!targetList.get(i).contains(target)) {
+            				continue;
+            			}
+            			MyLogger.log(LogLevel.DEBUG, "Found target: "+target);
+        				int[] argNums = sinkSpecs.get(i).getArgNums();
+        				
+        				if (null == argNums) {
+        					int staticIndex = 0 ;
+        					if (target.isStatic()) {
+        						staticIndex = 1;
+        					}
+        					
+        					int targetParamCount = target.getNumberOfParameters() - staticIndex;
+        					argNums = SinkSpec.getNewArgNums(targetParamCount);
+        				}
+        				
+        	            CGNode node = block.getNode();
 
-                	            IntSet resultSet = flowResult.getResult(block);
-                	            for(int j = 0; j<argNums.length; j++) {
-                    	            Set<FlowType> taintTypeSet = new HashSet<FlowType>();
+        	            IntSet resultSet = flowResult.getResult(block);
+        	            for(int j = 0; j < argNums.length; j++) {
+        	            	MyLogger.log(LogLevel.DEBUG, 
+        	            			"Looping over arg["+j+"] of "+argNums.length);
+        	            	
+        	            	// The set of flow types we're looking for:
+        	            	Set<FlowType<E>> taintTypeSet = Sets.newHashSet();
 
-                	                LocalElement le = new LocalElement(invInst.getUse(argNums[j]));
-                	                Set<DomainElement> elements = domain.getPossibleElements(le);
-                	                if(elements != null) {
-                	                    for(DomainElement de:elements) {
-                	                        if(resultSet.contains(domain.getMappedIndex(de))) {
-                	                            taintTypeSet.add(de.taintSource);
-                	                        }
-                	                    }
-                	                }
+        	                LocalElement le = new LocalElement(invInst.getUse(argNums[j]));
+        	                Set<DomainElement> elements = domain.getPossibleElements(le);
+        	                if(elements != null) {
+        	                    for(DomainElement de:elements) {
+        	                        if(resultSet.contains(domain.getMappedIndex(de))) {
+        	                        	MyLogger.log(LogLevel.DEBUG, "added to taintTypeSpecs: "+de.taintSource);
+        	                            taintTypeSet.add(de.taintSource);
+        	                        }
+        	                    }
+        	                }
 
-                	                for(InstanceKey ik: pa.getPointsToSet(new LocalPointerKey(node,invInst.getUse(argNums[j])))) {
-                	                    for(DomainElement de:domain.getPossibleElements(new InstanceKeyElement(ik))) {
-                	                        if(resultSet.contains(domain.getMappedIndex(de))) {
-                	                            taintTypeSet.add(de.taintSource);
-                	                        }
-                	                    }
-                	                }
-                	                
-                                    for(FlowType<E> dest: ssAL.get(i).getFlowType(block)) {
-                                        for(FlowType<E> source: taintTypeSet) {
-                    	                    // flow taint into uriIK
-                    	                    addEdge(flowGraph, source, dest);
-                    	                }
-                    	            }
-                	            }
-                			}
-                		}
+        	                LocalPointerKey lpkey = new LocalPointerKey(node,invInst.getUse(argNums[j]));
+							for(InstanceKey ik: pa.getPointsToSet(lpkey)) {
+        	                    for(DomainElement de :
+        	                    	domain.getPossibleElements(new InstanceKeyElement(ik))) {
+        	                        if(resultSet.contains(domain.getMappedIndex(de))) {
+        	                        	MyLogger.log(LogLevel.DEBUG, "added to taintTypeSpecs: "+de.taintSource);
+        	                            taintTypeSet.add(de.taintSource);
+        	                        }
+        	                    }
+        	                }
+        	                
+                            for(FlowType<E> dest: sinkSpecs.get(i).getFlowType(block)) {
+					            for(FlowType<E> source: taintTypeSet) {
+					            	MyLogger.log(LogLevel.DEBUG, "added edge: "+source+" \n \tto \n\t"+dest);
+					                // flow taint into uriIK
+					                addEdge(flowGraph, source, dest);
+					            }
+					        }
+        	            }
                 	}
                 }
             }
@@ -235,18 +257,19 @@ public class OutflowAnalysis <E extends ISSABasicBlock> {
         System.out.println("* Running outflow analysis *");
         System.out.println("****************************");
 
-        Map<FlowType<E>, Set<FlowType<E>>> taintFlow = new HashMap<FlowType<E>,Set<FlowType<E>>>();
+        Map<FlowType<E>, Set<FlowType<E>>> taintFlow = Maps.newHashMap();
 
         SinkSpec[] ss = s.getSinkSpecs();
+        MyLogger.log(LogLevel.DEBUG, ss.length + " sink Specs. ");
         
-        ArrayList<SinkSpec> ssAL = new ArrayList<SinkSpec>();
+        List<SinkSpec> ssAL = Lists.newArrayList();
         for (int i = 0; i < ss.length; i++) {
         	if (ss[i] instanceof EntryArgSinkSpec)
         		processEntryArgs(flowResult, domain, taintFlow, ss[i], cg, graph, pa, cha);
         	else if (ss[i] instanceof CallArgSinkSpec)
         		ssAL.add(ss[i]);
         	else
-        		throw new UnsupportedOperationException("SourceSpec not yet Implemented");
+        		throw new UnsupportedOperationException("SinkSpec not yet Implemented");
         }
         if (!ssAL.isEmpty())
         	processArgSinks(flowResult, domain, taintFlow, ssAL, cha, pa, graph, cg);
