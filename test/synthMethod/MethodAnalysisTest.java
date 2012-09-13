@@ -176,6 +176,24 @@ public class MethodAnalysisTest {
         String appJar = TEST_DATA_DIR + File.separator + "trivialJar8-1.0-SNAPSHOT.jar";
         runOnJar(appJar, new TestSpecs());
     }
+
+    /**
+     * Trivial Jar 7 uses a local variable as part of the data flow.
+     *
+     * @throws IllegalArgumentException
+     * @throws CallGraphBuilderCancelException
+     * @throws IOException
+     * @throws ClassHierarchyException
+     */
+    //@Ignore
+    @Test
+    public final void test_localVariableFlow()
+            throws IllegalArgumentException, CallGraphBuilderCancelException,
+            IOException, ClassHierarchyException {
+
+        String appJar = TEST_DATA_DIR + File.separator + "trivialJar7-1.0-SNAPSHOT.jar";
+        runOnJar(appJar, new TestSpecs());
+    }
     
     /**
      * TrivialJar3 uses .length on an array (incoming params to main(String[] args))
