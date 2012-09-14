@@ -67,7 +67,7 @@ import flow.types.ParameterFlow;
  */
 public class CallArgSourceSpec extends SourceSpec {
 	final String name = "CallArgSource";
-	CallArgSourceSpec(MethodNamePattern name, int[] args) {
+	public CallArgSourceSpec(MethodNamePattern name, int[] args) {
 		namePattern = name;
 		argNums = args;
 	}

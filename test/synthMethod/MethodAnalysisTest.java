@@ -20,6 +20,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import spec.CallArgSinkSpec;
+import spec.CallArgSourceSpec;
 import spec.EntryArgSourceSpec;
 import spec.ISpecs;
 import spec.MethodNamePattern;
@@ -193,6 +194,36 @@ public class MethodAnalysisTest {
 
         String appJar = TEST_DATA_DIR + File.separator + "trivialJar7-1.0-SNAPSHOT.jar";
         runOnJar(appJar, new TestSpecs());
+    }
+    
+    /**
+     * Test to see if methods that invoke sources are summarized properly.
+     *
+     * @throws IllegalArgumentException
+     * @throws CallGraphBuilderCancelException
+     * @throws IOException
+     * @throws ClassHierarchyException
+     */
+    //@Ignore
+    @Test
+    public final void test_flowFromInvokedSource()
+            throws IllegalArgumentException, CallGraphBuilderCancelException,
+            IOException, ClassHierarchyException {
+
+        String appJar = TEST_DATA_DIR + File.separator + "trivialJar7-1.0-SNAPSHOT.jar";
+        runOnJar(appJar, new TestSpecs() {
+            @Override
+            public SourceSpec[] getSourceSpecs() {
+                return new SourceSpec[] { 
+                         new EntryArgSourceSpec(new MethodNamePattern(
+                           "Lorg/scandroid/testing/App", "invokeCallArgSourceSpec"),
+                           new int[] { 0 }),
+                         new CallArgSourceSpec(new MethodNamePattern(
+                           "Lorg/scandroid/testing/App", "load"),
+                           new int[] { 0 })
+                         };
+            }
+        });
     }
     
     /**
@@ -385,6 +416,9 @@ public class MethodAnalysisTest {
            AndroidAppLoader.makeVanillaZeroOneCFABuilder(
                    options, new AnalysisCache(), cha, scope, null, null, WALA_NATIVES_XML);
 
+//        CallGraphBuilder builder = Util.makeZeroCFABuilder(options, cache, cha, scope, new
+//	               UriPrefixContextSelector(options, cha), null);
+        
         CallGraph cg = builder.makeCallGraph(options, null);
         ISupergraph<BasicBlockInContext<IExplodedBasicBlock>, CGNode> sg = 
                 ICFGSupergraph.make(cg, builder.getAnalysisCache());
