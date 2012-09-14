@@ -51,6 +51,7 @@ import java.util.Set;
 import util.IFDSTaintFlowFunctionProvider;
 import util.LoaderUtils;
 import util.MyLogger;
+import util.MyLogger.LogLevel;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -74,6 +75,7 @@ import com.ibm.wala.ipa.callgraph.propagation.PointerAnalysis;
 import com.ibm.wala.ipa.callgraph.propagation.PointerKey;
 import com.ibm.wala.ipa.callgraph.propagation.StaticFieldKey;
 import com.ibm.wala.ipa.cfg.BasicBlockInContext;
+import com.ibm.wala.ipa.cha.IClassHierarchy;
 import com.ibm.wala.ssa.ISSABasicBlock;
 import com.ibm.wala.types.ClassLoaderReference;
 import com.ibm.wala.types.MethodReference;
@@ -201,11 +203,10 @@ public class MethodAnalysis <E extends ISSABasicBlock>  {
 		// In this case, taint all parameters into the method call
 		for (int i = 0; i < entryMethod.getNumberOfParameters(); i++) {
 			//int id = entryMethod.isStatic()?i:i+1;
-			int paramValueNo = methEntryBlock.getNode().getIR().getParameter(i);
 			OrdinalSet<InstanceKey> pointsToSet = 
 			        pa.getPointsToSet(
 			                new LocalPointerKey(methEntryBlock.getNode(),
-			                        paramValueNo
+			                		methEntryBlock.getNode().getIR().getParameter(i)
 			                        ));
 
             pTaintIKMap.put(i, pointsToSet);
@@ -223,13 +224,38 @@ public class MethodAnalysis <E extends ISSABasicBlock>  {
 			TypeReference paramTR = entryMethod.getParameterType(i);
 			IClass paramClass = pa.getClassHierarchy().lookupClass(paramTR);
 			
+			if (paramTR.isPrimitiveType() 
+			 || paramTR.isArrayType()
+			 || paramClass == null ) {
+				continue;
+			}
+			
 			Collection<IField> fields = paramClass.getAllFields();
 			
 			for (IField iField : fields) {
-				taintField(pa, iField, pointsToSet, methEntryBlock, domain, initialTaints, initialEdges);
+				taintField(pa, iField, pointsToSet, methEntryBlock, domain,
+						initialTaints, initialEdges, Sets.newHashSet(paramTR));
 			}
 		}
 
+		if (entryMethod.isStatic()) {
+			// we need to taint the static fields of the enclosing class.
+			// if the method is *not* static, then these will have been tainted
+			// during the tainting of parameters above.
+			for (IField field : entryMethod.getDeclaringClass().getAllStaticFields() ){
+				Iterable<InstanceKey> staticInstances = 
+						pa.getPointsToSet(new StaticFieldKey(field));
+				
+				taintField(pa, field, staticInstances, 
+						methEntryBlock, domain, initialTaints,
+						initialEdges, Sets.<TypeReference>newHashSet());
+			}
+		}
+
+		// TODO we don't currently taint static globals outside of the enclosing
+		// class / method params.
+
+		
 		final IFlowFunctionMap<BasicBlockInContext<E>> functionMap =
 				new IFDSTaintFlowFunctionProvider<E>(domain, graph, pa, this);
 
@@ -285,7 +311,18 @@ public class MethodAnalysis <E extends ISSABasicBlock>  {
 			BasicBlockInContext<E> methEntryBlock,
 			IFDSTaintDomain<E> domain,
 			Set<DomainElement> initialTaints,
-			List<PathEdge<BasicBlockInContext<E>>> initialEdges) {
+			List<PathEdge<BasicBlockInContext<E>>> initialEdges,
+			Set<TypeReference> taintedTypes) {
+
+	    TypeReference tr = myField.getFieldTypeReference();
+	    
+	    if ( taintedTypes.contains(tr) ){
+	    	MyLogger.log(LogLevel.DEBUG, "*not* re-tainting tainted type: "+myField);
+	    	return;
+	    }
+	    
+	    MyLogger.log(LogLevel.DEBUG, "tainting field: "+myField);
+	    taintedTypes.add(tr);
 		
 	    Collection<PointerKey> pointerKeys = Lists.newArrayList();
 	    if (myField.isStatic()) {
@@ -305,8 +342,8 @@ public class MethodAnalysis <E extends ISSABasicBlock>  {
 					domain.getMappedIndex(de)));
     	}
     	
-    	// We need the all the instance keys for the field we're currently taining
-	    // for the recursive case
+    	// We need the all the instance keys for the field we're currently 
+	    // tainting for the recursive case
 	    List<InstanceKey> iks = Lists.newArrayList();
 	    for (PointerKey pk : pointerKeys ) {
 	    	for (InstanceKey ik: pa.getPointsToSet(pk)) {
@@ -314,15 +351,29 @@ public class MethodAnalysis <E extends ISSABasicBlock>  {
 			}
 	    }
 	    
+	    IClassHierarchy cha = myField.getClassHierarchy();
+	    IClass fieldClass = cha.lookupClass(tr);
+	    
 	    // recurse on the fields of the myField:
-	    TypeReference tr = myField.getFieldTypeReference();
-	    IClass fieldClass = myField.getClassHierarchy().lookupClass(tr);
+	    
+	    // Terminate recursion if myField is a primitive or an array
+	    // because they don't have fields.
+	    // Also, if the type is in the exclusions file (or doesn't exist for 
+	    // some other reason...) then the class reference will be null.
+	    if (tr.isPrimitiveType() 
+	     || tr.isArrayType() 
+	     || fieldClass == null ) {
+	    	return;
+	    }
+	    
+	    
+		
 		Collection<IField> fields = fieldClass.getAllFields();
 	    
 		for(IField field : fields) {
-			taintField(pa, field, iks, methEntryBlock, domain, initialTaints, initialEdges);
+			taintField(pa, field, iks, methEntryBlock, domain, 
+					initialTaints, initialEdges, taintedTypes);
 		}
-	    
 	}
 
 	private static<E extends ISSABasicBlock> void checkResults(
