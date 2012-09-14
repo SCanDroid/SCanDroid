@@ -40,10 +40,10 @@ package synthMethod;
 
 import static util.MyLogger.LogLevel.DEBUG;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -52,6 +52,10 @@ import util.IFDSTaintFlowFunctionProvider;
 import util.LoaderUtils;
 import util.MyLogger;
 
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
+import com.ibm.wala.classLoader.IClass;
 import com.ibm.wala.classLoader.IField;
 import com.ibm.wala.classLoader.IMethod;
 import com.ibm.wala.dataflow.IFDS.IFlowFunctionMap;
@@ -63,6 +67,7 @@ import com.ibm.wala.dataflow.IFDS.TabulationProblem;
 import com.ibm.wala.dataflow.IFDS.TabulationResult;
 import com.ibm.wala.dataflow.IFDS.TabulationSolver;
 import com.ibm.wala.ipa.callgraph.CGNode;
+import com.ibm.wala.ipa.callgraph.propagation.InstanceFieldKey;
 import com.ibm.wala.ipa.callgraph.propagation.InstanceKey;
 import com.ibm.wala.ipa.callgraph.propagation.LocalPointerKey;
 import com.ibm.wala.ipa.callgraph.propagation.PointerAnalysis;
@@ -72,6 +77,7 @@ import com.ibm.wala.ipa.cfg.BasicBlockInContext;
 import com.ibm.wala.ssa.ISSABasicBlock;
 import com.ibm.wala.types.ClassLoaderReference;
 import com.ibm.wala.types.MethodReference;
+import com.ibm.wala.types.TypeReference;
 import com.ibm.wala.util.CancelException;
 import com.ibm.wala.util.CancelRuntimeException;
 import com.ibm.wala.util.Predicate;
@@ -179,14 +185,15 @@ public class MethodAnalysis <E extends ISSABasicBlock>  {
 			}
 		}
 
-		Map<FlowType<E>, Set<CodeElement>> methodFlows = new HashMap<FlowType<E>, Set<CodeElement>>();
+		Map<FlowType<E>, Set<CodeElement>> methodFlows = Maps.newHashMap();
 		newSummaries.put(entryMethod, methodFlows);
 
-		Map<Integer, OrdinalSet<InstanceKey>> pTaintIKMap = new HashMap<Integer, OrdinalSet<InstanceKey>> ();
+		// Map from parameter number to the points to set for that param:
+		Map<Integer, OrdinalSet<InstanceKey>> pTaintIKMap = Maps.newHashMap();
 		methodTaints.put(entryMethod, pTaintIKMap);
 
 		final List<PathEdge<BasicBlockInContext<E>>>
-		         initialEdges = new ArrayList<PathEdge<BasicBlockInContext<E>>>();
+		         initialEdges = Lists.newArrayList();
 		
 		Set<DomainElement> initialTaints = new HashSet<DomainElement> ();		
 
@@ -194,51 +201,33 @@ public class MethodAnalysis <E extends ISSABasicBlock>  {
 		// In this case, taint all parameters into the method call
 		for (int i = 0; i < entryMethod.getNumberOfParameters(); i++) {
 			//int id = entryMethod.isStatic()?i:i+1;
-
-			DomainElement de = new DomainElement(new LocalElement(i + 1),
-			                         new ParameterFlow<E>(methEntryBlock, i, true));
-			
+			int paramValueNo = methEntryBlock.getNode().getIR().getParameter(i);
 			OrdinalSet<InstanceKey> pointsToSet = 
 			        pa.getPointsToSet(
 			                new LocalPointerKey(methEntryBlock.getNode(),
-			                        methEntryBlock.getNode().getIR().getParameter(i)
+			                        paramValueNo
 			                        ));
-                			//new LocalPointerKey(callerBlock.getNode(), invInst.getUse(i)));
-            pTaintIKMap.put(i, pointsToSet);
-			
-//							CodeElement.valueElements(pa, methEntryBlock.getNode(), invInst.getUse(i))));
-			initialTaints.add(de);
-			initialEdges.add(PathEdge.createPathEdge(methEntryBlock, 0, methEntryBlock, 
-					domain.getMappedIndex(de)));
-		}
 
-		// Also taint all field elements
-		for (IField myField : entryMethod.getDeclaringClass().getAllFields()) {
-		    PointerKey pk;
-		    boolean isStatic;
-		    if (myField.isStatic()) {
-		        pk = new StaticFieldKey(myField);
-		        isStatic = true;
-		    } else if (!entryMethod.isStatic()) {
-		        pk = new LocalPointerKey(methEntryBlock.getNode(),
-		                methEntryBlock.getNode().getIR().getParameter(0));
-		        isStatic = false;
-		    } else {
-		        /* do nothing if the method is static and the field is not --
-		         * static methods can't access non-static fields.
-		         */
-		        continue;
-		    }
-		    
-		    for (InstanceKey ik: pa.getPointsToSet(pk)) {
-				DomainElement de = new DomainElement(
-				        new FieldElement(ik, myField.getReference(), isStatic), 
-						new FieldFlow<E>(methEntryBlock, myField, true));
-				initialTaints.add(de);
-				initialEdges.add(PathEdge.createPathEdge(methEntryBlock, 0, methEntryBlock, 
-						domain.getMappedIndex(de)));
-			}
+            pTaintIKMap.put(i, pointsToSet);
+
+			DomainElement de = new DomainElement(new LocalElement(i + 1),
+			                         new ParameterFlow<E>(methEntryBlock, i, true));
+			initialTaints.add(de);
+
+			// taint the parameter:
+			int taint = domain.getMappedIndex(de);
+			initialEdges.add(PathEdge.createPathEdge(methEntryBlock, 0, methEntryBlock, 
+					taint));
 			
+			// taint the fields on the parameter:
+			TypeReference paramTR = entryMethod.getParameterType(i);
+			IClass paramClass = pa.getClassHierarchy().lookupClass(paramTR);
+			
+			Collection<IField> fields = paramClass.getAllFields();
+			
+			for (IField iField : fields) {
+				taintField(pa, iField, pointsToSet, methEntryBlock, domain, initialTaints, initialEdges);
+			}
 		}
 
 		final IFlowFunctionMap<BasicBlockInContext<E>> functionMap =
@@ -288,6 +277,52 @@ public class MethodAnalysis <E extends ISSABasicBlock>  {
 		} catch (CancelException e) {
 			throw new CancelRuntimeException(e);
 		}
+	}
+
+	private void taintField(PointerAnalysis pa, 
+			IField myField,
+			Iterable<InstanceKey> parentPointsToSet,
+			BasicBlockInContext<E> methEntryBlock,
+			IFDSTaintDomain<E> domain,
+			Set<DomainElement> initialTaints,
+			List<PathEdge<BasicBlockInContext<E>>> initialEdges) {
+		
+	    Collection<PointerKey> pointerKeys = Lists.newArrayList();
+	    if (myField.isStatic()) {
+	        pointerKeys.add(new StaticFieldKey(myField));
+	    } else {
+	    	for (InstanceKey ik : parentPointsToSet) {
+	    		pointerKeys.add(new InstanceFieldKey(ik, myField));
+	    	}
+	    } 
+
+    	for (InstanceKey ik: parentPointsToSet) {
+			DomainElement de = new DomainElement(
+			        new FieldElement(ik, myField.getReference(), myField.isStatic()), 
+					new FieldFlow<E>(methEntryBlock, myField, true));
+			initialTaints.add(de);
+			initialEdges.add(PathEdge.createPathEdge(methEntryBlock, 0, methEntryBlock, 
+					domain.getMappedIndex(de)));
+    	}
+    	
+    	// We need the all the instance keys for the field we're currently taining
+	    // for the recursive case
+	    List<InstanceKey> iks = Lists.newArrayList();
+	    for (PointerKey pk : pointerKeys ) {
+	    	for (InstanceKey ik: pa.getPointsToSet(pk)) {
+				iks.add(ik);
+			}
+	    }
+	    
+	    // recurse on the fields of the myField:
+	    TypeReference tr = myField.getFieldTypeReference();
+	    IClass fieldClass = myField.getClassHierarchy().lookupClass(tr);
+		Collection<IField> fields = fieldClass.getAllFields();
+	    
+		for(IField field : fields) {
+			taintField(pa, field, iks, methEntryBlock, domain, initialTaints, initialEdges);
+		}
+	    
 	}
 
 	private static<E extends ISSABasicBlock> void checkResults(
