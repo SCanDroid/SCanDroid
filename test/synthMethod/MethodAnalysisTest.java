@@ -204,7 +204,8 @@ public class MethodAnalysisTest {
      * @throws IOException
      * @throws ClassHierarchyException
      */
-    //@Ignore
+    @Ignore("Test code only uses main methods as entry points - " +
+    		"note that this is in addition to source specs.")
     @Test
     public final void test_flowFromInvokedSource()
             throws IllegalArgumentException, CallGraphBuilderCancelException,
@@ -412,12 +413,8 @@ public class MethodAnalysisTest {
         
         //Iterable<Entrypoint> entrypoints = Util.makeMainEntrypoints(scope, cha);
         AnalysisOptions options = new AnalysisOptions(scope, entrypoints);
-        CallGraphBuilder builder = 
-           AndroidAppLoader.makeVanillaZeroOneCFABuilder(
-                   options, new AnalysisCache(), cha, scope, null, null, WALA_NATIVES_XML);
+        CallGraphBuilder builder = makeCallgraph(scope, cha, options, WALA_NATIVES_XML);
 
-//        CallGraphBuilder builder = Util.makeZeroCFABuilder(options, cache, cha, scope, new
-//	               UriPrefixContextSelector(options, cha), null);
         
         CallGraph cg = builder.makeCallGraph(options, null);
         ISupergraph<BasicBlockInContext<IExplodedBasicBlock>, CGNode> sg = 
@@ -444,6 +441,21 @@ public class MethodAnalysisTest {
 
         return tempFile.getAbsolutePath();
     }
+
+	private CallGraphBuilder makeCallgraph(AnalysisScope scope,
+			ClassHierarchy cha, AnalysisOptions options, String methodSummariesFile) {
+        CallGraphBuilder builder = 
+                AndroidAppLoader.makeZeroCFABuilder(
+                        options, new AnalysisCache(), cha, scope, null, null, 
+                        methodSummariesFile, null);
+        
+//        CallGraphBuilder builder = 
+//                AndroidAppLoader.makeVanillaZeroOneCFABuilder(
+//                        options, new AnalysisCache(), cha, scope, null, null, 
+//                        methodSummariesFile, null);
+        
+		return builder;
+	}
 
     private Iterable<Entrypoint> getEntrypoints(AnalysisScope scope, ClassHierarchy cha) {
         List<Entrypoint> entrypoints = new ArrayList<Entrypoint>();
@@ -477,8 +489,7 @@ public class MethodAnalysisTest {
         
         AnalysisOptions options = new AnalysisOptions(scope, entrypoints);
         CallGraphBuilder builder = 
-           AndroidAppLoader.makeVanillaZeroOneCFABuilder(
-                   options, new AnalysisCache(), cha, scope, null, null, methodSummariesFile);
+        		makeCallgraph(scope, cha, options, methodSummariesFile);
 
         
         CallGraph cg = builder.makeCallGraph(options, null);
