@@ -57,6 +57,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.jar.JarFile;
 
+import model.AppModelMethod;
+
 import prefixTransfer.UriPrefixContextSelector;
 import spec.AndroidSpecs;
 import util.MyLogger.LogLevel;
@@ -212,10 +214,10 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
 
 		SSAPropagationCallGraphBuilder zeroxcgb, cgb;
 
-		zeroxcgb = Util.makeZeroCFABuilder(options, cache, cha, scope, new
-		               UriPrefixContextSelector(options, cha), null);
-//		zeroxcgb = makeVanillaZeroOneCFABuilder(options, cache, cha, scope,
-	//			new UriPrefixContextSelector(options, cha), null, methodSpec);
+//		zeroxcgb = Util.makeZeroCFABuilder(options, cache, cha, scope, new
+//		               UriPrefixContextSelector(options, cha), null);
+		zeroxcgb = makeVanillaZeroOneCFABuilder(options, cache, cha, scope,
+				new UriPrefixContextSelector(options, cha), null, methodSpec, null);
 //		cgb = new DexSSAPropagationCallGraphBuilder(cha, options, cache,
 //				zeroxcgb.getContextSelector(),
 //				(SSAContextInterpreter) zeroxcgb.getContextInterpreter(),
@@ -362,7 +364,8 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
 	public static SSAPropagationCallGraphBuilder makeVanillaZeroOneCFABuilder(
 			AnalysisOptions options, AnalysisCache cache, IClassHierarchy cha,
 			AnalysisScope scope, ContextSelector customSelector,
-			SSAContextInterpreter customInterpreter, String summariesFile) {
+			SSAContextInterpreter customInterpreter, String summariesFile,
+			MethodSummary extraSummary) {
 
 		if (options == null) {
 			throw new IllegalArgumentException("options is null");
@@ -372,18 +375,41 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
 		// cha);
 		// addBypassLogic(options, scope,
 		// AndroidAppLoader.class.getClassLoader(), methodSpec, cha);
-		addBypassLogic(options, scope, summariesFile, cha);
+		addBypassLogic(options, scope, summariesFile, cha, extraSummary);
 
 		return ZeroXCFABuilder.make(cha, options, cache, customSelector,
 				customInterpreter, ZeroXInstanceKeys.ALLOCATIONS
 						| ZeroXInstanceKeys.CONSTANT_SPECIFIC);
 	}
+	
+	 /**
+	   * @param options options that govern call graph construction
+	   * @param cha governing class hierarchy
+	   * @param scope representation of the analysis scope
+	   * @param customSelector user-defined context selector, or null if none
+	   * @param customInterpreter user-defined context interpreter, or null if none
+	   * @return a 0-CFA Call Graph Builder.
+	   * @throws IllegalArgumentException if options is null
+	   */	
+	  public static SSAPropagationCallGraphBuilder makeZeroCFABuilder(AnalysisOptions options, AnalysisCache cache,
+	      IClassHierarchy cha, AnalysisScope scope, ContextSelector customSelector, SSAContextInterpreter customInterpreter,
+	      String summariesFile, MethodSummary extraSummary) {
+
+	    if (options == null) {
+	      throw new IllegalArgumentException("options is null");
+	    }
+	    Util.addDefaultSelectors(options, cha);
+		addBypassLogic(options, scope, summariesFile, cha, extraSummary);
+
+	    return ZeroXCFABuilder.make(cha, options, cache, customSelector, customInterpreter, ZeroXInstanceKeys.NONE);
+	  }
 
 	// public static void addBypassLogic(AnalysisOptions options, AnalysisScope
 	// scope, ClassLoader cl, String xmlFile,
 	// IClassHierarchy cha) throws IllegalArgumentException {
 	public static void addBypassLogic(AnalysisOptions options,
-					  AnalysisScope scope, String xmlFile, IClassHierarchy cha)
+					  AnalysisScope scope, String xmlFile, IClassHierarchy cha, 
+					  MethodSummary extraSummary)
 			throws IllegalArgumentException {
 
 		if (scope == null) {
@@ -420,10 +446,10 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
 			
 			summaries.putAll(nativeSummaries.getSummaries());
 			summaryClasses.addAll(nativeSummaries.getAllocatableClasses());
-			
-		    //Application callbacks model
-		    //AppModelMethod amm = new AppModelMethod(cha, scope);
-			
+//			if (extraSummary != null) {
+//				summaries.put(extraSummary);
+//			}
+						
 			MethodTargetSelector ms = new BypassMethodTargetSelector(
 					options.getMethodTargetSelector(),
 					summaries,

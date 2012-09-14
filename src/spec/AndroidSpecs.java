@@ -134,7 +134,11 @@ public class AndroidSpecs implements ISpecs {
 	static MethodNamePattern httpExecute =
 			new MethodNamePattern(http, "execute");
 
-	private static MethodNamePattern[] entrypointSpecs = {
+	private static MethodNamePattern[] callbackModelEntry = {
+		new MethodNamePattern("Lcom/SCanDroid/AppModel", "entry")
+	};
+	
+	private static MethodNamePattern[] defaultCallbacks = {
 		actCreate,
 		actStart,
 		actResume,
@@ -154,8 +158,8 @@ public class AndroidSpecs implements ISpecs {
 		prvInsert,
 		prvUpdate,
 	};
-	public MethodNamePattern[] getEntrypointSpecs() { return entrypointSpecs; }
-
+	public MethodNamePattern[] getEntrypointSpecs() { return callbackModelEntry; }	
+	
 	private static SourceSpec[] sourceSpecs = {
 //		new EntryArgSourceSpec( actCreate, null ),
 		//doesn't have any parameters
@@ -230,7 +234,7 @@ public class AndroidSpecs implements ISpecs {
 
 	public SinkSpec[] getSinkSpecs() { return sinkSpecs; }
 
-	public static MethodNamePattern[] callBacks;
+	public static MethodNamePattern[] callBacks = new MethodNamePattern[]{};
 //	public MethodNamePattern[] getCallBacks() {
 //		if (callBacks == null)
 //			callBacks = new MethodNamePattern[] {};
@@ -256,7 +260,7 @@ public class AndroidSpecs implements ISpecs {
 		//add default entrypoints from AndroidSpecs.entrypointSpecs
 		//Currently adds methods even if they exist in the ignnoreMethods
 		//set.
-		for (MethodNamePattern mnp: getEntrypointSpecs()) {
+		for (MethodNamePattern mnp: defaultCallbacks) {
 			moreEntryPointSpecs.add(mnp);
 		}
 
