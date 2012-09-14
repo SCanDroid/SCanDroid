@@ -229,8 +229,10 @@ public class MethodAnalysisTest {
     
     /**
      * TrivialJar3 uses .length on an array (incoming params to main(String[] args))
-     * as a source, but this is tracked differently than using a param value directly (or, eg. args[0])
+     * as a source, but this is tracked differently than using a param value 
+     * directly (or, eg. args[0])
      * 
+     * This is also different than accessing a field on a basic POJO.
      * 
      * @throws IllegalArgumentException
      * @throws CallGraphBuilderCancelException
@@ -239,11 +241,29 @@ public class MethodAnalysisTest {
      */
     //@Ignore
     @Test
-    public final void test_flowFromInputParameter() 
+    public final void test_flowFromInputArrayParameter() 
             throws IllegalArgumentException, CallGraphBuilderCancelException,
             IOException, ClassHierarchyException {
 
     	String appJar = TEST_DATA_DIR + File.separator + "trivialJar3-1.0-SNAPSHOT.jar";
+        runOnJar(appJar, new TestSpecs());
+    }
+    
+    /**
+     * TrivialJar9 accesses a field on a param (a POJO) to a method.
+     * 
+     * @throws IllegalArgumentException
+     * @throws CallGraphBuilderCancelException
+     * @throws IOException
+     * @throws ClassHierarchyException
+     */
+    //@Ignore
+    @Test
+    public final void test_flowFromInputPOJOParameter() 
+            throws IllegalArgumentException, CallGraphBuilderCancelException,
+            IOException, ClassHierarchyException {
+
+    	String appJar = TEST_DATA_DIR + File.separator + "trivialJar9-1.0-SNAPSHOT.jar";
         runOnJar(appJar, new TestSpecs());
     }
     
