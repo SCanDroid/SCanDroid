@@ -47,6 +47,7 @@ import java.util.Map;
 import java.util.Set;
 
 import synthMethod.MethodAnalysis;
+import util.MyLogger.LogLevel;
 
 import com.ibm.wala.classLoader.IClass;
 import com.ibm.wala.classLoader.IField;
@@ -56,6 +57,7 @@ import com.ibm.wala.dataflow.IFDS.IFlowFunctionMap;
 import com.ibm.wala.dataflow.IFDS.ISupergraph;
 import com.ibm.wala.dataflow.IFDS.IUnaryFlowFunction;
 import com.ibm.wala.ipa.callgraph.CGNode;
+import com.ibm.wala.ipa.callgraph.propagation.InstanceFieldKey;
 import com.ibm.wala.ipa.callgraph.propagation.InstanceKey;
 import com.ibm.wala.ipa.callgraph.propagation.LocalPointerKey;
 import com.ibm.wala.ipa.callgraph.propagation.PointerAnalysis;
@@ -229,15 +231,22 @@ implements IFlowFunctionMap<BasicBlockInContext<E>> {
                             	pk = new StaticFieldKey(staticField);
 						    isStatic = true;
 						} else {
-						    p.uses.addAll(CodeElement.valueElements(pa, bb.getNode(), instruction.getUse(1)));
-						    // the value number is the "right hand side" of the write statement.
+						    p.uses.addAll(
+						    		CodeElement.valueElements(pa, bb.getNode(), instruction.getUse(1)));
+
+						    // this value number seems to be the object referenced in this instruction (?)
 							int valueNumber = instruction.getUse(0);
 							pk = new LocalPointerKey(bb.getNode(), valueNumber);
+							
+							MyLogger.log(LogLevel.DEBUG, " instruction: "+instruction);
+							
 							isStatic = false;
 							// add the object that holds the field that was modified
 							// to the list of things tainted by this flow:
 							p.defs.addAll(CodeElement.valueElements(pa, bb.getNode(), valueNumber));
 						}	
+						// now add the field keys to the defs list so that they
+						// are also tainted:
 						if (pk!=null) {
 							OrdinalSet<InstanceKey> m = pa.getPointsToSet(pk);
 							if (m != null) {
@@ -284,7 +293,8 @@ implements IFlowFunctionMap<BasicBlockInContext<E>> {
 						for(int i = 0; i < instruction.getNumberOfUses(); i++)
 						{
 							//p.uses.add(new LocalElement(instruction.getUse(i)));
-							p.uses.addAll(CodeElement.valueElements(pa, bb.getNode(), instruction.getUse(i)));
+							p.uses.addAll(
+								CodeElement.valueElements(pa, bb.getNode(), instruction.getUse(i)));
 							
 						}
 						p.defs.add(new ReturnElement());

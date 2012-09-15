@@ -123,6 +123,16 @@ public class MethodAnalysisTest {
         runOnJar(appJar, new TestSpecs());
     }
 
+    @Test
+    public final void test_fieldTaintTaintsThisObjectSummary() 
+            throws IllegalArgumentException, CallGraphBuilderCancelException,
+            IOException, ClassHierarchyException {
+
+        String appJar = TEST_DATA_DIR + File.separator + "trivialJar6-1.0-SNAPSHOT.jar";
+        
+        checkSummaryProperty(appJar, new TestSpecs(),
+        		"data/testdata/thisTaintSummary.xml");
+    }
     
     /**
      * Simple, direct data flow through a few methods.

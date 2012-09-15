@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<summary-spec>
+  <!-- <classloader name="Primordial"> -->
+  <!--   <package name="java/lang"> -->
+  <!--     <class name="String"> -->
+  <!--       <method descriptor="()I" name="length"> -->
+  <!--         <getfield class="Ljava/lang/String" def="count_localDef" field="count" fieldType="I" ref="arg0"/> -->
+  <!--         <return value="count_localDef"/> -->
+  <!--       </method> -->
+  <!--     </class> -->
+  <!--   </package> -->
+  <!-- </classloader> -->
+  <classloader name="Application">
+    <package name="org/scandroid/testing">
+      <class name="Point">
+        <method descriptor="(I)Lorg/scandroid/testing/Point;" name="moveX">
+          <putfield class="Lorg/scandroid/testing/Point"
+                    field="x" fieldType="I" ref="arg0" value="arg1"/>
+          <getfield class="Lorg/scandroid/testing/Point"
+                    def="x_localDef" field="x" fieldType="I" ref="arg0"/>
+          <return value="x_localDef"/>
+          <return value="arg0"/>
+          <return value="arg1"/>
+        </method>
+      </class>
+    </package>
+  </classloader>
+</summary-spec>
