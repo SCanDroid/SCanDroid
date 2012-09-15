@@ -43,6 +43,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import model.AppModelMethod;
+
 import util.LoaderUtils;
 
 import com.ibm.wala.classLoader.IClass;
@@ -51,6 +53,8 @@ import com.ibm.wala.ipa.cha.ClassHierarchy;
 import com.ibm.wala.types.ClassLoaderReference;
 
 public class AndroidSpecs implements ISpecs {
+	private AppModelMethod appEntrySummary;
+	
 	static String act = "Landroid/app/Activity";
 	static String svc = "Landroid/app/Service";
 	static String prv = "Landroid/content/ContentProvider";
@@ -234,7 +238,7 @@ public class AndroidSpecs implements ISpecs {
 
 	public SinkSpec[] getSinkSpecs() { return sinkSpecs; }
 
-	public static MethodNamePattern[] callBacks = new MethodNamePattern[]{};
+	private static MethodNamePattern[] callBacks = new MethodNamePattern[]{};
 //	public MethodNamePattern[] getCallBacks() {
 //		if (callBacks == null)
 //			callBacks = new MethodNamePattern[] {};
@@ -297,6 +301,17 @@ public class AndroidSpecs implements ISpecs {
 		callBacks = 
 				moreEntryPointSpecs.toArray(new MethodNamePattern[moreEntryPointSpecs.size()]);
 
-
 	}
+	
+	public MethodNamePattern[] getCallBacks() {
+		return callBacks;
+	}
+	
+	public void setEntrySummary(AppModelMethod amm) {
+		this.appEntrySummary = amm;
+	}
+	public AppModelMethod getEntrySummary() {
+		return appEntrySummary;
+	}
+	
 }

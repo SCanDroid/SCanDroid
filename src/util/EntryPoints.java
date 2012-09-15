@@ -418,7 +418,6 @@ public class EntryPoints {
             return ActivityIntentList;
 //          throw new UnimplementedError("EntryPoints intent category not yet covered: " + name);
         }
-
     }
 
     private void outputIntentList() {

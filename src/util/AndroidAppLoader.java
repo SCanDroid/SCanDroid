@@ -97,6 +97,9 @@ import com.ibm.wala.ipa.summaries.MethodSummary;
 import com.ibm.wala.ipa.summaries.XMLMethodSummaryReader;
 import com.ibm.wala.ssa.IRFactory;
 import com.ibm.wala.ssa.ISSABasicBlock;
+import com.ibm.wala.ssa.SSACFG;
+import com.ibm.wala.ssa.SSACFG.BasicBlock;
+import com.ibm.wala.ssa.SSAInstruction;
 import com.ibm.wala.types.ClassLoaderReference;
 import com.ibm.wala.types.MethodReference;
 import com.ibm.wala.types.TypeReference;
@@ -155,6 +158,8 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
 		scope.setLoaderImpl(ClassLoaderReference.Application,
 				"com.ibm.wala.classLoader.WDexClassLoaderImpl");
 		scope.addToScope(ClassLoaderReference.Primordial, androidLib);
+		scope.addToScope(ClassLoaderReference.Application, new JarFile("data/AppModel_dummy.jar"));
+
 
 		// AnalysisScope scope =
 		// AnalysisScopeReader.makeJavaBinaryAnalysisScope(
@@ -179,6 +184,9 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
 				            new FileProvider().getFile("conf" + File.separator
 						                     + "Java60RegressionExclusions.txt"));
 		specs.addPossibleListeners(ClassHierarchy.make(tempAndroidScope));
+		
+		AppModelMethod amm = new AppModelMethod(cha, scope, specs);
+		specs.setEntrySummary(amm);
 		
 		// Try to look for entry points
 		EntryPoints ep = new EntryPoints(classpath, cha, this);
@@ -217,7 +225,7 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
 //		zeroxcgb = Util.makeZeroCFABuilder(options, cache, cha, scope, new
 //		               UriPrefixContextSelector(options, cha), null);
 		zeroxcgb = makeVanillaZeroOneCFABuilder(options, cache, cha, scope,
-				new UriPrefixContextSelector(options, cha), null, methodSpec, null);
+				new UriPrefixContextSelector(options, cha), null, null, specs.getEntrySummary().getSummary());
 //		cgb = new DexSSAPropagationCallGraphBuilder(cha, options, cache,
 //				zeroxcgb.getContextSelector(),
 //				(SSAContextInterpreter) zeroxcgb.getContextInterpreter(),
@@ -252,7 +260,7 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
 			// CallGraph composed of APK nodes
 			public boolean test(CGNode node) {
 				return LoaderUtils.fromLoader(node,
-						ClassLoaderReference.Application);
+						ClassLoaderReference.Application) || node.getMethod().isSynthetic();
 			}
 		});
 
@@ -359,6 +367,25 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
 				}
 			}
 		}
+		for (Iterator<CGNode> nodeI = cg.iterator(); nodeI.hasNext();) {
+			CGNode node = nodeI.next();
+			if (node.getMethod().isSynthetic()) {
+				System.out.println("Synthetic Method: " + node.getMethod().getSignature());
+				System.out.println(node.getIR().getControlFlowGraph());
+				SSACFG ssaCFG = node.getIR().getControlFlowGraph();
+				int totalBlocks = ssaCFG.getNumberOfNodes();
+				for (int i = 0; i < totalBlocks; i++) {
+					System.out.println("BLOCK #" + i);
+					BasicBlock bb = ssaCFG.getBasicBlock(i);
+				
+					for (SSAInstruction ssaI: bb.getAllInstructions()) {
+						System.out.println("\tInstruction: "+ssaI);
+					}
+				}
+			}
+		}
+
+		
 	}
 
 	public static SSAPropagationCallGraphBuilder makeVanillaZeroOneCFABuilder(
@@ -446,9 +473,9 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
 			
 			summaries.putAll(nativeSummaries.getSummaries());
 			summaryClasses.addAll(nativeSummaries.getAllocatableClasses());
-//			if (extraSummary != null) {
-//				summaries.put(extraSummary);
-//			}
+			if (extraSummary != null) {
+				summaries.put((MethodReference)extraSummary.getMethod(), extraSummary);
+			}
 						
 			MethodTargetSelector ms = new BypassMethodTargetSelector(
 					options.getMethodTargetSelector(),
@@ -481,7 +508,7 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
 			} else {
 				s = AndroidAppLoader.class.getClassLoader()
 						.getResourceAsStream(
-								"/" + pathToSpec + File.separator + methodSpec);
+								pathToSpec + File.separator + methodSpec);
 			}
 		    summary = new XMLMethodSummaryReader(s, scope);
 		} finally {
