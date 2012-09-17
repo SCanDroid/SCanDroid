@@ -44,7 +44,6 @@ import com.ibm.wala.ipa.callgraph.CallGraphBuilder;
 import com.ibm.wala.ipa.callgraph.CallGraphBuilderCancelException;
 import com.ibm.wala.ipa.callgraph.Entrypoint;
 import com.ibm.wala.ipa.callgraph.impl.DefaultEntrypoint;
-import com.ibm.wala.ipa.callgraph.impl.Util;
 import com.ibm.wala.ipa.callgraph.propagation.InstanceKey;
 import com.ibm.wala.ipa.callgraph.propagation.PointerAnalysis;
 import com.ibm.wala.ipa.cfg.BasicBlockInContext;
@@ -64,6 +63,9 @@ import flow.types.FlowType;
 
 public class MethodAnalysisTest {
 
+	private static final Predicate<IMethod> TEST_APP_MAIN =
+			MethodPredicates.isNamed("main");
+	
     /**
      * Path to the original natives.xml file.
      * 
@@ -80,7 +82,7 @@ public class MethodAnalysisTest {
     	String appJar = TEST_DATA_DIR + File.separator + "trivialJar5-1.0-SNAPSHOT.jar";
     	
     	Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>>
-          directResults = runDFAnalysis(appJar, new TestSpecs(), WALA_NATIVES_XML);
+          directResults = runDFAnalysis(appJar, new TestSpecs(), WALA_NATIVES_XML, TEST_APP_MAIN);
     	
     	System.out.println("direct results: "+ flowMapToString(directResults));
     	
@@ -94,7 +96,7 @@ public class MethodAnalysisTest {
             IOException, ClassHierarchyException {
 
         String appJar = TEST_DATA_DIR + File.separator + "trivialJar1-1.0-SNAPSHOT.jar";
-        String filename = summarize(appJar);
+        String filename = summarize(appJar, TEST_APP_MAIN);
         
         String contents = readFile(filename);
         System.out.println("-----     Summary File: -------");
@@ -120,7 +122,7 @@ public class MethodAnalysisTest {
             IOException, ClassHierarchyException {
 
         String appJar = TEST_DATA_DIR + File.separator + "trivialJar6-1.0-SNAPSHOT.jar";
-        runOnJar(appJar, new TestSpecs());
+        runOnJar(appJar, new TestSpecs(), TEST_APP_MAIN);
     }
 
     @Test
@@ -149,7 +151,7 @@ public class MethodAnalysisTest {
             IOException, ClassHierarchyException {
 
         String appJar = TEST_DATA_DIR + File.separator + "trivialJar1-1.0-SNAPSHOT.jar";
-        runOnJar(appJar, new TestSpecs());
+        runOnJar(appJar, new TestSpecs(), TEST_APP_MAIN);
     }
 
     /**
@@ -167,7 +169,7 @@ public class MethodAnalysisTest {
             IOException, ClassHierarchyException {
 
         String appJar = TEST_DATA_DIR + File.separator + "trivialJar2-1.0-SNAPSHOT.jar";
-        runOnJar(appJar, new TestSpecs());
+        runOnJar(appJar, new TestSpecs(), TEST_APP_MAIN);
     }
 
     /**
@@ -185,7 +187,7 @@ public class MethodAnalysisTest {
             IOException, ClassHierarchyException {
 
         String appJar = TEST_DATA_DIR + File.separator + "trivialJar8-1.0-SNAPSHOT.jar";
-        runOnJar(appJar, new TestSpecs());
+        runOnJar(appJar, new TestSpecs(), TEST_APP_MAIN);
     }
 
     /**
@@ -203,7 +205,7 @@ public class MethodAnalysisTest {
             IOException, ClassHierarchyException {
 
         String appJar = TEST_DATA_DIR + File.separator + "trivialJar7-1.0-SNAPSHOT.jar";
-        runOnJar(appJar, new TestSpecs());
+        runOnJar(appJar, new TestSpecs(), TEST_APP_MAIN);
     }
     
     /**
@@ -234,7 +236,7 @@ public class MethodAnalysisTest {
                            new int[] { 0 })
                          };
             }
-        });
+        }, MethodPredicates.every);
     }
     
     /**
@@ -256,7 +258,7 @@ public class MethodAnalysisTest {
             IOException, ClassHierarchyException {
 
     	String appJar = TEST_DATA_DIR + File.separator + "trivialJar3-1.0-SNAPSHOT.jar";
-        runOnJar(appJar, new TestSpecs());
+        runOnJar(appJar, new TestSpecs(), TEST_APP_MAIN);
     }
     
     /**
@@ -274,7 +276,7 @@ public class MethodAnalysisTest {
             IOException, ClassHierarchyException {
 
     	String appJar = TEST_DATA_DIR + File.separator + "trivialJar9-1.0-SNAPSHOT.jar";
-        runOnJar(appJar, new TestSpecs());
+        runOnJar(appJar, new TestSpecs(), TEST_APP_MAIN);
     }
     
     /**
@@ -293,7 +295,7 @@ public class MethodAnalysisTest {
             IOException, ClassHierarchyException {
 
         String appJar = TEST_DATA_DIR + File.separator + "trivialJar5-1.0-SNAPSHOT.jar";
-        runOnJar(appJar, new TestSpecs());
+        runOnJar(appJar, new TestSpecs(), TEST_APP_MAIN);
     }
     
     /**
@@ -304,14 +306,13 @@ public class MethodAnalysisTest {
      * @throws IOException
      * @throws ClassHierarchyException
      */
-    //@Ignore
     @Test
     public final void test_staticFieldsinDataFlow() 
             throws IllegalArgumentException, CallGraphBuilderCancelException,
             IOException, ClassHierarchyException {
 
         String appJar = TEST_DATA_DIR + File.separator + "trivialJar4-1.0-SNAPSHOT.jar";
-        runOnJar(appJar, new TestSpecs());
+        runOnJar(appJar, new TestSpecs(), TEST_APP_MAIN);
     }
     
     @Ignore("Runs too long")
@@ -342,7 +343,7 @@ public class MethodAnalysisTest {
                         new CallArgSinkSpec(new MethodNamePattern(
                           "Ljava/io/PrintStream", "println"), new int[] { }) };
             }
-        });
+        }, TEST_APP_MAIN);
     }
     
     //@Ignore
@@ -356,9 +357,11 @@ public class MethodAnalysisTest {
         checkSummaryProperty(appJar, new TestSpecs(), "data/testdata/brokenSummary.xml");
     }
     
-    private void runOnJar(String appJar, ISpecs specs) throws IOException,
+    private void runOnJar(String appJar, ISpecs specs, 
+    		Predicate<IMethod> interestingMethod) 
+    				throws IOException,
             ClassHierarchyException, CallGraphBuilderCancelException {
-        String summary = summarize(appJar);
+        String summary = summarize(appJar, interestingMethod);
         
         String contents = readFile(summary);
         System.out.println("-----     Summary File: -------");
@@ -390,14 +393,14 @@ public class MethodAnalysisTest {
     private void checkSummaryProperty(String jarFile, ISpecs specs, String summaryFile) 
             throws ClassHierarchyException, CallGraphBuilderCancelException, IOException {
         Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>>
-          directResults = runDFAnalysis(jarFile, specs, WALA_NATIVES_XML);
+          directResults = runDFAnalysis(jarFile, specs, WALA_NATIVES_XML, TEST_APP_MAIN);
         
         System.out.println(" ----------------------------------------  ");
         System.out.println(" ---  DIRECT RESULTS DONE             ---  ");
         System.out.println(" ----------------------------------------  ");
         
         Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>>
-          summarizedResults = runDFAnalysis(jarFile, specs, summaryFile);
+          summarizedResults = runDFAnalysis(jarFile, specs, summaryFile, TEST_APP_MAIN);
         
         Assert.assertNotSame("No flows found in direct results.", 0, directResults.size());
         System.out.println("Actual Flows: \n"+flowMapToString(directResults));
@@ -407,13 +410,6 @@ public class MethodAnalysisTest {
         Assert.assertEquals("Results differed with summaries", 
                 directResults, summarizedResults);
     }
-    
-    private static Predicate<IMethod> isMain = new Predicate<IMethod>() {
-		@Override
-		public boolean test(IMethod t) {
-			return t.getSignature().contains(".main(");
-		}
-	};
     
     /**
      * Generate summaries for all the entry points in a jar file, write the 
@@ -426,7 +422,7 @@ public class MethodAnalysisTest {
      * @throws CallGraphBuilderCancelException 
      * @throws IllegalArgumentException 
      */
-    private String summarize(String jarFile) 
+    private String summarize(String jarFile, Predicate<IMethod> interestingEntrypoint) 
         throws IOException, ClassHierarchyException, IllegalArgumentException, 
                CallGraphBuilderCancelException {
         
@@ -439,9 +435,9 @@ public class MethodAnalysisTest {
                    new File("conf/Java60RegressionExclusions.txt"));
         ClassHierarchy cha = ClassHierarchy.make(scope);
         
-        Iterable<Entrypoint> entrypoints = getEntrypoints(scope, cha);
+        Iterable<Entrypoint> entrypoints =
+        		getEntrypoints(scope, cha, interestingEntrypoint);
         
-        //Iterable<Entrypoint> entrypoints = Util.makeMainEntrypoints(scope, cha);
         AnalysisOptions options = new AnalysisOptions(scope, entrypoints);
         CallGraphBuilder builder = makeCallgraph(scope, cha, options, WALA_NATIVES_XML);
 
@@ -487,35 +483,43 @@ public class MethodAnalysisTest {
 		return builder;
 	}
 
-    private Iterable<Entrypoint> getEntrypoints(AnalysisScope scope, ClassHierarchy cha) {
+    private Iterable<Entrypoint> getEntrypoints(AnalysisScope scope, 
+    		ClassHierarchy cha,
+    		Predicate<IMethod> isInteresting) {
         List<Entrypoint> entrypoints = new ArrayList<Entrypoint>();
-        for (IClass iClass : cha) {
-            for (Iterator<IMethod> itr = iClass.getAllMethods().iterator(); itr.hasNext();) {
-                IMethod iMethod = itr.next();
-                
-                if ( LoaderUtils.fromLoader(iMethod, ClassLoaderReference.Application) ) {
-                    entrypoints.add(new DefaultEntrypoint(iMethod, cha));
-                }
-            }
-        }
-        //return entrypoints;
-        return Util.makeMainEntrypoints(scope, cha);
+		for (IClass iClass : cha) {
+			for (IMethod iMethod : iClass.getAllMethods()) {
+				if (isInteresting.test(iMethod)) {
+					if (LoaderUtils.fromLoader(iMethod,
+							ClassLoaderReference.Application)) {
+						entrypoints.add(new DefaultEntrypoint(iMethod, cha));
+					}
+				}
+			}
+		}
+        return entrypoints;
+       // return Util.makeMainEntrypoints(scope, cha);
     }
     
     private
     Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> 
-    runDFAnalysis(String appJar, ISpecs specs, String methodSummariesFile) 
+    runDFAnalysis(String appJar, 
+    		      ISpecs specs,
+    		      String methodSummariesFile,
+    		      Predicate<IMethod> interestingEntrypoint) 
         throws IOException, ClassHierarchyException, 
                CallGraphBuilderCancelException {
 
-        MethodAnalysis<IExplodedBasicBlock> methodAnalysis =
+        @SuppressWarnings("unchecked")
+		MethodAnalysis<IExplodedBasicBlock> methodAnalysis =
                 new MethodAnalysis<IExplodedBasicBlock>(Predicate.TRUE);
         AnalysisScope scope = 
                 DexAnalysisScopeReader.makeAndroidBinaryAnalysisScope(appJar, 
                    new File("conf/Java60RegressionExclusions.txt"));
         ClassHierarchy cha = ClassHierarchy.make(scope);
         
-        Iterable<Entrypoint> entrypoints = getEntrypoints(scope, cha);
+        Iterable<Entrypoint> entrypoints = 
+        		getEntrypoints(scope, cha, interestingEntrypoint);
         
         AnalysisOptions options = new AnalysisOptions(scope, entrypoints);
         CallGraphBuilder builder = 
