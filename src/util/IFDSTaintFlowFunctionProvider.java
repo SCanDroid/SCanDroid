@@ -38,17 +38,19 @@
  */
 
 package util;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import synthMethod.MethodAnalysis;
 import util.MyLogger.LogLevel;
 
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.ibm.wala.classLoader.IClass;
 import com.ibm.wala.classLoader.IField;
 import com.ibm.wala.classLoader.IMethod;
@@ -57,7 +59,6 @@ import com.ibm.wala.dataflow.IFDS.IFlowFunctionMap;
 import com.ibm.wala.dataflow.IFDS.ISupergraph;
 import com.ibm.wala.dataflow.IFDS.IUnaryFlowFunction;
 import com.ibm.wala.ipa.callgraph.CGNode;
-import com.ibm.wala.ipa.callgraph.propagation.InstanceFieldKey;
 import com.ibm.wala.ipa.callgraph.propagation.InstanceKey;
 import com.ibm.wala.ipa.callgraph.propagation.LocalPointerKey;
 import com.ibm.wala.ipa.callgraph.propagation.PointerAnalysis;
@@ -66,10 +67,8 @@ import com.ibm.wala.ipa.callgraph.propagation.StaticFieldKey;
 import com.ibm.wala.ipa.cfg.BasicBlockInContext;
 import com.ibm.wala.ipa.cha.IClassHierarchy;
 import com.ibm.wala.ssa.ISSABasicBlock;
-import com.ibm.wala.ssa.SSAArrayLengthInstruction;
 import com.ibm.wala.ssa.SSAArrayLoadInstruction;
 import com.ibm.wala.ssa.SSAArrayStoreInstruction;
-import com.ibm.wala.ssa.SSABinaryOpInstruction;
 import com.ibm.wala.ssa.SSAGetInstruction;
 import com.ibm.wala.ssa.SSAInstruction;
 import com.ibm.wala.ssa.SSAInvokeInstruction;
@@ -81,7 +80,6 @@ import com.ibm.wala.types.TypeReference;
 import com.ibm.wala.util.intset.BitVectorIntSet;
 import com.ibm.wala.util.intset.IntSet;
 import com.ibm.wala.util.intset.OrdinalSet;
-
 import domain.CodeElement;
 import domain.DomainElement;
 import domain.FieldElement;
@@ -131,22 +129,22 @@ implements IFlowFunctionMap<BasicBlockInContext<E>> {
 
 	private static class UseDefSetPair
 	{
-		public Set<CodeElement> uses = new HashSet<CodeElement>();
-		public Set<CodeElement> defs = new HashSet<CodeElement>();
+		public Set<CodeElement> uses = Sets.newHashSet();
+		public Set<CodeElement> defs = Sets.newHashSet();
 	}
 
-	public class DefUse implements IUnaryFlowFunction
-	{
-		final ArrayList<UseDefSetPair> useToDefList = new ArrayList<UseDefSetPair>();
+	private class DefUse implements IUnaryFlowFunction {
+	
+		private final List<UseDefSetPair> useToDefList = Lists.newArrayList();
 
-		final BasicBlockInContext<E> bb;
+		private final BasicBlockInContext<E> bb;
 
-		public DefUse(final BasicBlockInContext<E> bb)
-		{
-			this.bb = bb;
-			Iterator<SSAInstruction> instructions = bb.iterator();
-			while (instructions.hasNext()) {
-				SSAInstruction instruction = instructions.next();
+		public DefUse(final BasicBlockInContext<E> inBlock) {
+		
+			this.bb = inBlock;
+
+			for (SSAInstruction instruction : bb) {
+				
 				UseDefSetPair p = new UseDefSetPair();
 				boolean thisToResult = false;
 				if(instruction instanceof SSAInvokeInstruction)
@@ -220,15 +218,16 @@ implements IFlowFunctionMap<BasicBlockInContext<E>> {
 						SSAPutInstruction pi = (SSAPutInstruction)instruction;
 						PointerKey pk;
 						boolean isStatic;
-						Set<CodeElement> elements = new HashSet<CodeElement>();
+						Set<CodeElement> elements = Sets.newHashSet();
 						if (pi.isStatic()) {
 						    p.uses.addAll(CodeElement.valueElements(pa, bb.getNode(), instruction.getUse(0)));
 						    FieldReference declaredField = pi.getDeclaredField();
                             IField staticField = getStaticIField(ch, declaredField);
-                            if (staticField == null)
+                            if (staticField == null) {
                             	pk = null;
-                            else
+                            } else {
                             	pk = new StaticFieldKey(staticField);
+                            }
 						    isStatic = true;
 						} else {
 						    p.uses.addAll(
@@ -238,7 +237,7 @@ implements IFlowFunctionMap<BasicBlockInContext<E>> {
 							int valueNumber = instruction.getUse(0);
 							pk = new LocalPointerKey(bb.getNode(), valueNumber);
 							
-							MyLogger.log(LogLevel.DEBUG, " instruction: "+instruction);
+							//MyLogger.log(LogLevel.DEBUG, " instruction: "+instruction);
 							
 							isStatic = false;
 							// add the object that holds the field that was modified
@@ -340,7 +339,7 @@ implements IFlowFunctionMap<BasicBlockInContext<E>> {
             return staticField;
         }
 
-		void addTargets(CodeElement d1, BitVectorIntSet set, FlowType taintType)
+		private void addTargets(CodeElement d1, BitVectorIntSet set, FlowType<E> taintType)
 		{
 			//System.out.println(this.toString()+".addTargets("+d1+"...)");
 			for(UseDefSetPair p: useToDefList)
@@ -362,8 +361,9 @@ implements IFlowFunctionMap<BasicBlockInContext<E>> {
 			BitVectorIntSet set = new BitVectorIntSet();
 			set.add(d1);
 			DomainElement de = domain.getMappedObject(d1);
-			if (de != null)
+			if (de != null) {
 				addTargets(de.codeElement, set, de.taintSource);
+			}
 			return set;
 		}
 	}
