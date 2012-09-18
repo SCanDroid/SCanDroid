@@ -50,6 +50,7 @@ import synthMethod.MethodAnalysis;
 import util.MyLogger.LogLevel;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.ibm.wala.classLoader.IClass;
 import com.ibm.wala.classLoader.IField;
@@ -109,17 +110,15 @@ implements IFlowFunctionMap<BasicBlockInContext<E>> {
 
 	// instruction has a valid def set
 	private static boolean inFlow(SSAInstruction instruction) {
-		return  
-				(instruction instanceof SSAArrayLoadInstruction) ||
+		return  (instruction instanceof SSAArrayLoadInstruction) ||
 				(instruction instanceof SSAGetInstruction);
 	}
 
 	// instruction's def is getUse(0)
 	private static boolean outFlow(SSAInstruction instruction) {
-		return
-				(instruction instanceof SSAArrayStoreInstruction) ||
-				(instruction instanceof SSAPutInstruction) ||
-				(instruction instanceof SSAInvokeInstruction);
+		return (instruction instanceof SSAArrayStoreInstruction) ||
+			   (instruction instanceof SSAPutInstruction) ||
+			   (instruction instanceof SSAInvokeInstruction);
 	}
 
 	// instruction is a return instruction
@@ -383,7 +382,7 @@ implements IFlowFunctionMap<BasicBlockInContext<E>> {
 //		}
 		
 
-		final Map<CodeElement,CodeElement> parameterMap = new HashMap<CodeElement,CodeElement>();
+		final Map<CodeElement,CodeElement> parameterMap = Maps.newHashMap();
 		for (int i = 0; i < instruction.getNumberOfParameters(); i++) {
 			Set<CodeElement> elements = CodeElement.valueElements(pa, src.getNode(), instruction.getUse(i));
 			for(CodeElement e: elements) {

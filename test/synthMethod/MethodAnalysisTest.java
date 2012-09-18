@@ -63,7 +63,7 @@ import flow.types.FlowType;
 
 public class MethodAnalysisTest {
 
-	private static final Predicate<IMethod> TEST_APP_MAIN =
+	private static final Predicate<IMethod> MAIN_METHODS =
 			MethodPredicates.isNamed("main");
 	
     /**
@@ -82,7 +82,7 @@ public class MethodAnalysisTest {
     	String appJar = TEST_DATA_DIR + File.separator + "trivialJar5-1.0-SNAPSHOT.jar";
     	
     	Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>>
-          directResults = runDFAnalysis(appJar, new TestSpecs(), WALA_NATIVES_XML, TEST_APP_MAIN);
+          directResults = runDFAnalysis(appJar, new TestSpecs(), WALA_NATIVES_XML, MAIN_METHODS);
     	
     	System.out.println("direct results: "+ flowMapToString(directResults));
     	
@@ -96,7 +96,7 @@ public class MethodAnalysisTest {
             IOException, ClassHierarchyException {
 
         String appJar = TEST_DATA_DIR + File.separator + "trivialJar1-1.0-SNAPSHOT.jar";
-        String filename = summarize(appJar, TEST_APP_MAIN);
+        String filename = summarize(appJar, MAIN_METHODS);
         
         String contents = readFile(filename);
         System.out.println("-----     Summary File: -------");
@@ -122,7 +122,7 @@ public class MethodAnalysisTest {
             IOException, ClassHierarchyException {
 
         String appJar = TEST_DATA_DIR + File.separator + "trivialJar6-1.0-SNAPSHOT.jar";
-        runOnJar(appJar, new TestSpecs(), TEST_APP_MAIN);
+        runOnJar(appJar, new TestSpecs(), MAIN_METHODS);
     }
 
     @Test
@@ -151,7 +151,7 @@ public class MethodAnalysisTest {
             IOException, ClassHierarchyException {
 
         String appJar = TEST_DATA_DIR + File.separator + "trivialJar1-1.0-SNAPSHOT.jar";
-        runOnJar(appJar, new TestSpecs(), TEST_APP_MAIN);
+        runOnJar(appJar, new TestSpecs(), MAIN_METHODS);
     }
 
     /**
@@ -169,7 +169,7 @@ public class MethodAnalysisTest {
             IOException, ClassHierarchyException {
 
         String appJar = TEST_DATA_DIR + File.separator + "trivialJar2-1.0-SNAPSHOT.jar";
-        runOnJar(appJar, new TestSpecs(), TEST_APP_MAIN);
+        runOnJar(appJar, new TestSpecs(), MAIN_METHODS);
     }
 
     /**
@@ -187,7 +187,7 @@ public class MethodAnalysisTest {
             IOException, ClassHierarchyException {
 
         String appJar = TEST_DATA_DIR + File.separator + "trivialJar8-1.0-SNAPSHOT.jar";
-        runOnJar(appJar, new TestSpecs(), TEST_APP_MAIN);
+        runOnJar(appJar, new TestSpecs(), MAIN_METHODS);
     }
 
     /**
@@ -205,7 +205,33 @@ public class MethodAnalysisTest {
             IOException, ClassHierarchyException {
 
         String appJar = TEST_DATA_DIR + File.separator + "trivialJar7-1.0-SNAPSHOT.jar";
-        runOnJar(appJar, new TestSpecs(), TEST_APP_MAIN);
+        runOnJar(appJar, new TestSpecs(), MAIN_METHODS);
+    }
+    
+    /**
+     * Test summarization for data flow through exceptions.
+     *
+     * @throws IllegalArgumentException
+     * @throws CallGraphBuilderCancelException
+     * @throws IOException
+     * @throws ClassHierarchyException
+     */
+    @Test
+    public final void test_exceptionFlow()
+            throws IllegalArgumentException, CallGraphBuilderCancelException,
+            IOException, ClassHierarchyException {
+
+        String appJar = TEST_DATA_DIR + File.separator + "trivialJar7-1.0-SNAPSHOT.jar";
+        runOnJar(appJar, new TestSpecs() {
+            @Override
+            public SourceSpec[] getSourceSpecs() {
+                return new SourceSpec[] { 
+                         new EntryArgSourceSpec(new MethodNamePattern(
+                           "Lorg/scandroid/testing/ExceptionFlow", "exceptionFlow"),
+                           new int[] { 0 })
+                         };
+            }
+        }, MethodPredicates.isNamed("exceptionFlow"));
     }
     
     /**
@@ -216,27 +242,52 @@ public class MethodAnalysisTest {
      * @throws IOException
      * @throws ClassHierarchyException
      */
-    @Ignore("Test code only uses main methods as entry points - " +
-    		"note that this is in addition to source specs.")
+    @Ignore("takes 1m seconds")
     @Test
-    public final void test_flowFromInvokedSource()
+    public final void test_flowFromInvokedSourceStr()
             throws IllegalArgumentException, CallGraphBuilderCancelException,
             IOException, ClassHierarchyException {
 
-        String appJar = TEST_DATA_DIR + File.separator + "trivialJar7-1.0-SNAPSHOT.jar";
+        String appJar = TEST_DATA_DIR + File.separator + "trivialJar10-1.0-SNAPSHOT.jar";
         runOnJar(appJar, new TestSpecs() {
-            @Override
+        	@Override
             public SourceSpec[] getSourceSpecs() {
                 return new SourceSpec[] { 
                          new EntryArgSourceSpec(new MethodNamePattern(
-                           "Lorg/scandroid/testing/App", "invokeCallArgSourceSpec"),
-                           new int[] { 0 }),
-                         new CallArgSourceSpec(new MethodNamePattern(
                            "Lorg/scandroid/testing/App", "load"),
                            new int[] { 0 })
                          };
             }
-        }, MethodPredicates.every);
+        }, MAIN_METHODS);
+    }
+    
+    /**
+     * Test to see if methods that invoke sources are summarized properly.
+     *
+     * @throws IllegalArgumentException
+     * @throws CallGraphBuilderCancelException
+     * @throws IOException
+     * @throws ClassHierarchyException
+     */
+    @Test
+    public final void test_flowFromInvokedSourceInt()
+            throws IllegalArgumentException, CallGraphBuilderCancelException,
+            IOException, ClassHierarchyException {
+
+        String appJar = TEST_DATA_DIR + File.separator + "trivialJar6-1.0-SNAPSHOT.jar";
+        runOnJar(appJar, new TestSpecs() {
+        	@Override
+            public SourceSpec[] getSourceSpecs() {
+                return new SourceSpec[] { 
+                         new EntryArgSourceSpec(new MethodNamePattern(
+                           "Lorg/scandroid/testing/App", "mainNoStr"),
+                           new int[] { 0 }),
+                         new CallArgSourceSpec(new MethodNamePattern(
+                           "Lorg/scandroid/testing/App", "loadPoint"),
+                           new int[] { 0 })
+                         };
+            }
+        }, MethodPredicates.isNamed("mainNoStr"));
     }
     
     /**
@@ -258,7 +309,7 @@ public class MethodAnalysisTest {
             IOException, ClassHierarchyException {
 
     	String appJar = TEST_DATA_DIR + File.separator + "trivialJar3-1.0-SNAPSHOT.jar";
-        runOnJar(appJar, new TestSpecs(), TEST_APP_MAIN);
+        runOnJar(appJar, new TestSpecs(), MAIN_METHODS);
     }
     
     /**
@@ -276,7 +327,7 @@ public class MethodAnalysisTest {
             IOException, ClassHierarchyException {
 
     	String appJar = TEST_DATA_DIR + File.separator + "trivialJar9-1.0-SNAPSHOT.jar";
-        runOnJar(appJar, new TestSpecs(), TEST_APP_MAIN);
+        runOnJar(appJar, new TestSpecs(), MAIN_METHODS);
     }
     
     /**
@@ -295,7 +346,7 @@ public class MethodAnalysisTest {
             IOException, ClassHierarchyException {
 
         String appJar = TEST_DATA_DIR + File.separator + "trivialJar5-1.0-SNAPSHOT.jar";
-        runOnJar(appJar, new TestSpecs(), TEST_APP_MAIN);
+        runOnJar(appJar, new TestSpecs(), MAIN_METHODS);
     }
     
     /**
@@ -312,7 +363,7 @@ public class MethodAnalysisTest {
             IOException, ClassHierarchyException {
 
         String appJar = TEST_DATA_DIR + File.separator + "trivialJar4-1.0-SNAPSHOT.jar";
-        runOnJar(appJar, new TestSpecs(), TEST_APP_MAIN);
+        runOnJar(appJar, new TestSpecs(), MAIN_METHODS);
     }
     
     @Ignore("Runs too long")
@@ -343,7 +394,7 @@ public class MethodAnalysisTest {
                         new CallArgSinkSpec(new MethodNamePattern(
                           "Ljava/io/PrintStream", "println"), new int[] { }) };
             }
-        }, TEST_APP_MAIN);
+        }, MAIN_METHODS);
     }
     
     //@Ignore
@@ -393,14 +444,14 @@ public class MethodAnalysisTest {
     private void checkSummaryProperty(String jarFile, ISpecs specs, String summaryFile) 
             throws ClassHierarchyException, CallGraphBuilderCancelException, IOException {
         Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>>
-          directResults = runDFAnalysis(jarFile, specs, WALA_NATIVES_XML, TEST_APP_MAIN);
+          directResults = runDFAnalysis(jarFile, specs, WALA_NATIVES_XML, MAIN_METHODS);
         
         System.out.println(" ----------------------------------------  ");
         System.out.println(" ---  DIRECT RESULTS DONE             ---  ");
         System.out.println(" ----------------------------------------  ");
         
         Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>>
-          summarizedResults = runDFAnalysis(jarFile, specs, summaryFile, TEST_APP_MAIN);
+          summarizedResults = runDFAnalysis(jarFile, specs, summaryFile, MAIN_METHODS);
         
         Assert.assertNotSame("No flows found in direct results.", 0, directResults.size());
         System.out.println("Actual Flows: \n"+flowMapToString(directResults));

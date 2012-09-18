@@ -360,7 +360,8 @@ public class XMLMethodSummaryWriter {
 //                        System.out.println("Method: "+ ff.getBlock().getMethod());
 //                        System.out.println(ff);
 //                        System.out.println("Field: "+fe);
-                        throw new IllegalArgumentException("FieldElement IK Not Found: " + fe.getIK()+" hash: " + fe.getIK().hashCode());
+        				// This might be an instance key for an intermittent object, which is OK
+                        //throw new IllegalArgumentException("FieldElement IK Not Found: " + fe.getIK()+" hash: " + fe.getIK().hashCode());
         			}
         		}
         	}
