@@ -75,6 +75,18 @@ public class MethodAnalysisTest {
             "wala/wala-src/com.ibm.wala.core/dat/natives.xml";
     private static final String TEST_DATA_DIR = "data/testdata/";
 
+    /**
+     * Test that a dataflow is found when running through a constructor.
+     * 
+     * This serves as a bit of a sanity check -- if it fails, the other tests
+     * are a little suspect (since they use the basic data flow analysis as 
+     * one oracle).
+     * 
+     * @throws ClassHierarchyException
+     * @throws IllegalArgumentException
+     * @throws CallGraphBuilderCancelException
+     * @throws IOException
+     */
     @Test
     public final void test_dataFlowThroughConstructor() 
     		throws ClassHierarchyException, IllegalArgumentException, 
@@ -89,7 +101,15 @@ public class MethodAnalysisTest {
     	Assert.assertEquals("Exactly one flow needed", 1, directResults.size());
     }
     
-    //@Ignore
+    /**
+     * Test that the summarization code actually produces a summary for simple 
+     * situtaions.
+     * 
+     * @throws IllegalArgumentException
+     * @throws CallGraphBuilderCancelException
+     * @throws IOException
+     * @throws ClassHierarchyException
+     */
     @Test
     public final void test_summarizeProducesOutput() 
             throws IllegalArgumentException, CallGraphBuilderCancelException,
@@ -99,9 +119,6 @@ public class MethodAnalysisTest {
         String filename = summarize(appJar, MAIN_METHODS);
         
         String contents = readFile(filename);
-        System.out.println("-----     Summary File: -------");
-        System.out.println(contents);
-        System.out.println("-----   End Summary File -------");
         Assert.assertTrue("contents not long enough.", 80 <= contents.length());
     }
     
@@ -137,16 +154,15 @@ public class MethodAnalysisTest {
     }
     
     /**
-     * Simple, direct data flow through a few methods.
+     * Simple, direct data flow through a return.
      * 
      * @throws IllegalArgumentException
      * @throws CallGraphBuilderCancelException
      * @throws IOException
      * @throws ClassHierarchyException
      */
-    //@Ignore
     @Test
-    public final void test_trivialJar1() 
+    public final void test_trivialReturnFlow() 
             throws IllegalArgumentException, CallGraphBuilderCancelException,
             IOException, ClassHierarchyException {
 
@@ -162,7 +178,6 @@ public class MethodAnalysisTest {
      * @throws IOException
      * @throws ClassHierarchyException
      */
-    //@Ignore
     @Test
     public final void test_consCellRecursion() 
             throws IllegalArgumentException, CallGraphBuilderCancelException,
@@ -180,7 +195,6 @@ public class MethodAnalysisTest {
      * @throws IOException
      * @throws ClassHierarchyException
      */
-    //@Ignore
     @Test
     public final void test_consCellLooping()
             throws IllegalArgumentException, CallGraphBuilderCancelException,
@@ -198,7 +212,6 @@ public class MethodAnalysisTest {
      * @throws IOException
      * @throws ClassHierarchyException
      */
-    //@Ignore
     @Test
     public final void test_localVariableFlow()
             throws IllegalArgumentException, CallGraphBuilderCancelException,
@@ -302,7 +315,6 @@ public class MethodAnalysisTest {
      * @throws IOException
      * @throws ClassHierarchyException
      */
-    //@Ignore
     @Test
     public final void test_flowFromInputArrayParameter() 
             throws IllegalArgumentException, CallGraphBuilderCancelException,
@@ -320,7 +332,6 @@ public class MethodAnalysisTest {
      * @throws IOException
      * @throws ClassHierarchyException
      */
-    //@Ignore
     @Test
     public final void test_flowFromInputPOJOParameter() 
             throws IllegalArgumentException, CallGraphBuilderCancelException,
@@ -339,7 +350,6 @@ public class MethodAnalysisTest {
      * @throws IOException
      * @throws ClassHierarchyException
      */
-    //@Ignore
     @Test
     public final void test_flowViaNewInteger() 
             throws IllegalArgumentException, CallGraphBuilderCancelException,
@@ -397,7 +407,14 @@ public class MethodAnalysisTest {
         }, MAIN_METHODS);
     }
     
-    //@Ignore
+    /**
+     * Test that loading a broken summary causes tests to fail.
+     * 
+     * @throws IllegalArgumentException
+     * @throws CallGraphBuilderCancelException
+     * @throws IOException
+     * @throws ClassHierarchyException
+     */
     @Test(expected=AssertionError.class)
     public final void test_brokensummaryBreaksDataFlow() 
             throws IllegalArgumentException, CallGraphBuilderCancelException,
