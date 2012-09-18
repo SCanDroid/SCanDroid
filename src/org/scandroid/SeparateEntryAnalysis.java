@@ -100,7 +100,13 @@ public class SeparateEntryAnalysis {
         }
     }
 
-    static void 
+    /**
+     * @param loader
+     * @param localEntries
+     * @param methodAnalysis
+     * @return the number of permission outflows detected
+     */
+    public static int 
         analyze(AndroidAppLoader<IExplodedBasicBlock> loader,
                  LinkedList<Entrypoint> localEntries, 
                  MethodAnalysis<IExplodedBasicBlock> methodAnalysis) {
@@ -198,11 +204,12 @@ public class SeparateEntryAnalysis {
 //            		System.out.println("Definition "+ssa);
 //            	}
 //            }
-            
+            return permissionOutflow.size();
         } catch (com.ibm.wala.util.debug.UnimplementedError e) {
             e.printStackTrace();
         } catch (CancelException e){
             System.err.println("Canceled (" + e.getMessage() + ").");
         }
+        return 0;
     }
 }
