@@ -137,7 +137,7 @@ public class MethodAnalysisTest {
     }
     
     /**
-     * Simple, direct data flow through a few methods.
+     * Simple, direct data flow through a return.
      * 
      * @throws IllegalArgumentException
      * @throws CallGraphBuilderCancelException
@@ -146,7 +146,7 @@ public class MethodAnalysisTest {
      */
     //@Ignore
     @Test
-    public final void test_trivialJar1() 
+    public final void test_trivialReturnFlow() 
             throws IllegalArgumentException, CallGraphBuilderCancelException,
             IOException, ClassHierarchyException {
 
@@ -180,7 +180,6 @@ public class MethodAnalysisTest {
      * @throws IOException
      * @throws ClassHierarchyException
      */
-    //@Ignore
     @Test
     public final void test_consCellLooping()
             throws IllegalArgumentException, CallGraphBuilderCancelException,
@@ -198,7 +197,6 @@ public class MethodAnalysisTest {
      * @throws IOException
      * @throws ClassHierarchyException
      */
-    //@Ignore
     @Test
     public final void test_localVariableFlow()
             throws IllegalArgumentException, CallGraphBuilderCancelException,
