@@ -102,10 +102,10 @@ public class CLI {
 		options.addOption("i", "IFDS-Explorer", false, "bring up a gui to analyze domainelements for flow analysis");
 		options.addOption("m", "main-entrypoint", false, "look for main methods and add them as entrypoints");
 		options.addOption("a", "stdout-call-graph", false, "output full call graph to stdout");
-		options.addOption("w", "write-summaries", false, "write calculated method summaries out in XML format");
 		options.addOption("t", "thread-run-main", false, "use ServerThread.run as the entry point for analysis");
 		options.addOption("x", "prefix-analysis", false, "run string prefix analysis");
-
+        options.addOption("f", "summaries-file", true, "Use the specified summaries xml file");
+		
 		options.addOption(OptionBuilder.withLongOpt( "android-lib" ).withDescription( "include ALIB in scope of analysis" ).hasArg().withArgName("ALIB").create() );
 		options.addOption(OptionBuilder.withLongOpt( "reflection" ).withDescription( "FULL, NO_FLOW_TO_CASTS, NO_METHOD_INVOKE, NO_FLOW_TO_CASTS_NO_METHOD_INVOKE, ONE_FLOW_TO_CASTS_NO_METHOD_INVOKE, NO_STRING_CONSTANTS, NONE (Default)").hasArg().withArgName("option").create() );	    
 		

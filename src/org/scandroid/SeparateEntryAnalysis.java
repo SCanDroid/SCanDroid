@@ -37,15 +37,18 @@ package org.scandroid;
  *
  */
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
 
-import spec.ISpecs;
 import spec.AndroidSpecs;
+import spec.ISpecs;
 import synthMethod.MethodAnalysis;
 import synthMethod.XMLMethodSummaryWriter;
 import util.AndroidAppLoader;
@@ -56,7 +59,6 @@ import com.ibm.wala.ipa.callgraph.CGNode;
 import com.ibm.wala.ipa.callgraph.Entrypoint;
 import com.ibm.wala.ipa.callgraph.propagation.InstanceKey;
 import com.ibm.wala.ipa.cfg.BasicBlockInContext;
-import com.ibm.wala.ssa.ISSABasicBlock;
 import com.ibm.wala.ssa.analysis.IExplodedBasicBlock;
 import com.ibm.wala.util.CancelException;
 
@@ -78,11 +80,25 @@ public class SeparateEntryAnalysis {
         if (loader.entries == null || loader.entries.size() == 0) {
             throw new IOException("No Entrypoints Detected!");
         }
-        MethodAnalysis<IExplodedBasicBlock> methodAnalysis =
-           new MethodAnalysis<IExplodedBasicBlock>();
+        MethodAnalysis<IExplodedBasicBlock> methodAnalysis = null;
+           //new MethodAnalysis<IExplodedBasicBlock>();
         for (Entrypoint entry : loader.entries) {
             System.out.println("Entry point: " + entry);
         }
+        
+        String summariesFileName = CLI.getOption("summaries-file");
+        InputStream summaryStream = null;
+        if ( null != summariesFileName ) {
+        	File summariesFile = new File(summariesFileName);
+        	
+        	if ( !summariesFile.exists() ) {
+        		System.err.println("Could not find summaries file: "+summariesFileName);
+        		System.exit(1);
+        	}
+        	
+        	summaryStream = new FileInputStream(summariesFile);
+        }
+        
         if(CLI.hasOption("separate-entries")) {
             int i = 1;
             for (Entrypoint entry : loader.entries) {
@@ -90,13 +106,11 @@ public class SeparateEntryAnalysis {
                         loader.entries.size() + ": " + entry);
                 LinkedList<Entrypoint> localEntries = new LinkedList<Entrypoint>();
                 localEntries.add(entry);
-                analyze(loader, localEntries, methodAnalysis);
+                analyze(loader, localEntries, methodAnalysis, summaryStream);
                 i++;
             }
         } else {
-            analyze(loader, loader.entries, methodAnalysis);
-            if(CLI.hasOption("write-summaries"))
-                XMLMethodSummaryWriter.writeXML(methodAnalysis);
+            analyze(loader, loader.entries, methodAnalysis, summaryStream);
         }
     }
 
@@ -109,12 +123,10 @@ public class SeparateEntryAnalysis {
     public static int 
         analyze(AndroidAppLoader<IExplodedBasicBlock> loader,
                  LinkedList<Entrypoint> localEntries, 
-                 MethodAnalysis<IExplodedBasicBlock> methodAnalysis) {
+                 MethodAnalysis<IExplodedBasicBlock> methodAnalysis,
+                 InputStream summariesStream) {
         try {
-            loader.buildGraphs(localEntries);
-            // load the permissions
-            Set<String> manifestFilenames = new HashSet<String>();
-            Permissions perms = Permissions.load(manifestFilenames);
+            loader.buildGraphs(localEntries, summariesStream);
 
             System.out.println("Supergraph size = "
                     + loader.graph.getNumberOfNodes());

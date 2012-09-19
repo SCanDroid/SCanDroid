@@ -2,7 +2,9 @@ package synthMethod;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
@@ -321,6 +323,51 @@ public class MethodAnalysisTest {
     }
     
     /**
+     * Test to see if using a hand-crafted (and somewhat wrong) method summary
+     * for AbstractStringBuilder.append(String) works here, and improves performance.
+     * 
+     * When running with no summaries (ie: WALA_NATIVES_XML) this test takes 
+     * about 450 seconds.
+     * 
+     * Ran in ~154 seconds with the summary (while doing method analysis)
+     * 
+     * @throws IllegalArgumentException
+     * @throws CallGraphBuilderCancelException
+     * @throws IOException
+     * @throws ClassHierarchyException
+     */
+    @Test
+    public final void test_flowFromInvokedSourceStrWithSummary()
+            throws IllegalArgumentException, CallGraphBuilderCancelException,
+            IOException, ClassHierarchyException {
+
+        String appJar = TEST_DATA_DIR + File.separator + "trivialJar10-1.0-SNAPSHOT.jar";
+        String summaryXMLFile = TEST_DATA_DIR + File.separator + "AbstractStringBuilder-append.xml";
+
+        ISpecs specs = new TestSpecs() {
+        	@Override
+            public SourceSpec[] getSourceSpecs() {
+                return new SourceSpec[] { 
+                         new EntryArgSourceSpec(new MethodNamePattern(
+                           "Lorg/scandroid/testing/App", "load"),
+                           new int[] { 0 })
+                         };
+            }
+        }; 
+        
+        checkSummaryProperty(appJar, specs, summaryXMLFile, MAIN_METHODS);
+//        Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>>
+//        	directResults = runDFAnalysis(appJar, specs, WALA_NATIVES_XML, MAIN_METHODS);
+//        
+//        System.out.println("Direct Results: \n"+flowMapToString(directResults));
+//        
+//        Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>>
+//       	    summaryResults = runDFAnalysis(appJar, specs, summaryXMLFile, MAIN_METHODS);
+//        System.out.println("Summary Results: \n"+flowMapToString(summaryResults));
+    }
+    
+    
+    /**
      * Test to see if methods that invoke sources are summarized properly.
      *
      * @throws IllegalArgumentException
@@ -509,15 +556,27 @@ public class MethodAnalysisTest {
     		String summaryFile, 
     		Predicate<IMethod> interestingEntrypoint) 
             throws ClassHierarchyException, CallGraphBuilderCancelException, IOException {
+    	
+    	long startTime = System.currentTimeMillis();
+    	
         Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>>
           directResults = runDFAnalysis(jarFile, specs, WALA_NATIVES_XML, interestingEntrypoint);
+        
+        long directRunTime = System.currentTimeMillis() - startTime;
+        
         
         System.out.println(" ----------------------------------------  ");
         System.out.println(" ---  DIRECT RESULTS DONE             ---  ");
         System.out.println(" ----------------------------------------  ");
         
+        startTime = System.currentTimeMillis();
         Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>>
           summarizedResults = runDFAnalysis(jarFile, specs, summaryFile, interestingEntrypoint);
+        
+        long summaryRunTime = System.currentTimeMillis() - startTime;
+        
+        System.out.println("Direct runtime: "+directRunTime+" Summary runtime: "+summaryRunTime);
+        System.out.println("Speedup of: "+ (directRunTime - summaryRunTime) + " ms");
         
         Assert.assertNotSame("No flows found in direct results.", 0, directResults.size());
         System.out.println("Actual Flows: \n"+flowMapToString(directResults));
@@ -590,11 +649,13 @@ public class MethodAnalysisTest {
     }
 
 	private CallGraphBuilder makeCallgraph(AnalysisScope scope,
-			ClassHierarchy cha, AnalysisOptions options, String methodSummariesFile) {
+			ClassHierarchy cha, AnalysisOptions options, String methodSummariesFile) 
+					throws FileNotFoundException {
+		InputStream summaryStream = new FileInputStream(methodSummariesFile);
         CallGraphBuilder builder = 
                 AndroidAppLoader.makeZeroCFABuilder(
                         options, new AnalysisCache(), cha, scope, null, null, 
-                        methodSummariesFile, null);
+                        summaryStream, null);
         
 //        CallGraphBuilder builder = 
 //                AndroidAppLoader.makeVanillaZeroOneCFABuilder(
@@ -632,10 +693,10 @@ public class MethodAnalysisTest {
                CallGraphBuilderCancelException {
 
         @SuppressWarnings("unchecked")
-		MethodAnalysis<IExplodedBasicBlock> methodAnalysis =
+		MethodAnalysis<IExplodedBasicBlock> methodAnalysis = null;
         		// don't summarize the interesting entry points. 
         		//new MethodAnalysis<IExplodedBasicBlock>(interestingEntrypoint.not());
-				new MethodAnalysis<IExplodedBasicBlock>(Predicate.TRUE);
+				//new MethodAnalysis<IExplodedBasicBlock>(Predicate.TRUE);
         
         AnalysisScope scope = 
                 DexAnalysisScopeReader.makeAndroidBinaryAnalysisScope(appJar, 

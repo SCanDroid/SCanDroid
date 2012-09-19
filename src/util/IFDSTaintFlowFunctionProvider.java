@@ -428,7 +428,10 @@ implements IFlowFunctionMap<BasicBlockInContext<E>> {
 //		    && LoaderUtils.fromLoader(dest.getNode(), ClassLoaderReference.Primordial)) {
 //		    
 //            MyLogger.log(DEBUG,"Primordial and No Summary! (getCallFlowFunction) - " + dest.getMethod().getReference());
-		methodAnalysis.analyze(graph, pa, src, dest);
+		
+		if (null != methodAnalysis) {
+			methodAnalysis.analyze(graph, pa, src, dest);
+		}
 //		}
 		
 
