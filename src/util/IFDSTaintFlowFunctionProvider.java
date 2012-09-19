@@ -142,173 +142,223 @@ implements IFlowFunctionMap<BasicBlockInContext<E>> {
 		
 			this.bb = inBlock;
 
-			for (SSAInstruction instruction : bb) {
+			for (SSAInstruction instruction : bb) {				
+				handleInstruction(instruction);
+			}
+		}
+
+		private void handleInstruction(SSAInstruction instruction) {
+			UseDefSetPair p = new UseDefSetPair();
+			boolean thisToResult = false;
+			if(instruction instanceof SSAInvokeInstruction)
+			{
+				thisToResult = handleInvokeInstruction(instruction, p);
+			}
+			if (thisToResult) {
+				useToDefList.add(p);
+				p = new UseDefSetPair();
+			}
 				
-				UseDefSetPair p = new UseDefSetPair();
-				boolean thisToResult = false;
-				if(instruction instanceof SSAInvokeInstruction)
+			IClassHierarchy ch = bb.getNode().getClassHierarchy();
+
+			if (inFlow(instruction)) {
+				handleInflowInstruction(instruction, p, ch);
+			}
+			else if (outFlow(instruction)) {
+				handleOutflowInstruction(instruction, p, ch);
+			}
+			else if(returnFlow(instruction))
+			{
+				handleReturnFlowInstruction(instruction, p);
+			}
+			else
+			{
+				for (int i = 0; i < instruction.getNumberOfUses(); i++) {
+					p.uses.addAll(CodeElement.valueElements(pa, bb.getNode(), instruction.getUse(i)));
+				}
+				for (int j = 0; j < instruction.getNumberOfDefs(); j++) {
+					p.defs.addAll(CodeElement.valueElements(pa, bb.getNode(), instruction.getDef(j)));
+				}
+			}
+			
+			useToDefList.add(p);
+		}
+
+		private void handleReturnFlowInstruction(SSAInstruction instruction,
+				UseDefSetPair p) {
+			SSAReturnInstruction retInst = (SSAReturnInstruction)instruction;
+			if(retInst.getNumberOfUses() > 0)
+			{
+				/* TODO: why not add instance keys, too? */
+				for(int i = 0; i < instruction.getNumberOfUses(); i++)
 				{
-					SSAInvokeInstruction invInst = (SSAInvokeInstruction)instruction;
-					if(!invInst.isSpecial() && !invInst.isStatic() && instruction.getNumberOfDefs() > 0)
-					{
-						//System.out.println("adding receiver flow in "+this+" for "+invInst);
-						//System.out.println("\tadding local element "+invInst.getReceiver());
-						//getReceiver() == getUse(0) == param[0] == this
-						p.uses.addAll(CodeElement.valueElements(pa, bb.getNode(), invInst.getReceiver()));
-						for(int i = 0; i < invInst.getNumberOfDefs(); i++)
-						{
-							//System.out.println("\tadding def local element "+invInst.getDef(i));
-							//return valuenumber of invoke instruction
-							p.defs.addAll(CodeElement.valueElements(pa, bb.getNode(), invInst.getDef(i)));
-						}
-					}
-					thisToResult = true;
-				}
-				if (thisToResult) {
-					useToDefList.add(p);
-					p = new UseDefSetPair();
-				}
+					//p.uses.add(new LocalElement(instruction.getUse(i)));
+					p.uses.addAll(
+						CodeElement.valueElements(pa, bb.getNode(), instruction.getUse(i)));
 					
-			    IClassHierarchy ch = bb.getNode().getClassHierarchy();
+				}
+				p.defs.add(new ReturnElement());
+			}
+		}
 
-				if (inFlow(instruction)) {
-					if (instruction instanceof SSAGetInstruction) {
-						SSAGetInstruction gi = (SSAGetInstruction)instruction;
-						
-						PointerKey pk;
-						boolean isStatic;
-						FieldReference declaredField = gi.getDeclaredField();
-                        if ( gi.isStatic()) {
-						    IField staticField =
-                                    getStaticIField(ch, declaredField);
-						    
-						    if (staticField == null)
-						    	pk = null;
-						    else
-						    	pk = new StaticFieldKey(staticField);
-						    isStatic = true;
-						} else {
-						    int valueNumber = instruction.getUse(0);
-						    pk = new LocalPointerKey(bb.getNode(), valueNumber);
-						    isStatic = false;
-						}
-						
-                        if (pk!=null) {
-                        	Set<CodeElement> elements = new HashSet<CodeElement>();
-                        	OrdinalSet<InstanceKey> m = pa.getPointsToSet(pk);
-                        	if(m != null) {
-                        		for(Iterator<InstanceKey> keyIter = m.iterator();keyIter.hasNext();) {
-                        			elements.add(
-                        					new FieldElement(keyIter.next(), declaredField, isStatic));
-                        		}
-                        	}
-                        	p.uses.addAll(elements);
-                        	//getinstruction only has 1 def
-                        	p.defs.add(new LocalElement(instruction.getDef(0)));
-                        }
-					}
-					else if (instruction instanceof SSAArrayLoadInstruction){
-						p.uses.addAll(CodeElement.valueElements(pa, bb.getNode(), instruction.getUse(0)));
-						p.defs.addAll(CodeElement.valueElements(pa, bb.getNode(),instruction.getDef()));
-					}
+		private boolean handleInvokeInstruction(SSAInstruction instruction,
+				UseDefSetPair p) {
+			boolean thisToResult;
+			SSAInvokeInstruction invInst = (SSAInvokeInstruction)instruction;
+			if(!invInst.isSpecial() && !invInst.isStatic() && instruction.getNumberOfDefs() > 0)
+			{
+				//System.out.println("adding receiver flow in "+this+" for "+invInst);
+				//System.out.println("\tadding local element "+invInst.getReceiver());
+				//getReceiver() == getUse(0) == param[0] == this
+				p.uses.addAll(CodeElement.valueElements(pa, bb.getNode(), invInst.getReceiver()));
+				for(int i = 0; i < invInst.getNumberOfDefs(); i++)
+				{
+					//System.out.println("\tadding def local element "+invInst.getDef(i));
+					//return valuenumber of invoke instruction
+					p.defs.addAll(CodeElement.valueElements(pa, bb.getNode(), invInst.getDef(i)));
 				}
-				else if (outFlow(instruction)) {
-					if (instruction instanceof SSAPutInstruction) {
-						SSAPutInstruction pi = (SSAPutInstruction)instruction;
-						PointerKey pk;
-						boolean isStatic;
-						Set<CodeElement> elements = Sets.newHashSet();
-						if (pi.isStatic()) {
-						    p.uses.addAll(CodeElement.valueElements(pa, bb.getNode(), instruction.getUse(0)));
-						    FieldReference declaredField = pi.getDeclaredField();
-                            IField staticField = getStaticIField(ch, declaredField);
-                            if (staticField == null) {
-                            	pk = null;
-                            } else {
-                            	pk = new StaticFieldKey(staticField);
-                            }
-						    isStatic = true;
-						} else {
-						    p.uses.addAll(
-						    		CodeElement.valueElements(pa, bb.getNode(), instruction.getUse(1)));
+			}
+			thisToResult = true;
+			return thisToResult;
+		}
 
-						    // this value number seems to be the object referenced in this instruction (?)
-							int valueNumber = instruction.getUse(0);
-							pk = new LocalPointerKey(bb.getNode(), valueNumber);
-							
-							//MyLogger.log(LogLevel.DEBUG, " instruction: "+instruction);
-							
-							isStatic = false;
-							// add the object that holds the field that was modified
-							// to the list of things tainted by this flow:
-							p.defs.addAll(CodeElement.valueElements(pa, bb.getNode(), valueNumber));
-						}	
-						// now add the field keys to the defs list so that they
-						// are also tainted:
-						if (pk!=null) {
-							OrdinalSet<InstanceKey> m = pa.getPointsToSet(pk);
-							if (m != null) {
-								for (Iterator<InstanceKey> keyIter = m.iterator(); keyIter
-										.hasNext();) {
-									elements.add(new FieldElement(keyIter.next(),
-											pi.getDeclaredField(), isStatic));
-								}
-							}
-							p.defs.addAll(elements);
-						}
-					}
-					else if (instruction instanceof SSAArrayStoreInstruction){						
-						p.uses.addAll(CodeElement.valueElements(pa, bb.getNode(), instruction.getUse(2)));
-						p.defs.addAll(CodeElement.valueElements(pa, bb.getNode(), instruction.getUse(0)));
-					}
-					else if (instruction instanceof SSAInvokeInstruction){
-						
-						MethodReference targetMethod = ((SSAInvokeInstruction) instruction).getCallSite().getDeclaredTarget();
-						if (methodExcluded(targetMethod)) {
-							// TODO make all parameters flow into all other 
-							// parameters, which could happen in the static case as well.
-							if (!((SSAInvokeInstruction) instruction).isStatic()) {
-								// These loops cause all parameters flow into the 
-								// 'this' param (due to instruction.getUse(0))
-								for (int i = 1; i < instruction.getNumberOfUses(); i++) {
-									p.uses.addAll(CodeElement.valueElements(pa, bb.getNode(), instruction.getUse(i)));
-								}
-							
-	
-								if (instruction.getNumberOfUses() > 0) {
-									p.defs.addAll(CodeElement.valueElements(pa, bb.getNode(), instruction.getUse(0)));
-								}
-							}
-						}
-					}
-				}
-				else if(returnFlow(instruction))
-				{
-					SSAReturnInstruction retInst = (SSAReturnInstruction)instruction;
-					if(retInst.getNumberOfUses() > 0)
-					{
-						/* TODO: why not add instance keys, too? */
-						for(int i = 0; i < instruction.getNumberOfUses(); i++)
-						{
-							//p.uses.add(new LocalElement(instruction.getUse(i)));
-							p.uses.addAll(
-								CodeElement.valueElements(pa, bb.getNode(), instruction.getUse(i)));
-							
-						}
-						p.defs.add(new ReturnElement());
-					}
-				}
-				else
-				{
-					for (int i = 0; i < instruction.getNumberOfUses(); i++) {
+		private void handleInflowInstruction(SSAInstruction instruction,
+				UseDefSetPair p, IClassHierarchy ch) {
+			if (instruction instanceof SSAGetInstruction) {
+				handleInflowGetInstruction(instruction, p, ch);
+			}
+			else if (instruction instanceof SSAArrayLoadInstruction){
+				handleInflowArrayLoadInstruction(instruction, p);
+			}
+		}
+
+		private void handleOutflowInstruction(SSAInstruction instruction,
+				UseDefSetPair p, IClassHierarchy ch) {
+			if (instruction instanceof SSAPutInstruction) {
+				handleOutflowPutInstruction(instruction, p, ch);
+			}
+			else if (instruction instanceof SSAArrayStoreInstruction){						
+				handleOutflowArrayStoreInstruction(instruction, p);
+			}
+			else if (instruction instanceof SSAInvokeInstruction){
+				
+				handleOutflowInvokeInstruction(instruction, p);
+			}
+		}
+
+		private void handleOutflowInvokeInstruction(SSAInstruction instruction,
+				UseDefSetPair p) {
+			MethodReference targetMethod = ((SSAInvokeInstruction) instruction).getCallSite().getDeclaredTarget();
+			if (methodExcluded(targetMethod)) {
+				// TODO make all parameters flow into all other 
+				// parameters, which could happen in the static case as well.
+				if (!((SSAInvokeInstruction) instruction).isStatic()) {
+					// These loops cause all parameters flow into the 
+					// 'this' param (due to instruction.getUse(0))
+					for (int i = 1; i < instruction.getNumberOfUses(); i++) {
 						p.uses.addAll(CodeElement.valueElements(pa, bb.getNode(), instruction.getUse(i)));
 					}
-					for (int j = 0; j < instruction.getNumberOfDefs(); j++) {
-						p.defs.addAll(CodeElement.valueElements(pa, bb.getNode(), instruction.getDef(j)));
+				
+
+					if (instruction.getNumberOfUses() > 0) {
+						p.defs.addAll(CodeElement.valueElements(pa, bb.getNode(), instruction.getUse(0)));
 					}
 				}
+			}
+		}
+
+		private void handleOutflowArrayStoreInstruction(
+				SSAInstruction instruction, UseDefSetPair p) {
+			p.uses.addAll(CodeElement.valueElements(pa, bb.getNode(), instruction.getUse(2)));
+			p.defs.addAll(CodeElement.valueElements(pa, bb.getNode(), instruction.getUse(0)));
+		}
+
+		private void handleOutflowPutInstruction(SSAInstruction instruction,
+				UseDefSetPair p, IClassHierarchy ch) {
+			SSAPutInstruction pi = (SSAPutInstruction)instruction;
+			PointerKey pk;
+			boolean isStatic;
+			Set<CodeElement> elements = Sets.newHashSet();
+			if (pi.isStatic()) {
+			    p.uses.addAll(CodeElement.valueElements(pa, bb.getNode(), instruction.getUse(0)));
+			    FieldReference declaredField = pi.getDeclaredField();
+			    IField staticField = getStaticIField(ch, declaredField);
+			    if (staticField == null) {
+			    	pk = null;
+			    } else {
+			    	pk = new StaticFieldKey(staticField);
+			    }
+			    isStatic = true;
+			} else {
+			    p.uses.addAll(
+			    		CodeElement.valueElements(pa, bb.getNode(), instruction.getUse(1)));
+
+			    // this value number seems to be the object referenced in this instruction (?)
+				int valueNumber = instruction.getUse(0);
+				pk = new LocalPointerKey(bb.getNode(), valueNumber);
 				
-				useToDefList.add(p);
+				//MyLogger.log(LogLevel.DEBUG, " instruction: "+instruction);
+				
+				isStatic = false;
+				// add the object that holds the field that was modified
+				// to the list of things tainted by this flow:
+				p.defs.addAll(CodeElement.valueElements(pa, bb.getNode(), valueNumber));
+			}	
+			// now add the field keys to the defs list so that they
+			// are also tainted:
+			if (pk!=null) {
+				OrdinalSet<InstanceKey> m = pa.getPointsToSet(pk);
+				if (m != null) {
+					for (Iterator<InstanceKey> keyIter = m.iterator(); keyIter
+							.hasNext();) {
+						elements.add(new FieldElement(keyIter.next(),
+								pi.getDeclaredField(), isStatic));
+					}
+				}
+				p.defs.addAll(elements);
+			}
+		}
+
+		private void handleInflowArrayLoadInstruction(
+				SSAInstruction instruction, UseDefSetPair p) {
+			p.uses.addAll(CodeElement.valueElements(pa, bb.getNode(), instruction.getUse(0)));
+			p.defs.addAll(CodeElement.valueElements(pa, bb.getNode(),instruction.getDef()));
+		}
+
+		private void handleInflowGetInstruction(SSAInstruction instruction,
+				UseDefSetPair p, IClassHierarchy ch) {
+			SSAGetInstruction gi = (SSAGetInstruction)instruction;
+			
+			PointerKey pk;
+			boolean isStatic;
+			FieldReference declaredField = gi.getDeclaredField();
+			if ( gi.isStatic()) {
+			    IField staticField =
+			            getStaticIField(ch, declaredField);
+			    
+			    if (staticField == null)
+			    	pk = null;
+			    else
+			    	pk = new StaticFieldKey(staticField);
+			    isStatic = true;
+			} else {
+			    int valueNumber = instruction.getUse(0);
+			    pk = new LocalPointerKey(bb.getNode(), valueNumber);
+			    isStatic = false;
+			}
+			
+			if (pk!=null) {
+				Set<CodeElement> elements = new HashSet<CodeElement>();
+				OrdinalSet<InstanceKey> m = pa.getPointsToSet(pk);
+				if(m != null) {
+					for(Iterator<InstanceKey> keyIter = m.iterator();keyIter.hasNext();) {
+						elements.add(
+								new FieldElement(keyIter.next(), declaredField, isStatic));
+					}
+				}
+				p.uses.addAll(elements);
+				//getinstruction only has 1 def
+				p.defs.add(new LocalElement(instruction.getDef(0)));
 			}
 		}
 
