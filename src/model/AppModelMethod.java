@@ -77,6 +77,8 @@ public class AppModelMethod {
     //all callbacks to consider
 	private List<MethodParams> callBacks = new ArrayList<MethodParams>();
 	
+	private Map<TypeReference, TypeReference> aClassToTR = new HashMap<TypeReference, TypeReference> ();
+	
 	private class MethodParams{
 		public IMethod im;
 		public int params[];
@@ -144,10 +146,7 @@ public class AppModelMethod {
         					mp.getIMethod().getReference(), 
         					dispatch));        	
         	methodSummary.addStatement(insts.GotoInstruction(loopLabel));
-        }
-
-		
-		
+        }		
 	}
 	
 	private void startMethod() {
@@ -176,8 +175,8 @@ public class AppModelMethod {
     
     private void buildTypeMap(AndroidSpecs specs) {
 		//Go through all possible callbacks found in Application code
-		//Add their TypeReference with a unique variable name to typeToID.
-		//Also keep track of all innerclasses found.
+		//Associate their TypeReference with a unique number in typeToID.
+		//Also keep track of all anonymous classes found.
     	for (MethodNamePattern mnp:specs.getCallBacks()) {
     		for (IMethod im: mnp.getPossibleTargets(cha)) {
     			// limit to functions defined within the application
@@ -186,50 +185,71 @@ public class AppModelMethod {
     				callBacks.add(new MethodParams(im));
     				TypeReference tr = im.getDeclaringClass().getReference(); 
     				if (!typeToID.containsKey(tr)) {
+						log(DEBUG,"AppModel Mapping type "+tr.getName()+" to id " + nextLocal);
+						typeToID.put(tr, nextLocal++);
     					//class is an innerclass
     					if (tr.getName().getClassName().toString().contains("$")) {
     						addDependencies(tr);
     					}
-    					log(DEBUG,"AppModel Mapping type "+tr.getName()+" to name " + nextLocal);
-    					typeToID.put(tr, nextLocal++);        				
     				}
     			}
     		}
-    	}
-    	
-    	//Go through innerclasses, and make sure outerclasses 
-    	//are in typeToID list, if not add them.
-    	for (Entry<TypeReference, LinkedList<TypeReference>> trE:icDependencies.entrySet()) {
-    		for (TypeReference trS: trE.getValue()) {
-        		if (!typeToID.containsKey(trS)) {
-					log(DEBUG,"AppModel Mapping type "+trS.getName()+" to name " + nextLocal);
-        			typeToID.put(trS, nextLocal++);
-        		}
-    		}    		
-    	}
+    	}    	    
     }
+    
+  	private void addDependencies(TypeReference tr) {
+		String packageName = "L"+tr.getName().getPackage().toString()+"/";
+		String outerClassName;		
+		String innerClassName = tr.getName().getClassName().toString();
+		LinkedList<TypeReference> trLL = new LinkedList<TypeReference> ();
+		trLL.push(tr);
+		int index = innerClassName.lastIndexOf("$");
+		while (index != -1) {
+    		outerClassName = innerClassName.substring(0, index);
+    		TypeReference innerTR = TypeReference.findOrCreate(ClassLoaderReference.Application, packageName+outerClassName);
+    		trLL.push(innerTR);    		
+    		if (!typeToID.containsKey(innerTR)) {
+				log(DEBUG,"AppModel Mapping type "+innerTR.getName()+" to id " + nextLocal);
+    			typeToID.put(innerTR, nextLocal++);
+    			aClassToTR.put(innerTR, tr);
+    		}
+    		
+    		innerClassName = outerClassName;
+    		index = outerClassName.lastIndexOf("$");
+		}
+		icDependencies.put(tr, trLL);
+	}
 
         
     private void processTypeMap() {
     	Set<Integer> createdIDs = new HashSet<Integer> ();    	
-    	for (Entry<TypeReference, Integer> eSet:typeToID.entrySet()) {
+    	for (Entry<TypeReference, Integer> eSet:typeToID.entrySet()) {    		
+    		Integer i = eSet.getValue();
+    		if (createdIDs.contains(i))
+    			continue;
+    		
     		TypeReference tr = eSet.getKey();
     		String className = tr.getName().getClassName().toString();
+    		
+    		
     		//Not an anonymous innerclass
     		if (!className.contains("$")) {
-        		Integer i = eSet.getValue();
-        		if (createdIDs.contains(i))
-        			continue;
     			processAllocation(tr, i, false);
     			createdIDs.add(i);
     		}
     		//Is an anonymous innerclass
     		else {
+    			LinkedList<TypeReference> deps = icDependencies.get(tr);
+    			if (deps == null) {
+    				tr = aClassToTR.get(tr);
+    			}
+
     			for (TypeReference trD:icDependencies.get(tr)) {
-    				Integer i = typeToID.get(trD);
-    				if (!createdIDs.contains(i)) {
-    					processAllocation(trD,i, true);
-    					createdIDs.add(i);
+    				Integer j = typeToID.get(trD);
+    				if (!createdIDs.contains(j)) {
+    					String depClassName = trD.getName().getClassName().toString(); 
+    					processAllocation(trD, j, depClassName.contains("$"));    					
+    					createdIDs.add(j);
     				}
     			}
     		}
@@ -324,23 +344,46 @@ public class AppModelMethod {
 				boolean foundValidCtor = false;
 				for (IMethod im: klass.getAllMethods()) {
 					if (im.getDeclaringClass().getName().toString().equals(klass.getName().toString()) && 
-							im.getSelector().getName().toString().equals(MethodReference.initAtom.toString()) &&
-							im.getDescriptor().getNumberOfParameters()==1 &&
-							im.getDescriptor().getParameters()[0].equals(
-									icDependencies.get(tr).get(icDependencies.get(tr).size()-2).getName())) {
+							im.getSelector().getName().toString().equals(MethodReference.initAtom.toString())) {
 						ctor = im;
-						foundValidCtor = true;
-						break;						
-					}
+						foundValidCtor = true;						
+						//found a default constructor that takes only the outer class as a parameter					
+						if (im.getDescriptor().getNumberOfParameters() == 1) {
+							break;
+						}						
+					}					
 				}
-				if (!foundValidCtor)
+				if (!foundValidCtor) {
 					throw new UnimplementedError("Check for other constructors, or just use default Object constructor");
+				}
 			}
 			int[] params;
 			if (ctor.getDescriptor().getNumberOfParameters() == 0)
 				params = new int[] {i};
 			else {
-				params = new int[] {i, typeToID.get(icDependencies.get(tr).get(icDependencies.get(tr).size()-2))};
+				params = new int[ctor.getNumberOfParameters()];
+				params[0] = i;
+				
+				LinkedList<TypeReference> deps = icDependencies.get(tr);
+				if (deps == null) {
+					deps = icDependencies.get(aClassToTR.get(tr));
+					int index = deps.lastIndexOf(tr);					
+					TypeReference otr = deps.get(index-1);
+					assert(ctor.getParameterType(1).equals(otr)) : "Type Mismatch";
+					params[1] = typeToID.get(otr);
+				}
+				else {
+					TypeReference otr = deps.get(deps.size()-2);
+					assert(ctor.getParameterType(1).equals(otr)) : "Type Mismatch";
+					params[1] = typeToID.get(otr);
+				}
+				
+				//Allocate new instances for each of the other parameters
+				//in the current constructor.
+				for (int pI = 2; pI < params.length; pI++) {
+					params[pI] = makeArgument(ctor.getParameterType(pI));
+				}
+				
 			}
         	addInvocation(params, CallSiteReference.make(methodSummary.getStatements().length, ctor.getReference(),
         			IInvokeInstruction.Dispatch.SPECIAL));
@@ -363,27 +406,7 @@ public class AppModelMethod {
     	methodSummary.addStatement(s);
     	//        	cache.invalidate(this, Everywhere.EVERYWHERE);
     	return s;
-    }
-          
-
-
-  	private void addDependencies(TypeReference tr) {
-		String packageName = "L"+tr.getName().getPackage().toString()+"/";
-		String outerClassName;		
-		String innerClassName = tr.getName().getClassName().toString();
-		LinkedList<TypeReference> trLL = new LinkedList<TypeReference> ();
-		trLL.push(tr);
-		int index = innerClassName.lastIndexOf("$");
-		while (index != -1) {
-    		outerClassName = innerClassName.substring(0, index);
-    		TypeReference innerTR = TypeReference.findOrCreate(ClassLoaderReference.Application, packageName+outerClassName);
-    		trLL.push(innerTR);
-    		
-    		innerClassName = outerClassName;
-    		index = innerClassName.lastIndexOf("$");
-		}
-		icDependencies.put(tr, trLL);				
-	}
+    }        
   	
     protected int getValueNumberForIntConstant(int c) {
         ConstantValue v = new ConstantValue(c);
