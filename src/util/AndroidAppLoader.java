@@ -161,8 +161,8 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
 				"com.ibm.wala.classLoader.WDexClassLoaderImpl");
 		scope.addToScope(ClassLoaderReference.Primordial, androidLib);
 
-		scope.addToScope(ClassLoaderReference.Application, new JarFile(
-				new FileProvider().getFile("data/AppModel_dummy.jar")));
+//		scope.addToScope(ClassLoaderReference.Application, new JarFile(
+//				new FileProvider().getFile("data/AppModel_dummy.jar")));
 
 		// AnalysisScope scope =
 		// AnalysisScopeReader.makeJavaBinaryAnalysisScope(
@@ -189,16 +189,16 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
 								+ "Java60RegressionExclusions.txt"));
 		specs.addPossibleListeners(ClassHierarchy.make(tempAndroidScope));
 
-		AppModelMethod amm = new AppModelMethod(cha, scope, specs);
-		specs.setEntrySummary(amm);
+//		AppModelMethod amm = new AppModelMethod(cha, scope, specs);
+//		specs.setEntrySummary(amm);
 
 		// Try to look for entry points
 		EntryPoints ep = new EntryPoints(classpath, cha, this);
 		entries = ep.getEntries();
 	}
 
-	public void buildGraphs(List<Entrypoint> localEntries, InputStream summariesStream)
-			throws CancelException {
+	public void buildGraphs(List<Entrypoint> localEntries,
+			InputStream summariesStream) throws CancelException {
 
 		AnalysisOptions options = new AnalysisOptions(scope, localEntries);
 		for (Entrypoint e : localEntries) {
@@ -224,16 +224,16 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
 		// options, cache), ci);
 
 		SSAPropagationCallGraphBuilder zeroxcgb, cgb;
-	
+
 		zeroxcgb = makeZeroCFABuilder(options, cache, cha, scope,
-					new UriPrefixContextSelector(options, cha), null, summariesStream,
-					 specs.getEntrySummary().getSummary());
-		
-		zeroxcgb = Util.makeZeroCFABuilder(options, cache, cha, scope, new
-				         UriPrefixContextSelector(options, cha), null);
-//		zeroxcgb = makeVanillaZeroOneCFABuilder(options, cache, cha, scope,
-//				new UriPrefixContextSelector(options, cha), null, null, specs
-//						.getEntrySummary().getSummary());
+				new UriPrefixContextSelector(options, cha), null,
+				summariesStream, null);//specs.getEntrySummary().getSummary());
+
+//		zeroxcgb = Util.makeZeroCFABuilder(options, cache, cha, scope,
+//				new UriPrefixContextSelector(options, cha), null);
+		// zeroxcgb = makeVanillaZeroOneCFABuilder(options, cache, cha, scope,
+		// new UriPrefixContextSelector(options, cha), null, null, specs
+		// .getEntrySummary().getSummary());
 		// cgb = new DexSSAPropagationCallGraphBuilder(cha, options, cache,
 		// zeroxcgb.getContextSelector(),
 		// (SSAContextInterpreter) zeroxcgb.getContextInterpreter(),
@@ -400,8 +400,8 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
 	public static SSAPropagationCallGraphBuilder makeVanillaZeroOneCFABuilder(
 			AnalysisOptions options, AnalysisCache cache, IClassHierarchy cha,
 			AnalysisScope scope, ContextSelector customSelector,
-			SSAContextInterpreter customInterpreter, InputStream summariesStream,
-			MethodSummary extraSummary) {
+			SSAContextInterpreter customInterpreter,
+			InputStream summariesStream, MethodSummary extraSummary) {
 
 		if (options == null) {
 			throw new IllegalArgumentException("options is null");
@@ -436,9 +436,9 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
 	public static SSAPropagationCallGraphBuilder makeZeroCFABuilder(
 			AnalysisOptions options, AnalysisCache cache, IClassHierarchy cha,
 			AnalysisScope scope, ContextSelector customSelector,
-			SSAContextInterpreter customInterpreter, InputStream summariesStream,
-			MethodSummary extraSummary) {
-	
+			SSAContextInterpreter customInterpreter,
+			InputStream summariesStream, MethodSummary extraSummary) {
+
 		if (options == null) {
 			throw new IllegalArgumentException("options is null");
 		}
@@ -483,11 +483,12 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
 			MyLogger.log(LogLevel.DEBUG, "loaded " + summaries.size()
 					+ " new summaries");
 
-			s = new FileInputStream(
-					new File(pathToSpec + File.separator + methodSpec));
+			s = new FileProvider().getInputStreamFromClassLoader(pathToSpec
+					+ File.separator + methodSpec,
+					AndroidAppLoader.class.getClassLoader());
 
-			XMLMethodSummaryReader nativeSummaries = 
-					loadMethodSummaries(scope, s);
+			XMLMethodSummaryReader nativeSummaries = loadMethodSummaries(scope,
+					s);
 
 			MyLogger.log(LogLevel.DEBUG, "loaded "
 					+ nativeSummaries.getSummaries().size()
@@ -513,7 +514,7 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		} finally {
-			if( null != s ) {
+			if (null != s) {
 				try {
 					s.close();
 				} catch (IOException e) {
@@ -525,7 +526,8 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
 	}
 
 	private static XMLMethodSummaryReader loadMethodSummaries(
-			AnalysisScope scope, InputStream xmlIStream) throws FileNotFoundException {
+			AnalysisScope scope, InputStream xmlIStream)
+			throws FileNotFoundException {
 		InputStream s = xmlIStream;
 		XMLMethodSummaryReader summary = null;
 

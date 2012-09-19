@@ -162,7 +162,7 @@ public class AndroidSpecs implements ISpecs {
 		prvInsert,
 		prvUpdate,
 	};
-	public MethodNamePattern[] getEntrypointSpecs() { return callbackModelEntry; }	
+	public MethodNamePattern[] getEntrypointSpecs() { return defaultCallbacks; }
 	
 	private static SourceSpec[] sourceSpecs = {
 //		new EntryArgSourceSpec( actCreate, null ),
@@ -307,11 +307,11 @@ public class AndroidSpecs implements ISpecs {
 		return callBacks;
 	}
 	
-	public void setEntrySummary(AppModelMethod amm) {
-		this.appEntrySummary = amm;
-	}
-	public AppModelMethod getEntrySummary() {
-		return appEntrySummary;
-	}
+//	public void setEntrySummary(AppModelMethod amm) {
+//		this.appEntrySummary = amm;
+//	}
+//	public AppModelMethod getEntrySummary() {
+//		return appEntrySummary;
+//	}
 	
 }
