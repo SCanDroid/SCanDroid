@@ -120,4 +120,12 @@ public class MethodNamePattern {
 		return returnString+" - Descriptor: "+descriptor+")";
 
 	}
+
+	public String getClassName() {
+		return className;
+	}
+
+	public String getMemberName() {
+		return memberName;
+	}
 }

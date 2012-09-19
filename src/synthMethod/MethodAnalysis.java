@@ -99,17 +99,19 @@ import flow.types.ParameterFlow;
 
 
 public class MethodAnalysis <E extends ISSABasicBlock>  {
+	
 	//contains a mapping from an IMethod to a mapping of flows
 	//parameters and fields to returns or other fields.
 	public final Map<IMethod, Map<FlowType<E>, Set<CodeElement>>> newSummaries =
-	        new HashMap<IMethod, Map<FlowType<E>, Set<CodeElement>>>();
+	        Maps.newHashMap();
+	
 	//contains a mapping from an IMethod to a mapping of Integers
 	//(which represent the parameter #) to their respective instancekey set
 	public final Map<IMethod, Map<Integer, OrdinalSet<InstanceKey>>> methodTaints = 
-	        new HashMap<IMethod, Map<Integer, OrdinalSet<InstanceKey>>>();
+	        Maps.newHashMap();
 	
-	private final Set<MethodReference> blacklist =
-			new HashSet<MethodReference>();
+	private final Set<MethodReference> blacklist = Sets.newHashSet();
+			
 	
 	private Predicate<IMethod> isConstructor = new Predicate<IMethod>() {
 		@Override
@@ -127,9 +129,7 @@ public class MethodAnalysis <E extends ISSABasicBlock>  {
 					return false;
 				return true;
 			}
-		}.and(isConstructor.not());
-	
-	private ClassLoaderReference clr;
+		}.and(isConstructor.not()); // the summary files can't summarize constructors.
 	
 	public MethodAnalysis() {
 	    this.p = this.p.and(new Predicate<IMethod>() {
@@ -317,11 +317,11 @@ public class MethodAnalysis <E extends ISSABasicBlock>  {
 	    TypeReference tr = myField.getFieldTypeReference();
 	    
 	    if ( taintedTypes.contains(tr) ){
-	    	MyLogger.log(LogLevel.DEBUG, "*not* re-tainting tainted type: "+myField);
+	    	//MyLogger.log(LogLevel.DEBUG, "*not* re-tainting tainted type: "+myField);
 	    	return;
 	    }
 	    
-	    MyLogger.log(LogLevel.DEBUG, "tainting field: "+myField);
+	    //MyLogger.log(LogLevel.DEBUG, "tainting field: "+myField);
 	    taintedTypes.add(tr);
 		
 	    Collection<PointerKey> pointerKeys = Lists.newArrayList();
@@ -420,15 +420,15 @@ public class MethodAnalysis <E extends ISSABasicBlock>  {
 					continue;
 				}
 				
-				System.out.println(de.taintSource + " FLOWS into " + de.codeElement);
+//				System.out.println(de.taintSource + " FLOWS into " + de.codeElement);
 				
 				if (de.codeElement instanceof FieldElement) {
 				    // TODO make sure this covers static fields too.
-					MyLogger.log(DEBUG,de.taintSource +" FLOWS into FIELD " + de.codeElement);
+//					MyLogger.log(DEBUG,de.taintSource +" FLOWS into FIELD " + de.codeElement);
 					addToFlow(de.taintSource, de.codeElement, methodFlows);
 				} else if (de.codeElement instanceof ReturnElement) {
 				    
-					MyLogger.log(DEBUG,de.taintSource + " FLOWS into RETURNELEMENT " + de.codeElement);
+//					MyLogger.log(DEBUG,de.taintSource + " FLOWS into RETURNELEMENT " + de.codeElement);
 					addToFlow(de.taintSource, de.codeElement, methodFlows);
 				}
 			}
