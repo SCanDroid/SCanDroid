@@ -148,7 +148,7 @@ implements IFlowFunctionMap<BasicBlockInContext<E>> {
 		}
 
 		private void handleInstruction(SSAInstruction instruction) {
-			System.out.println("handle instruction: "+instruction);
+//			System.out.println("handle instruction: "+instruction);
 			
 			UseDefSetPair p = new UseDefSetPair();
 			boolean thisToResult = false;
