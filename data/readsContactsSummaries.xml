@@ -202,6 +202,3 @@
     </package>
   </classloader>
 </summary-spec>
-
-<!-- java.lang.StringBuilder.<init>(Ljava/lang/String;)V -->
-<!-- android.content.Intent.<init>()V -->
