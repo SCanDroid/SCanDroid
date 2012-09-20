@@ -139,7 +139,7 @@ implements IFlowFunctionMap<BasicBlockInContext<E>> {
 		private final BasicBlockInContext<E> bb;
 
 		public DefUse(final BasicBlockInContext<E> inBlock) {
-		
+			
 			this.bb = inBlock;
 
 			for (SSAInstruction instruction : bb) {				
@@ -148,6 +148,8 @@ implements IFlowFunctionMap<BasicBlockInContext<E>> {
 		}
 
 		private void handleInstruction(SSAInstruction instruction) {
+			System.out.println("handle instruction: "+instruction);
+			
 			UseDefSetPair p = new UseDefSetPair();
 			boolean thisToResult = false;
 			if(instruction instanceof SSAInvokeInstruction)
@@ -423,7 +425,8 @@ implements IFlowFunctionMap<BasicBlockInContext<E>> {
 		assert graph.isCall(src);
 
 		final SSAInvokeInstruction instruction = (SSAInvokeInstruction) src.getLastInstruction();
-
+		System.err.println(instruction.getDeclaredTarget().getSignature());
+		
 //		if (! dest.getMethod().isSynthetic() 
 //		    && LoaderUtils.fromLoader(dest.getNode(), ClassLoaderReference.Primordial)) {
 //		    
