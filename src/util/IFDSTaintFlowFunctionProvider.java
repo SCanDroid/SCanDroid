@@ -425,7 +425,13 @@ implements IFlowFunctionMap<BasicBlockInContext<E>> {
 		assert graph.isCall(src);
 
 		final SSAInvokeInstruction instruction = (SSAInvokeInstruction) src.getLastInstruction();
-		System.err.println(instruction.getDeclaredTarget().getSignature());
+		
+		String signature = dest.getMethod().getSignature();
+		if ( dest.getMethod().isSynthetic() ) { 
+			System.out.println("Synthetic: "+signature);
+		} else {
+			System.err.println(signature);
+		}
 		
 //		if (! dest.getMethod().isSynthetic() 
 //		    && LoaderUtils.fromLoader(dest.getNode(), ClassLoaderReference.Primordial)) {
