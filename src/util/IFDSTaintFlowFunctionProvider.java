@@ -75,6 +75,7 @@ import com.ibm.wala.ssa.SSAInstruction;
 import com.ibm.wala.ssa.SSAInvokeInstruction;
 import com.ibm.wala.ssa.SSAPutInstruction;
 import com.ibm.wala.ssa.SSAReturnInstruction;
+import com.ibm.wala.types.ClassLoaderReference;
 import com.ibm.wala.types.FieldReference;
 import com.ibm.wala.types.MethodReference;
 import com.ibm.wala.types.TypeReference;
@@ -419,7 +420,8 @@ implements IFlowFunctionMap<BasicBlockInContext<E>> {
 		}
 	}
 
-	public IUnaryFlowFunction getCallFlowFunction(BasicBlockInContext<E> src,
+	public IUnaryFlowFunction getCallFlowFunction(
+			BasicBlockInContext<E> src,
 			BasicBlockInContext<E> dest,
 			BasicBlockInContext<E> ret) {
 		assert graph.isCall(src);
@@ -427,22 +429,27 @@ implements IFlowFunctionMap<BasicBlockInContext<E>> {
 		final SSAInvokeInstruction instruction = (SSAInvokeInstruction) src.getLastInstruction();
 		
 		String signature = dest.getMethod().getSignature();
-		if ( dest.getMethod().isSynthetic() ) { 
-			System.out.println("Synthetic: "+signature);
-		} else {
-			System.err.println(signature);
+//		if ( dest.getMethod().isSynthetic() ) { 
+//			System.out.println("Synthetic: "+signature);
+//		} else {
+//			System.err.println(signature);
+//		}
+		
+		
+		if ( LoaderUtils.fromLoader(src.getNode(), ClassLoaderReference.Application)
+		  && LoaderUtils.fromLoader(dest.getNode(), ClassLoaderReference.Primordial)) {
+			System.out.println("Call to system: "+signature);
 		}
 		
 //		if (! dest.getMethod().isSynthetic() 
 //		    && LoaderUtils.fromLoader(dest.getNode(), ClassLoaderReference.Primordial)) {
 //		    
 //            MyLogger.log(DEBUG,"Primordial and No Summary! (getCallFlowFunction) - " + dest.getMethod().getReference());
+//		}
 		
 		if (null != methodAnalysis) {
 			methodAnalysis.analyze(graph, pa, src, dest);
 		}
-//		}
-		
 
 		final Map<CodeElement,CodeElement> parameterMap = Maps.newHashMap();
 		for (int i = 0; i < instruction.getNumberOfParameters(); i++) {
@@ -481,6 +488,7 @@ implements IFlowFunctionMap<BasicBlockInContext<E>> {
 		final SSAInvokeInstruction instruction = (SSAInvokeInstruction) src.getLastInstruction();
 
 //		System.out.println("call to return(no callee) method inside call graph: " + src.getNode()+"--" + instruction.getDeclaredTarget());
+		// System.out.println("call to system: " + instruction.getDeclaredTarget());
 		return new DefUse(dest);
 	}
 
