@@ -71,16 +71,34 @@
           <return value="value_localDef" />
         </method>
       </class>
+      <class name="Throwable">
+      	<method descriptor="()Ljava/lang/Throwable" name="getCause">
+      		<getfield class="Ljava/lang/Throwable" field="cause"
+            	        fieldType="Ljava/lang/Throwable" ref="arg0"
+                	    def="cause_localDef" />
+            <return value="cause_localDef" />
+      	</method>
+      </class>
     </package>
+    <package name="java/text">
+    	<class name="BreakIterator">
+    		<method descriptor="([BI)I" name="getInt">
+    			<return value="arg0" />
+    		</method>
+    		    <method descriptor="([BI)S" name="getShort">
+    			<return value="arg0" />
+    		</method>
+    	</class>
+    </package>
+    
 
 <!-- 
-1874919 java.lang.String.length()I
 1893552 java.util.MissingResourceException.<init>(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
-1898016 java.text.BreakIterator.getShort([BI)S
-1911456 java.lang.Throwable.getCause()Ljava/lang/Throwable;
+x - 1898016 java.text.BreakIterator.getShort([BI)S
+x - 1911456 java.lang.Throwable.getCause()Ljava/lang/Throwable;
 x - 2913590 java.lang.String.charAt(I)C
 x - 3189937 java.lang.StringBuilder.append(Ljava/lang/Object;)Ljava/lang/StringBuilder;
-6195264 java.text.BreakIterator.getInt([BI)I
+x - 6195264 java.text.BreakIterator.getInt([BI)I
 -->
   </classloader>
 </summary-spec>
