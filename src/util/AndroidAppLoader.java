@@ -482,7 +482,13 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
 			}
 			MyLogger.log(LogLevel.DEBUG, "loaded " + summaries.size()
 					+ " new summaries");
-
+			System.out.println("loaded " + summaries.size()
+					+ " new summaries");
+			for (MethodReference mr : summaries.keySet()) {
+				System.out.println("summary loaded for: "+mr.getSignature());
+			}
+			
+			
 			s = new FileProvider().getInputStreamFromClassLoader(pathToSpec
 					+ File.separator + methodSpec,
 					AndroidAppLoader.class.getClassLoader());
