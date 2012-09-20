@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<summary-spec>
+  <classloader name="Primordial">
+    <package name="java/lang">
+      <class name="String">
+        <!-- java.lang.String.charAt(I)C -->
+        <method descriptor="(I)C" name="charAt">
+          <!-- Get the value field of the reference object: -->
+           <getfield class="Ljava/lang/String" field="value"
+                    fieldType="Ljava/lang/Object" ref="arg0"
+                    def="value_localDef" />
+
+           <!-- return the value field we got; not type correct, but includes the data flow. -->
+           <return value="value_localDef" />
+        </method>
+      </class>
+      <class name="AbstractStringBuilder">
+        <method descriptor="(Ljava/lang/String;)Ljava/lang/AbstractStringBuilder;" name="append">
+          <!-- Get the value field from the incomming parameter, store it in a local def: -->
+          <!-- def is the place the 'gotten' value is stored.
+               ref is the place the value is gotten from     -->
+          <getfield class="Ljava/lang/String" field="value"
+                    fieldType="Ljava/lang/Object" ref="arg1"
+                    def="value_localDef" />
+
+          <!-- Put the value stored in the local def into the 'value' field of the reference object:
+               Note that the field name (value, in this case) is specified by the field attribute.
+               The value *attribute* specifies where the actual content of the string is
+               retrieved from.                                                                   -->
+          <putfield class="Ljava/lang/AbstractStringBuilder" field="value"
+                    fieldType="Ljava/lang/Object" ref="arg0" value="value_localDef"/>
+          <return value="arg0" />
+        </method>
+      </class>
+      <class name="StringBuilder">
+        <!-- java.lang.StringBuilder.append(Ljava/lang/String;)Ljava/lang/StringBuilder; -->
+        <method descriptor="(Ljava/lang/String;)Ljava/lang/StringBuilder;" name="append">
+          <getfield class="Ljava/lang/String" field="value"
+                    fieldType="Ljava/lang/Object" ref="arg1"
+                    def="value_localDef" />
+          <putfield class="Ljava/lang/StringBuilder" field="value"
+                    fieldType="Ljava/lang/Object" ref="arg0" value="value_localDef"/>
+          <return value="arg0" />
+        </method>
+
+        <!-- java.lang.StringBuilder.append(Ljava/lang/Object;)Ljava/lang/StringBuilder; -->
+        <method descriptor="(Ljava/lang/Object;)Ljava/lang/StringBuilder;" name="append">
+          <!-- Invoke toString on the first parameter, store locally: -->
+          <call type="virtual" name="toString" class="Ljava/lang/Object"
+                descriptor="()Ljava/lang/String;" arg0="arg1" def="objToStr_localDef" />
+
+          <!-- Get the value field off the string, store locally: -->
+          <getfield class="Ljava/lang/String" field="value"
+                    fieldType="Ljava/lang/Object" ref="objToStr_localDef"
+                    def="value_localDef" />
+
+          <putfield class="Ljava/lang/StringBuilder" field="value"
+                    fieldType="Ljava/lang/Object" ref="arg0" value="value_localDef"/>
+
+          <!-- The resulting data flow is a combination of the reference StringBuilder
+               and the incoming parameter. (via that object's toString() )
+          -->
+          <return value="arg0" />
+        </method>
+
+        <!-- java.lang.StringBuilder.toString()Ljava/lang/String; -->
+        <method descriptor="()Ljava/lang/StringBuilder;" name="toString">
+          <getfield class="Ljava/lang/StringBuilder" field="value"
+                    fieldType="Ljava/lang/Object" ref="arg0"
+                    def="value_localDef" />
+          <return value="value_localDef" />
+        </method>
+      </class>
+    </package>
+
+<!-- 
+1874919 java.lang.String.length()I
+1893552 java.util.MissingResourceException.<init>(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+1898016 java.text.BreakIterator.getShort([BI)S
+1911456 java.lang.Throwable.getCause()Ljava/lang/Throwable;
+x - 2913590 java.lang.String.charAt(I)C
+x - 3189937 java.lang.StringBuilder.append(Ljava/lang/Object;)Ljava/lang/StringBuilder;
+6195264 java.text.BreakIterator.getInt([BI)I
+-->
+  </classloader>
+</summary-spec>
