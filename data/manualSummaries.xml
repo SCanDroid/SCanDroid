@@ -115,7 +115,7 @@
         </method>
 
         <!-- java.lang.StringBuilder.toString()Ljava/lang/String; -->
-        <method descriptor="()Ljava/lang/StringBuilder;" name="toString">
+        <method descriptor="()Ljava/lang/String;" name="toString">
           <getfield class="Ljava/lang/StringBuilder" field="value"
                     fieldType="Ljava/lang/Object" ref="arg0"
                     def="value_localDef" />
@@ -123,7 +123,7 @@
         </method>
       </class>
       <class name="Throwable">
-      	<method descriptor="()Ljava/lang/Throwable" name="getCause">
+      	<method descriptor="()Ljava/lang/Throwable;" name="getCause">
       		<getfield class="Ljava/lang/Throwable" field="cause"
             	        fieldType="Ljava/lang/Throwable" ref="arg0"
                 	    def="cause_localDef" />
