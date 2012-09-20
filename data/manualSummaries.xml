@@ -2,7 +2,30 @@
 <summary-spec>
   <classloader name="Primordial">
     <package name="java/lang">
+
+      <class name="Character">
+        <!--  java.lang.Character.charCount(I)I -->
+        <method descriptor="(I)I" name="charCount" static="true" >
+          <constant name="one" type="int" value="1" />
+          <constant name="two" type="int" value="2" />
+
+          <return value="one" />
+          <return value="two" />
+        </method>
+
+      </class>
       <class name="String">
+        <!-- java.lang.String.codePointAt(I)I -->
+        <method descriptor="(I)I" name="codePointAt">
+          <!-- Get the value field of the reference object: -->
+           <getfield class="Ljava/lang/String" field="value"
+                    fieldType="Ljava/lang/Object" ref="arg0"
+                    def="value_localDef" />
+
+           <!-- return the value field we got; not type correct, but includes the data flow. -->
+           <return value="value_localDef" />
+        </method>
+
         <!-- java.lang.String.charAt(I)C -->
         <method descriptor="(I)C" name="charAt">
           <!-- Get the value field of the reference object: -->
@@ -13,6 +36,21 @@
            <!-- return the value field we got; not type correct, but includes the data flow. -->
            <return value="value_localDef" />
         </method>
+
+        <!-- java.lang.String.length()I -->
+        <method descriptor="()I" name="length">
+           <getfield class="Ljava/lang/String" field="count"
+                    fieldType="I" ref="arg0"
+                    def="value_localDef" />
+           <!-- Just return the value of this.count: -->
+           <return value="value_localDef" />
+        </method>
+
+        <!-- java.lang.String.substring(II)Ljava/lang/String; -->
+        <method descriptor="(II)Ljava/lang/String;" name="substring">
+           <return value="arg0" />
+        </method>
+
       </class>
       <class name="AbstractStringBuilder">
         <method descriptor="(Ljava/lang/String;)Ljava/lang/AbstractStringBuilder;" name="append">
@@ -63,6 +101,19 @@
           <return value="arg0" />
         </method>
 
+        <!-- java.lang.StringBuilder.append(I)Ljava/lang/StringBuilder; -->
+        <method descriptor="(I)Ljava/lang/StringBuilder;" name="append">
+
+          <!-- cram the incomming int into the value field: -->
+          <putfield class="Ljava/lang/StringBuilder" field="value"
+                    fieldType="Ljava/lang/Object" ref="arg0" value="arg1"/>
+
+          <!-- The resulting data flow is a combination of the reference StringBuilder
+               and the incoming parameter.
+          -->
+          <return value="arg0" />
+        </method>
+
         <!-- java.lang.StringBuilder.toString()Ljava/lang/String; -->
         <method descriptor="()Ljava/lang/StringBuilder;" name="toString">
           <getfield class="Ljava/lang/StringBuilder" field="value"
@@ -82,17 +133,43 @@
     </package>
     <package name="java/text">
     	<class name="BreakIterator">
-    		<method descriptor="([BI)I" name="getInt">
+    		<method descriptor="([BI)I" name="getInt" static="true">
     			<return value="arg0" />
     		</method>
-    		    <method descriptor="([BI)S" name="getShort">
+
+        <method descriptor="([BI)S" name="getShort" static="true">
     			<return value="arg0" />
     		</method>
     	</class>
     </package>
-    
+    <package name="java/util">
+    	<class name="Locale">
+        <!-- java.util.Locale.equals(Ljava/lang/Object;)Z -->
+    		<method descriptor="(Ljava/lang/Object;)Z" name="equals">
+          <constant name="t" type="boolean" value="true" />
+          <constant name="f" type="boolean" value="false" />
+
+          <return value="t" />
+          <return value="f" />
+    		</method>
+
+    	</class>
+    </package>
+
 
 <!-- 
+
+x (native) - 1099494 java.security.AccessController.doPrivileged(Ljava/security/PrivilegedAction;)Ljava/lang/Object;
+1102506 java.util.ResourceBundle$CacheKey.access$400(Ljava/util/ResourceBundle$CacheKey;)Ljava/lang/Throwable;
+x - 1114706 java.util.Locale.equals(Ljava/lang/Object;)Z
+x - 1122081 java.lang.StringBuilder.append(I)Ljava/lang/StringBuilder;
+1166650 java.io.BufferedInputStream.<init>(Ljava/io/InputStream;)V
+x - 1178208 java.lang.String.codePointAt(I)I
+x (native) - 1184805 java.lang.Thread.currentThread()Ljava/lang/Thread;
+x - 1219284 java.lang.Character.charCount(I)I
+1612944 java.util.concurrent.ConcurrentHashMap$Segment.unlock()V
+x - 1857674 java.lang.String.substring(II)Ljava/lang/String;
+x - 1874919 java.lang.String.length()I
 1893552 java.util.MissingResourceException.<init>(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
 x - 1898016 java.text.BreakIterator.getShort([BI)S
 x - 1911456 java.lang.Throwable.getCause()Ljava/lang/Throwable;
