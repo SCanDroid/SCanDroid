@@ -366,8 +366,6 @@ public class MethodAnalysis <E extends ISSABasicBlock>  {
 	    	return;
 	    }
 	    
-	    
-		
 		Collection<IField> fields = fieldClass.getAllFields();
 	    
 		for(IField field : fields) {

@@ -95,8 +95,7 @@ public class FlowAnalysis {
       analyze(final ISupergraph<BasicBlockInContext<E>, CGNode> graph,
               CallGraph cg,
               PointerAnalysis pa,
-              Map<BasicBlockInContext<E>,
-              Map<FlowType<E>,Set<CodeElement>>> initialTaints,
+              Map<BasicBlockInContext<E>, Map<FlowType<E>,Set<CodeElement>>> initialTaints,
               IFDSTaintDomain<E> d,
               MethodAnalysis<E> methodAnalysis
             ) throws CancelRuntimeException {

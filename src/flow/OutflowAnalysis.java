@@ -194,8 +194,13 @@ public class OutflowAnalysis <E extends ISSABasicBlock> {
     
     private static <E extends ISSABasicBlock> void processEntryArgs(
     		TabulationResult<BasicBlockInContext<E>, CGNode, DomainElement> flowResult,
-    		IFDSTaintDomain<E> domain, Map<FlowType<E>, Set<FlowType<E>>> flowGraph, 
-    		SinkSpec ss, CallGraph cg, ISupergraph<BasicBlockInContext<E>, CGNode> graph, PointerAnalysis pa, ClassHierarchy cha) {
+    		IFDSTaintDomain<E> domain, 
+    		Map<FlowType<E>, Set<FlowType<E>>> flowGraph, 
+    		SinkSpec ss, 
+    		CallGraph cg, 
+    		ISupergraph<BasicBlockInContext<E>, CGNode> graph, 
+    		PointerAnalysis pa, 
+    		ClassHierarchy cha) {
 
     	int[] newArgNums;    	
     	for (IMethod im:ss.getNamePattern().getPossibleTargets(cha)) {
@@ -210,8 +215,19 @@ public class OutflowAnalysis <E extends ISSABasicBlock> {
             if (entriesForProcedure == null || 0 == entriesForProcedure.length) {
     			continue;
     		}
-    		
-    		newArgNums = (ss.getArgNums() == null) ? SinkSpec.getNewArgNums((im.isStatic())?im.getNumberOfParameters():im.getNumberOfParameters()-1) : ss.getArgNums();
+            
+            newArgNums = ss.getArgNums();
+            if (null == newArgNums ) {
+            	int staticIndex = 1;
+				if (im.isStatic()) {
+					staticIndex = 0;
+				}
+				int targetParamCount = im.getNumberOfParameters() - staticIndex;
+				
+            	newArgNums = SinkSpec.getNewArgNums( targetParamCount );
+            }
+            
+    		//newArgNums = (ss.getArgNums() == null) ? SinkSpec.getNewArgNums( (im.isStatic()) ? im.getNumberOfParameters() : im.getNumberOfParameters()-1 ) : ss.getArgNums();
 
             for (int i = 0; i < newArgNums.length; i++) {
     			
