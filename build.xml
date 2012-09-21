@@ -29,6 +29,9 @@
         <pathelement location="${LIBS}/junit-4.9b2.jar"/>
     	<pathelement location="${LIBS}/commons-cli-1.2.jar"/>
     	<pathelement location="${LIBS}/commons-io-2.4.jar"/>
+    	<pathelement location="${LIBS}/slf4j-api-1.7.1.jar"/>
+    	<pathelement location="${LIBS}/slf4j-log4j12-1.7.1.jar"/>
+    	<pathelement location="${LIBS}/log4j-1.2.17.jar"/>
     </path>
 
     <target name="init" depends="init-mac,init-linux,init-windows">
@@ -167,6 +170,9 @@
             <zipfileset excludes="META-INF/*.SF" src="${LIBS}/jgrapht-0.8.3.jar"/>
         	<zipfileset excludes="META-INF/*.SF" src="${LIBS}/commons-cli-1.2.jar"/>
         	<zipfileset excludes="META-INF/*.SF" src="${LIBS}/commons-io-2.4.jar"/>
+        	<zipfileset excludes="META-INF/*.SF" src="${LIBS}/slf4j-api-1.7.1.jar"/>
+        	<zipfileset excludes="META-INF/*.SF" src="${LIBS}/slf4j-log4j12-1.7.1.jar"/>
+        	<zipfileset excludes="META-INF/*.SF" src="${LIBS}/log4j-1.2.17.jar"/>
         </jar>
     </target>
 

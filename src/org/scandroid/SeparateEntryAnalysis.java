@@ -42,15 +42,17 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.log4j.BasicConfigurator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import spec.AndroidSpecs;
 import spec.ISpecs;
 import synthMethod.MethodAnalysis;
-import synthMethod.XMLMethodSummaryWriter;
 import util.AndroidAppLoader;
 import util.CLI;
 
@@ -71,10 +73,13 @@ import flow.OutflowAnalysis;
 import flow.types.FlowType;
 
 public class SeparateEntryAnalysis {
+	private static final Logger logger = LoggerFactory.getLogger(SeparateEntryAnalysis.class);
+	
     public static void main(String[] args) throws Exception {
+    	BasicConfigurator.configure();
         CLI.parseArgs(args, true);
 
-        System.out.println("Loading app.");
+        logger.info("Loading app.");
         AndroidAppLoader<IExplodedBasicBlock> loader =
                 new AndroidAppLoader<IExplodedBasicBlock>(CLI.getClasspath());
         if (loader.entries == null || loader.entries.size() == 0) {
@@ -83,7 +88,7 @@ public class SeparateEntryAnalysis {
         MethodAnalysis<IExplodedBasicBlock> methodAnalysis = null;
            //new MethodAnalysis<IExplodedBasicBlock>();
         for (Entrypoint entry : loader.entries) {
-            System.out.println("Entry point: " + entry);
+            logger.info("Entry point: " + entry);
         }
         
         String summariesFileName = CLI.getOption("summaries-file");
@@ -92,7 +97,7 @@ public class SeparateEntryAnalysis {
         	File summariesFile = new File(summariesFileName);
         	
         	if ( !summariesFile.exists() ) {
-        		System.err.println("Could not find summaries file: "+summariesFileName);
+        		logger.error("Could not find summaries file: "+summariesFileName);
         		System.exit(1);
         	}
         	
@@ -102,7 +107,7 @@ public class SeparateEntryAnalysis {
         if(CLI.hasOption("separate-entries")) {
             int i = 1;
             for (Entrypoint entry : loader.entries) {
-                System.out.println("** Processing entry point " + i + "/" +
+                logger.info("** Processing entry point " + i + "/" +
                         loader.entries.size() + ": " + entry);
                 LinkedList<Entrypoint> localEntries = new LinkedList<Entrypoint>();
                 localEntries.add(entry);
@@ -128,14 +133,14 @@ public class SeparateEntryAnalysis {
         try {
             loader.buildGraphs(localEntries, summariesStream);
 
-            System.out.println("Supergraph size = "
+            logger.info("Supergraph size = "
                     + loader.graph.getNumberOfNodes());
 
             Map<InstanceKey, String> prefixes;
             if(CLI.hasOption("prefix-analysis")) {
-                System.out.println("Running prefix analysis.");
+                logger.info("Running prefix analysis.");
                 prefixes = UriPrefixAnalysis.runAnalysisHelper(loader.cg, loader.pa);
-                System.out.println("Number of prefixes = " + prefixes.values().size());
+                logger.info("Number of prefixes = " + prefixes.values().size());
             } else {
                 prefixes = new HashMap<InstanceKey, String>();
             }
@@ -143,48 +148,46 @@ public class SeparateEntryAnalysis {
             
             ISpecs specs = new AndroidSpecs();
              
-            System.out.println("Running inflow analysis.");
+            logger.info("Running inflow analysis.");
             Map<BasicBlockInContext<IExplodedBasicBlock>, 
                 Map<FlowType<IExplodedBasicBlock>, Set<CodeElement>>> initialTaints = 
                   InflowAnalysis.analyze(loader, prefixes, specs);
             
-            System.out.println("  Initial taint size = "
+            logger.info("  Initial taint size = "
                     + initialTaints.size());
                        
-            System.out.println("Running flow analysis.");
+            logger.info("Running flow analysis.");
             IFDSTaintDomain<IExplodedBasicBlock> domain = new IFDSTaintDomain<IExplodedBasicBlock>();
             TabulationResult<BasicBlockInContext<IExplodedBasicBlock>, CGNode, DomainElement> 
               flowResult = FlowAnalysis.analyze(loader, initialTaints, domain, methodAnalysis);
 
-            System.out.println("Running outflow analysis.");
+            logger.info("Running outflow analysis.");
             Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> permissionOutflow = OutflowAnalysis
                     .analyze(loader, flowResult, domain, specs);
-            System.out.println("  Permission outflow size = "
+            logger.info("  Permission outflow size = "
                     + permissionOutflow.size());
             
-            //System.out.println("Running Checker.");
+            //logger.info("Running Checker.");
     		//Checker.check(permissionOutflow, perms, prefixes);
 
             
-            System.out.println();
-            System.out
-                    .println("================================================================");
-            System.out.println();
+            logger.info("");
+            logger.info("================================================================");
+            logger.info("");
 
             for (Map.Entry<BasicBlockInContext<IExplodedBasicBlock>, Map<FlowType<IExplodedBasicBlock>, Set<CodeElement>>> e : initialTaints
                     .entrySet()) {
-                System.out.println(e.getKey());
+                logger.info(e.getKey().toString());
                 for (Map.Entry<FlowType<IExplodedBasicBlock>, Set<CodeElement>> e2 : e.getValue()
                         .entrySet()) {
-                    System.out
-                            .println(e2.getKey() + " <- " + e2.getValue());
+                    logger.info(e2.getKey() + " <- " + e2.getValue());
                 }
             }
             for (Map.Entry<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> e : permissionOutflow
                     .entrySet()) {
-                System.out.println(e.getKey());
+                logger.info(e.getKey().toString());
                 for (FlowType t : e.getValue()) {
-                    System.out.println("    --> " + t);
+                    logger.info("    --> " + t);
                 }
             }            
             
@@ -218,9 +221,9 @@ public class SeparateEntryAnalysis {
 //            }
             return permissionOutflow.size();
         } catch (com.ibm.wala.util.debug.UnimplementedError e) {
-            e.printStackTrace();
+            logger.error("exception during analysis", e);
         } catch (CancelException e){
-            System.err.println("Canceled (" + e.getMessage() + ").");
+            logger.warn("Canceled", e);
         }
         return 0;
     }
