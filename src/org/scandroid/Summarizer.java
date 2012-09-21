@@ -152,7 +152,17 @@ public class Summarizer {
 		// permissionOutflow = OutflowAnalysis.analyze(cg, cha, sg, pa,
 		// flowResult, domain, specs);
 		System.out.println(flowResult);
-		return Maps.newHashMap();
+
+		return makeSummary(flowResult);
+	}
+
+	private Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> makeSummary(
+			TabulationResult<BasicBlockInContext<IExplodedBasicBlock>, CGNode, DomainElement> flowResult) {
+		// TODO get exit blocks for method
+		
+		// get results for each exit block
+		
+		return null;
 	}
 
 	private CallGraphBuilder makeCallgraph(AnalysisScope scope,
