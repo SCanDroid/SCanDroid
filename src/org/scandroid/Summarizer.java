@@ -1,15 +1,14 @@
 package org.scandroid;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import synthMethod.MethodAnalysis;
 import util.AndroidAppLoader;
 
 import com.google.common.collect.ImmutableList;
@@ -48,6 +47,7 @@ import com.ibm.wala.ssa.ISSABasicBlock;
 import com.ibm.wala.ssa.analysis.IExplodedBasicBlock;
 import com.ibm.wala.types.MethodReference;
 import com.ibm.wala.types.TypeReference;
+import com.ibm.wala.util.Predicate;
 import com.ibm.wala.util.intset.OrdinalSet;
 import com.ibm.wala.util.strings.StringStuff;
 
@@ -56,7 +56,6 @@ import domain.DomainElement;
 import domain.FieldElement;
 import domain.IFDSTaintDomain;
 import domain.LocalElement;
-import flow.FlowAnalysis;
 import flow.types.FieldFlow;
 import flow.types.FlowType;
 import flow.types.ParameterFlow;
@@ -96,14 +95,15 @@ public class Summarizer {
 	private String summarize() throws ClassHierarchyException,
 			CallGraphBuilderCancelException, IOException {
 
-		Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> summaryMap = runDFAnalysis(appJar);
-
+		// Map<FlowType<IExplodedBasicBlock>,
+		// Set<FlowType<IExplodedBasicBlock>>> summaryMap =
+		// runDFAnalysis(appJar);
+		runDFAnalysis(appJar);
 		return "not yet summarized";
 	}
 
-	private Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> runDFAnalysis(
-			String appJar) throws IOException, ClassHierarchyException,
-			CallGraphBuilderCancelException {
+	private void runDFAnalysis(String appJar) throws IOException,
+			ClassHierarchyException, CallGraphBuilderCancelException {
 
 		AnalysisScope scope = DexAnalysisScopeReader
 				.makeAndroidBinaryAnalysisScope(appJar, new File(
@@ -120,8 +120,8 @@ public class Summarizer {
 
 		CallGraph cg = builder.makeCallGraph(options, null);
 
-		ISupergraph<BasicBlockInContext<IExplodedBasicBlock>, CGNode> sg = 
-				ICFGSupergraph.make(cg, builder.getAnalysisCache());
+		ISupergraph<BasicBlockInContext<IExplodedBasicBlock>, CGNode> sg = ICFGSupergraph
+				.make(cg, builder.getAnalysisCache());
 		PointerAnalysis pa = builder.getPointerAnalysis();
 
 		// Map<BasicBlockInContext<IExplodedBasicBlock>,
@@ -129,113 +129,123 @@ public class Summarizer {
 		// InflowAnalysis.analyze(cg, cha, sg, pa, new HashMap<InstanceKey,
 		// String>(), specs);
 		IFDSTaintDomain<IExplodedBasicBlock> domain = new IFDSTaintDomain<IExplodedBasicBlock>();
-		
+
 		Collection<IMethod> entryMethods = cha.getPossibleTargets(methodRef);
-		
-		IMethod entryMethod = null;
-		if ( 1 != entryMethods.size()) {
-			System.err.println("Too many IMethods for method reference " +
-					"(or none at all).  found: " + entryMethods.size());
+
+		final IMethod entryMethod;
+		if (1 != entryMethods.size()) {
+			System.err.println("Too many IMethods for method reference "
+					+ "(or none at all).  found: " + entryMethods.size());
+			throw new IllegalArgumentException();
 		} else {
 			entryMethod = entryMethods.iterator().next();
 		}
-		
-		Map<BasicBlockInContext<IExplodedBasicBlock>, 
-		    Map<FlowType<IExplodedBasicBlock>, Set<CodeElement>>> 
-   		   initialTaints = setUpTaints(sg, cg, pa, domain, entryMethod);
-		
-		TabulationResult<BasicBlockInContext<IExplodedBasicBlock>, CGNode, DomainElement> 
-		   flowResult =	FlowAnalysis.analyze(sg, cg, pa, initialTaints, domain, null);
 
-		// Map<FlowType<IExplodedBasicBlock>,
-		// Set<FlowType<IExplodedBasicBlock>>>
-		// permissionOutflow = OutflowAnalysis.analyze(cg, cha, sg, pa,
-		// flowResult, domain, specs);
-		System.out.println(flowResult);
+		MethodAnalysis<IExplodedBasicBlock> methodAnalysis = new MethodAnalysis<IExplodedBasicBlock>(
+				new Predicate<IMethod>() {
+					@Override
+					public boolean test(IMethod im) {
+						return im.equals(entryMethod);
+					}
+				});
+		methodAnalysis.analyze(sg, pa, null, sg.getEntriesForProcedure(cg
+				.getNode(entryMethod, Everywhere.EVERYWHERE))[0]);
 
-		return makeSummary(flowResult);
+		System.out.println(methodAnalysis.newSummaries);
+
+		//
+		// Map<BasicBlockInContext<IExplodedBasicBlock>,
+		// Map<FlowType<IExplodedBasicBlock>, Set<CodeElement>>>
+		// initialTaints = setUpTaints(sg, cg, pa, domain, entryMethod);
+		//
+		// TabulationResult<BasicBlockInContext<IExplodedBasicBlock>, CGNode,
+		// DomainElement>
+		// flowResult = FlowAnalysis.analyze(sg, cg, pa, initialTaints, domain,
+		// null);
+		//
+		// // Map<FlowType<IExplodedBasicBlock>,
+		// // Set<FlowType<IExplodedBasicBlock>>>
+		// // permissionOutflow = OutflowAnalysis.analyze(cg, cha, sg, pa,
+		// // flowResult, domain, specs);
+		// System.out.println(flowResult);
+		//
+		// return makeSummary(flowResult);
 	}
 
 	private Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> makeSummary(
 			TabulationResult<BasicBlockInContext<IExplodedBasicBlock>, CGNode, DomainElement> flowResult) {
 		// TODO get exit blocks for method
-		
+
 		// get results for each exit block
-		
+
 		return null;
 	}
 
 	private CallGraphBuilder makeCallgraph(AnalysisScope scope,
 			ClassHierarchy cha, AnalysisOptions options,
 			String methodSummariesFile) throws FileNotFoundException {
-		
+
 		CallGraphBuilder builder = AndroidAppLoader.makeZeroCFABuilder(options,
-				new AnalysisCache(), cha, scope, null, null, null,
-				null);
+				new AnalysisCache(), cha, scope, null, null, null, null);
 
 		return builder;
 	}
-	
-	private <E extends ISSABasicBlock> 
-	Map<BasicBlockInContext<E>, Map<FlowType<E>, Set<CodeElement>>> 
-	setUpTaints(final ISupergraph<BasicBlockInContext<E>, CGNode> graph,
-				CallGraph cg,
-			    PointerAnalysis pa, 
-			    final IFDSTaintDomain<E> domain,
-			    IMethod entryMethod) {
-		Map<BasicBlockInContext<E>, Map<FlowType<E>, Set<CodeElement>>> taintMap = Maps.newHashMap();		
-		
+
+	private <E extends ISSABasicBlock> Map<BasicBlockInContext<E>, Map<FlowType<E>, Set<CodeElement>>> setUpTaints(
+			final ISupergraph<BasicBlockInContext<E>, CGNode> graph,
+			CallGraph cg, PointerAnalysis pa, final IFDSTaintDomain<E> domain,
+			IMethod entryMethod) {
+		Map<BasicBlockInContext<E>, Map<FlowType<E>, Set<CodeElement>>> taintMap = Maps
+				.newHashMap();
+
 		CGNode node = cg.getNode(entryMethod, Everywhere.EVERYWHERE);
-				
+
 		for (BasicBlockInContext<E> block : graph.getEntriesForProcedure(node)) {
-			taintMap.put(block, buildTaintMap(graph, cg, pa, domain, entryMethod, block));
+			taintMap.put(block,
+					buildTaintMap(graph, cg, pa, domain, entryMethod, block));
 		}
 		return taintMap;
 	}
-	
-	private <E extends ISSABasicBlock> 
-	Map<FlowType<E>, Set<CodeElement>> 
-	buildTaintMap(final ISupergraph<BasicBlockInContext<E>, CGNode> graph,
-				  CallGraph cg,
-			      PointerAnalysis pa, 
-			      final IFDSTaintDomain<E> domain,
-			      IMethod entryMethod,
-			      BasicBlockInContext<E> methEntryBlock) {
-		
-		final List<PathEdge<BasicBlockInContext<E>>> initialEdges = Lists.newArrayList();
+
+	private <E extends ISSABasicBlock> Map<FlowType<E>, Set<CodeElement>> buildTaintMap(
+			final ISupergraph<BasicBlockInContext<E>, CGNode> graph,
+			CallGraph cg, PointerAnalysis pa, final IFDSTaintDomain<E> domain,
+			IMethod entryMethod, BasicBlockInContext<E> methEntryBlock) {
+
+		final List<PathEdge<BasicBlockInContext<E>>> initialEdges = Lists
+				.newArrayList();
 		Map<FlowType<E>, Set<CodeElement>> taintMap = Maps.newHashMap();
-		
+
 		Set<DomainElement> initialTaints = Sets.newHashSet();
 
 		// Add PathEdges to the initial taints.
 		// In this case, taint all parameters into the method call
 		for (int i = 0; i < entryMethod.getNumberOfParameters(); i++) {
 			DomainElement de = new DomainElement(new LocalElement(i + 1),
-					                             new ParameterFlow<E>(methEntryBlock, i, true));
+					new ParameterFlow<E>(methEntryBlock, i, true));
 			initialTaints.add(de);
 
 			// taint the parameter:
 			int taint = domain.getMappedIndex(de);
-			initialEdges.add(
-				PathEdge.createPathEdge(methEntryBlock, 0, methEntryBlock, taint));
+			initialEdges.add(PathEdge.createPathEdge(methEntryBlock, 0,
+					methEntryBlock, taint));
 
 			// taint the fields on the parameter:
 			TypeReference paramTR = entryMethod.getParameterType(i);
 			IClass paramClass = pa.getClassHierarchy().lookupClass(paramTR);
 
-			if (paramTR.isPrimitiveType() 
-			 || paramTR.isArrayType()
-			 || paramClass == null) {
+			if (paramTR.isPrimitiveType() || paramTR.isArrayType()
+					|| paramClass == null) {
 				continue;
 			}
 
 			Collection<IField> fields = paramClass.getAllFields();
 
-			LocalPointerKey pointerKey = 
-					new LocalPointerKey(methEntryBlock.getNode(), 
-	   					                methEntryBlock.getNode().getIR().getParameter(i));
-				
-				OrdinalSet<InstanceKey> pointsToSet = pa.getPointsToSet(pointerKey);
+			LocalPointerKey pointerKey = new LocalPointerKey(
+					methEntryBlock.getNode(), methEntryBlock.getNode().getIR()
+							.getParameter(i));
+
+			OrdinalSet<InstanceKey> pointsToSet = pa.getPointsToSet(pointerKey);
 
 			for (IField iField : fields) {
 				taintField(pa, iField, pointsToSet, methEntryBlock, domain,

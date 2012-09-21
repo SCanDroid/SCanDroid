@@ -41,38 +41,40 @@ package domain;
 import flow.types.FlowType;
 
 public class DomainElement {
-    public final CodeElement codeElement;
-    public final FlowType taintSource;
+	// the code element in question
+	// alternate framing: the /current/ fact about the element
+	public final CodeElement codeElement;
+	// the taint (probably from some other point in the code) that affects the
+	// code element in question
+	// alternate framing: the /initial/ fact about the element
+	public final FlowType taintSource;
 
-    public DomainElement(CodeElement codeElement, FlowType taintSource)
-    {
-        this.codeElement = codeElement;
-        this.taintSource = taintSource;
-    }
+	public DomainElement(CodeElement codeElement, FlowType taintSource) {
+		this.codeElement = codeElement;
+		this.taintSource = taintSource;
+	}
 
-    @Override
-    public boolean equals(Object other)
-    {
-        if(other == null || !(other instanceof DomainElement))
-            return false;
-        DomainElement otherDE = (DomainElement)other;
-        if(taintSource != null)
-        {
-            return codeElement.equals(otherDE.codeElement) && taintSource.equals(otherDE.taintSource);
-        }
-        return codeElement.equals(otherDE.codeElement) && otherDE.taintSource == null;
-    }
+	@Override
+	public boolean equals(Object other) {
+		if (other == null || !(other instanceof DomainElement))
+			return false;
+		DomainElement otherDE = (DomainElement) other;
+		if (taintSource != null) {
+			return codeElement.equals(otherDE.codeElement)
+					&& taintSource.equals(otherDE.taintSource);
+		}
+		return codeElement.equals(otherDE.codeElement)
+				&& otherDE.taintSource == null;
+	}
 
-    @Override
-    public int hashCode()
-    {
-        if(taintSource == null)
-            return codeElement.hashCode();
-        return codeElement.hashCode() ^ taintSource.hashCode();
-    }
+	@Override
+	public int hashCode() {
+		if (taintSource == null)
+			return codeElement.hashCode();
+		return codeElement.hashCode() ^ taintSource.hashCode();
+	}
 
-    public String toString()
-    {
-        return codeElement.toString()+", "+taintSource;
-    }
+	public String toString() {
+		return codeElement.toString() + ", " + taintSource;
+	}
 }
