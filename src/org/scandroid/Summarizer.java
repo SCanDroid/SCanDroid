@@ -60,7 +60,7 @@ import flow.types.FieldFlow;
 import flow.types.FlowType;
 import flow.types.ParameterFlow;
 
-public class Summarizer {
+public class Summarizer<E extends ISSABasicBlock> {
 
 	/**
 	 * @param args
@@ -79,13 +79,14 @@ public class Summarizer {
 		String appJar = args[0];
 		String methoddescriptor = args[1];
 
-		Summarizer s = new Summarizer(appJar, methoddescriptor);
+		Summarizer<IExplodedBasicBlock> s = new Summarizer<IExplodedBasicBlock>(appJar, methoddescriptor);
 
 		System.out.println(s.summarize());
 	}
 
 	private final String appJar;
 	private final String methodDescriptor;
+	private ISupergraph<BasicBlockInContext<E>, CGNode> graph;
 
 	public Summarizer(String appJar, String methoddescriptor) {
 		this.appJar = appJar;
@@ -120,15 +121,14 @@ public class Summarizer {
 
 		CallGraph cg = builder.makeCallGraph(options, null);
 
-		ISupergraph<BasicBlockInContext<IExplodedBasicBlock>, CGNode> sg = ICFGSupergraph
-				.make(cg, builder.getAnalysisCache());
+		graph = ICFGSupergraph.make(cg, builder.getAnalysisCache());
 		PointerAnalysis pa = builder.getPointerAnalysis();
 
 		// Map<BasicBlockInContext<IExplodedBasicBlock>,
 		// Map<FlowType<IExplodedBasicBlock>, Set<CodeElement>>> initialTaints =
 		// InflowAnalysis.analyze(cg, cha, sg, pa, new HashMap<InstanceKey,
 		// String>(), specs);
-		IFDSTaintDomain<IExplodedBasicBlock> domain = new IFDSTaintDomain<IExplodedBasicBlock>();
+		IFDSTaintDomain<E> domain = new IFDSTaintDomain<E>();
 
 		Collection<IMethod> entryMethods = cha.getPossibleTargets(methodRef);
 
@@ -141,14 +141,14 @@ public class Summarizer {
 			entryMethod = entryMethods.iterator().next();
 		}
 
-		MethodAnalysis<IExplodedBasicBlock> methodAnalysis = new MethodAnalysis<IExplodedBasicBlock>(
+		MethodAnalysis<E> methodAnalysis = new MethodAnalysis<E>(
 				new Predicate<IMethod>() {
 					@Override
 					public boolean test(IMethod im) {
 						return im.equals(entryMethod);
 					}
 				});
-		methodAnalysis.analyze(sg, pa, null, sg.getEntriesForProcedure(cg
+		methodAnalysis.analyze(graph, pa, null, graph.getEntriesForProcedure(cg
 				.getNode(entryMethod, Everywhere.EVERYWHERE))[0]);
 
 		System.out.println(methodAnalysis.newSummaries);
@@ -172,15 +172,6 @@ public class Summarizer {
 		// return makeSummary(flowResult);
 	}
 
-	private Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> makeSummary(
-			TabulationResult<BasicBlockInContext<IExplodedBasicBlock>, CGNode, DomainElement> flowResult) {
-		// TODO get exit blocks for method
-
-		// get results for each exit block
-
-		return null;
-	}
-
 	private CallGraphBuilder makeCallgraph(AnalysisScope scope,
 			ClassHierarchy cha, AnalysisOptions options,
 			String methodSummariesFile) throws FileNotFoundException {
@@ -191,7 +182,7 @@ public class Summarizer {
 		return builder;
 	}
 
-	private <E extends ISSABasicBlock> Map<BasicBlockInContext<E>, Map<FlowType<E>, Set<CodeElement>>> setUpTaints(
+	private Map<BasicBlockInContext<E>, Map<FlowType<E>, Set<CodeElement>>> setUpTaints(
 			final ISupergraph<BasicBlockInContext<E>, CGNode> graph,
 			CallGraph cg, PointerAnalysis pa, final IFDSTaintDomain<E> domain,
 			IMethod entryMethod) {
@@ -207,7 +198,7 @@ public class Summarizer {
 		return taintMap;
 	}
 
-	private <E extends ISSABasicBlock> Map<FlowType<E>, Set<CodeElement>> buildTaintMap(
+	private Map<FlowType<E>, Set<CodeElement>> buildTaintMap(
 			final ISupergraph<BasicBlockInContext<E>, CGNode> graph,
 			CallGraph cg, PointerAnalysis pa, final IFDSTaintDomain<E> domain,
 			IMethod entryMethod, BasicBlockInContext<E> methEntryBlock) {
@@ -273,7 +264,7 @@ public class Summarizer {
 		return taintMap;
 	}
 
-	private <E extends ISSABasicBlock> void taintField(PointerAnalysis pa,
+	private void taintField(PointerAnalysis pa,
 			IField myField, Iterable<InstanceKey> parentPointsToSet,
 			BasicBlockInContext<E> methEntryBlock, IFDSTaintDomain<E> domain,
 			Set<DomainElement> initialTaints,
@@ -337,6 +328,11 @@ public class Summarizer {
 			taintField(pa, field, iks, methEntryBlock, domain, initialTaints,
 					initialEdges, taintedTypes);
 		}
+	}
+
+	public Set<PointerKey> getInputPointerKeys(IMethod method) {
+
+		return null;
 	}
 
 }
