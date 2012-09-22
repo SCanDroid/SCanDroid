@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -18,10 +19,8 @@ import com.google.common.collect.Sets;
 import com.ibm.wala.classLoader.IClass;
 import com.ibm.wala.classLoader.IField;
 import com.ibm.wala.classLoader.IMethod;
-import com.ibm.wala.dataflow.IFDS.ICFGSupergraph;
 import com.ibm.wala.dataflow.IFDS.ISupergraph;
 import com.ibm.wala.dataflow.IFDS.PathEdge;
-import com.ibm.wala.dataflow.IFDS.TabulationResult;
 import com.ibm.wala.dex.util.config.DexAnalysisScopeReader;
 import com.ibm.wala.ipa.callgraph.AnalysisCache;
 import com.ibm.wala.ipa.callgraph.AnalysisOptions;
@@ -48,6 +47,8 @@ import com.ibm.wala.ssa.analysis.IExplodedBasicBlock;
 import com.ibm.wala.types.MethodReference;
 import com.ibm.wala.types.TypeReference;
 import com.ibm.wala.util.Predicate;
+import com.ibm.wala.util.collections.Filter;
+import com.ibm.wala.util.graph.traverse.DFSPathFinder;
 import com.ibm.wala.util.intset.OrdinalSet;
 import com.ibm.wala.util.strings.StringStuff;
 
@@ -58,7 +59,9 @@ import domain.IFDSTaintDomain;
 import domain.LocalElement;
 import flow.types.FieldFlow;
 import flow.types.FlowType;
+import flow.types.IKFlow;
 import flow.types.ParameterFlow;
+import flow.types.ReturnFlow;
 
 public class Summarizer<E extends ISSABasicBlock> {
 
@@ -79,7 +82,8 @@ public class Summarizer<E extends ISSABasicBlock> {
 		String appJar = args[0];
 		String methoddescriptor = args[1];
 
-		Summarizer<IExplodedBasicBlock> s = new Summarizer<IExplodedBasicBlock>(appJar, methoddescriptor);
+		Summarizer<IExplodedBasicBlock> s = new Summarizer<IExplodedBasicBlock>(
+				appJar, methoddescriptor);
 
 		System.out.println(s.summarize());
 	}
@@ -87,6 +91,8 @@ public class Summarizer<E extends ISSABasicBlock> {
 	private final String appJar;
 	private final String methodDescriptor;
 	private ISupergraph<BasicBlockInContext<E>, CGNode> graph;
+	private CallGraph cg;
+	private PointerAnalysis pa;
 
 	public Summarizer(String appJar, String methoddescriptor) {
 		this.appJar = appJar;
@@ -121,7 +127,7 @@ public class Summarizer<E extends ISSABasicBlock> {
 
 		CallGraph cg = builder.makeCallGraph(options, null);
 
-		graph = ICFGSupergraph.make(cg, builder.getAnalysisCache());
+		graph = null; // ICFGSupergraph.make(cg, builder.getAnalysisCache());
 		PointerAnalysis pa = builder.getPointerAnalysis();
 
 		// Map<BasicBlockInContext<IExplodedBasicBlock>,
@@ -192,16 +198,14 @@ public class Summarizer<E extends ISSABasicBlock> {
 		CGNode node = cg.getNode(entryMethod, Everywhere.EVERYWHERE);
 
 		for (BasicBlockInContext<E> block : graph.getEntriesForProcedure(node)) {
-			taintMap.put(block,
-					buildTaintMap(graph, cg, pa, domain, entryMethod, block));
+			taintMap.put(block, buildTaintMap(domain, entryMethod, block));
 		}
 		return taintMap;
 	}
 
 	private Map<FlowType<E>, Set<CodeElement>> buildTaintMap(
-			final ISupergraph<BasicBlockInContext<E>, CGNode> graph,
-			CallGraph cg, PointerAnalysis pa, final IFDSTaintDomain<E> domain,
-			IMethod entryMethod, BasicBlockInContext<E> methEntryBlock) {
+			final IFDSTaintDomain<E> domain, IMethod entryMethod,
+			BasicBlockInContext<E> methEntryBlock) {
 
 		final List<PathEdge<BasicBlockInContext<E>>> initialEdges = Lists
 				.newArrayList();
@@ -239,7 +243,7 @@ public class Summarizer<E extends ISSABasicBlock> {
 			OrdinalSet<InstanceKey> pointsToSet = pa.getPointsToSet(pointerKey);
 
 			for (IField iField : fields) {
-				taintField(pa, iField, pointsToSet, methEntryBlock, domain,
+				taintField(iField, pointsToSet, methEntryBlock, domain,
 						initialTaints, initialEdges, Sets.newHashSet(paramTR));
 			}
 		}
@@ -253,7 +257,7 @@ public class Summarizer<E extends ISSABasicBlock> {
 				Iterable<InstanceKey> staticInstances = pa
 						.getPointsToSet(new StaticFieldKey(field));
 
-				taintField(pa, field, staticInstances, methEntryBlock, domain,
+				taintField(field, staticInstances, methEntryBlock, domain,
 						initialTaints, initialEdges,
 						Sets.<TypeReference> newHashSet());
 			}
@@ -264,8 +268,8 @@ public class Summarizer<E extends ISSABasicBlock> {
 		return taintMap;
 	}
 
-	private void taintField(PointerAnalysis pa,
-			IField myField, Iterable<InstanceKey> parentPointsToSet,
+	private void taintField(IField myField,
+			Iterable<InstanceKey> parentPointsToSet,
 			BasicBlockInContext<E> methEntryBlock, IFDSTaintDomain<E> domain,
 			Set<DomainElement> initialTaints,
 			List<PathEdge<BasicBlockInContext<E>>> initialEdges,
@@ -325,14 +329,71 @@ public class Summarizer<E extends ISSABasicBlock> {
 		Collection<IField> fields = fieldClass.getAllFields();
 
 		for (IField field : fields) {
-			taintField(pa, field, iks, methEntryBlock, domain, initialTaints,
+			taintField(field, iks, methEntryBlock, domain, initialTaints,
 					initialEdges, taintedTypes);
 		}
 	}
 
+	/**
+	 * Eventually, we'd like these pointer keys to encompass the entire
+	 * environment (such as static fields) in scope for this method. For now,
+	 * though, parameters suffice.
+	 * 
+	 * @param method
+	 * @return
+	 */
 	public Set<PointerKey> getInputPointerKeys(IMethod method) {
+		CGNode node = nodeForMethod(method);
+		Set<PointerKey> pkSet = Sets.newHashSet();
+		for (int p : node.getIR().getParameterValueNumbers()) {
+			pkSet.add(new LocalPointerKey(node, p));
+		}
+		return pkSet;
+	}
 
+	public List<PointerKey> getAccessPath(Set<PointerKey> pkSet,
+			final InstanceKey ik) {
+		List<PointerKey> path = Lists.newArrayList();
+
+		DFSPathFinder<Object> finder = new DFSPathFinder<Object>(
+				pa.getHeapGraph(), pkSet.iterator(), new Filter<Object>() {
+					public boolean accepts(Object o) {
+						return (ik.equals(o));
+					}
+				});
+		List<Object> result = finder.find();
+		if (result == null)
+			return null;
+		for (Object step : result) {
+			if (step instanceof PointerKey) {
+				path.add((PointerKey) step);
+			}
+		}
+		return path;
+	}
+
+	private Object getKeyFromFlowType(FlowType ft) {
+		if (ft instanceof FieldFlow) {
+			FieldFlow ff = (FieldFlow) ft;
+			int val = ff.getBlock().getLastInstruction().getUse(0);
+			return (Object) new LocalPointerKey(graph.getProcOf(ff.getBlock()),
+					val);
+		} else if (ft instanceof IKFlow) {
+			return (Object) ((IKFlow) ft).getIK();
+		} else if (ft instanceof ParameterFlow) {
+			// TODO: is this right? The whole point of this method is to lookup
+			// symbols in the environment that we introduce. In the case of
+			// parameters, we don't introduce them, they're arg0, arg1, etc.
+			return null;
+		} else if (ft instanceof ReturnFlow) {
+			ReturnFlow rf = (ReturnFlow) ft;
+			// TODO: figure this out on Monday
+		}
 		return null;
+	}
+
+	private CGNode nodeForMethod(IMethod method) {
+		return cg.getNode(method, Everywhere.EVERYWHERE);
 	}
 
 }
