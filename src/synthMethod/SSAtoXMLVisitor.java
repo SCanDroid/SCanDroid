@@ -4,11 +4,13 @@ import java.io.UTFDataFormatException;
 import java.util.List;
 import java.util.Map;
 
+import org.w3c.dom.DOMException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.ibm.wala.shrikeBT.BytecodeConstants;
 import com.ibm.wala.ssa.SSAArrayLengthInstruction;
 import com.ibm.wala.ssa.SSAArrayLoadInstruction;
 import com.ibm.wala.ssa.SSAArrayStoreInstruction;
@@ -33,6 +35,7 @@ import com.ibm.wala.ssa.SSAReturnInstruction;
 import com.ibm.wala.ssa.SSASwitchInstruction;
 import com.ibm.wala.ssa.SSAThrowInstruction;
 import com.ibm.wala.ssa.SSAUnaryOpInstruction;
+import com.ibm.wala.types.MethodReference;
 import com.ibm.wala.types.TypeReference;
 import com.ibm.wala.util.strings.Atom;
 
@@ -64,7 +67,7 @@ public class SSAtoXMLVisitor implements SSAInstruction.IVisitor {
 
     @Override
     public void visitGoto(SSAGotoInstruction instruction) {
-        // TODO Auto-generated method stub
+        throw new SSASerializationException("Unsupported.");
     }
 
     @Override
@@ -81,39 +84,33 @@ public class SSAtoXMLVisitor implements SSAInstruction.IVisitor {
 
     @Override
     public void visitBinaryOp(SSABinaryOpInstruction instruction) {
-        // TODO Auto-generated method stub
-
+        throw new SSASerializationException("Unsupported.");
     }
 
     @Override
     public void visitUnaryOp(SSAUnaryOpInstruction instruction) {
-        // TODO Auto-generated method stub
-
+        throw new SSASerializationException("Unsupported.");
     }
 
     @Override
     public void visitConversion(SSAConversionInstruction instruction) {
-        // TODO Auto-generated method stub
-
+        throw new SSASerializationException("Unsupported.");
     }
 
     @Override
     public void visitComparison(SSAComparisonInstruction instruction) {
-        // TODO Auto-generated method stub
-
+        throw new SSASerializationException("Unsupported.");
     }
 
     @Override
     public void visitConditionalBranch(
             SSAConditionalBranchInstruction instruction) {
-        // TODO Auto-generated method stub
-
+        throw new SSASerializationException("Unsupported.");
     }
 
     @Override
     public void visitSwitch(SSASwitchInstruction instruction) {
-        // TODO Auto-generated method stub
-
+        throw new SSASerializationException("Unsupported.");
     }
 
     @Override
@@ -136,7 +133,7 @@ public class SSAtoXMLVisitor implements SSAInstruction.IVisitor {
      * fieldType="Ljava/lang/Runnable" def="x" ref="arg0" />
      * 
      * I think the get statics look like this:
-     * 
+     * 1007g 9.1g  12m S 237.9  0.9   4:27.32 java
      * <getstatic class="Ljava/lang/Thread" field="runnable"
      * fieldType="Ljava/lang/Runnable" def="x" />
      */
@@ -145,7 +142,6 @@ public class SSAtoXMLVisitor implements SSAInstruction.IVisitor {
         try {
             String eltName;
 
-            // TODO I suspect this is the wrong boolean to check:
             if (instruction.isStatic()) {
                 eltName = XMLSummaryWriter.E_GETSTATIC;
             } else {
@@ -153,7 +149,6 @@ public class SSAtoXMLVisitor implements SSAInstruction.IVisitor {
             }
             Element elt = doc.createElement(eltName);
 
-            // TODO see above... same question about isStatic()
             if (!instruction.isStatic()) {
                 String refName = getRefName(instruction.getRef());
                 elt.setAttribute(XMLSummaryWriter.A_REF, refName);
@@ -192,7 +187,6 @@ public class SSAtoXMLVisitor implements SSAInstruction.IVisitor {
         try {
             String eltName;
 
-            // TODO I suspect this is the wrong boolean to check:
             if (instruction.isStatic()) {
                 eltName = XMLSummaryWriter.E_PUTSTATIC;
             } else {
@@ -200,7 +194,6 @@ public class SSAtoXMLVisitor implements SSAInstruction.IVisitor {
             }
             Element elt = doc.createElement(eltName);
 
-            // TODO see above... same question about isStatic()
             if (!instruction.isStatic()) {
                 String refName = getRefName(instruction.getRef());
                 elt.setAttribute(XMLSummaryWriter.A_REF, refName);
@@ -229,8 +222,29 @@ public class SSAtoXMLVisitor implements SSAInstruction.IVisitor {
 
     @Override
     public void visitInvoke(SSAInvokeInstruction instruction) {
-        // TODO Auto-generated method stub
+        try {
+            Element elt = doc.createElement(XMLSummaryWriter.E_CALL);
+            
+            MethodReference callee = instruction.getDeclaredTarget();
+            
+            String descString = callee.getDescriptor().toUnicodeString();
+            elt.setAttribute(XMLSummaryWriter.A_DESCRIPTOR, descString);
+            
+            String typeString = 
+                instruction.getCallSite().getInvocationString();
+            elt.setAttribute(XMLSummaryWriter.A_TYPE, typeString);
+            
+            String nameString = callee.getName().toUnicodeString();
+            elt.setAttribute(XMLSummaryWriter.A_NAME, nameString);
+            
+            String classString = typeRefToStr(instruction.getDeclaredResultType());
+            elt.setAttribute(XMLSummaryWriter.A_CLASS, classString);
 
+            summary.add(elt);
+        } catch (Exception e) {
+            throw new SSASerializationException(e);
+        }
+        
     }
 
     @Override
@@ -240,6 +254,7 @@ public class SSAtoXMLVisitor implements SSAInstruction.IVisitor {
             String localName = newLocalDef(defNum);
 
             TypeReference type = instruction.getConcreteType();
+
             String className = type.getName().getClassName().toUnicodeString();
 
             Element elt = doc.createElement(XMLSummaryWriter.E_NEW);
@@ -254,56 +269,65 @@ public class SSAtoXMLVisitor implements SSAInstruction.IVisitor {
     @Override
     public void visitArrayLength(SSAArrayLengthInstruction instruction) {
         // TODO Auto-generated method stub
-
+        
     }
 
+    /**
+     * Serialiaze a throw to XML.
+     * 
+     * Something like this?
+     * 
+     * <throw value="val_localDef" /> 
+     */
     @Override
     public void visitThrow(SSAThrowInstruction instruction) {
-        // TODO Auto-generated method stub
-
+        throw new SSASerializationException("Exceptions not currently supported.");
+//        try {
+//            int exValNo = instruction.getException();
+//            String value = getLocalName(exValNo);
+//            
+//            Element elt = doc.createElement(XMLSummaryWriter.E_ATHROW);
+//            elt.setAttribute(XMLSummaryWriter.A_VALUE, value);
+//            summary.add(elt);
+//        } catch (Exception e) {
+//            throw new SSASerializationException(e);
+//        }
     }
 
     @Override
     public void visitMonitor(SSAMonitorInstruction instruction) {
-        // TODO Auto-generated method stub
-
+        throw new SSASerializationException("Unsupported.");
     }
 
     @Override
     public void visitCheckCast(SSACheckCastInstruction instruction) {
-        // TODO Auto-generated method stub
-
+        throw new SSASerializationException("Unsupported.");
     }
 
     @Override
     public void visitInstanceof(SSAInstanceofInstruction instruction) {
-        // TODO Auto-generated method stub
-
+        throw new SSASerializationException("Unsupported.");
     }
 
     @Override
     public void visitPhi(SSAPhiInstruction instruction) {
-        // TODO Auto-generated method stub
-
+        throw new SSASerializationException("Unsupported.");
     }
 
     @Override
     public void visitPi(SSAPiInstruction instruction) {
-        // TODO Auto-generated method stub
-
+        throw new SSASerializationException("Unsupported.");
     }
 
     @Override
     public void visitGetCaughtException(
             SSAGetCaughtExceptionInstruction instruction) {
-        // TODO Auto-generated method stub
-
+        throw new SSASerializationException("Unsupported.");
     }
 
     @Override
     public void visitLoadMetadata(SSALoadMetadataInstruction instruction) {
-        // TODO Auto-generated method stub
-
+        throw new SSASerializationException("Unsupported.");
     }
 
     /**

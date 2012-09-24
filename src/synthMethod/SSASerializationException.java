@@ -7,4 +7,8 @@ public class SSASerializationException extends RuntimeException {
 	public SSASerializationException(Exception e) {
 		super(e);
 	}
+
+    public SSASerializationException(String string) {
+        super(string);
+    }
 }
