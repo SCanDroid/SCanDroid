@@ -4,13 +4,11 @@ import java.io.UTFDataFormatException;
 import java.util.List;
 import java.util.Map;
 
-import org.w3c.dom.DOMException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.ibm.wala.shrikeBT.BytecodeConstants;
 import com.ibm.wala.ssa.SSAArrayLengthInstruction;
 import com.ibm.wala.ssa.SSAArrayLoadInstruction;
 import com.ibm.wala.ssa.SSAArrayStoreInstruction;

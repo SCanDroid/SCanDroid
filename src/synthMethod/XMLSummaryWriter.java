@@ -1,11 +1,19 @@
 package synthMethod;
 
+import java.io.ByteArrayOutputStream;
 import java.io.UTFDataFormatException;
 import java.util.List;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 
 import org.w3c.dom.DOMException;
 import org.w3c.dom.Document;
@@ -77,6 +85,35 @@ public class XMLSummaryWriter {
         doc.appendChild(rootElement);
     }
 
+    public String serialize() {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
+        // write the content into xml file
+        TransformerFactory transformerFactory =
+                TransformerFactory.newInstance();
+        // transformerFactory.setAttribute("indent-number", new Integer(4));
+        try {
+            Transformer transformer = transformerFactory.newTransformer();
+            transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+            transformer.setOutputProperty(
+                    "{http://xml.apache.org/xslt}indent-amount", "2");
+            DOMSource source = new DOMSource(doc);
+
+            StreamResult result = new StreamResult(baos);
+            transformer.transform(source, result);
+        } catch (TransformerConfigurationException e) {
+            e.printStackTrace();
+        } catch (IllegalArgumentException e) {
+            e.printStackTrace();
+        } catch (TransformerException e) {
+            e.printStackTrace();
+        }
+        
+        // using the default encoding here, since the bytes were just written
+        // with a default encoding...
+        return baos.toString();
+    }
+    
     /**
      * Throws various exceptions if a problem occurred serializing this method.
      * 
@@ -88,15 +125,17 @@ public class XMLSummaryWriter {
      * @throws UTFDataFormatException
      * @throws SSASerializationException
      */
-    public String serialize(MethodSummary summary) throws DOMException,
+    public void add(MethodSummary summary) throws DOMException,
             UTFDataFormatException, SSASerializationException {
         TypeReference methClass = summary.getMethod().getDeclaringClass();
-        Atom pkg = methClass.getName().getPackage();
-        Atom className = methClass.getName().getClassName();
+        
+        Atom clrName    = methClass.getClassLoader().getName();
+        Atom pkg        = methClass.getName().getPackage();
+        Atom className  = methClass.getName().getClassName();
         Atom methodName = summary.getMethod().getName();
 
         // get an element to add this method to:
-        Element classElt = findOrCreateClassElt(pkg, className);
+        Element classElt = findOrCreateClassElt(clrName, pkg, className);
 
         // create a method element, and populate it's attributes:
         Element methElt = doc.createElement(E_METHOD);
@@ -122,18 +161,27 @@ public class XMLSummaryWriter {
         }
 
         classElt.appendChild(methElt);
-
-        return doc.getTextContent();
     }
 
-    private Element findOrCreateClassElt(Atom pkg, Atom className)
+    private Element findOrCreateClassElt(Atom classLoaderName, Atom pkg, Atom className)
             throws UTFDataFormatException {
         // TODO always creates a new element, needs to look-up if one exists
+        Element clrElt = findOrCreateClrElt(classLoaderName);
         Element pkgElt = findOrCreatePkgElt(pkg);
         Element classElt = doc.createElement(E_CLASS);
         classElt.setAttribute(A_NAME, className.toUnicodeString());
         pkgElt.appendChild(classElt);
         return classElt;
+    }
+
+    private Element findOrCreateClrElt(Atom classLoaderName) throws DOMException, 
+        UTFDataFormatException {
+        
+        // TODO always creates a new element, needs to look-up if one exists
+        Element clrElt = doc.createElement(E_CLASSLOADER);
+        clrElt.setAttribute(A_NAME, classLoaderName.toUnicodeString());
+        doc.appendChild(clrElt);
+        return clrElt;
     }
 
     private Element findOrCreatePkgElt(Atom pkg) throws UTFDataFormatException {
