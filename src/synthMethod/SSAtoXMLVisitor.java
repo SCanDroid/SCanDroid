@@ -73,10 +73,27 @@ public class SSAtoXMLVisitor implements SSAInstruction.IVisitor {
         throw new SSASerializationException("Unsupported.");
     }
 
+    /**
+     * Load from an array ref, at specified index, and store in def.
+     * 
+     *   <aaload ref="x" index="0" def="y" />
+     */
     @Override
     public void visitArrayLoad(SSAArrayLoadInstruction instruction) {
-        // TODO Auto-generated method stub
-        throw new SSASerializationException("Unsupported.");
+        try {
+            Element elt = doc.createElement(XMLSummaryWriter.E_AALOAD);
+            
+            String refStr = getLocalName(instruction.getArrayRef());
+            elt.setAttribute(XMLSummaryWriter.A_REF, refStr);
+            
+            String defStr = getLocalName(instruction.getDef());
+            elt.setAttribute(XMLSummaryWriter.A_VALUE, defStr);
+            
+            elt.setAttribute(XMLSummaryWriter.A_INDEX, ""+instruction.getIndex());
+            summary.add(elt);
+        } catch (Exception e) {
+            throw new SSASerializationException(e);
+        }
     }
 
     /**
@@ -85,7 +102,7 @@ public class SSAtoXMLVisitor implements SSAInstruction.IVisitor {
     @Override
     public void visitArrayStore(SSAArrayStoreInstruction instruction) {
         try {
-            Element elt = doc.createElement(XMLSummaryWriter.E_RETURN);
+            Element elt = doc.createElement(XMLSummaryWriter.E_AASTORE);
             
             String refStr = getLocalName(instruction.getArrayRef());
             elt.setAttribute(XMLSummaryWriter.A_REF, refStr);

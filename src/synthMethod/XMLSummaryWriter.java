@@ -32,8 +32,9 @@ public class XMLSummaryWriter {
     final static String E_RETURN = "return";
     final static String E_PUTSTATIC = "putstatic";
     final static String E_GETSTATIC = "getstatic";
-    final static String E_AASTORE = "aastore";
     final static String E_PUTFIELD = "putfield";
+    final static String E_AALOAD = "aaload";
+    final static String E_AASTORE = "aastore";
     final static String E_GETFIELD = "getfield";
     final static String E_ATHROW = "throw";
     final static String E_CONSTANT = "constant";
