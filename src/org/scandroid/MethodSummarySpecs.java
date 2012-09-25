@@ -19,6 +19,7 @@ import spec.SourceSpec;
 
 import com.google.common.collect.Lists;
 import com.ibm.wala.types.MethodReference;
+import com.ibm.wala.types.TypeReference;
 
 /**
  * @author creswick
@@ -85,10 +86,13 @@ public class MethodSummarySpecs implements ISpecs {
 		}
 		sinks.add(new EntryArgSinkSpec(pattern, argNums));
 		
-		//
-		// Add the return value as a EntryRetSinkSpec
-		//
-		sinks.add(new EntryRetSinkSpec(pattern));
+		TypeReference typeRef = methodRef.getReturnType();
+		if (! typeRef.equals(TypeReference.Void)) {
+			//
+			// Add the return value as a EntryRetSinkSpec
+			//
+			sinks.add(new EntryRetSinkSpec(pattern));
+		}
 		
 		logger.debug("found sinks: " + sinks.toString());
 		return sinks;
