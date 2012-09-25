@@ -3,28 +3,19 @@ package org.scandroid;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.UTFDataFormatException;
 import java.util.BitSet;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-
-import spec.CallArgSinkSpec;
-import spec.EntryArgSinkSpec;
-import spec.EntryArgSourceSpec;
-import spec.EntryRetSinkSpec;
-import spec.ISpecs;
-import spec.MethodNamePattern;
-import spec.SinkSpec;
-import spec.SourceSpec;
 import org.apache.log4j.BasicConfigurator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import synthMethod.MethodAnalysis;
+import spec.ISpecs;
 import util.AndroidAppLoader;
+import util.ThrowingSSAInstructionVisitor;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -61,12 +52,11 @@ import com.ibm.wala.ssa.ISSABasicBlock;
 import com.ibm.wala.ssa.SSAGetInstruction;
 import com.ibm.wala.ssa.SSAInstruction;
 import com.ibm.wala.ssa.SSAInvokeInstruction;
-import com.ibm.wala.ssa.SSAPhiInstruction;
+import com.ibm.wala.ssa.SSAPutInstruction;
 import com.ibm.wala.ssa.SSAReturnInstruction;
 import com.ibm.wala.ssa.analysis.IExplodedBasicBlock;
 import com.ibm.wala.types.MethodReference;
 import com.ibm.wala.types.TypeReference;
-import com.ibm.wala.util.Predicate;
 import com.ibm.wala.util.collections.Filter;
 import com.ibm.wala.util.graph.traverse.DFSPathFinder;
 import com.ibm.wala.util.intset.OrdinalSet;
@@ -160,28 +150,28 @@ public class Summarizer<E extends ISSABasicBlock> {
 		// String>(), specs);
 		IFDSTaintDomain<E> domain = new IFDSTaintDomain<E>();
 
-		
-//      Collection<IMethod> entryMethods = cha.getPossibleTargets(methodRef);				
-//		final IMethod entryMethod;
-//		if (1 != entryMethods.size()) {
-//			System.err.println("Too many IMethods for method reference "
-//					+ "(or none at all).  found: " + entryMethods.size());
-//			throw new IllegalArgumentException();
-//		} else {
-//			entryMethod = entryMethods.iterator().next();
-//		}
-//
-//		MethodAnalysis<E> methodAnalysis = new MethodAnalysis<E>(
-//				new Predicate<IMethod>() {
-//					@Override
-//					public boolean test(IMethod im) {
-//						return im.equals(entryMethod);
-//					}
-//				});
-//		methodAnalysis.analyze(graph, pa, null, graph.getEntriesForProcedure(cg
-//				.getNode(entryMethod, Everywhere.EVERYWHERE))[0]);
-//
-//		System.out.println(methodAnalysis.newSummaries);
+		// Collection<IMethod> entryMethods = cha.getPossibleTargets(methodRef);
+		// final IMethod entryMethod;
+		// if (1 != entryMethods.size()) {
+		// System.err.println("Too many IMethods for method reference "
+		// + "(or none at all).  found: " + entryMethods.size());
+		// throw new IllegalArgumentException();
+		// } else {
+		// entryMethod = entryMethods.iterator().next();
+		// }
+		//
+		// MethodAnalysis<E> methodAnalysis = new MethodAnalysis<E>(
+		// new Predicate<IMethod>() {
+		// @Override
+		// public boolean test(IMethod im) {
+		// return im.equals(entryMethod);
+		// }
+		// });
+		// methodAnalysis.analyze(graph, pa, null,
+		// graph.getEntriesForProcedure(cg
+		// .getNode(entryMethod, Everywhere.EVERYWHERE))[0]);
+		//
+		// System.out.println(methodAnalysis.newSummaries);
 
 		//
 		// Map<BasicBlockInContext<IExplodedBasicBlock>,
@@ -415,7 +405,11 @@ public class Summarizer<E extends ISSABasicBlock> {
 		final List<SSAInstruction> returns = Lists.newArrayList();
 		ft.visit(new FlowType.FlowTypeVisitor<E>() {
 
-			final class PathWalker extends SSAInstruction.Visitor {
+			final class PathWalker extends ThrowingSSAInstructionVisitor {
+
+				public PathWalker() {
+					super(new IllegalArgumentException("unhandled SSAInstruction"));
+				}
 				
 				@Override
 				public void visitGet(SSAGetInstruction instruction) {
@@ -428,13 +422,37 @@ public class Summarizer<E extends ISSABasicBlock> {
 						// ref is not in scope yet, so find the SSA
 						// instruction that brings it into scope
 						SSAInstruction refInst = du.getDef(ref);
-						refInst.visit(new PathWalker());
+						refInst.visit(this);
 					}
 					// postcondition: ref is now in scope
-					assert refInScope.get(ref);
+					assert ref == -1 || refInScope.get(ref);
 
 					insts.add(instruction);
 					refInScope.set(instruction.getDef());
+				}
+
+				@Override
+				public void visitPut(SSAPutInstruction instruction) {
+					int val = instruction.getVal();
+					if (!refInScope.get(val)) {
+						// if the RHS of the assignment is not in scope, recur
+						SSAInstruction valInst = du.getDef(val);
+						valInst.visit(this);
+					}
+					// postcondition: val is now in scope
+					assert refInScope.get(val);
+
+					int ref = instruction.getRef();
+					if (ref != -1 && !refInScope.get(ref)) {
+						// ref is not in scope yet, so find the SSA
+						// instruction that brings it into scope
+						SSAInstruction refInst = du.getDef(ref);
+						refInst.visit(this);
+					}
+					// postcondition: ref is now in scope
+					assert ref == -1 || refInScope.get(ref);
+
+					insts.add(instruction);
 				}
 
 				@Override
@@ -482,9 +500,9 @@ public class Summarizer<E extends ISSABasicBlock> {
 						useInst.visit(new PathWalker());
 					}
 					// postcondition: use is now in scope, if present
-					assert (use == -1 || refInScope.get(use));					
+					assert (use == -1 || refInScope.get(use));
 					returns.add(instruction);
-				}			
+				}
 
 			}
 
@@ -545,7 +563,7 @@ public class Summarizer<E extends ISSABasicBlock> {
 			}
 		});
 		insts.addAll(returns);
-		return insts;	
+		return insts;
 	}
 
 	private Object getKeyFromFlowType(FlowType ft) {
