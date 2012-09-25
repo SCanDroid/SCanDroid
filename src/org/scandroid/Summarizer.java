@@ -4,11 +4,12 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import spec.SinkSpec;
+import spec.SourceSpec;
 import synthMethod.MethodAnalysis;
 import util.AndroidAppLoader;
 
@@ -130,14 +131,21 @@ public class Summarizer<E extends ISSABasicBlock> {
 		graph = null; // ICFGSupergraph.make(cg, builder.getAnalysisCache());
 		PointerAnalysis pa = builder.getPointerAnalysis();
 
+		
+		List<SourceSpec> sources = getSources(methodRef); 
+		List<SinkSpec> sinks = getSinks(methodRef);
+		
 		// Map<BasicBlockInContext<IExplodedBasicBlock>,
 		// Map<FlowType<IExplodedBasicBlock>, Set<CodeElement>>> initialTaints =
 		// InflowAnalysis.analyze(cg, cha, sg, pa, new HashMap<InstanceKey,
 		// String>(), specs);
 		IFDSTaintDomain<E> domain = new IFDSTaintDomain<E>();
 
-		Collection<IMethod> entryMethods = cha.getPossibleTargets(methodRef);
-
+		//Collection<IMethod> entryMethods = cha.getPossibleTargets(methodRef);
+		
+		
+		
+				
 		final IMethod entryMethod;
 		if (1 != entryMethods.size()) {
 			System.err.println("Too many IMethods for method reference "
@@ -176,6 +184,21 @@ public class Summarizer<E extends ISSABasicBlock> {
 		// System.out.println(flowResult);
 		//
 		// return makeSummary(flowResult);
+	}
+
+	private List<SinkSpec> getSinks(MethodReference methodRef) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	private List<SourceSpec> getSources(MethodReference methodRef) {
+		int paramCount = methodRef.getNumberOfParameters();
+		
+		for (int i=0; i < paramCount; i++) {
+		}
+		
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 	private CallGraphBuilder makeCallgraph(AnalysisScope scope,
