@@ -58,4 +58,9 @@ public class ReturnFlow <E extends ISSABasicBlock> extends FlowType<E> {
     public String toString() {
         return "ReturnFlow( " + super.toString() + ")";
     }
+
+	@Override
+	public void visit(flow.types.FlowType.FlowTypeVisitor<E> v) {
+		v.visitReturnFlow(this);
+	}
 }
