@@ -33,6 +33,7 @@ import com.ibm.wala.ssa.SSAReturnInstruction;
 import com.ibm.wala.ssa.SSASwitchInstruction;
 import com.ibm.wala.ssa.SSAThrowInstruction;
 import com.ibm.wala.ssa.SSAUnaryOpInstruction;
+import com.ibm.wala.types.MethodReference;
 import com.ibm.wala.types.TypeReference;
 import com.ibm.wala.util.strings.Atom;
 
@@ -58,62 +59,91 @@ public class SSAtoXMLVisitor implements SSAInstruction.IVisitor {
      */
     private final List<Element> summary = Lists.newArrayList();
 
-    public SSAtoXMLVisitor(Document doc) {
+    public SSAtoXMLVisitor(Document doc, int argCount) {
         this.doc = doc;
+        for (int i=0; i < argCount; i++) {
+            localDefs.put(i+1, "arg"+i);
+        }
     }
 
     @Override
     public void visitGoto(SSAGotoInstruction instruction) {
-        // TODO Auto-generated method stub
+        throw new SSASerializationException("Unsupported.");
     }
 
+    /**
+     * Load from an array ref, at specified index, and store in def.
+     * 
+     *   <aaload ref="x" index="0" def="y" />
+     */
     @Override
     public void visitArrayLoad(SSAArrayLoadInstruction instruction) {
-        // TODO Auto-generated method stub
-
+        try {
+            Element elt = doc.createElement(XMLSummaryWriter.E_AALOAD);
+            
+            String refStr = getLocalName(instruction.getArrayRef());
+            elt.setAttribute(XMLSummaryWriter.A_REF, refStr);
+            
+            String defStr = getLocalName(instruction.getDef());
+            elt.setAttribute(XMLSummaryWriter.A_VALUE, defStr);
+            
+            elt.setAttribute(XMLSummaryWriter.A_INDEX, ""+instruction.getIndex());
+            summary.add(elt);
+        } catch (Exception e) {
+            throw new SSASerializationException(e);
+        }
     }
 
+    /**
+     *    <aastore ref="x" value="y" index="0" />
+     */
     @Override
     public void visitArrayStore(SSAArrayStoreInstruction instruction) {
-        // TODO Auto-generated method stub
-
+        try {
+            Element elt = doc.createElement(XMLSummaryWriter.E_AASTORE);
+            
+            String refStr = getLocalName(instruction.getArrayRef());
+            elt.setAttribute(XMLSummaryWriter.A_REF, refStr);
+            
+            String valueStr = getLocalName(instruction.getValue());
+            elt.setAttribute(XMLSummaryWriter.A_VALUE, valueStr);
+            
+            elt.setAttribute(XMLSummaryWriter.A_INDEX, ""+instruction.getIndex());
+            summary.add(elt);
+        } catch (Exception e) {
+            throw new SSASerializationException(e);
+        }
     }
 
     @Override
     public void visitBinaryOp(SSABinaryOpInstruction instruction) {
-        // TODO Auto-generated method stub
-
+        throw new SSASerializationException("Unsupported.");
     }
 
     @Override
     public void visitUnaryOp(SSAUnaryOpInstruction instruction) {
-        // TODO Auto-generated method stub
-
+        throw new SSASerializationException("Unsupported.");
     }
 
     @Override
     public void visitConversion(SSAConversionInstruction instruction) {
-        // TODO Auto-generated method stub
-
+        throw new SSASerializationException("Unsupported.");
     }
 
     @Override
     public void visitComparison(SSAComparisonInstruction instruction) {
-        // TODO Auto-generated method stub
-
+        throw new SSASerializationException("Unsupported.");
     }
 
     @Override
     public void visitConditionalBranch(
             SSAConditionalBranchInstruction instruction) {
-        // TODO Auto-generated method stub
-
+        throw new SSASerializationException("Unsupported.");
     }
 
     @Override
     public void visitSwitch(SSASwitchInstruction instruction) {
-        // TODO Auto-generated method stub
-
+        throw new SSASerializationException("Unsupported.");
     }
 
     @Override
@@ -136,7 +166,7 @@ public class SSAtoXMLVisitor implements SSAInstruction.IVisitor {
      * fieldType="Ljava/lang/Runnable" def="x" ref="arg0" />
      * 
      * I think the get statics look like this:
-     * 
+     * 1007g 9.1g  12m S 237.9  0.9   4:27.32 java
      * <getstatic class="Ljava/lang/Thread" field="runnable"
      * fieldType="Ljava/lang/Runnable" def="x" />
      */
@@ -145,7 +175,6 @@ public class SSAtoXMLVisitor implements SSAInstruction.IVisitor {
         try {
             String eltName;
 
-            // TODO I suspect this is the wrong boolean to check:
             if (instruction.isStatic()) {
                 eltName = XMLSummaryWriter.E_GETSTATIC;
             } else {
@@ -153,7 +182,6 @@ public class SSAtoXMLVisitor implements SSAInstruction.IVisitor {
             }
             Element elt = doc.createElement(eltName);
 
-            // TODO see above... same question about isStatic()
             if (!instruction.isStatic()) {
                 String refName = getRefName(instruction.getRef());
                 elt.setAttribute(XMLSummaryWriter.A_REF, refName);
@@ -192,7 +220,6 @@ public class SSAtoXMLVisitor implements SSAInstruction.IVisitor {
         try {
             String eltName;
 
-            // TODO I suspect this is the wrong boolean to check:
             if (instruction.isStatic()) {
                 eltName = XMLSummaryWriter.E_PUTSTATIC;
             } else {
@@ -200,7 +227,6 @@ public class SSAtoXMLVisitor implements SSAInstruction.IVisitor {
             }
             Element elt = doc.createElement(eltName);
 
-            // TODO see above... same question about isStatic()
             if (!instruction.isStatic()) {
                 String refName = getRefName(instruction.getRef());
                 elt.setAttribute(XMLSummaryWriter.A_REF, refName);
@@ -229,8 +255,29 @@ public class SSAtoXMLVisitor implements SSAInstruction.IVisitor {
 
     @Override
     public void visitInvoke(SSAInvokeInstruction instruction) {
-        // TODO Auto-generated method stub
+        try {
+            Element elt = doc.createElement(XMLSummaryWriter.E_CALL);
+            
+            MethodReference callee = instruction.getDeclaredTarget();
+            
+            String descString = callee.getDescriptor().toUnicodeString();
+            elt.setAttribute(XMLSummaryWriter.A_DESCRIPTOR, descString);
+            
+            String typeString = 
+                instruction.getCallSite().getInvocationString();
+            elt.setAttribute(XMLSummaryWriter.A_TYPE, typeString);
+            
+            String nameString = callee.getName().toUnicodeString();
+            elt.setAttribute(XMLSummaryWriter.A_NAME, nameString);
+            
+            String classString = typeRefToStr(instruction.getDeclaredResultType());
+            elt.setAttribute(XMLSummaryWriter.A_CLASS, classString);
 
+            summary.add(elt);
+        } catch (Exception e) {
+            throw new SSASerializationException(e);
+        }
+        
     }
 
     @Override
@@ -240,6 +287,7 @@ public class SSAtoXMLVisitor implements SSAInstruction.IVisitor {
             String localName = newLocalDef(defNum);
 
             TypeReference type = instruction.getConcreteType();
+
             String className = type.getName().getClassName().toUnicodeString();
 
             Element elt = doc.createElement(XMLSummaryWriter.E_NEW);
@@ -253,57 +301,65 @@ public class SSAtoXMLVisitor implements SSAInstruction.IVisitor {
 
     @Override
     public void visitArrayLength(SSAArrayLengthInstruction instruction) {
-        // TODO Auto-generated method stub
-
+        throw new SSASerializationException("Unsupported.");
     }
 
+    /**
+     * Serialiaze a throw to XML.
+     * 
+     * Something like this?
+     * 
+     * <throw value="val_localDef" /> 
+     */
     @Override
     public void visitThrow(SSAThrowInstruction instruction) {
-        // TODO Auto-generated method stub
-
+        throw new SSASerializationException("Exceptions not currently supported.");
+//        try {
+//            int exValNo = instruction.getException();
+//            String value = getLocalName(exValNo);
+//            
+//            Element elt = doc.createElement(XMLSummaryWriter.E_ATHROW);
+//            elt.setAttribute(XMLSummaryWriter.A_VALUE, value);
+//            summary.add(elt);
+//        } catch (Exception e) {
+//            throw new SSASerializationException(e);
+//        }
     }
 
     @Override
     public void visitMonitor(SSAMonitorInstruction instruction) {
-        // TODO Auto-generated method stub
-
+        throw new SSASerializationException("Unsupported.");
     }
 
     @Override
     public void visitCheckCast(SSACheckCastInstruction instruction) {
-        // TODO Auto-generated method stub
-
+        throw new SSASerializationException("Unsupported.");
     }
 
     @Override
     public void visitInstanceof(SSAInstanceofInstruction instruction) {
-        // TODO Auto-generated method stub
-
+        throw new SSASerializationException("Unsupported.");
     }
 
     @Override
     public void visitPhi(SSAPhiInstruction instruction) {
-        // TODO Auto-generated method stub
-
+        throw new SSASerializationException("Unsupported.");
     }
 
     @Override
     public void visitPi(SSAPiInstruction instruction) {
-        // TODO Auto-generated method stub
-
+        throw new SSASerializationException("Unsupported.");
     }
 
     @Override
     public void visitGetCaughtException(
             SSAGetCaughtExceptionInstruction instruction) {
-        // TODO Auto-generated method stub
-
+        throw new SSASerializationException("Unsupported.");
     }
 
     @Override
     public void visitLoadMetadata(SSALoadMetadataInstruction instruction) {
-        // TODO Auto-generated method stub
-
+        throw new SSASerializationException("Unsupported.");
     }
 
     /**
@@ -325,8 +381,11 @@ public class SSAtoXMLVisitor implements SSAInstruction.IVisitor {
      * If, for some reason, the defNum has not yet been seen (and, thus, has no
      * local name associated with it) then this will throw an illegal state
      * exception.
-     * 
+     *
+     * TODO needs to return 'arg0' -> 'argN' for those value numbers...
+     *
      * @param defNum
+     *
      * @return
      * @throws IllegalStateException
      */
