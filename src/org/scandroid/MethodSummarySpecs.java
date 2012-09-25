@@ -6,8 +6,8 @@ package org.scandroid;
 import java.io.UTFDataFormatException;
 import java.util.List;
 
-import com.google.common.collect.Lists;
-import com.ibm.wala.types.MethodReference;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import spec.EntryArgSinkSpec;
 import spec.EntryArgSourceSpec;
@@ -17,11 +17,15 @@ import spec.MethodNamePattern;
 import spec.SinkSpec;
 import spec.SourceSpec;
 
+import com.google.common.collect.Lists;
+import com.ibm.wala.types.MethodReference;
+
 /**
  * @author creswick
  *
  */
 public class MethodSummarySpecs implements ISpecs {
+	private static final Logger logger = LoggerFactory.getLogger(MethodSummarySpecs.class);
 
 	private final MethodReference methodRef;
 
@@ -74,13 +78,19 @@ public class MethodSummarySpecs implements ISpecs {
 		String methodName = methodRef.getName().toUnicodeString();
 		String descriptor = methodRef.getDescriptor().toUnicodeString();
 		MethodNamePattern pattern = new MethodNamePattern(className, methodName, descriptor);
-		sinks.add(new EntryArgSinkSpec(pattern, new int[] { }));
+		
+		int[] argNums = new int[methodRef.getNumberOfParameters()];
+		for (int i = 0; i < argNums.length; i++) {
+			argNums[i] = i;
+		}
+		sinks.add(new EntryArgSinkSpec(pattern, argNums));
 		
 		//
 		// Add the return value as a EntryRetSinkSpec
 		//
 		sinks.add(new EntryRetSinkSpec(pattern));
 		
+		logger.debug("found sinks: " + sinks.toString());
 		return sinks;
 	}
 
@@ -95,9 +105,13 @@ public class MethodSummarySpecs implements ISpecs {
 		String descriptor = methodRef.getDescriptor().toUnicodeString();
 		MethodNamePattern pattern = new MethodNamePattern(className, methodName, descriptor);
 
-		// TODO make sure the empty array does tag all params:
-		sources.add(new EntryArgSourceSpec(pattern, new int[] { }));
+		int[] argNums = new int[methodRef.getNumberOfParameters()];
+		for (int i = 0; i < argNums.length; i++) {
+			argNums[i] = i;
+		}
+		sources.add(new EntryArgSourceSpec(pattern, argNums));
 		
+		logger.debug("found sources: " + sources.toString());
 		return sources;
 	}
 }

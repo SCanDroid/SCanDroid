@@ -38,39 +38,41 @@
 
 package spec;
 
+import java.util.Arrays;
 import java.util.Collection;
 
-
-import com.ibm.wala.classLoader.IMethod;
-import com.ibm.wala.ipa.callgraph.CGNode;
-import com.ibm.wala.ipa.callgraph.propagation.PointerAnalysis;
 import com.ibm.wala.ipa.cfg.BasicBlockInContext;
 import com.ibm.wala.ssa.ISSABasicBlock;
-import com.ibm.wala.ssa.SSAInvokeInstruction;
 
 import flow.types.FlowType;
 
 public abstract class SinkSpec implements ISinkSpec {
-    protected MethodNamePattern namePattern;
-    // Zero-based arguments, but 0 is 'this'
-    protected int[] argNums; // null = all arguments, empty = no arguments?
-    
+	protected MethodNamePattern namePattern;
+	// Zero-based arguments, but 0 is 'this'
+	protected int[] argNums; // null = all arguments, empty = no arguments?
+
 	public static int[] getNewArgNums(int n) {
 		int[] newArgNums = new int[n];
 		for (int i = 0; i < n; i++) {
-			newArgNums[i] = i+1;
+			newArgNums[i] = i + 1;
 		}
 		return newArgNums;
 	}
-    
+
 	public MethodNamePattern getNamePattern() {
 		return namePattern;
 	}
-	
+
 	public int[] getArgNums() {
 		return argNums;
 	}
-		
-    abstract public <E extends ISSABasicBlock> Collection<FlowType<E>> getFlowType(
-        BasicBlockInContext<E> block);
+
+	@Override
+	public String toString() {
+		return "SinkSpec [namePattern=" + namePattern + ", argNums="
+				+ Arrays.toString(argNums) + "]";
+	}
+
+	abstract public <E extends ISSABasicBlock> Collection<FlowType<E>> getFlowType(
+			BasicBlockInContext<E> block);
 }

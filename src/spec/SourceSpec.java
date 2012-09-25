@@ -38,6 +38,7 @@
 
 package spec;
 
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Set;
 
@@ -72,6 +73,12 @@ public abstract class SourceSpec implements ISourceSpec {
 	
 	public int[] getArgNums() {
 		return argNums;
+	}		
+	
+	@Override
+	public String toString() {
+		return "SourceSpec [namePattern=" + namePattern + ", argNums="
+				+ Arrays.toString(argNums) + "]";
 	}
 			
 	abstract public<E extends ISSABasicBlock> void addDomainElements(

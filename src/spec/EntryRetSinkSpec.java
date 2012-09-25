@@ -41,9 +41,6 @@ package spec;
 import java.util.Collection;
 import java.util.HashSet;
 
-import com.ibm.wala.classLoader.IMethod;
-import com.ibm.wala.ipa.callgraph.CGNode;
-import com.ibm.wala.ipa.callgraph.propagation.PointerAnalysis;
 import com.ibm.wala.ipa.cfg.BasicBlockInContext;
 import com.ibm.wala.ssa.ISSABasicBlock;
 
@@ -51,7 +48,6 @@ import flow.types.FlowType;
 import flow.types.ReturnFlow;
 
 public class EntryRetSinkSpec extends SinkSpec {
-    final MethodNamePattern namePattern;
     
     public EntryRetSinkSpec(MethodNamePattern name) {
         namePattern = name;
