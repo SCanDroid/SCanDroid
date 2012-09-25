@@ -275,9 +275,13 @@ public class OutflowAnalysis <E extends ISSABasicBlock> {
             
             for(DomainElement de:domain.getPossibleElements(new ReturnElement())) {
             	for (BasicBlockInContext<E> block: exitsForProcedure) {
-            		if(flowResult.getResult(block).contains(domain.getMappedIndex(de))) {
-            			addEdge(flowGraph,de.taintSource, new ReturnFlow<E>(block, false));
-            		}
+            		Iterator<BasicBlockInContext<E>> it = graph.getPredNodes(block);
+        			while (it.hasNext()) {
+        				BasicBlockInContext<E> realBlock = it.next();
+                		if(flowResult.getResult(realBlock).contains(domain.getMappedIndex(de))) {
+                			addEdge(flowGraph,de.taintSource, new ReturnFlow<E>(realBlock, false));
+                		}
+					}  
             	}
             }
     	}
