@@ -8,28 +8,26 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
+
+import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.log4j.BasicConfigurator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import spec.ISpecs;
-import synthMethod.MethodAnalysis;
 import synthMethod.XMLSummaryWriter;
 import util.AndroidAppLoader;
 import util.ThrowingSSAInstructionVisitor;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import com.ibm.wala.classLoader.IClass;
-import com.ibm.wala.classLoader.IField;
 import com.ibm.wala.classLoader.IMethod;
 import com.ibm.wala.dataflow.IFDS.ICFGSupergraph;
 import com.ibm.wala.dataflow.IFDS.ISupergraph;
-import com.ibm.wala.dataflow.IFDS.PathEdge;
 import com.ibm.wala.dataflow.IFDS.TabulationResult;
 import com.ibm.wala.dex.util.config.DexAnalysisScopeReader;
 import com.ibm.wala.ipa.callgraph.AnalysisCache;
@@ -42,16 +40,13 @@ import com.ibm.wala.ipa.callgraph.CallGraphBuilderCancelException;
 import com.ibm.wala.ipa.callgraph.Entrypoint;
 import com.ibm.wala.ipa.callgraph.impl.DefaultEntrypoint;
 import com.ibm.wala.ipa.callgraph.impl.Everywhere;
-import com.ibm.wala.ipa.callgraph.propagation.InstanceFieldKey;
 import com.ibm.wala.ipa.callgraph.propagation.InstanceKey;
 import com.ibm.wala.ipa.callgraph.propagation.LocalPointerKey;
 import com.ibm.wala.ipa.callgraph.propagation.PointerAnalysis;
 import com.ibm.wala.ipa.callgraph.propagation.PointerKey;
-import com.ibm.wala.ipa.callgraph.propagation.StaticFieldKey;
 import com.ibm.wala.ipa.cfg.BasicBlockInContext;
 import com.ibm.wala.ipa.cha.ClassHierarchy;
 import com.ibm.wala.ipa.cha.ClassHierarchyException;
-import com.ibm.wala.ipa.cha.IClassHierarchy;
 import com.ibm.wala.ipa.summaries.MethodSummary;
 import com.ibm.wala.ssa.DefUse;
 import com.ibm.wala.ssa.ISSABasicBlock;
@@ -62,17 +57,13 @@ import com.ibm.wala.ssa.SSAPutInstruction;
 import com.ibm.wala.ssa.SSAReturnInstruction;
 import com.ibm.wala.ssa.analysis.IExplodedBasicBlock;
 import com.ibm.wala.types.MethodReference;
-import com.ibm.wala.types.TypeReference;
 import com.ibm.wala.util.collections.Filter;
 import com.ibm.wala.util.graph.traverse.DFSPathFinder;
-import com.ibm.wala.util.intset.OrdinalSet;
 import com.ibm.wala.util.strings.StringStuff;
 
 import domain.CodeElement;
 import domain.DomainElement;
-import domain.FieldElement;
 import domain.IFDSTaintDomain;
-import domain.LocalElement;
 import flow.FlowAnalysis;
 import flow.InflowAnalysis;
 import flow.OutflowAnalysis;
@@ -92,9 +83,10 @@ public class Summarizer<E extends ISSABasicBlock> {
 	 * @throws IOException
 	 * @throws CallGraphBuilderCancelException
 	 * @throws ClassHierarchyException
+	 * @throws ParserConfigurationException 
 	 */
 	public static void main(String[] args) throws ClassHierarchyException,
-			CallGraphBuilderCancelException, IOException {
+			CallGraphBuilderCancelException, IOException, ParserConfigurationException {
 		BasicConfigurator.configure();
 		if (args.length < 2) {
 			logger.error("Usage: Summarizer <jarfile> <methoddescriptor>");
@@ -110,17 +102,15 @@ public class Summarizer<E extends ISSABasicBlock> {
 		System.out.println(s.summarize());
 	}
 
-	private final String appJar;
 	private final String methodDescriptor;
 	private ISupergraph<BasicBlockInContext<E>, CGNode> graph;
 	private CallGraph cg;
 	private PointerAnalysis pa;
 	private MethodReference methodRef;
-	private AnalysisScope scope;
-	private ClassHierarchy cha;
+	private final AnalysisScope scope;
+	private final ClassHierarchy cha;
 
 	public Summarizer(String appJar, String methoddescriptor) throws IOException, ClassHierarchyException {
-		this.appJar = appJar;
 		this.methodDescriptor = methoddescriptor;
 		this.methodRef = StringStuff.makeMethodReference(methodDescriptor);
         this.scope = DexAnalysisScopeReader.makeAndroidBinaryAnalysisScope(appJar, 
@@ -129,11 +119,8 @@ public class Summarizer<E extends ISSABasicBlock> {
 	}
 
 	private String summarize() throws ClassHierarchyException,
-			CallGraphBuilderCancelException, IOException {
+			CallGraphBuilderCancelException, IOException, ParserConfigurationException {
 
-		// Map<FlowType<IExplodedBasicBlock>,
-		// Set<FlowType<IExplodedBasicBlock>>> summaryMap =
-		// runDFAnalysis(appJar);
 		Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> dfAnalysis = runDFAnalysis();
 		logger.debug(dfAnalysis.toString());
 		
@@ -147,7 +134,7 @@ public class Summarizer<E extends ISSABasicBlock> {
 		
 		IMethod imethod = entryMethods.iterator().next();
 		
-		List<SSAInstruction> instructions = compileFlowType(imethod, dfAnalysis);
+		List<SSAInstruction> instructions = compileFlowMap(imethod, dfAnalysis);
 		
 		for (SSAInstruction inst : instructions) {
 			summary.addStatement(inst);
@@ -279,152 +266,6 @@ public class Summarizer<E extends ISSABasicBlock> {
 		return builder;
 	}
 
-	private Map<BasicBlockInContext<E>, Map<FlowType<E>, Set<CodeElement>>> setUpTaints(
-			final ISupergraph<BasicBlockInContext<E>, CGNode> graph,
-			CallGraph cg, PointerAnalysis pa, final IFDSTaintDomain<E> domain,
-			IMethod entryMethod) {
-		Map<BasicBlockInContext<E>, Map<FlowType<E>, Set<CodeElement>>> taintMap = Maps
-				.newHashMap();
-
-		CGNode node = cg.getNode(entryMethod, Everywhere.EVERYWHERE);
-
-		for (BasicBlockInContext<E> block : graph.getEntriesForProcedure(node)) {
-			taintMap.put(block, buildTaintMap(domain, entryMethod, block));
-		}
-		return taintMap;
-	}
-
-	private Map<FlowType<E>, Set<CodeElement>> buildTaintMap(
-			final IFDSTaintDomain<E> domain, IMethod entryMethod,
-			BasicBlockInContext<E> methEntryBlock) {
-
-		final List<PathEdge<BasicBlockInContext<E>>> initialEdges = Lists
-				.newArrayList();
-		Map<FlowType<E>, Set<CodeElement>> taintMap = Maps.newHashMap();
-
-		Set<DomainElement> initialTaints = Sets.newHashSet();
-
-		// Add PathEdges to the initial taints.
-		// In this case, taint all parameters into the method call
-		for (int i = 0; i < entryMethod.getNumberOfParameters(); i++) {
-			DomainElement de = new DomainElement(new LocalElement(i + 1),
-					new ParameterFlow<E>(methEntryBlock, i, true));
-			initialTaints.add(de);
-
-			// taint the parameter:
-			int taint = domain.getMappedIndex(de);
-			initialEdges.add(PathEdge.createPathEdge(methEntryBlock, 0,
-					methEntryBlock, taint));
-
-			// taint the fields on the parameter:
-			TypeReference paramTR = entryMethod.getParameterType(i);
-			IClass paramClass = pa.getClassHierarchy().lookupClass(paramTR);
-
-			if (paramTR.isPrimitiveType() || paramTR.isArrayType()
-					|| paramClass == null) {
-				continue;
-			}
-
-			Collection<IField> fields = paramClass.getAllFields();
-
-			LocalPointerKey pointerKey = new LocalPointerKey(
-					methEntryBlock.getNode(), methEntryBlock.getNode().getIR()
-							.getParameter(i));
-
-			OrdinalSet<InstanceKey> pointsToSet = pa.getPointsToSet(pointerKey);
-
-			for (IField iField : fields) {
-				taintField(iField, pointsToSet, methEntryBlock, domain,
-						initialTaints, initialEdges, Sets.newHashSet(paramTR));
-			}
-		}
-
-		if (entryMethod.isStatic()) {
-			// we need to taint the static fields of the enclosing class.
-			// if the method is *not* static, then these will have been tainted
-			// during the tainting of parameters above.
-			for (IField field : entryMethod.getDeclaringClass()
-					.getAllStaticFields()) {
-				Iterable<InstanceKey> staticInstances = pa
-						.getPointsToSet(new StaticFieldKey(field));
-
-				taintField(field, staticInstances, methEntryBlock, domain,
-						initialTaints, initialEdges,
-						Sets.<TypeReference> newHashSet());
-			}
-		}
-
-		// TODO we don't currently taint static globals outside of the enclosing
-		// class / method params.
-		return taintMap;
-	}
-
-	private void taintField(IField myField,
-			Iterable<InstanceKey> parentPointsToSet,
-			BasicBlockInContext<E> methEntryBlock, IFDSTaintDomain<E> domain,
-			Set<DomainElement> initialTaints,
-			List<PathEdge<BasicBlockInContext<E>>> initialEdges,
-			Set<TypeReference> taintedTypes) {
-
-		TypeReference tr = myField.getFieldTypeReference();
-
-		if (taintedTypes.contains(tr)) {
-			// MyLogger.log(LogLevel.DEBUG,
-			// "*not* re-tainting tainted type: "+myField);
-			return;
-		}
-
-		// MyLogger.log(LogLevel.DEBUG, "tainting field: "+myField);
-		taintedTypes.add(tr);
-
-		Collection<PointerKey> pointerKeys = Lists.newArrayList();
-		if (myField.isStatic()) {
-			pointerKeys.add(new StaticFieldKey(myField));
-		} else {
-			for (InstanceKey ik : parentPointsToSet) {
-				pointerKeys.add(new InstanceFieldKey(ik, myField));
-			}
-		}
-
-		for (InstanceKey ik : parentPointsToSet) {
-			DomainElement de = new DomainElement(new FieldElement(ik,
-					myField.getReference(), myField.isStatic()),
-					new FieldFlow<E>(methEntryBlock, myField, true));
-			initialTaints.add(de);
-			initialEdges.add(PathEdge.createPathEdge(methEntryBlock, 0,
-					methEntryBlock, domain.getMappedIndex(de)));
-		}
-
-		// We need the all the instance keys for the field we're currently
-		// tainting for the recursive case
-		List<InstanceKey> iks = Lists.newArrayList();
-		for (PointerKey pk : pointerKeys) {
-			for (InstanceKey ik : pa.getPointsToSet(pk)) {
-				iks.add(ik);
-			}
-		}
-
-		IClassHierarchy cha = myField.getClassHierarchy();
-		IClass fieldClass = cha.lookupClass(tr);
-
-		// recurse on the fields of the myField:
-
-		// Terminate recursion if myField is a primitive or an array
-		// because they don't have fields.
-		// Also, if the type is in the exclusions file (or doesn't exist for
-		// some other reason...) then the class reference will be null.
-		if (tr.isPrimitiveType() || tr.isArrayType() || fieldClass == null) {
-			return;
-		}
-
-		Collection<IField> fields = fieldClass.getAllFields();
-
-		for (IField field : fields) {
-			taintField(field, iks, methEntryBlock, domain, initialTaints,
-					initialEdges, taintedTypes);
-		}
-	}
-
 	/**
 	 * Eventually, we'd like these pointer keys to encompass the entire
 	 * environment (such as static fields) in scope for this method. For now,
@@ -462,9 +303,20 @@ public class Summarizer<E extends ISSABasicBlock> {
 		}
 		return path;
 	}
+	
+	public List<SSAInstruction> compileFlowMap(IMethod method, Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> flowMap) {
+		List<SSAInstruction> insts = Lists.newArrayList();
+		for (Entry<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> entry : flowMap.entrySet()) {
+			insts.addAll(compileFlowType(method, entry.getKey()));
+			for (FlowType<IExplodedBasicBlock> flow : entry.getValue()) {
+				insts.addAll(compileFlowType(method, flow));
+			}
+		}
+		return insts;
+	}
 
 	private List<SSAInstruction> compileFlowType(final IMethod method,
-			final FlowType<E> ft) {
+			final FlowType<IExplodedBasicBlock> ft) {
 		// what's the largest SSA value that refers to a parameter?
 		final int maxParam = method.getNumberOfParameters();
 		// keep track of which SSA values have already been added to the result
@@ -480,7 +332,7 @@ public class Summarizer<E extends ISSABasicBlock> {
 		// in case order matters, add any return statements to this list, to be
 		// combined at the end
 		final List<SSAInstruction> returns = Lists.newArrayList();
-		ft.visit(new FlowType.FlowTypeVisitor<E>() {
+		ft.visit(new FlowType.FlowTypeVisitor<IExplodedBasicBlock>() {
 
 			final class PathWalker extends ThrowingSSAInstructionVisitor {
 
@@ -584,7 +436,7 @@ public class Summarizer<E extends ISSABasicBlock> {
 			}
 
 			@Override
-			public void visitFieldFlow(FieldFlow<E> flow) {
+			public void visitFieldFlow(FieldFlow<IExplodedBasicBlock> flow) {
 				if (flow.getBlock().getLastInstructionIndex() != 0) {
 					logger.warn("basic block with length other than 1: "
 							+ flow.getBlock());
@@ -593,7 +445,7 @@ public class Summarizer<E extends ISSABasicBlock> {
 			}
 
 			@Override
-			public void visitIKFlow(IKFlow<E> flow) {
+			public void visitIKFlow(IKFlow<IExplodedBasicBlock> flow) {
 				IllegalArgumentException e = new IllegalArgumentException(
 						"shouldn't find any IKFlows");
 				logger.error("exception compiling FlowType", e);
@@ -601,7 +453,7 @@ public class Summarizer<E extends ISSABasicBlock> {
 			}
 
 			@Override
-			public void visitParameterFlow(ParameterFlow<E> flow) {
+			public void visitParameterFlow(ParameterFlow<IExplodedBasicBlock> flow) {
 				// ParameterFlow can be used in two ways. Here we handle the way
 				// that references a parameter of the current method, and do
 				// nothing. The other way involves arguments to method
@@ -625,7 +477,7 @@ public class Summarizer<E extends ISSABasicBlock> {
 			}
 
 			@Override
-			public void visitReturnFlow(ReturnFlow<E> flow) {
+			public void visitReturnFlow(ReturnFlow<IExplodedBasicBlock> flow) {
 				if (flow.getBlock().getLastInstructionIndex() != 0) {
 					logger.warn("basic block with length other than 1: "
 							+ flow.getBlock());
