@@ -8,6 +8,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import org.apache.log4j.BasicConfigurator;
@@ -15,7 +16,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import spec.ISpecs;
-import synthMethod.MethodAnalysis;
 import util.AndroidAppLoader;
 import util.ThrowingSSAInstructionVisitor;
 
@@ -125,7 +125,8 @@ public class Summarizer<E extends ISSABasicBlock> {
 		// Map<FlowType<IExplodedBasicBlock>,
 		// Set<FlowType<IExplodedBasicBlock>>> summaryMap =
 		// runDFAnalysis(appJar);
-		logger.debug(runDFAnalysis(appJar).toString());
+		Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> flowMap = runDFAnalysis(appJar);
+		logger.debug(flowMap.toString());		
 		return "not yet summarized";
 	}
 	
@@ -439,6 +440,17 @@ public class Summarizer<E extends ISSABasicBlock> {
 			}
 		}
 		return path;
+	}
+	
+	public List<SSAInstruction> compileFlowMap(IMethod method, Map<FlowType<E>, Set<FlowType<E>>> flowMap) {
+		List<SSAInstruction> insts = Lists.newArrayList();
+		for (Entry<FlowType<E>, Set<FlowType<E>>> entry : flowMap.entrySet()) {
+			insts.addAll(compileFlowType(method, entry.getKey()));
+			for (FlowType<E> flow : entry.getValue()) {
+				insts.addAll(compileFlowType(method, flow));
+			}
+		}
+		return insts;
 	}
 
 	private List<SSAInstruction> compileFlowType(final IMethod method,
