@@ -52,7 +52,7 @@ import flow.types.ParameterFlow;
 
 public class EntryArgSinkSpec extends SinkSpec {
 
-    EntryArgSinkSpec(MethodNamePattern name, int[] args) {
+    public EntryArgSinkSpec(MethodNamePattern name, int[] args) {
         namePattern = name;
         argNums = args;
     }

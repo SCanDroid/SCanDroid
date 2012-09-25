@@ -3,6 +3,7 @@ package org.scandroid;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.UTFDataFormatException;
 import java.util.BitSet;
 import java.util.Collection;
 import java.util.List;
@@ -10,6 +11,12 @@ import java.util.Map;
 import java.util.Set;
 
 
+import spec.CallArgSinkSpec;
+import spec.EntryArgSinkSpec;
+import spec.EntryArgSourceSpec;
+import spec.EntryRetSinkSpec;
+import spec.ISpecs;
+import spec.MethodNamePattern;
 import spec.SinkSpec;
 import spec.SourceSpec;
 import org.apache.log4j.BasicConfigurator;
@@ -145,9 +152,8 @@ public class Summarizer<E extends ISSABasicBlock> {
 		PointerAnalysis pa = builder.getPointerAnalysis();
 
 		
-		List<SourceSpec> sources = getSources(methodRef); 
-		List<SinkSpec> sinks = getSinks(methodRef);
-		
+		ISpecs methodSummarySpecs = new MethodSummarySpecs(methodRef);
+				
 		// Map<BasicBlockInContext<IExplodedBasicBlock>,
 		// Map<FlowType<IExplodedBasicBlock>, Set<CodeElement>>> initialTaints =
 		// InflowAnalysis.analyze(cg, cha, sg, pa, new HashMap<InstanceKey,
@@ -194,21 +200,6 @@ public class Summarizer<E extends ISSABasicBlock> {
 		// System.out.println(flowResult);
 		//
 		// return makeSummary(flowResult);
-	}
-
-	private List<SinkSpec> getSinks(MethodReference methodRef) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	private List<SourceSpec> getSources(MethodReference methodRef) {
-		int paramCount = methodRef.getNumberOfParameters();
-		
-		for (int i=0; i < paramCount; i++) {
-		}
-		
-		// TODO Auto-generated method stub
-		return null;
 	}
 
 	private CallGraphBuilder makeCallgraph(AnalysisScope scope,
