@@ -3,6 +3,7 @@ package synthMethod;
 import java.io.ByteArrayOutputStream;
 import java.io.UTFDataFormatException;
 import java.util.List;
+import java.util.Map;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -19,6 +20,7 @@ import org.w3c.dom.DOMException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
+import com.google.common.collect.Maps;
 import com.ibm.wala.ipa.summaries.MethodSummary;
 import com.ibm.wala.ssa.SSAInstruction;
 import com.ibm.wala.types.TypeReference;
@@ -74,6 +76,10 @@ public class XMLSummaryWriter {
     final static String V_TRUE = "true";
 
     private final Document doc;
+	private final Element rootElement;
+	private Element clrElt = null;
+	private Element pkgElt = null;
+	private final Map<Atom, Element> classElts;
 
     public XMLSummaryWriter() throws ParserConfigurationException {
         DocumentBuilderFactory docFactory = DocumentBuilderFactory
@@ -81,8 +87,9 @@ public class XMLSummaryWriter {
         DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
 
         doc = docBuilder.newDocument();
-        Element rootElement = doc.createElement(E_SUMMARY_SPEC);
+        rootElement = doc.createElement(E_SUMMARY_SPEC);
         doc.appendChild(rootElement);
+        classElts = Maps.newHashMap();
     }
 
     public String serialize() {
@@ -165,30 +172,36 @@ public class XMLSummaryWriter {
 
     private Element findOrCreateClassElt(Atom classLoaderName, Atom pkg, Atom className)
             throws UTFDataFormatException {
-        // TODO always creates a new element, needs to look-up if one exists
-        Element clrElt = findOrCreateClrElt(classLoaderName);
-        Element pkgElt = findOrCreatePkgElt(pkg);
-        Element classElt = doc.createElement(E_CLASS);
-        classElt.setAttribute(A_NAME, className.toUnicodeString());
-        pkgElt.appendChild(classElt);
+    	Element classElt = classElts.get(className);
+    	if (classElt == null) {
+    		Element pkgElt = findOrCreatePkgElt(classLoaderName, pkg);
+    		classElt = doc.createElement(E_CLASS);        
+
+    		classElt.setAttribute(A_NAME, className.toUnicodeString());
+    		pkgElt.appendChild(classElt);
+    		classElts.put(className, classElt);
+    	}
         return classElt;
     }
 
     private Element findOrCreateClrElt(Atom classLoaderName) throws DOMException, 
         UTFDataFormatException {
         
-        // TODO always creates a new element, needs to look-up if one exists
-        Element clrElt = doc.createElement(E_CLASSLOADER);
-        clrElt.setAttribute(A_NAME, classLoaderName.toUnicodeString());
-        doc.appendChild(clrElt);
+    	if (clrElt == null) {
+    		clrElt = doc.createElement(E_CLASSLOADER);
+    		clrElt.setAttribute(A_NAME, classLoaderName.toUnicodeString());
+    		rootElement.appendChild(clrElt);
+    	}
         return clrElt;
     }
 
-    private Element findOrCreatePkgElt(Atom pkg) throws UTFDataFormatException {
-        // TODO always creates a new element, needs to look-up if one exists
-        Element pkgElt = doc.createElement(E_PACKAGE);
-        pkgElt.setAttribute(A_NAME, pkg.toUnicodeString());
-        doc.appendChild(pkgElt);
+    private Element findOrCreatePkgElt(Atom classLoaderName, Atom pkg) throws UTFDataFormatException {
+    	if (pkgElt == null) {
+    		Element clrElt = findOrCreateClrElt(classLoaderName);
+    		pkgElt = doc.createElement(E_PACKAGE);
+    		pkgElt.setAttribute(A_NAME, pkg.toUnicodeString());
+    		clrElt.appendChild(pkgElt);
+    	}
         return pkgElt;
     }
 

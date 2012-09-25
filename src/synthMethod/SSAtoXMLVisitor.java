@@ -149,10 +149,11 @@ public class SSAtoXMLVisitor implements SSAInstruction.IVisitor {
     @Override
     public void visitReturn(SSAReturnInstruction instruction) {
         try {
-            String localName = getLocalName(instruction.getDef());
-
-            Element elt = doc.createElement(XMLSummaryWriter.E_RETURN);
-            elt.setAttribute(XMLSummaryWriter.A_VALUE, localName);
+        	Element elt = doc.createElement(XMLSummaryWriter.E_RETURN);
+            if (!instruction.returnsVoid()) {
+            	String localName = getLocalName(instruction.getResult());
+            	elt.setAttribute(XMLSummaryWriter.A_VALUE, localName);
+            }
             summary.add(elt);
         } catch (Exception e) {
             throw new SSASerializationException(e);
