@@ -144,7 +144,8 @@ public class XMLSummaryWriter {
     }
 
     private List<Element> summarizeInstructions(MethodSummary summary) {
-        SSAtoXMLVisitor v = new SSAtoXMLVisitor(doc);
+        SSAtoXMLVisitor v = 
+                new SSAtoXMLVisitor(doc, summary.getNumberOfParameters());
 
         for (SSAInstruction inst : summary.getStatements()) {
             inst.visit(v);

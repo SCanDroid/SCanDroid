@@ -61,8 +61,11 @@ public class SSAtoXMLVisitor implements SSAInstruction.IVisitor {
      */
     private final List<Element> summary = Lists.newArrayList();
 
-    public SSAtoXMLVisitor(Document doc) {
+    public SSAtoXMLVisitor(Document doc, int argCount) {
         this.doc = doc;
+        for (int i=0; i < argCount; i++) {
+            localDefs.put(i+1, "arg"+i);
+        }
     }
 
     @Override
@@ -73,13 +76,28 @@ public class SSAtoXMLVisitor implements SSAInstruction.IVisitor {
     @Override
     public void visitArrayLoad(SSAArrayLoadInstruction instruction) {
         // TODO Auto-generated method stub
-
+        throw new SSASerializationException("Unsupported.");
     }
 
+    /**
+     *    <aastore ref="x" value="y" index="0" />
+     */
     @Override
     public void visitArrayStore(SSAArrayStoreInstruction instruction) {
-        // TODO Auto-generated method stub
-
+        try {
+            Element elt = doc.createElement(XMLSummaryWriter.E_RETURN);
+            
+            String refStr = getLocalName(instruction.getArrayRef());
+            elt.setAttribute(XMLSummaryWriter.A_REF, refStr);
+            
+            String valueStr = getLocalName(instruction.getValue());
+            elt.setAttribute(XMLSummaryWriter.A_VALUE, valueStr);
+            
+            elt.setAttribute(XMLSummaryWriter.A_INDEX, ""+instruction.getIndex());
+            summary.add(elt);
+        } catch (Exception e) {
+            throw new SSASerializationException(e);
+        }
     }
 
     @Override
@@ -268,8 +286,7 @@ public class SSAtoXMLVisitor implements SSAInstruction.IVisitor {
 
     @Override
     public void visitArrayLength(SSAArrayLengthInstruction instruction) {
-        // TODO Auto-generated method stub
-        
+        throw new SSASerializationException("Unsupported.");
     }
 
     /**
@@ -349,8 +366,11 @@ public class SSAtoXMLVisitor implements SSAInstruction.IVisitor {
      * If, for some reason, the defNum has not yet been seen (and, thus, has no
      * local name associated with it) then this will throw an illegal state
      * exception.
-     * 
+     *
+     * TODO needs to return 'arg0' -> 'argN' for those value numbers...
+     *
      * @param defNum
+     *
      * @return
      * @throws IllegalStateException
      */
