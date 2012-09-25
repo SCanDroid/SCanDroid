@@ -267,6 +267,41 @@ public class MethodAnalysisTest {
     }
     
     /**
+     * Test the aaload summary reader code.
+     * 
+     * TODO move this out of the MethodAnalysisTest
+     *
+     * @throws IllegalArgumentException
+     * @throws CallGraphBuilderCancelException
+     * @throws IOException
+     * @throws ClassHierarchyException
+     */
+    @Test
+    public final void test_aaloadSSAreading()
+            throws IllegalArgumentException, CallGraphBuilderCancelException,
+            IOException, ClassHierarchyException {
+
+        String appJar = TEST_DATA_DIR + File.separator + "trivialJar7-1.0-SNAPSHOT.jar";
+        String summaryXMLFile = TEST_DATA_DIR + File.separator + "aaloadSummary.xml";
+        
+        final MethodNamePattern methodNamePattern = new MethodNamePattern(
+                "Lorg/scandroid/testing/ArrayLoad", "flow");
+        
+        TestSpecs specs = new TestSpecs() {
+            @Override
+            public SourceSpec[] getSourceSpecs() {
+                return new SourceSpec[] { 
+                         new EntryArgSourceSpec(methodNamePattern,
+                           new int[] { 0 })
+                         };
+            }
+        };
+        
+        checkSummaryProperty(appJar, specs, summaryXMLFile, 
+                MethodPredicates.matchesPattern(methodNamePattern));
+    }
+    
+    /**
      * Test summarization for data flow through assignment return values.
      *
      * @throws IllegalArgumentException
