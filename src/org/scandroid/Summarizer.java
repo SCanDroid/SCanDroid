@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 
 import spec.ISpecs;
 import synthMethod.MethodAnalysis;
+import synthMethod.XMLSummaryWriter;
 import util.AndroidAppLoader;
 import util.ThrowingSSAInstructionVisitor;
 
@@ -51,6 +52,7 @@ import com.ibm.wala.ipa.cfg.BasicBlockInContext;
 import com.ibm.wala.ipa.cha.ClassHierarchy;
 import com.ibm.wala.ipa.cha.ClassHierarchyException;
 import com.ibm.wala.ipa.cha.IClassHierarchy;
+import com.ibm.wala.ipa.summaries.MethodSummary;
 import com.ibm.wala.ssa.DefUse;
 import com.ibm.wala.ssa.ISSABasicBlock;
 import com.ibm.wala.ssa.SSAGetInstruction;
@@ -113,10 +115,17 @@ public class Summarizer<E extends ISSABasicBlock> {
 	private ISupergraph<BasicBlockInContext<E>, CGNode> graph;
 	private CallGraph cg;
 	private PointerAnalysis pa;
+	private MethodReference methodRef;
+	private AnalysisScope scope;
+	private ClassHierarchy cha;
 
-	public Summarizer(String appJar, String methoddescriptor) {
+	public Summarizer(String appJar, String methoddescriptor) throws IOException, ClassHierarchyException {
 		this.appJar = appJar;
 		this.methodDescriptor = methoddescriptor;
+		this.methodRef = StringStuff.makeMethodReference(methodDescriptor);
+        this.scope = DexAnalysisScopeReader.makeAndroidBinaryAnalysisScope(appJar, 
+		   new File("conf/Java60RegressionExclusions.txt"));
+        this.cha = ClassHierarchy.make(scope);
 	}
 
 	private String summarize() throws ClassHierarchyException,
@@ -125,23 +134,36 @@ public class Summarizer<E extends ISSABasicBlock> {
 		// Map<FlowType<IExplodedBasicBlock>,
 		// Set<FlowType<IExplodedBasicBlock>>> summaryMap =
 		// runDFAnalysis(appJar);
-		logger.debug(runDFAnalysis(appJar).toString());
-		return "not yet summarized";
+		Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> dfAnalysis = runDFAnalysis();
+		logger.debug(dfAnalysis.toString());
+		
+		MethodSummary summary = new MethodSummary(methodRef);
+		
+		
+		Collection<IMethod> entryMethods = cha.getPossibleTargets(methodRef);
+		if (entryMethods.size() != 1) {
+			logger.error("More than one imethod found for: "+methodRef);
+		}
+		
+		IMethod imethod = entryMethods.iterator().next();
+		
+		List<SSAInstruction> instructions = compileFlowType(imethod, dfAnalysis);
+		
+		for (SSAInstruction inst : instructions) {
+			summary.addStatement(inst);
+		}
+		
+		XMLSummaryWriter writer = new XMLSummaryWriter();
+		writer.add(summary);
+		
+		return writer.serialize();
 	}
 	
 	private
     Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> 
-    runDFAnalysis(String appJar) 
+    runDFAnalysis() 
         throws IOException, ClassHierarchyException, 
                CallGraphBuilderCancelException {        
-        
-        AnalysisScope scope = 
-                DexAnalysisScopeReader.makeAndroidBinaryAnalysisScope(appJar, 
-                   new File("conf/Java60RegressionExclusions.txt"));
-        ClassHierarchy cha = ClassHierarchy.make(scope);
-        
-        MethodReference methodRef = StringStuff
-				.makeMethodReference(methodDescriptor);
 		Iterable<Entrypoint> entrypoints = ImmutableList
 				.<Entrypoint> of(new DefaultEntrypoint(methodRef, cha));
 		
