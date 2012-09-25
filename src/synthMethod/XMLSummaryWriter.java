@@ -218,20 +218,36 @@ public class XMLSummaryWriter {
 
     /**
      * Generate a method descriptor, such as
-     * (I[Ljava/lang/String;)[Ljava/lang/String
+     * (I[Ljava/lang/String;)[Ljava/lang/String;
      * 
      * @param summary
      * @return
      */
     private String getMethodDescriptor(MethodSummary summary) {
         StringBuilder typeSigs = new StringBuilder("(");
-        for (int i = 0; i < summary.getNumberOfParameters(); i++) {
+        
+        int i=0;
+        if (!summary.isStatic()) {
+        	i = 1; // if it's not static, start with param 1.
+        }
+        
+        for (; i < summary.getNumberOfParameters(); i++) {
             TypeReference tr = summary.getParameterType(i);
 
-            typeSigs.append(tr.getName().toUnicodeString());
+            if (tr.isPrimitiveType()) {
+            	typeSigs.append(tr.getName().toUnicodeString());
+            } else {
+            	typeSigs.append(tr.getName().toUnicodeString()+ ";");
+            }
         }
         typeSigs.append(")");
-        typeSigs.append(summary.getReturnType().getName().toUnicodeString());
+        
+        TypeReference returnType = summary.getReturnType();
+        if (returnType.isPrimitiveType()) {
+        	typeSigs.append(returnType.getName().toUnicodeString());
+        } else {
+        	typeSigs.append(returnType.getName().toUnicodeString() + ";");
+        }
         String descriptor = typeSigs.toString();
         return descriptor;
     }
