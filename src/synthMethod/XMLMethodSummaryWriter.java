@@ -2,7 +2,6 @@ package synthMethod;
 
 import java.io.File;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -26,16 +25,15 @@ import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
-import org.w3c.dom.Attr;
 import org.w3c.dom.DOMException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import com.ibm.wala.classLoader.IClass;
 import com.ibm.wala.classLoader.IMethod;
 import com.ibm.wala.ipa.callgraph.propagation.InstanceKey;
+import com.ibm.wala.ssa.SSAGetInstruction;
 import com.ibm.wala.ssa.analysis.IExplodedBasicBlock;
 import com.ibm.wala.types.FieldReference;
 import com.ibm.wala.util.intset.OrdinalSet;
@@ -316,9 +314,13 @@ public class XMLMethodSummaryWriter {
 
     private static void addFieldFlow(Document doc, Element mE,
             Entry<FlowType<IExplodedBasicBlock>, Set<CodeElement>> ftE,
-            Map<InstanceKey, Set<Integer>> IKMap, FieldFlow<IExplodedBasicBlock> ff) {
+            Map<InstanceKey, Set<Integer>> paramIKMap, FieldFlow<IExplodedBasicBlock> ff) {
         Element e;
-        //get static field
+        //get static field        
+//        SSAGetInstruction inst = (SSAGetInstruction) ff.getBlock().getLastInstruction();
+//        int val = inst.getUse(0);
+//        
+        
         if (ff.getField().isStatic()) {
         	e = doc.createElement(E_GETSTATIC);				
         }
@@ -351,8 +353,8 @@ public class XMLMethodSummaryWriter {
         		else {
         			//search instance keys of our parameters for instance reference
         			//could be 'this' or any of the parameters
-        			if (IKMap.containsKey(fe.getIK())) {						
-        				for (Integer i:IKMap.get(fe.getIK())) {
+        			if (paramIKMap.containsKey(fe.getIK())) {						
+        				for (Integer i:paramIKMap.get(fe.getIK())) {
         					mE.appendChild(createPutFieldElement(doc, fe.getRef(), "arg"+i.intValue(), localDef));
         				}
         			}

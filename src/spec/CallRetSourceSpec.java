@@ -61,7 +61,7 @@ import flow.types.ReturnFlow;
  * CallRetSourceSpecs represent sources from invocations of other methods 
  * (eg: API methods).
  * 
- * reading file contents, and returning bytes eg: via {@code int write(...)} is
+ * reading file contents, and returning bytes eg: via {@code int read(...)} is
  * an example of a call return source.
  */
 public class CallRetSourceSpec extends SourceSpec {

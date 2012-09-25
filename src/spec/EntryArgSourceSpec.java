@@ -57,7 +57,7 @@ import flow.types.FlowType;
 import flow.types.ParameterFlow;
 
 /**
- * Entry arg source specs reperesent sources that are arguments to methods 
+ * Entry arg source specs represent sources that are arguments to methods 
  * that are entry points.
  * 
  * For example, the command line arguments to a {@code main(String[] args)}
