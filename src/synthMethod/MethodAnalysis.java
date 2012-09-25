@@ -197,7 +197,7 @@ public class MethodAnalysis <E extends ISSABasicBlock>  {
 		final List<PathEdge<BasicBlockInContext<E>>>
 		         initialEdges = Lists.newArrayList();
 		
-		Set<DomainElement> initialTaints = new HashSet<DomainElement> ();		
+		Set<DomainElement> initialTaints = Sets.newHashSet();
 
 		// Add PathEdges to the initial taints.  
 		// In this case, taint all parameters into the method call

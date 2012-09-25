@@ -43,6 +43,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import com.google.common.collect.Sets;
 import com.ibm.wala.classLoader.IMethod;
 import com.ibm.wala.dataflow.IFDS.ISupergraph;
 import com.ibm.wala.ipa.callgraph.CGNode;
@@ -57,7 +58,6 @@ import flow.InflowAnalysis;
 import flow.types.FlowType;
 import flow.types.ParameterFlow;
 
-
 /**
  * CallArgSourceSpecs represent sources that are arguments to another function.
  * 
@@ -67,34 +67,38 @@ import flow.types.ParameterFlow;
  */
 public class CallArgSourceSpec extends SourceSpec {
 	final String name = "CallArgSource";
+
 	public CallArgSourceSpec(MethodNamePattern name, int[] args) {
 		namePattern = name;
 		argNums = args;
 	}
 
 	@Override
-	public<E extends ISSABasicBlock> void addDomainElements(
+	public <E extends ISSABasicBlock> void addDomainElements(
 			Map<BasicBlockInContext<E>, Map<FlowType<E>, Set<CodeElement>>> taintMap,
-			IMethod target, BasicBlockInContext<E> block, SSAInvokeInstruction invInst,
-			int[] newArgNums, ISupergraph<BasicBlockInContext<E>, CGNode> graph, PointerAnalysis pa, CallGraph cg) {
+			IMethod target, BasicBlockInContext<E> block,
+			SSAInvokeInstruction invInst, int[] newArgNums,
+			ISupergraph<BasicBlockInContext<E>, CGNode> graph,
+			PointerAnalysis pa, CallGraph cg) {
 
-		for (int j = 0; j<newArgNums.length; j++) {
-			for (FlowType ft:getFlowType(block,invInst,block.getNode(), target, newArgNums[j], pa)) {
-				InflowAnalysis.addDomainElements(taintMap, block, ft, 
-				        CodeElement.valueElements(pa, block.getNode(), invInst.getUse(newArgNums[j])));
+		for (int j = 0; j < newArgNums.length; j++) {
+			for (FlowType<E> ft : getFlowType(block)) {
+				// a collection of a LocalElement for this argument's SSA value,
+				// along with a set of InstanceKeyElements for each instance
+				// that this SSA value might point to
+				Set<CodeElement> valueElements = CodeElement.valueElements(pa,
+						block.getNode(), invInst.getUse(newArgNums[j]));
+				InflowAnalysis.addDomainElements(taintMap, block, ft,
+						valueElements);
 			}
 		}
 	}
 
-
-	public<E extends ISSABasicBlock> Collection<FlowType<E>> getFlowType(
-	        BasicBlockInContext<E> block,
-	        SSAInvokeInstruction invInst,
-			CGNode node, IMethod target, int argNum, PointerAnalysis pa) {
-		HashSet<FlowType<E>> flowSet = new HashSet<FlowType<E>>();
-		flowSet.clear();
-		for(int i: argNums) {
-		    flowSet.add(new ParameterFlow<E>(block, i, true));
+	public <E extends ISSABasicBlock> Collection<FlowType<E>> getFlowType(
+			BasicBlockInContext<E> block) {
+		HashSet<FlowType<E>> flowSet = Sets.newHashSet();
+		for (int i : argNums) {
+			flowSet.add(new ParameterFlow<E>(block, i, true));
 		}
 		return flowSet;
 	}

@@ -91,4 +91,9 @@ public class ParameterFlow <E extends ISSABasicBlock> extends FlowType<E> {
     public String toString() {
         return "ParameterFlow( argNum="+argNum+" "+super.toString()+")";
     }
+
+	@Override
+	public void visit(flow.types.FlowType.FlowTypeVisitor<E> v) {
+		v.visitParameterFlow(this);
+	}
 }

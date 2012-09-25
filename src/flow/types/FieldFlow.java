@@ -97,4 +97,9 @@ public class FieldFlow<E extends ISSABasicBlock> extends FlowType<E> {
         return true;
     }
 
+	@Override
+	public void visit(flow.types.FlowType.FlowTypeVisitor<E> v) {
+		v.visitFieldFlow(this);
+	}
+
 }
