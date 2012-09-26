@@ -35,14 +35,30 @@ public class JarAnalysis {
 		
 		for (String pkg : pkgMethods.keySet()) {
 			Collection<String> methodDescriptors = pkgMethods.get(pkg);
-			Summarizer<ISSABasicBlock> s = new Summarizer<ISSABasicBlock>(appJar);
-			
-			for (String mDescr : methodDescriptors) {
-				s.summarize(mDescr);
+			try {
+				Summarizer<ISSABasicBlock> s = new Summarizer<ISSABasicBlock>(appJar);
+				
+				for (String mDescr : methodDescriptors) {
+					try {
+						s.summarize(mDescr);
+					} catch (Exception e) {
+						System.err.println("Could not summarize method: "+mDescr);
+						e.printStackTrace();
+					}
+				}
+				store(pkg, s.serialize());
+			} catch (Exception e) {
+				System.err.println("Could not create summarizer for appJar: "+appJar);
+				e.printStackTrace();
 			}
 		}
 	}
 	
+	private static void store(String pkg, String xml) {
+		// TODO Auto-generated method stub
+		System.out.println(xml);
+	}
+
 	/**
 	 * Calculate a map of package name to method descriptor for all interesting
 	 * methods in the supplied jar file (which must also be on the classpath)
@@ -92,7 +108,7 @@ public class JarAnalysis {
 				desc.append("."+m.getName());
 				
 				desc.append("(");
-				for( Class pType : m.getParameterTypes() ) {
+				for( Class<?> pType : m.getParameterTypes() ) {
 					desc.append(toDescStr(pType));
 				}
 				desc.append(")");
@@ -105,8 +121,8 @@ public class JarAnalysis {
 		return pkgMap;
 	}
 	
-	private static String toDescStr(Class pType) {
-		Map<Class, String> primitives = Maps.newHashMap(); 
+	private static String toDescStr(Class<?> pType) {
+		Map<Class<?>, String> primitives = Maps.newHashMap(); 
 		primitives.put(Void.TYPE, "V");
 		primitives.put(float.class, "F");
         primitives.put(double.class, "D");

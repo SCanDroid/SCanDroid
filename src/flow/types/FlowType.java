@@ -131,12 +131,12 @@ public abstract class FlowType<E extends ISSABasicBlock> {
         return true;
     }
     
-    public abstract void visit(FlowTypeVisitor<E> v);
+    public abstract <R> R visit(FlowTypeVisitor<E, R> v);
     
-    public static interface FlowTypeVisitor<E extends ISSABasicBlock> {
-    	void visitFieldFlow(FieldFlow<E> flow);
-    	void visitIKFlow(IKFlow<E> flow);
-    	void visitParameterFlow(ParameterFlow<E> flow);
-    	void visitReturnFlow(ReturnFlow<E> flow);
+    public static interface FlowTypeVisitor<E extends ISSABasicBlock, R> {
+    	R visitFieldFlow(FieldFlow<E> flow);
+    	R visitIKFlow(IKFlow<E> flow);
+    	R visitParameterFlow(ParameterFlow<E> flow);
+    	R visitReturnFlow(ReturnFlow<E> flow);
     }
 }

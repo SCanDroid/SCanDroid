@@ -60,7 +60,7 @@ public class ReturnFlow <E extends ISSABasicBlock> extends FlowType<E> {
     }
 
 	@Override
-	public void visit(flow.types.FlowType.FlowTypeVisitor<E> v) {
-		v.visitReturnFlow(this);
+	public <R> R visit(FlowTypeVisitor<E, R> v) {
+		return v.visitReturnFlow(this);
 	}
 }

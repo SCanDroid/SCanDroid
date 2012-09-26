@@ -86,7 +86,7 @@ public class IKFlow<E extends ISSABasicBlock> extends FlowType<E> {
     }
 
 	@Override
-	public void visit(flow.types.FlowType.FlowTypeVisitor<E> v) {
-		v.visitIKFlow(this);		
+	public <R> R visit(flow.types.FlowType.FlowTypeVisitor<E, R> v) {
+		return v.visitIKFlow(this);		
 	}
 }

@@ -93,7 +93,7 @@ public class ParameterFlow <E extends ISSABasicBlock> extends FlowType<E> {
     }
 
 	@Override
-	public void visit(flow.types.FlowType.FlowTypeVisitor<E> v) {
-		v.visitParameterFlow(this);
+	public <R> R visit(FlowTypeVisitor<E, R> v) {
+		return v.visitParameterFlow(this);
 	}
 }
