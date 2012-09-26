@@ -254,6 +254,12 @@ public class SSAtoXMLVisitor implements SSAInstruction.IVisitor {
 
     }
 
+    /**
+     * 	  <call type="virtual" name="put"
+	 *          class="Ljava/util/Hashtable"
+	 *          descriptor="(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;"
+	 *          arg0="x" arg1="key" arg2="value" def="ignore" />
+     */
     @Override
     public void visitInvoke(SSAInvokeInstruction instruction) {
         try {
@@ -274,6 +280,18 @@ public class SSAtoXMLVisitor implements SSAInstruction.IVisitor {
             String classString = typeRefToStr(instruction.getDeclaredResultType());
             elt.setAttribute(XMLSummaryWriter.A_CLASS, classString);
 
+            if (! instruction.getDeclaredResultType().equals(TypeReference.Void) ) {
+                int defNum = instruction.getDef();
+                String localName = newLocalDef(defNum);
+                elt.setAttribute(XMLSummaryWriter.A_DEF, localName);
+            }
+
+            int paramCount = instruction.getNumberOfParameters();
+            for (int i=0; i < paramCount; i++) {
+            	String argName = getLocalName(instruction.getUse(i));
+            	elt.setAttribute(XMLSummaryWriter.A_ARG+i, argName);
+            }
+            
             summary.add(elt);
         } catch (Exception e) {
             throw new SSASerializationException(e);
