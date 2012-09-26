@@ -53,6 +53,7 @@ import com.ibm.wala.ssa.ISSABasicBlock;
 import com.ibm.wala.ssa.SSAGetInstruction;
 import com.ibm.wala.ssa.SSAInstruction;
 import com.ibm.wala.ssa.SSAInvokeInstruction;
+import com.ibm.wala.ssa.SSANewInstruction;
 import com.ibm.wala.ssa.SSAPutInstruction;
 import com.ibm.wala.ssa.SSAReturnInstruction;
 import com.ibm.wala.ssa.analysis.IExplodedBasicBlock;
@@ -74,19 +75,20 @@ import flow.types.ParameterFlow;
 import flow.types.ReturnFlow;
 
 public class Summarizer<E extends ISSABasicBlock> {
-	public static final Logger logger = LoggerFactory.getLogger(Summarizer.class);
-    public static final String WALA_NATIVES_XML = 
-            "wala/wala-src/com.ibm.wala.core/dat/natives.xml";
+	public static final Logger logger = LoggerFactory
+			.getLogger(Summarizer.class);
+	public static final String WALA_NATIVES_XML = "wala/wala-src/com.ibm.wala.core/dat/natives.xml";
 
 	/**
 	 * @param args
 	 * @throws IOException
 	 * @throws CallGraphBuilderCancelException
 	 * @throws ClassHierarchyException
-	 * @throws ParserConfigurationException 
+	 * @throws ParserConfigurationException
 	 */
 	public static void main(String[] args) throws ClassHierarchyException,
-			CallGraphBuilderCancelException, IOException, ParserConfigurationException {
+			CallGraphBuilderCancelException, IOException,
+			ParserConfigurationException {
 		BasicConfigurator.configure();
 		if (args.length < 2) {
 			logger.error("Usage: Summarizer <jarfile> <methoddescriptor>");
@@ -111,149 +113,147 @@ public class Summarizer<E extends ISSABasicBlock> {
 	private final ClassHierarchy cha;
 	private CallGraphBuilder builder;
 
-	public Summarizer(String appJar, String methoddescriptor) throws IOException, ClassHierarchyException, IllegalArgumentException, CallGraphBuilderCancelException {
+	public Summarizer(String appJar, String methoddescriptor)
+			throws IOException, ClassHierarchyException,
+			IllegalArgumentException, CallGraphBuilderCancelException {
 		this.methodDescriptor = methoddescriptor;
 		this.methodRef = StringStuff.makeMethodReference(methodDescriptor);
-        this.scope = DexAnalysisScopeReader.makeAndroidBinaryAnalysisScope(appJar, 
-		   new File("conf/Java60RegressionExclusions.txt"));
-        this.cha = ClassHierarchy.make(scope);
-        
+		this.scope = DexAnalysisScopeReader.makeAndroidBinaryAnalysisScope(
+				appJar, new File("conf/Java60RegressionExclusions.txt"));
+		this.cha = ClassHierarchy.make(scope);
 
 		Iterable<Entrypoint> entrypoints = ImmutableList
 				.<Entrypoint> of(new DefaultEntrypoint(methodRef, cha));
-        AnalysisOptions options = new AnalysisOptions(scope, entrypoints);
-        builder = makeCallgraph(scope, cha, options, WALA_NATIVES_XML);        
-        this.cg = builder.makeCallGraph(options, null);
-        
-        this.graph = ICFGSupergraph.make(cg, builder.getAnalysisCache());
+		AnalysisOptions options = new AnalysisOptions(scope, entrypoints);
+		builder = makeCallgraph(scope, cha, options, WALA_NATIVES_XML);
+		this.cg = builder.makeCallGraph(options, null);
+
+		this.graph = ICFGSupergraph.make(cg, builder.getAnalysisCache());
 	}
 
 	private String summarize() throws ClassHierarchyException,
-			CallGraphBuilderCancelException, IOException, ParserConfigurationException {
+			CallGraphBuilderCancelException, IOException,
+			ParserConfigurationException {
 
 		Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> dfAnalysis = runDFAnalysis();
 		logger.debug(dfAnalysis.toString());
-		
+
 		MethodSummary summary = new MethodSummary(methodRef);
-		
-		
+
 		Collection<IMethod> entryMethods = cha.getPossibleTargets(methodRef);
 		if (entryMethods.size() != 1) {
-			logger.error("More than one imethod found for: "+methodRef);
+			logger.error("More than one imethod found for: " + methodRef);
 		}
-		
+
 		IMethod imethod = entryMethods.iterator().next();
-		
+
 		List<SSAInstruction> instructions = compileFlowMap(imethod, dfAnalysis);
-		
+
 		for (SSAInstruction inst : instructions) {
 			summary.addStatement(inst);
 		}
-		
+
 		XMLSummaryWriter writer = new XMLSummaryWriter();
 		writer.add(summary);
-		
+
 		return writer.serialize();
 	}
-	
-	private
-    Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> 
-    runDFAnalysis() 
-        throws IOException, ClassHierarchyException, 
-               CallGraphBuilderCancelException {        
-		
-		ISpecs specs = new MethodSummarySpecs(methodRef);
-                       
-        
-        PointerAnalysis pa = builder.getPointerAnalysis();
-        
-        Map<BasicBlockInContext<IExplodedBasicBlock>, 
-            Map<FlowType<IExplodedBasicBlock>, Set<CodeElement>>> initialTaints = 
-              InflowAnalysis.analyze(cg, cha, graph, pa, new HashMap<InstanceKey, String>(), specs);
-                   
-        System.out.println("  InitialTaints count: "+initialTaints.size());
-        
-        IFDSTaintDomain<IExplodedBasicBlock> domain = new IFDSTaintDomain<IExplodedBasicBlock>();
-        TabulationResult<BasicBlockInContext<IExplodedBasicBlock>, CGNode, DomainElement> 
-          flowResult = FlowAnalysis.analyze(graph, cg, pa, initialTaints, domain, null);
-        
-        Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>>
-          permissionOutflow = OutflowAnalysis.analyze(cg, cha, graph, pa, flowResult, domain, specs);
-        
-        return permissionOutflow;
-    }
 
-//	private void runDFAnalysis(String appJar) throws IOException,
-//			ClassHierarchyException, CallGraphBuilderCancelException {
-//
-//		AnalysisScope scope = DexAnalysisScopeReader
-//				.makeAndroidBinaryAnalysisScope(appJar, new File(
-//						"conf/Java60RegressionExclusions.txt"));
-//		ClassHierarchy cha = ClassHierarchy.make(scope);
-//
-//		MethodReference methodRef = StringStuff
-//				.makeMethodReference(methodDescriptor);
-//		Iterable<Entrypoint> entrypoints = ImmutableList
-//				.<Entrypoint> of(new DefaultEntrypoint(methodRef, cha));
-//
-//		AnalysisOptions options = new AnalysisOptions(scope, entrypoints);
-//		CallGraphBuilder builder = makeCallgraph(scope, cha, options, null);
-//
-//		CallGraph cg = builder.makeCallGraph(options, null);
-//
-//		graph = null; // ICFGSupergraph.make(cg, builder.getAnalysisCache());
-//		PointerAnalysis pa = builder.getPointerAnalysis();
-//
-//		
-//		ISpecs methodSummarySpecs = new MethodSummarySpecs(methodRef);
-//				
-//		// Map<BasicBlockInContext<IExplodedBasicBlock>,
-//		// Map<FlowType<IExplodedBasicBlock>, Set<CodeElement>>> initialTaints =
-//		// InflowAnalysis.analyze(cg, cha, sg, pa, new HashMap<InstanceKey,
-//		// String>(), specs);
-//		IFDSTaintDomain<E> domain = new IFDSTaintDomain<E>();
-//
-//		// Collection<IMethod> entryMethods = cha.getPossibleTargets(methodRef);
-//		// final IMethod entryMethod;
-//		// if (1 != entryMethods.size()) {
-//		// System.err.println("Too many IMethods for method reference "
-//		// + "(or none at all).  found: " + entryMethods.size());
-//		// throw new IllegalArgumentException();
-//		// } else {
-//		// entryMethod = entryMethods.iterator().next();
-//		// }
-//		//
-//		// MethodAnalysis<E> methodAnalysis = new MethodAnalysis<E>(
-//		// new Predicate<IMethod>() {
-//		// @Override
-//		// public boolean test(IMethod im) {
-//		// return im.equals(entryMethod);
-//		// }
-//		// });
-//		// methodAnalysis.analyze(graph, pa, null,
-//		// graph.getEntriesForProcedure(cg
-//		// .getNode(entryMethod, Everywhere.EVERYWHERE))[0]);
-//		//
-//		// System.out.println(methodAnalysis.newSummaries);
-//
-//		//
-//		// Map<BasicBlockInContext<IExplodedBasicBlock>,
-//		// Map<FlowType<IExplodedBasicBlock>, Set<CodeElement>>>
-//		// initialTaints = setUpTaints(sg, cg, pa, domain, entryMethod);
-//		//
-//		// TabulationResult<BasicBlockInContext<IExplodedBasicBlock>, CGNode,
-//		// DomainElement>
-//		// flowResult = FlowAnalysis.analyze(sg, cg, pa, initialTaints, domain,
-//		// null);
-//		//
-//		// // Map<FlowType<IExplodedBasicBlock>,
-//		// // Set<FlowType<IExplodedBasicBlock>>>
-//		// // permissionOutflow = OutflowAnalysis.analyze(cg, cha, sg, pa,
-//		// // flowResult, domain, specs);
-//		// System.out.println(flowResult);
-//		//
-//		// return makeSummary(flowResult);
-//	}
+	private Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> runDFAnalysis()
+			throws IOException, ClassHierarchyException,
+			CallGraphBuilderCancelException {
+
+		ISpecs specs = new MethodSummarySpecs(methodRef);
+
+		PointerAnalysis pa = builder.getPointerAnalysis();
+
+		Map<BasicBlockInContext<IExplodedBasicBlock>, Map<FlowType<IExplodedBasicBlock>, Set<CodeElement>>> initialTaints = InflowAnalysis
+				.analyze(cg, cha, graph, pa,
+						new HashMap<InstanceKey, String>(), specs);
+
+		System.out.println("  InitialTaints count: " + initialTaints.size());
+
+		IFDSTaintDomain<IExplodedBasicBlock> domain = new IFDSTaintDomain<IExplodedBasicBlock>();
+		TabulationResult<BasicBlockInContext<IExplodedBasicBlock>, CGNode, DomainElement> flowResult = FlowAnalysis
+				.analyze(graph, cg, pa, initialTaints, domain, null);
+
+		Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> permissionOutflow = OutflowAnalysis
+				.analyze(cg, cha, graph, pa, flowResult, domain, specs);
+
+		return permissionOutflow;
+	}
+
+	// private void runDFAnalysis(String appJar) throws IOException,
+	// ClassHierarchyException, CallGraphBuilderCancelException {
+	//
+	// AnalysisScope scope = DexAnalysisScopeReader
+	// .makeAndroidBinaryAnalysisScope(appJar, new File(
+	// "conf/Java60RegressionExclusions.txt"));
+	// ClassHierarchy cha = ClassHierarchy.make(scope);
+	//
+	// MethodReference methodRef = StringStuff
+	// .makeMethodReference(methodDescriptor);
+	// Iterable<Entrypoint> entrypoints = ImmutableList
+	// .<Entrypoint> of(new DefaultEntrypoint(methodRef, cha));
+	//
+	// AnalysisOptions options = new AnalysisOptions(scope, entrypoints);
+	// CallGraphBuilder builder = makeCallgraph(scope, cha, options, null);
+	//
+	// CallGraph cg = builder.makeCallGraph(options, null);
+	//
+	// graph = null; // ICFGSupergraph.make(cg, builder.getAnalysisCache());
+	// PointerAnalysis pa = builder.getPointerAnalysis();
+	//
+	//
+	// ISpecs methodSummarySpecs = new MethodSummarySpecs(methodRef);
+	//
+	// // Map<BasicBlockInContext<IExplodedBasicBlock>,
+	// // Map<FlowType<IExplodedBasicBlock>, Set<CodeElement>>> initialTaints =
+	// // InflowAnalysis.analyze(cg, cha, sg, pa, new HashMap<InstanceKey,
+	// // String>(), specs);
+	// IFDSTaintDomain<E> domain = new IFDSTaintDomain<E>();
+	//
+	// // Collection<IMethod> entryMethods = cha.getPossibleTargets(methodRef);
+	// // final IMethod entryMethod;
+	// // if (1 != entryMethods.size()) {
+	// // System.err.println("Too many IMethods for method reference "
+	// // + "(or none at all).  found: " + entryMethods.size());
+	// // throw new IllegalArgumentException();
+	// // } else {
+	// // entryMethod = entryMethods.iterator().next();
+	// // }
+	// //
+	// // MethodAnalysis<E> methodAnalysis = new MethodAnalysis<E>(
+	// // new Predicate<IMethod>() {
+	// // @Override
+	// // public boolean test(IMethod im) {
+	// // return im.equals(entryMethod);
+	// // }
+	// // });
+	// // methodAnalysis.analyze(graph, pa, null,
+	// // graph.getEntriesForProcedure(cg
+	// // .getNode(entryMethod, Everywhere.EVERYWHERE))[0]);
+	// //
+	// // System.out.println(methodAnalysis.newSummaries);
+	//
+	// //
+	// // Map<BasicBlockInContext<IExplodedBasicBlock>,
+	// // Map<FlowType<IExplodedBasicBlock>, Set<CodeElement>>>
+	// // initialTaints = setUpTaints(sg, cg, pa, domain, entryMethod);
+	// //
+	// // TabulationResult<BasicBlockInContext<IExplodedBasicBlock>, CGNode,
+	// // DomainElement>
+	// // flowResult = FlowAnalysis.analyze(sg, cg, pa, initialTaints, domain,
+	// // null);
+	// //
+	// // // Map<FlowType<IExplodedBasicBlock>,
+	// // // Set<FlowType<IExplodedBasicBlock>>>
+	// // // permissionOutflow = OutflowAnalysis.analyze(cg, cha, sg, pa,
+	// // // flowResult, domain, specs);
+	// // System.out.println(flowResult);
+	// //
+	// // return makeSummary(flowResult);
+	// }
 
 	private CallGraphBuilder makeCallgraph(AnalysisScope scope,
 			ClassHierarchy cha, AnalysisOptions options,
@@ -302,13 +302,16 @@ public class Summarizer<E extends ISSABasicBlock> {
 		}
 		return path;
 	}
-	
-	public List<SSAInstruction> compileFlowMap(IMethod method, Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> flowMap) {
+
+	public List<SSAInstruction> compileFlowMap(
+			IMethod method,
+			Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> flowMap) {
 		final List<SSAInstruction> insts = Lists.newArrayList();
 		// keep track of which SSA values have already been added to the result
 		// list, and so can be referenced by subsequent instructions
 		final BitSet refInScope = new BitSet();
-		for (Entry<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> entry : flowMap.entrySet()) {
+		for (Entry<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> entry : flowMap
+				.entrySet()) {
 			insts.addAll(compileFlowType(method, entry.getKey(), refInScope));
 			for (FlowType<IExplodedBasicBlock> flow : entry.getValue()) {
 				insts.addAll(compileFlowType(method, flow, refInScope));
@@ -337,9 +340,10 @@ public class Summarizer<E extends ISSABasicBlock> {
 			final class PathWalker extends ThrowingSSAInstructionVisitor {
 
 				public PathWalker() {
-					super(new IllegalArgumentException("unhandled SSAInstruction"));
+					super(new IllegalArgumentException(
+							"unhandled SSAInstruction"));
 				}
-				
+
 				@Override
 				public void visitGet(SSAGetInstruction instruction) {
 					// if this val is already in scope, do nothing
@@ -402,7 +406,7 @@ public class Summarizer<E extends ISSABasicBlock> {
 							// ref is not in scope yet, so find the SSA
 							// instruction that brings it into scope
 							SSAInstruction paramInst = du.getDef(param);
-							paramInst.visit(new PathWalker());
+							paramInst.visit(this);
 						}
 						// postcondition: param is now in scope
 						assert refInScope.get(param);
@@ -417,6 +421,19 @@ public class Summarizer<E extends ISSABasicBlock> {
 				}
 
 				@Override
+				public void visitNew(SSANewInstruction instruction) {
+					// if already in scope, do nothing
+					int def = instruction.getDef();
+					if (refInScope.get(def))
+						return;
+
+					// otherwise, just add the new instruction. Remember that
+					// constructors are handled as separate <init> methods
+					insts.add(instruction);
+					refInScope.set(def);
+				}
+
+				@Override
 				public void visitReturn(SSAReturnInstruction instruction) {
 					// returns only have a single use (-1 if void return), so
 					// walk that val if present and then add this instruction to
@@ -426,7 +443,7 @@ public class Summarizer<E extends ISSABasicBlock> {
 					if (use != -1 && !refInScope.get(use)) {
 						// use is not in scope yet
 						SSAInstruction useInst = du.getDef(use);
-						useInst.visit(new PathWalker());
+						useInst.visit(this);
 					}
 					// postcondition: use is now in scope, if present
 					assert (use == -1 || refInScope.get(use));
@@ -453,7 +470,8 @@ public class Summarizer<E extends ISSABasicBlock> {
 			}
 
 			@Override
-			public void visitParameterFlow(ParameterFlow<IExplodedBasicBlock> flow) {
+			public void visitParameterFlow(
+					ParameterFlow<IExplodedBasicBlock> flow) {
 				// ParameterFlow can be used in two ways. Here we handle the way
 				// that references a parameter of the current method, and do
 				// nothing. The other way involves arguments to method
@@ -465,7 +483,7 @@ public class Summarizer<E extends ISSABasicBlock> {
 				boolean equal = false;
 				for (BasicBlockInContext<IExplodedBasicBlock> entryBlock : graph
 						.getEntriesForProcedure(node)) {
-					equal = equal || flow.getBlock().equals(entryBlock);					
+					equal = equal || flow.getBlock().equals(entryBlock);
 				}
 				if (equal) {
 					return;
@@ -481,7 +499,7 @@ public class Summarizer<E extends ISSABasicBlock> {
 				if (flow.getBlock().getLastInstructionIndex() != 0) {
 					logger.warn("basic block with length other than 1: "
 							+ flow.getBlock());
-				}								
+				}
 				SSAInstruction inst = flow.getBlock().getLastInstruction();
 				// TODO: SUPPOSEDLY Two cases here:
 				// 1. source == true: block should be an invoke instruction
@@ -489,7 +507,7 @@ public class Summarizer<E extends ISSABasicBlock> {
 				// handle both by invoking the PathWalker to ensure all relevant
 				// refs are in scope
 				if (inst == null) {
-					
+
 				}
 				inst.visit(new PathWalker());
 			}
