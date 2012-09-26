@@ -188,7 +188,7 @@ public class SSAtoXMLVisitor implements SSAInstruction.IVisitor {
                 elt.setAttribute(XMLSummaryWriter.A_REF, refName);
             }
 
-            String def = getLocalName(instruction.getDef());
+            String def = newLocalDef(instruction.getDef());
             TypeReference fieldType = instruction.getDeclaredFieldType();
             TypeReference classType = instruction.getDeclaredField()
                     .getDeclaringClass();

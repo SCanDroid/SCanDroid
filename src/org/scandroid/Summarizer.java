@@ -463,7 +463,7 @@ public class Summarizer<E extends ISSABasicBlock> {
 				}
 				final PointerKey pkFromFlowType = getPKFromFlowType(method, flow);
 				logger.debug("ReturnFlow PK: " + pkFromFlowType);
-				logger.debug("Path from params: " + getAccessPath(getInputPointerKeys(method), pkFromFlowType));
+				//logger.debug("Path from params: " + getAccessPath(getInputPointerKeys(method), pkFromFlowType));
 				return null;
 			}
 		});

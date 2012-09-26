@@ -86,6 +86,7 @@ import domain.CodeElement;
 import domain.DomainElement;
 import domain.FieldElement;
 import domain.IFDSTaintDomain;
+import domain.InstanceKeyElement;
 import domain.LocalElement;
 import domain.ReturnElement;
 import flow.types.FlowType;
@@ -312,10 +313,9 @@ implements IFlowFunctionMap<BasicBlockInContext<E>> {
 			if (pk!=null) {
 				OrdinalSet<InstanceKey> m = pa.getPointsToSet(pk);
 				if (m != null) {
-					for (Iterator<InstanceKey> keyIter = m.iterator(); keyIter
-							.hasNext();) {
-						elements.add(new FieldElement(keyIter.next(),
-								pi.getDeclaredField(), isStatic));
+					for (InstanceKey instanceKey : m) {
+						elements.add(new FieldElement(instanceKey, pi.getDeclaredField(), isStatic));
+						elements.add(new InstanceKeyElement(instanceKey));
 					}
 				}
 				p.defs.addAll(elements);
@@ -351,12 +351,12 @@ implements IFlowFunctionMap<BasicBlockInContext<E>> {
 			}
 			
 			if (pk!=null) {
-				Set<CodeElement> elements = new HashSet<CodeElement>();
+				Set<CodeElement> elements = Sets.newHashSet();
 				OrdinalSet<InstanceKey> m = pa.getPointsToSet(pk);
 				if(m != null) {
-					for(Iterator<InstanceKey> keyIter = m.iterator();keyIter.hasNext();) {
-						elements.add(
-								new FieldElement(keyIter.next(), declaredField, isStatic));
+					for (InstanceKey instanceKey : m) {
+						elements.add(new FieldElement(instanceKey, declaredField, isStatic));
+						elements.add(new InstanceKeyElement(instanceKey));
 					}
 				}
 				p.uses.addAll(elements);
