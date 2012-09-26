@@ -258,7 +258,7 @@ public class SSAtoXMLVisitor implements SSAInstruction.IVisitor {
      * 	  <call type="virtual" name="put"
 	 *          class="Ljava/util/Hashtable"
 	 *          descriptor="(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;"
-	 *          arg0="x" arg1="key" arg2="value" def="ignore" />
+	 *          arg0="x" arg1="key" arg2="value" def="local_def" />
      */
     @Override
     public void visitInvoke(SSAInvokeInstruction instruction) {

@@ -5,12 +5,15 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.BitSet;
 import java.util.Collection;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 
 import javax.xml.parsers.ParserConfigurationException;
 
@@ -92,15 +95,18 @@ public class Summarizer<E extends ISSABasicBlock> {
 	public static void main(String[] args) throws ClassHierarchyException,
 			CallGraphBuilderCancelException, IOException,
 			ParserConfigurationException {
+
 		BasicConfigurator.configure();
 		if (args.length < 2) {
 			logger.error("Usage: Summarizer <jarfile> <methoddescriptor>");
+			logger.error("   methoddescriptor -- a specification of a java method, formatted as:");
+			logger.error("                       some.package.Clasas(Ljava/lang/String;I)Ljava/lang/String;");
 			System.exit(1);
 		}
 
 		String appJar = args[0];
 		String methoddescriptor = args[1];
-
+		
 		Summarizer<IExplodedBasicBlock> s = new Summarizer<IExplodedBasicBlock>(
 				appJar, methoddescriptor);
 
