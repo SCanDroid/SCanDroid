@@ -104,44 +104,32 @@ public class Summarizer<E extends ISSABasicBlock> {
 		String appJar = args[0];
 		String methoddescriptor = args[1];
 		
-		Summarizer<IExplodedBasicBlock> s = new Summarizer<IExplodedBasicBlock>(
-				appJar, methoddescriptor);
+		Summarizer<IExplodedBasicBlock> s = new Summarizer<IExplodedBasicBlock>(appJar);
 
-		System.out.println(s.summarize());
+		System.out.println(s.summarize(methoddescriptor));
 	}
 
-	private final String methodDescriptor;
-	private ISupergraph<BasicBlockInContext<IExplodedBasicBlock>, CGNode> graph;
-	private CallGraph cg;
-	private PointerAnalysis pa;
-	private MethodReference methodRef;
 	private final AnalysisScope scope;
 	private final ClassHierarchy cha;
-	private CallGraphBuilder builder;
-
-	public Summarizer(String appJar, String methoddescriptor)
+	private CallGraph cg;
+	private PointerAnalysis pa;
+	private ISupergraph<BasicBlockInContext<IExplodedBasicBlock>, CGNode> graph;
+	
+	public Summarizer(String appJar)
 			throws IOException, ClassHierarchyException,
 			IllegalArgumentException, CallGraphBuilderCancelException {
-		this.methodDescriptor = methoddescriptor;
-		this.methodRef = StringStuff.makeMethodReference(methodDescriptor);
 		this.scope = DexAnalysisScopeReader.makeAndroidBinaryAnalysisScope(
 				appJar, new File("conf/Java60RegressionExclusions.txt"));
 		this.cha = ClassHierarchy.make(scope);
-
-		Iterable<Entrypoint> entrypoints = ImmutableList
-				.<Entrypoint> of(new DefaultEntrypoint(methodRef, cha));
-		AnalysisOptions options = new AnalysisOptions(scope, entrypoints);
-		builder = makeCallgraph(scope, cha, options, WALA_NATIVES_XML);
-		this.cg = builder.makeCallGraph(options, null);
-
-		this.graph = ICFGSupergraph.make(cg, builder.getAnalysisCache());
 	}
 
-	private String summarize() throws ClassHierarchyException,
+	public String summarize(String methodDescriptor) throws ClassHierarchyException,
 			CallGraphBuilderCancelException, IOException,
 			ParserConfigurationException {
+		
+		MethodReference methodRef = StringStuff.makeMethodReference(methodDescriptor);
 
-		Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> dfAnalysis = runDFAnalysis();
+		Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> dfAnalysis = runDFAnalysis(methodRef);
 		logger.debug(dfAnalysis.toString());
 
 		MethodSummary summary = new MethodSummary(methodRef);
@@ -165,10 +153,18 @@ public class Summarizer<E extends ISSABasicBlock> {
 		return writer.serialize();
 	}
 
-	private Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> runDFAnalysis()
-			throws IOException, ClassHierarchyException,
+	private Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> 
+	runDFAnalysis(MethodReference methodRef) throws IOException, ClassHierarchyException,
 			CallGraphBuilderCancelException {
-
+		
+		Iterable<Entrypoint> entrypoints = ImmutableList
+				.<Entrypoint> of(new DefaultEntrypoint(methodRef, cha));
+		AnalysisOptions options = new AnalysisOptions(scope, entrypoints);
+		CallGraphBuilder builder = makeCallgraph(scope, cha, options, WALA_NATIVES_XML);
+		CallGraph cg = builder.makeCallGraph(options, null);
+		ISupergraph<BasicBlockInContext<IExplodedBasicBlock>, CGNode> graph =
+				ICFGSupergraph.make(cg, builder.getAnalysisCache());
+		
 		ISpecs specs = new MethodSummarySpecs(methodRef);
 
 		PointerAnalysis pa = builder.getPointerAnalysis();
