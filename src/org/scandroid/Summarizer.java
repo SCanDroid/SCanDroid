@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.util.BitSet;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -70,6 +71,7 @@ import flow.InflowAnalysis;
 import flow.OutflowAnalysis;
 import flow.types.FieldFlow;
 import flow.types.FlowType;
+import flow.types.FlowType.FlowTypeVisitor;
 import flow.types.IKFlow;
 import flow.types.ParameterFlow;
 import flow.types.ReturnFlow;
@@ -312,17 +314,24 @@ public class Summarizer<E extends ISSABasicBlock> {
 		final BitSet refInScope = new BitSet();
 		for (Entry<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> entry : flowMap
 				.entrySet()) {
-			insts.addAll(compileFlowType(method, entry.getKey(), refInScope));
+			insts.addAll(compileFlowType(method, entry.getKey(), refInScope, -1));
 			for (FlowType<IExplodedBasicBlock> flow : entry.getValue()) {
-				insts.addAll(compileFlowType(method, flow, refInScope));
+				insts.addAll(compileFlowType(method, flow, refInScope, -1));
 			}
 		}
 		logger.debug("compiled flowMap: " + insts.toString());
 		return insts;
+
 	}
 
 	private List<SSAInstruction> compileFlowType(final IMethod method,
 			final FlowType<IExplodedBasicBlock> ft, final BitSet refInScope) {
+		return compileFlowType(method, ft, refInScope, -1);
+	}
+
+	private List<SSAInstruction> compileFlowType(final IMethod method,
+			final FlowType<IExplodedBasicBlock> ft, final BitSet refInScope,
+			int lhsVal) {
 		// what's the largest SSA value that refers to a parameter?
 		final int maxParam = method.getNumberOfParameters();
 		// set the implicit values for parameters
@@ -335,7 +344,7 @@ public class Summarizer<E extends ISSABasicBlock> {
 		// in case order matters, add any return statements to this list, to be
 		// combined at the end
 		final List<SSAInstruction> returns = Lists.newArrayList();
-		ft.visit(new FlowType.FlowTypeVisitor<IExplodedBasicBlock>() {
+		ft.visit(new FlowType.FlowTypeVisitor<IExplodedBasicBlock, Void>() {
 
 			final class PathWalker extends ThrowingSSAInstructionVisitor {
 
@@ -453,16 +462,17 @@ public class Summarizer<E extends ISSABasicBlock> {
 			}
 
 			@Override
-			public void visitFieldFlow(FieldFlow<IExplodedBasicBlock> flow) {
+			public Void visitFieldFlow(FieldFlow<IExplodedBasicBlock> flow) {
 				if (flow.getBlock().getLastInstructionIndex() != 0) {
 					logger.warn("basic block with length other than 1: "
 							+ flow.getBlock());
 				}
 				flow.getBlock().getLastInstruction().visit(new PathWalker());
+				return null;
 			}
 
 			@Override
-			public void visitIKFlow(IKFlow<IExplodedBasicBlock> flow) {
+			public Void visitIKFlow(IKFlow<IExplodedBasicBlock> flow) {
 				IllegalArgumentException e = new IllegalArgumentException(
 						"shouldn't find any IKFlows");
 				logger.error("exception compiling FlowType", e);
@@ -470,7 +480,7 @@ public class Summarizer<E extends ISSABasicBlock> {
 			}
 
 			@Override
-			public void visitParameterFlow(
+			public Void visitParameterFlow(
 					ParameterFlow<IExplodedBasicBlock> flow) {
 				// ParameterFlow can be used in two ways. Here we handle the way
 				// that references a parameter of the current method, and do
@@ -485,17 +495,16 @@ public class Summarizer<E extends ISSABasicBlock> {
 						.getEntriesForProcedure(node)) {
 					equal = equal || flow.getBlock().equals(entryBlock);
 				}
-				if (equal) {
-					return;
-				} else {
+				if (!equal) {
 					IllegalArgumentException e = new IllegalArgumentException(
 							"shouldn't have any ParameterFlows for invoked arguments");
 					logger.error("exception compiling FlowType", e);
 				}
+				return null;
 			}
 
 			@Override
-			public void visitReturnFlow(ReturnFlow<IExplodedBasicBlock> flow) {
+			public Void visitReturnFlow(ReturnFlow<IExplodedBasicBlock> flow) {
 				if (flow.getBlock().getLastInstructionIndex() != 0) {
 					logger.warn("basic block with length other than 1: "
 							+ flow.getBlock());
@@ -507,33 +516,74 @@ public class Summarizer<E extends ISSABasicBlock> {
 				// handle both by invoking the PathWalker to ensure all relevant
 				// refs are in scope
 				if (inst == null) {
-
+					Iterator<BasicBlockInContext<IExplodedBasicBlock>> it = graph
+							.getPredNodes(flow.getBlock());
+					while (it.hasNext()) {
+						BasicBlockInContext<IExplodedBasicBlock> realBlock = it
+								.next();
+						SSAInstruction realInst = realBlock
+								.getLastInstruction();
+						realInst.visit(new PathWalker());
+					}
+				} else {
+					inst.visit(new PathWalker());
 				}
-				inst.visit(new PathWalker());
+				return null;
 			}
 		});
 		insts.addAll(returns);
 		return insts;
 	}
 
-	private Object getKeyFromFlowType(FlowType ft) {
-		if (ft instanceof FieldFlow) {
-			FieldFlow ff = (FieldFlow) ft;
-			int val = ff.getBlock().getLastInstruction().getUse(0);
-			return (Object) new LocalPointerKey(graph.getProcOf(ff.getBlock()),
-					val);
-		} else if (ft instanceof IKFlow) {
-			return (Object) ((IKFlow) ft).getIK();
-		} else if (ft instanceof ParameterFlow) {
-			// TODO: is this right? The whole point of this method is to lookup
-			// symbols in the environment that we introduce. In the case of
-			// parameters, we don't introduce them, they're arg0, arg1, etc.
-			return null;
-		} else if (ft instanceof ReturnFlow) {
-			ReturnFlow rf = (ReturnFlow) ft;
-			// TODO: figure this out on Monday
-		}
-		return null;
+	private Object getKeyFromFlowType(FlowType<IExplodedBasicBlock> ft) {
+		return ft.visit(new FlowTypeVisitor<IExplodedBasicBlock, Object>() {
+
+			@Override
+			public Object visitFieldFlow(FieldFlow<IExplodedBasicBlock> flow) {
+				int val = flow.getBlock().getLastInstruction().getUse(0);
+				return (Object) new LocalPointerKey(graph.getProcOf(flow
+						.getBlock()), val);
+			}
+
+			@Override
+			public Object visitIKFlow(IKFlow<IExplodedBasicBlock> flow) {
+				return (Object) ((IKFlow<IExplodedBasicBlock>) flow).getIK();
+			}
+
+			@Override
+			public Object visitParameterFlow(
+					ParameterFlow<IExplodedBasicBlock> flow) {
+				// TODO: is this right? The whole point of this method is to
+				// lookup
+				// symbols in the environment that we introduce. In the case of
+				// parameters, we don't introduce them, they're arg0, arg1, etc.
+				return null;
+			}
+
+			@Override
+			public Object visitReturnFlow(ReturnFlow<IExplodedBasicBlock> flow) {
+				int val;
+				SSAInstruction inst = flow.getBlock().getLastInstruction();
+				if (inst == null) {
+					Iterator<BasicBlockInContext<IExplodedBasicBlock>> it = graph
+							.getPredNodes(flow.getBlock());
+					if (it.hasNext()) {
+						BasicBlockInContext<IExplodedBasicBlock> realBlock = it
+								.next();
+						SSAInstruction realInst = realBlock
+								.getLastInstruction();
+						val = realInst.getUse(0);
+					} else {
+						logger.error("synthetic return flow with no predecessor: probably shouldn't happen");
+						throw new IllegalArgumentException();
+					}
+				} else {
+					val = inst.getUse(0);
+				}
+				return (Object) new LocalPointerKey(graph.getProcOf(flow
+						.getBlock()), val);
+			}
+		});
 	}
 
 	private CGNode nodeForMethod(IMethod method) {
