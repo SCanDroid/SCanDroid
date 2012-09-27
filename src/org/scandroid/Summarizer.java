@@ -337,6 +337,7 @@ public class Summarizer<E extends ISSABasicBlock> {
 								SSAInstruction refInst = du.getDef(ref);
 								refInst.visit(this);
 							}
+							completedChain = completedChain || ref == lhsVal;
 							// postcondition: ref is now in scope
 							assert ref == -1 || refInScope.get(ref);
 
