@@ -157,6 +157,11 @@ public class Summarizer<E extends ISSABasicBlock> {
 
 		List<SSAInstruction> instructions = compileFlowMap(imethod, dfAnalysis);
 
+		if ( 0 == instructions.size() ) {
+			logger.warn("No instructions in summary for "+methodDescriptor);
+			return;
+		}
+		
 		for (SSAInstruction inst : instructions) {
 			summary.addStatement(inst);
 		}

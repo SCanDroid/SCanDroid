@@ -3,19 +3,30 @@
  */
 package org.scandroid;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+
+import org.apache.commons.io.FileUtils;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
+import com.google.common.collect.Sets;
 import com.ibm.wala.ssa.ISSABasicBlock;
 
 /**
@@ -24,39 +35,74 @@ import com.ibm.wala.ssa.ISSABasicBlock;
  */
 public class JarAnalysis {
 
+	private static String OUTPUT_DIR = "results";
+
 	/**
 	 * @param args
 	 * @throws IOException 
 	 * @throws ClassNotFoundException 
 	 */
 	public static void main(String[] args) throws IOException, ClassNotFoundException {
-		String appJar = args[0];
-		Multimap<String, String> pkgMethods = getMethodsByPackage(appJar);
+		final String appJar = args[0];
+		final Multimap<String, String> pkgMethods = getMethodsByPackage(appJar);
+
+		Set<Future<?>> futures = Sets.newHashSet(); 
+		ExecutorService pool = Executors.newCachedThreadPool();
 		
-		for (String pkg : pkgMethods.keySet()) {
-			Collection<String> methodDescriptors = pkgMethods.get(pkg);
-			try {
-				Summarizer<ISSABasicBlock> s = new Summarizer<ISSABasicBlock>(appJar);
-				
-				for (String mDescr : methodDescriptors) {
+		for (final String pkg : pkgMethods.keySet()) {
+			Runnable runner = new Runnable() {
+				public void run() {
+					Collection<String> methodDescriptors = pkgMethods.get(pkg);
 					try {
-						s.summarize(mDescr);
+						Summarizer<ISSABasicBlock> s = new Summarizer<ISSABasicBlock>(
+								appJar);
+
+						for (String mDescr : methodDescriptors) {
+							try {
+								s.summarize(mDescr);
+							} catch (Exception e) {
+								System.err
+										.println("Could not summarize method: "
+												+ mDescr);
+								e.printStackTrace();
+							}
+						}
+						store(pkg, s.serialize());
 					} catch (Exception e) {
-						System.err.println("Could not summarize method: "+mDescr);
+						System.err
+								.println("Could not create summarizer for appJar: "
+										+ appJar);
 						e.printStackTrace();
 					}
 				}
-				store(pkg, s.serialize());
-			} catch (Exception e) {
-				System.err.println("Could not create summarizer for appJar: "+appJar);
+			};
+
+			futures.add(pool.submit(runner));
+		}
+		
+		for (Future<?> f : futures) {
+			try {
+				f.get();
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (ExecutionException e) {
+				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}
 	}
 	
-	private static void store(String pkg, String xml) {
-		// TODO Auto-generated method stub
-		System.out.println(xml);
+	private static void store(String pkg, String xml) {		
+		String pathname = OUTPUT_DIR+"/"+ pkg+".xml";
+		File file = new File(pathname);
+		try {
+			FileUtils.writeStringToFile(file, xml);
+			System.out.println("Wrote XML to: "+pathname);
+		} catch (IOException e) {
+			System.err.println("Could not write package xml file to: "+pathname);
+			e.printStackTrace();
+		}
 	}
 
 	/**
@@ -115,7 +161,8 @@ public class JarAnalysis {
 				
 				desc.append(toDescStr(m.getReturnType()));
 				
-				pkgMap.put(clazz.getPackage().toString(), desc.toString());
+				String packageName = clazz.getPackage().getName();
+				pkgMap.put(packageName, desc.toString());
 			}
 		}
 		return pkgMap;
