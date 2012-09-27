@@ -132,43 +132,42 @@ public class XMLSummaryWriter {
      * @throws UTFDataFormatException
      * @throws SSASerializationException
      */
-    public void add(MethodSummary summary) throws DOMException,
-            UTFDataFormatException, SSASerializationException {
-        TypeReference methClass = summary.getMethod().getDeclaringClass();
-        
-        Atom clrName    = methClass.getClassLoader().getName();
-        Atom pkg        = methClass.getName().getPackage();
-        Atom className  = methClass.getName().getClassName();
-        Atom methodName = summary.getMethod().getName();
+	public void add(MethodSummary summary) throws UTFDataFormatException {
+		// create a method element, and populate it's attributes:
+		Element methElt;
+		TypeReference methClass = summary.getMethod().getDeclaringClass();
 
-        // get an element to add this method to:
-        Element classElt = findOrCreateClassElt(clrName, pkg, className);
+		Atom clrName = methClass.getClassLoader().getName();
+		Atom pkg = methClass.getName().getPackage();
+		Atom className = methClass.getName().getClassName();
+		Atom methodName = summary.getMethod().getName();
 
-        // create a method element, and populate it's attributes:
-        Element methElt = doc.createElement(E_METHOD);
-        methElt.setAttribute(A_NAME, methodName.toUnicodeString());
+		methElt = doc.createElement(E_METHOD);
+		methElt.setAttribute(A_NAME, methodName.toUnicodeString());
 
-        String descriptor = getMethodDescriptor(summary);
-        methElt.setAttribute(A_DESCRIPTOR, descriptor);
+		String descriptor = getMethodDescriptor(summary);
+		methElt.setAttribute(A_DESCRIPTOR, descriptor);
 
-        // default is false:
-        if (summary.isStatic()) {
-            methElt.setAttribute(A_STATIC, "true");
-        }
+		// default is false:
+		if (summary.isStatic()) {
+			methElt.setAttribute(A_STATIC, "true");
+		}
 
-        // default is false:
-        if (summary.isFactory()) {
-            methElt.setAttribute(A_FACTORY, "true");
-        }
+		// default is false:
+		if (summary.isFactory()) {
+			methElt.setAttribute(A_FACTORY, "true");
+		}
 
-        // summarize the instructions:
-        List<Element> instructions = summarizeInstructions(summary);
-        for (Element elt : instructions) {
-            methElt.appendChild(elt);
-        }
+		// summarize the instructions:
+		List<Element> instructions = summarizeInstructions(summary);
+		for (Element elt : instructions) {
+			methElt.appendChild(elt);
+		}
 
-        classElt.appendChild(methElt);
-    }
+		// get an element to add this method to:
+		Element classElt = findOrCreateClassElt(clrName, pkg, className);
+		classElt.appendChild(methElt);
+	}
 
     private Element findOrCreateClassElt(Atom classLoaderName, Atom pkg, Atom className)
             throws UTFDataFormatException {

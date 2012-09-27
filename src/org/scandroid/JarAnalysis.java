@@ -5,6 +5,7 @@ package org.scandroid;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
+import java.util.Collection;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
@@ -15,6 +16,7 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
+import com.ibm.wala.ssa.ISSABasicBlock;
 
 /**
  * @author creswick
@@ -28,9 +30,49 @@ public class JarAnalysis {
 	 * @throws ClassNotFoundException 
 	 */
 	public static void main(String[] args) throws IOException, ClassNotFoundException {
-
-		List<String> classes = getClasses(args[0]);
+		String appJar = args[0];
+		Multimap<String, String> pkgMethods = getMethodsByPackage(appJar);
+		
+		for (String pkg : pkgMethods.keySet()) {
+			Collection<String> methodDescriptors = pkgMethods.get(pkg);
+			try {
+				Summarizer<ISSABasicBlock> s = new Summarizer<ISSABasicBlock>(appJar);
 				
+				for (String mDescr : methodDescriptors) {
+					try {
+						s.summarize(mDescr);
+					} catch (Exception e) {
+						System.err.println("Could not summarize method: "+mDescr);
+						e.printStackTrace();
+					}
+				}
+				store(pkg, s.serialize());
+			} catch (Exception e) {
+				System.err.println("Could not create summarizer for appJar: "+appJar);
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	private static void store(String pkg, String xml) {
+		// TODO Auto-generated method stub
+		System.out.println(xml);
+	}
+
+	/**
+	 * Calculate a map of package name to method descriptor for all interesting
+	 * methods in the supplied jar file (which must also be on the classpath)
+	 * 
+	 * @param jarFile
+	 * @return
+	 * @throws ClassNotFoundException 
+	 * @throws IOException 
+	 */
+	public static Multimap<String, String> getMethodsByPackage(String jarFile) 
+			throws ClassNotFoundException, IOException {
+		Multimap<String, String> pkgMap = HashMultimap.create();
+		List<String> classes = getClasses(jarFile);
+		
 		for (String c : classes ) {
 			System.out.println(c);
 			
@@ -66,21 +108,21 @@ public class JarAnalysis {
 				desc.append("."+m.getName());
 				
 				desc.append("(");
-				for( Class pType : m.getParameterTypes() ) {
+				for( Class<?> pType : m.getParameterTypes() ) {
 					desc.append(toDescStr(pType));
 				}
 				desc.append(")");
 				
 				desc.append(toDescStr(m.getReturnType()));
-			
-				System.out.println("   "+desc.toString());
-
+				
+				pkgMap.put(clazz.getPackage().toString(), desc.toString());
 			}
 		}
+		return pkgMap;
 	}
 	
-	private static String toDescStr(Class pType) {
-		Map<Class, String> primitives = Maps.newHashMap(); 
+	private static String toDescStr(Class<?> pType) {
+		Map<Class<?>, String> primitives = Maps.newHashMap(); 
 		primitives.put(Void.TYPE, "V");
 		primitives.put(float.class, "F");
         primitives.put(double.class, "D");
@@ -139,7 +181,6 @@ public class JarAnalysis {
 			
 			String dottedPkg = pkgName.replace('/', '.');
 
-			
 			packages.put(dottedPkg, className);
 		}
 		
