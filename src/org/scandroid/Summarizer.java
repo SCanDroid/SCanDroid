@@ -473,6 +473,11 @@ public class Summarizer<E extends ISSABasicBlock> {
 								if (!completedChain) {
 									// shove into return value if chain not
 									// finished
+									useInst = du.getDef(lhsVal);
+									useInst.visit(this);
+									if (!completedChain) {
+										logger.error("can't bring LHS into scope!");
+									}
 									instruction = instFactory
 											.ReturnInstruction(
 													lhsVal,
@@ -560,19 +565,17 @@ public class Summarizer<E extends ISSABasicBlock> {
 							while (it.hasNext()) {
 								BasicBlockInContext<IExplodedBasicBlock> realBlock = it
 										.next();
-								SSAInstruction realInst = realBlock
-										.getLastInstruction();
-								realInst.visit(new PathWalker());
+								inst = realBlock.getLastInstruction();
 							}
-						} else {
-							inst.visit(new PathWalker());
-						}
-						final PointerKey pkFromFlowType = getPKFromFlowType(
-								method, flow);
-						logger.debug("ReturnFlow PK: " + pkFromFlowType);
-						logger.debug("Path from params: "
-								+ getAccessPath(getInputPointerKeys(method),
-										pkFromFlowType));
+						} 
+						inst.visit(new PathWalker());
+						
+//						final PointerKey pkFromFlowType = getPKFromFlowType(
+//								method, flow);
+//						logger.debug("ReturnFlow PK: " + pkFromFlowType);
+//						logger.debug("Path from params: "
+//								+ getAccessPath(getInputPointerKeys(method),
+//										pkFromFlowType));
 						return Integer.valueOf(inst.getDef());
 					}
 				});
