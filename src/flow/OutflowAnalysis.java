@@ -61,7 +61,6 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.ibm.wala.classLoader.IMethod;
-import com.ibm.wala.dataflow.IFDS.ICFGSupergraph;
 import com.ibm.wala.dataflow.IFDS.ISupergraph;
 import com.ibm.wala.dataflow.IFDS.TabulationResult;
 import com.ibm.wala.ipa.callgraph.CGNode;
@@ -74,6 +73,7 @@ import com.ibm.wala.ipa.cfg.BasicBlockInContext;
 import com.ibm.wala.ipa.cha.ClassHierarchy;
 import com.ibm.wala.ssa.ISSABasicBlock;
 import com.ibm.wala.ssa.SSAInvokeInstruction;
+import com.ibm.wala.util.intset.IntIterator;
 import com.ibm.wala.util.intset.IntSet;
 
 import domain.DomainElement;
@@ -231,13 +231,22 @@ public class OutflowAnalysis <E extends ISSABasicBlock> {
 				
             	newArgNums = SinkSpec.getNewArgNums( targetParamCount );
             }
-            
+//            for (BasicBlockInContext<E> block: graph.getExitsForProcedure(node) ) {
+//            	IntIterator itr = flowResult.getResult(block).intIterator();
+//            	while (itr.hasNext()) {
+//					int i = itr.next();
+//					logger.debug("domain element at exit: "+domain.getMappedObject(i));
+//					
+//					
+//				}
+//            }
             for (int i = 0; i < newArgNums.length; i++) {
     			
             	// see if anything flowed into the args as sinks:
     			for(DomainElement de:domain.getPossibleElements(new LocalElement(node.getIR().getParameter(newArgNums[i])))) {
-    			
+    				
     				for (BasicBlockInContext<E> block: graph.getExitsForProcedure(node) ) {
+
     					int mappedIndex = domain.getMappedIndex(de);
 						if(flowResult.getResult(block).contains(mappedIndex)) {
 							addEdge(flowGraph, de.taintSource, new ParameterFlow<E>(entryBlock, newArgNums[i], false));
