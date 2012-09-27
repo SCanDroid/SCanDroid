@@ -438,7 +438,7 @@ implements IFlowFunctionMap<BasicBlockInContext<E>> {
 		
 		if ( LoaderUtils.fromLoader(src.getNode(), ClassLoaderReference.Application)
 		  && LoaderUtils.fromLoader(dest.getNode(), ClassLoaderReference.Primordial)) {
-			System.out.println("Call to system: "+signature);
+			//System.out.println("Call to system: "+signature);
 		}
 		
 //		if (! dest.getMethod().isSynthetic() 

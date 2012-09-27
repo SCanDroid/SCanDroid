@@ -4,9 +4,7 @@
 package org.scandroid;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.Enumeration;
@@ -21,6 +19,7 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.log4j.BasicConfigurator;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Lists;
@@ -43,6 +42,8 @@ public class JarAnalysis {
 	 * @throws ClassNotFoundException 
 	 */
 	public static void main(String[] args) throws IOException, ClassNotFoundException {
+		BasicConfigurator.configure();
+		
 		final String appJar = args[0];
 		final Multimap<String, String> pkgMethods = getMethodsByPackage(appJar);
 
