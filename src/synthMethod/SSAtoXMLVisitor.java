@@ -184,7 +184,7 @@ public class SSAtoXMLVisitor implements SSAInstruction.IVisitor {
             Element elt = doc.createElement(eltName);
 
             if (!instruction.isStatic()) {
-                String refName = getRefName(instruction.getRef());
+                String refName = getLocalName(instruction.getRef());
                 elt.setAttribute(XMLSummaryWriter.A_REF, refName);
             }
 
@@ -229,7 +229,7 @@ public class SSAtoXMLVisitor implements SSAInstruction.IVisitor {
             Element elt = doc.createElement(eltName);
 
             if (!instruction.isStatic()) {
-                String refName = getRefName(instruction.getRef());
+                String refName = getLocalName(instruction.getRef());
                 elt.setAttribute(XMLSummaryWriter.A_REF, refName);
             }
 
@@ -409,29 +409,17 @@ public class SSAtoXMLVisitor implements SSAInstruction.IVisitor {
      * @throws IllegalStateException
      */
     private String getLocalName(int defNum) throws IllegalStateException {
+    	if (0 == defNum) {
+    		return "unknown";
+    	}
         if (localDefs.containsKey(defNum)) {
             return localDefs.get(defNum);
         }
-        throw new IllegalStateException("defNum: " + defNum
-                + " is not defined.");
+        return XMLSummaryWriter.A_ARG + (defNum - 1);
+//        throw new IllegalStateException("defNum: " + defNum
+//                + " is not defined.");
     }
 
-    /**
-     * Calculate the correct ref name based on the incomming number.
-     * 
-     * Note that this needs to be consistent with XMLMethodSummaryReader's use
-     * of the symbolTable in that class.
-     * 
-     * @param ref
-     * @return
-     */
-    private String getRefName(int ref) {
-        if (0 == ref) {
-            return "unknown";
-        } else {
-            return "arg" + (ref - 1);
-        }
-    }
 
     public List<Element> getInstSummary() {
         return summary;
