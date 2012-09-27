@@ -45,21 +45,35 @@ public class LocalElement extends CodeElement {
         this.id = id;
     }
 
-    @Override
-    public boolean equals(Object other)
-    {
-        if(other != null && other instanceof LocalElement)
-            return ((LocalElement)other).id == id;
-        return false;
-    }
+    
 
     @Override
-    public int hashCode()
-    {
-        return id;
-    }
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + id;
+		return result;
+	}
 
-    @Override
+
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		LocalElement other = (LocalElement) obj;
+		if (id != other.id)
+			return false;
+		return true;
+	}
+
+
+
+	@Override
     public String toString()
     {
         return "LocalElement("+id+")";

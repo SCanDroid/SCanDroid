@@ -53,7 +53,7 @@ public class DomainElement {
 		this.codeElement = codeElement;
 		this.taintSource = taintSource;
 	}
-
+/*
 	@Override
 	public boolean equals(Object other) {
 		if (other == null || !(other instanceof DomainElement))
@@ -65,16 +65,56 @@ public class DomainElement {
 		}
 		return codeElement.equals(otherDE.codeElement)
 				&& otherDE.taintSource == null;
-	}
-
+	}	
+	
 	@Override
 	public int hashCode() {
 		if (taintSource == null)
 			return codeElement.hashCode();
 		return codeElement.hashCode() ^ taintSource.hashCode();
 	}
-
+ */
+	
+	
+	
 	public String toString() {
 		return codeElement.toString() + ", " + taintSource;
+	}
+
+
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result
+				+ ((codeElement == null) ? 0 : codeElement.hashCode());
+		result = prime * result
+				+ ((taintSource == null) ? 0 : taintSource.hashCode());
+		return result;
+	}
+
+
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		DomainElement other = (DomainElement) obj;
+		if (codeElement == null) {
+			if (other.codeElement != null)
+				return false;
+		} else if (!codeElement.equals(other.codeElement))
+			return false;
+		if (taintSource == null) {
+			if (other.taintSource != null)
+				return false;
+		} else if (!taintSource.equals(other.taintSource))
+			return false;
+		return true;
 	}
 }
