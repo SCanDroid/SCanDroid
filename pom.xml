@@ -25,6 +25,7 @@
 						<phase>package</phase>
 						<configuration>
 							<tasks>
+                <property name="build.compiler" value="extJavac" />
 								<ant antfile="build.xml" target="jar" />
 							</tasks>
 						</configuration>
