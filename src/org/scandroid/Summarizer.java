@@ -27,6 +27,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.ibm.wala.classLoader.IMethod;
+import com.ibm.wala.classLoader.JavaLanguage;
 import com.ibm.wala.dataflow.IFDS.ICFGSupergraph;
 import com.ibm.wala.dataflow.IFDS.ISupergraph;
 import com.ibm.wala.dataflow.IFDS.TabulationResult;
@@ -53,13 +54,16 @@ import com.ibm.wala.ssa.DefUse;
 import com.ibm.wala.ssa.ISSABasicBlock;
 import com.ibm.wala.ssa.SSAGetInstruction;
 import com.ibm.wala.ssa.SSAInstruction;
+import com.ibm.wala.ssa.SSAInstructionFactory;
 import com.ibm.wala.ssa.SSAInvokeInstruction;
 import com.ibm.wala.ssa.SSANewInstruction;
 import com.ibm.wala.ssa.SSAPutInstruction;
 import com.ibm.wala.ssa.SSAReturnInstruction;
 import com.ibm.wala.ssa.analysis.IExplodedBasicBlock;
+import com.ibm.wala.types.FieldReference;
 import com.ibm.wala.types.MethodReference;
 import com.ibm.wala.util.collections.Filter;
+import com.ibm.wala.util.collections.Pair;
 import com.ibm.wala.util.graph.traverse.DFSPathFinder;
 import com.ibm.wala.util.intset.OrdinalSet;
 import com.ibm.wala.util.strings.StringStuff;
@@ -103,7 +107,7 @@ public class Summarizer<E extends ISSABasicBlock> {
 
 		String appJar = args[0];
 		String methoddescriptor = args[1];
-		
+
 		Summarizer<IExplodedBasicBlock> s = new Summarizer<IExplodedBasicBlock>(
 				appJar, methoddescriptor);
 
@@ -289,10 +293,12 @@ public class Summarizer<E extends ISSABasicBlock> {
 
 	public List<PointerKey> getAccessPath(Set<PointerKey> pkSet,
 			final PointerKey pk) {
+		// TODO: Broken! Doesn't follow field accesses
 		List<PointerKey> path = Lists.newArrayList();
 
-		DFSPathFinder<Object> finder = new DFSPathFinder<Object>(
-				pa.getHeapGraph(), pkSet.iterator(), new Filter<Object>() {
+		final Iterator<Object> iterator = (Iterator) pkSet.iterator();
+		DFSPathFinder<Object> finder = DFSPathFinder.newDFSPathFinder(
+				pa.getHeapGraph(), iterator, new Filter<Object>() {
 					public boolean accepts(Object o) {
 						return (pk.equals(o));
 					}
@@ -317,9 +323,11 @@ public class Summarizer<E extends ISSABasicBlock> {
 		final BitSet refInScope = new BitSet();
 		for (Entry<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> entry : flowMap
 				.entrySet()) {
-			insts.addAll(compileFlowType(method, entry.getKey(), refInScope, -1));
+			final Pair<List<SSAInstruction>, Integer> lhs = compileFlowType(
+					method, entry.getKey(), refInScope);
+			insts.addAll(lhs.fst);
 			for (FlowType<IExplodedBasicBlock> flow : entry.getValue()) {
-				insts.addAll(compileFlowType(method, flow, refInScope, -1));
+				insts.addAll(compileFlowType(method, flow, refInScope, lhs.snd).fst);
 			}
 		}
 		logger.debug("compiled flowMap: " + insts.toString());
@@ -327,14 +335,33 @@ public class Summarizer<E extends ISSABasicBlock> {
 
 	}
 
-	private List<SSAInstruction> compileFlowType(final IMethod method,
-			final FlowType<IExplodedBasicBlock> ft, final BitSet refInScope) {
+	private Pair<List<SSAInstruction>, Integer> compileFlowType(
+			final IMethod method, final FlowType<IExplodedBasicBlock> ft,
+			final BitSet refInScope) {
 		return compileFlowType(method, ft, refInScope, -1);
 	}
 
-	private List<SSAInstruction> compileFlowType(final IMethod method,
-			final FlowType<IExplodedBasicBlock> ft, final BitSet refInScope,
-			int lhsVal) {
+	/**
+	 * Compile a FlowType into a list of SSA instructions representing that
+	 * flow. If walking backwards from the FlowType's enclosed SSA instruction
+	 * does not reach the lhsVal normally, we emit extra instructions to
+	 * complete the chain, even if they do not yield type-correct code. If
+	 * called on the LHS of a mapping, the lhsVal with be -1.
+	 * 
+	 * We accomplish this by checking whether the chain is complete after each
+	 * recursive call to the PathWalker. If it happens to not be complete, we
+	 * ignore the SSA vals that are actually there, eg, the ref field of a field
+	 * get, and use the val from the LHS instead.
+	 * 
+	 * @param method
+	 * @param ft
+	 * @param refInScope
+	 * @param lhsVal
+	 * @return
+	 */
+	private Pair<List<SSAInstruction>, Integer> compileFlowType(
+			final IMethod method, final FlowType<IExplodedBasicBlock> ft,
+			final BitSet refInScope, final int lhsVal) {
 		// what's the largest SSA value that refers to a parameter?
 		final int maxParam = method.getNumberOfParameters();
 		// set the implicit values for parameters
@@ -342,202 +369,284 @@ public class Summarizer<E extends ISSABasicBlock> {
 
 		final CGNode node = nodeForMethod(method);
 		final DefUse du = node.getDU();
+		final SSAInstructionFactory instFactory = new JavaLanguage()
+				.instructionFactory();
 
 		final List<SSAInstruction> insts = Lists.newArrayList();
 		// in case order matters, add any return statements to this list, to be
 		// combined at the end
 		final List<SSAInstruction> returns = Lists.newArrayList();
-		ft.visit(new FlowType.FlowTypeVisitor<IExplodedBasicBlock, Void>() {
+		Integer val = ft
+				.visit(new FlowType.FlowTypeVisitor<IExplodedBasicBlock, Integer>() {
+					final class PathWalker extends
+							ThrowingSSAInstructionVisitor {
+						public boolean completedChain = false || lhsVal == -1;
 
-			final class PathWalker extends ThrowingSSAInstructionVisitor {
-
-				public PathWalker() {
-					super(new IllegalArgumentException(
-							"unhandled SSAInstruction"));
-				}
-
-				@Override
-				public void visitGet(SSAGetInstruction instruction) {
-					// if this val is already in scope, do nothing
-					if (refInScope.get(instruction.getDef()))
-						return;
-
-					int ref = instruction.getRef();
-					if (ref != -1 && !refInScope.get(ref)) {
-						// ref is not in scope yet, so find the SSA
-						// instruction that brings it into scope
-						SSAInstruction refInst = du.getDef(ref);
-						refInst.visit(this);
-					}
-					// postcondition: ref is now in scope
-					assert ref == -1 || refInScope.get(ref);
-
-					insts.add(instruction);
-					refInScope.set(instruction.getDef());
-				}
-
-				@Override
-				public void visitPut(SSAPutInstruction instruction) {
-					int val = instruction.getVal();
-					if (!refInScope.get(val)) {
-						// if the RHS of the assignment is not in scope, recur
-						SSAInstruction valInst = du.getDef(val);
-						valInst.visit(this);
-					}
-					// postcondition: val is now in scope
-					assert refInScope.get(val);
-
-					int ref = instruction.getRef();
-					if (ref != -1 && !refInScope.get(ref)) {
-						// ref is not in scope yet, so find the SSA
-						// instruction that brings it into scope
-						SSAInstruction refInst = du.getDef(ref);
-						refInst.visit(this);
-					}
-					// postcondition: ref is now in scope
-					assert ref == -1 || refInScope.get(ref);
-
-					insts.add(instruction);
-				}
-
-				@Override
-				public void visitInvoke(SSAInvokeInstruction instruction) {
-					// if this val is already in scope, do nothing
-					if (refInScope.get(instruction.getDef()))
-						return;
-
-					// get all the param refvals
-					int params[] = new int[instruction.getNumberOfParameters()];
-					for (int paramIndex = 0; paramIndex < params.length; paramIndex++) {
-						params[paramIndex] = instruction.getUse(paramIndex);
-					}
-
-					// make sure all params are in scope
-					for (int param : params) {
-						if (!refInScope.get(param)) {
-							// ref is not in scope yet, so find the SSA
-							// instruction that brings it into scope
-							SSAInstruction paramInst = du.getDef(param);
-							paramInst.visit(this);
+						public PathWalker() {
+							super(new IllegalArgumentException(
+									"unhandled SSAInstruction"));
 						}
-						// postcondition: param is now in scope
-						assert refInScope.get(param);
+
+						@Override
+						public void visitGet(SSAGetInstruction instruction) {
+							final int ref = instruction.getRef();
+							if (ref != -1 && !refInScope.get(ref)) {
+								// ref is not in scope yet, so find the SSA
+								// instruction that brings it into scope
+								SSAInstruction refInst = du.getDef(ref);
+								refInst.visit(this);
+							}
+							// postcondition: ref is now in scope
+							assert ref == -1 || refInScope.get(ref);
+
+							final int def = instruction.getDef();
+							if (!completedChain) {
+								// if we haven't completed the chain by now,
+								// stuff the lhsVal into the field
+								FieldReference field = instruction.getDeclaredField();
+								if (instruction.isStatic()) {
+									logger.error("impossible");
+								} else {
+									instruction = instFactory.GetInstruction(def, lhsVal, field);
+								}
+							}
+
+							// if this val is already in scope, don't emit more
+							// instructions
+							if (refInScope.get(def)) {
+								return;
+							} else {
+								insts.add(instruction);
+								refInScope.set(def);
+							}
+						}
+
+						@Override
+						public void visitPut(SSAPutInstruction instruction) {
+							int ref = instruction.getRef();
+							// a ref does not make a completed chain, since we
+							// aren't getting the value from it
+							if (ref != -1 && !refInScope.get(ref)) {
+								// ref is not in scope yet, so find the SSA
+								// instruction that brings it into scope
+								SSAInstruction refInst = du.getDef(ref);
+								refInst.visit(this);
+							}
+							// postcondition: ref is now in scope
+							assert ref == -1 || refInScope.get(ref);
+
+							int val = instruction.getVal();
+							// LHS flows into target field
+							completedChain = completedChain || val == lhsVal;
+							if (!refInScope.get(val)) {
+								// if the RHS of the assignment is not in scope,
+								// recur
+								SSAInstruction valInst = du.getDef(val);
+								valInst.visit(this);
+							}
+							// postcondition: val is now in scope
+							assert refInScope.get(val);
+
+							if (!completedChain) {
+								// if we haven't completed the chain by now,
+								// stuff the lhsVal into the field
+								FieldReference field = instruction.getDeclaredField();
+								if (instruction.isStatic()) {
+									instruction = instFactory.PutInstruction(lhsVal, field);
+								} else {
+									instruction = instFactory.PutInstruction(ref, lhsVal, field);
+								}
+							}
+							insts.add(instruction);
+						}
+
+						@Override
+						public void visitInvoke(SSAInvokeInstruction instruction) {
+
+							// get all the param refvals
+							int params[] = new int[instruction
+									.getNumberOfParameters()];
+							for (int paramIndex = 0; paramIndex < params.length; paramIndex++) {
+								params[paramIndex] = instruction
+										.getUse(paramIndex);
+							}
+
+							// make sure all params are in scope
+							for (int param : params) {
+								// LHS is a param?
+								completedChain = completedChain
+										|| param == lhsVal;
+								if (!refInScope.get(param)) {
+									// ref is not in scope yet, so find the SSA
+									// instruction that brings it into scope
+									SSAInstruction paramInst = du.getDef(param);
+									paramInst.visit(this);
+								}
+								// postcondition: param is now in scope
+								assert refInScope.get(param);
+							}
+							// postcondition: all params are now in scope
+
+							// if the chain is not yet completed, punt for now
+							// and let the next level in the stack handle it,
+							// since we don't know which param "ought" to have
+							// the link
+
+							insts.add(instruction);
+							// only set refInScope if non-void:
+							if (instruction.getNumberOfReturnValues() == 1) {
+								// if this val is already in scope, don't emit
+								// more
+								// instructions, but check for completed chain
+								final int def = instruction.getReturnValue(0);
+								completedChain = completedChain
+										|| def == lhsVal;
+								if (refInScope.get(def)) {
+									return;
+								} else {
+									insts.add(instruction);
+									refInScope.set(def);
+								}
+							}
+						}
+
+						@Override
+						public void visitNew(SSANewInstruction instruction) {
+							final int def = instruction.getDef();
+							// I doubt this could complete a chain, but just in
+							// case:
+							completedChain = completedChain || def == lhsVal;
+							// if already in scope, do nothing
+							if (refInScope.get(def))
+								return;
+
+							// otherwise, just add the new instruction. Remember
+							// that constructors are handled as separate <init>
+							// methods
+							insts.add(instruction);
+							refInScope.set(def);
+						}
+
+						@Override
+						public void visitReturn(SSAReturnInstruction instruction) {
+							// returns only have a single use (-1 if void
+							// return), so walk that val if present and then add
+							// this
+							// instruction to the return list
+							int use = instruction.getUse(0);
+							completedChain = completedChain || use == lhsVal;
+							if (use != -1 && !refInScope.get(use)) {
+								// use is not in scope yet
+								SSAInstruction useInst = du.getDef(use);
+								useInst.visit(this);
+								if (!completedChain) {
+									// shove into return value if chain not
+									// finished
+									instruction = instFactory
+											.ReturnInstruction(
+													lhsVal,
+													instruction
+															.returnsPrimitiveType());
+								}
+							}
+							// postcondition: use is now in scope, if present
+							assert (use == -1 || refInScope.get(use));
+							returns.add(instruction);
+						}
+
 					}
-					// postcondition: all params are now in scope
 
-					insts.add(instruction);
-					// only set refInScope if non-void:
-					if (instruction.getNumberOfReturnValues() == 1) {
-						refInScope.set(instruction.getReturnValue(0));
-					}
-				}
-
-				@Override
-				public void visitNew(SSANewInstruction instruction) {
-					// if already in scope, do nothing
-					int def = instruction.getDef();
-					if (refInScope.get(def))
-						return;
-
-					// otherwise, just add the new instruction. Remember that
-					// constructors are handled as separate <init> methods
-					insts.add(instruction);
-					refInScope.set(def);
-				}
-
-				@Override
-				public void visitReturn(SSAReturnInstruction instruction) {
-					// returns only have a single use (-1 if void return), so
-					// walk that val if present and then add this instruction to
-					// the return list
-					int use = instruction.getUse(0);
-					if (use != -1 && !refInScope.get(use)) {
-						// use is not in scope yet
-						SSAInstruction useInst = du.getDef(use);
-						useInst.visit(this);
-					}
-					// postcondition: use is now in scope, if present
-					assert (use == -1 || refInScope.get(use));
-					returns.add(instruction);
-				}
-
-			}
-
-			@Override
-			public Void visitFieldFlow(FieldFlow<IExplodedBasicBlock> flow) {
-				if (flow.getBlock().getLastInstructionIndex() != 0) {
-					logger.warn("basic block with length other than 1: "
-							+ flow.getBlock());
-				}
-				flow.getBlock().getLastInstruction().visit(new PathWalker());
-				return null;
-			}
-
-			@Override
-			public Void visitIKFlow(IKFlow<IExplodedBasicBlock> flow) {
-				IllegalArgumentException e = new IllegalArgumentException(
-						"shouldn't find any IKFlows");
-				logger.error("exception compiling FlowType", e);
-				throw e;
-			}
-
-			@Override
-			public Void visitParameterFlow(
-					ParameterFlow<IExplodedBasicBlock> flow) {
-				// ParameterFlow can be used in two ways. Here we handle the way
-				// that references a parameter of the current method, and do
-				// nothing. The other way involves arguments to method
-				// invocations, and AT says we shouldn't see any of those
-				// currently.
-
-				// This loop detects the first case, where the block associated
-				// with the flow is equal to the entry block of the method
-				boolean equal = false;
-				for (BasicBlockInContext<IExplodedBasicBlock> entryBlock : graph
-						.getEntriesForProcedure(node)) {
-					equal = equal || flow.getBlock().equals(entryBlock);
-				}
-				if (!equal) {
-					IllegalArgumentException e = new IllegalArgumentException(
-							"shouldn't have any ParameterFlows for invoked arguments");
-					logger.error("exception compiling FlowType", e);
-				}
-				return null;
-			}
-
-			@Override
-			public Void visitReturnFlow(ReturnFlow<IExplodedBasicBlock> flow) {
-				if (flow.getBlock().getLastInstructionIndex() != 0) {
-					logger.warn("basic block with length other than 1: "
-							+ flow.getBlock());
-				}
-				SSAInstruction inst = flow.getBlock().getLastInstruction();
-				// TODO: SUPPOSEDLY Two cases here:
-				// 1. source == true: block should be an invoke instruction
-				// 2. source == false: block should be a return instruction
-				// handle both by invoking the PathWalker to ensure all relevant
-				// refs are in scope
-				if (inst == null) {
-					Iterator<BasicBlockInContext<IExplodedBasicBlock>> it = graph
-							.getPredNodes(flow.getBlock());
-					while (it.hasNext()) {
-						BasicBlockInContext<IExplodedBasicBlock> realBlock = it
-								.next();
-						SSAInstruction realInst = realBlock
+					@Override
+					public Integer visitFieldFlow(
+							FieldFlow<IExplodedBasicBlock> flow) {
+						if (flow.getBlock().getLastInstructionIndex() != 0) {
+							logger.warn("basic block with length other than 1: "
+									+ flow.getBlock());
+						}
+						final SSAInstruction inst = flow.getBlock()
 								.getLastInstruction();
-						realInst.visit(new PathWalker());
+						inst.visit(new PathWalker());
+						return inst.getDef();
 					}
-				} else {
-					inst.visit(new PathWalker());
-				}
-				final PointerKey pkFromFlowType = getPKFromFlowType(method, flow);
-				logger.debug("ReturnFlow PK: " + pkFromFlowType);
-				logger.debug("Path from params: " + getAccessPath(getInputPointerKeys(method), pkFromFlowType));
-				return null;
-			}
-		});
+
+					@Override
+					public Integer visitIKFlow(IKFlow<IExplodedBasicBlock> flow) {
+						IllegalArgumentException e = new IllegalArgumentException(
+								"shouldn't find any IKFlows");
+						logger.error("exception compiling FlowType", e);
+						throw e;
+					}
+
+					@Override
+					public Integer visitParameterFlow(
+							ParameterFlow<IExplodedBasicBlock> flow) {
+						// ParameterFlow can be used in two ways. Here we handle
+						// the way
+						// that references a parameter of the current method,
+						// and do
+						// nothing. The other way involves arguments to method
+						// invocations, and AT says we shouldn't see any of
+						// those
+						// currently.
+
+						// This loop detects the first case, where the block
+						// associated
+						// with the flow is equal to the entry block of the
+						// method
+						boolean equal = false;
+						for (BasicBlockInContext<IExplodedBasicBlock> entryBlock : graph
+								.getEntriesForProcedure(node)) {
+							equal = equal || flow.getBlock().equals(entryBlock);
+						}
+						if (!equal) {
+							IllegalArgumentException e = new IllegalArgumentException(
+									"shouldn't have any ParameterFlows for invoked arguments");
+							logger.error("exception compiling FlowType", e);
+						}
+						return Integer.valueOf(flow.getArgNum() + 1);
+					}
+
+					@Override
+					public Integer visitReturnFlow(
+							ReturnFlow<IExplodedBasicBlock> flow) {
+						if (flow.getBlock().getLastInstructionIndex() != 0) {
+							logger.warn("basic block with length other than 1: "
+									+ flow.getBlock());
+						}
+						SSAInstruction inst = flow.getBlock()
+								.getLastInstruction();
+						// TODO: SUPPOSEDLY Two cases here:
+						// 1. source == true: block should be an invoke
+						// instruction
+						// 2. source == false: block should be a return
+						// instruction
+						// handle both by invoking the PathWalker to ensure all
+						// relevant
+						// refs are in scope
+						if (inst == null) {
+							Iterator<BasicBlockInContext<IExplodedBasicBlock>> it = graph
+									.getPredNodes(flow.getBlock());
+							while (it.hasNext()) {
+								BasicBlockInContext<IExplodedBasicBlock> realBlock = it
+										.next();
+								SSAInstruction realInst = realBlock
+										.getLastInstruction();
+								realInst.visit(new PathWalker());
+							}
+						} else {
+							inst.visit(new PathWalker());
+						}
+						final PointerKey pkFromFlowType = getPKFromFlowType(
+								method, flow);
+						logger.debug("ReturnFlow PK: " + pkFromFlowType);
+						logger.debug("Path from params: "
+								+ getAccessPath(getInputPointerKeys(method),
+										pkFromFlowType));
+						return Integer.valueOf(inst.getDef());
+					}
+				});
 		insts.addAll(returns);
-		return insts;
+		return Pair.make(insts, val);
 	}
 
 	private PointerKey getPKFromFlowType(final IMethod method,
@@ -622,14 +731,15 @@ public class Summarizer<E extends ISSABasicBlock> {
 				int val;
 				// now we have to handle the two variants of this flow.
 				if (flow.isSource()) {
-					// If it's a source, then this represents the return value of an
+					// If it's a source, then this represents the return value
+					// of an
 					// invoked method, so we use the getDef value.
 					val = ((SSAInvokeInstruction) inst).getReturnValue(0);
 				} else {
 					// If it's a sink, then we use the getUse value.
 					val = ((SSAReturnInstruction) inst).getResult();
 					assert val != -1;
-				}				
+				}
 				return pa.getHeapModel().getPointerKeyForLocal(node, val);
 			}
 		});
