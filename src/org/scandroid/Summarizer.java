@@ -61,6 +61,7 @@ import com.ibm.wala.ssa.SSAPutInstruction;
 import com.ibm.wala.ssa.SSAReturnInstruction;
 import com.ibm.wala.ssa.analysis.IExplodedBasicBlock;
 import com.ibm.wala.types.FieldReference;
+import com.ibm.wala.types.MemberReference;
 import com.ibm.wala.types.MethodReference;
 import com.ibm.wala.util.collections.Filter;
 import com.ibm.wala.util.collections.Pair;
@@ -98,7 +99,7 @@ public class Summarizer<E extends ISSABasicBlock> {
 
 		BasicConfigurator.configure();
 		if (args.length < 2) {
-			logger.error("Usage: Summarizer <jarfile> <methoddescriptor>");
+			logger.error("Usage: Summarizer <jarfile> <methoddescriptor> [static|notstatic]");
 			logger.error("   methoddescriptor -- a specification of a java method, formatted as:");
 			logger.error("                       some.package.Clasas(Ljava/lang/String;I)Ljava/lang/String;");
 			System.exit(1);
@@ -106,6 +107,10 @@ public class Summarizer<E extends ISSABasicBlock> {
 
 		String appJar = args[0];
 		String methoddescriptor = args[1];
+//		boolean isStatic = false;
+//		if (args[2].equals("static")) {
+//			isStatic = true;
+//		}
 		
 		Summarizer<IExplodedBasicBlock> s = new Summarizer<IExplodedBasicBlock>(appJar);
 		s.summarize(methoddescriptor);
@@ -134,18 +139,19 @@ public class Summarizer<E extends ISSABasicBlock> {
 			ParserConfigurationException {
 		
 		MethodReference methodRef = StringStuff.makeMethodReference(methodDescriptor);
-
-		Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> dfAnalysis = runDFAnalysis(methodRef);
-		logger.debug(dfAnalysis.toString());
-
-		MethodSummary summary = new MethodSummary(methodRef);
-
+		
 		Collection<IMethod> entryMethods = cha.getPossibleTargets(methodRef);
 		if (entryMethods.size() != 1) {
 			logger.error("More than one imethod found for: " + methodRef);
 		}
-
 		IMethod imethod = entryMethods.iterator().next();
+		
+		MethodSummary summary = new MethodSummary(methodRef);
+		summary.setStatic(imethod.isStatic());
+
+		
+		Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> dfAnalysis = runDFAnalysis(summary);
+		logger.debug(dfAnalysis.toString());
 
 		List<SSAInstruction> instructions = compileFlowMap(imethod, dfAnalysis);
 
@@ -166,9 +172,10 @@ public class Summarizer<E extends ISSABasicBlock> {
 	}
 	
 	private Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> 
-	runDFAnalysis(MethodReference methodRef) throws IOException, ClassHierarchyException,
-			CallGraphBuilderCancelException {
+	runDFAnalysis(MethodSummary mSummary)
+			throws IOException, ClassHierarchyException, CallGraphBuilderCancelException {
 		
+		MethodReference methodRef = (MethodReference) mSummary.getMethod();
 		Iterable<Entrypoint> entrypoints = ImmutableList
 				.<Entrypoint> of(new DefaultEntrypoint(methodRef, cha));
 		AnalysisOptions options = new AnalysisOptions(scope, entrypoints);
@@ -177,7 +184,7 @@ public class Summarizer<E extends ISSABasicBlock> {
 		pa = builder.getPointerAnalysis();
 		graph =	ICFGSupergraph.make(cg, builder.getAnalysisCache());
 		
-		ISpecs specs = new MethodSummarySpecs(methodRef);
+		ISpecs specs = new MethodSummarySpecs(mSummary);
 
 		Map<BasicBlockInContext<IExplodedBasicBlock>, Map<FlowType<IExplodedBasicBlock>, Set<CodeElement>>> 
 		initialTaints = InflowAnalysis.analyze(cg, cha, graph, pa,

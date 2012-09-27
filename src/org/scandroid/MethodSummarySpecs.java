@@ -18,6 +18,7 @@ import spec.SinkSpec;
 import spec.SourceSpec;
 
 import com.google.common.collect.Lists;
+import com.ibm.wala.ipa.summaries.MethodSummary;
 import com.ibm.wala.types.MethodReference;
 import com.ibm.wala.types.TypeReference;
 
@@ -28,9 +29,9 @@ import com.ibm.wala.types.TypeReference;
 public class MethodSummarySpecs implements ISpecs {
 	private static final Logger logger = LoggerFactory.getLogger(MethodSummarySpecs.class);
 
-	private final MethodReference methodRef;
+	private final MethodSummary methodRef;
 
-	public MethodSummarySpecs(MethodReference methodRef) {
+	public MethodSummarySpecs(MethodSummary methodRef) {
 		this.methodRef = methodRef;
 	}
 	
@@ -69,24 +70,26 @@ public class MethodSummarySpecs implements ISpecs {
 		return new SinkSpec[] {};
 	}
 
-	private List<SinkSpec> getSinks(MethodReference methodRef) throws UTFDataFormatException {
+	private List<SinkSpec> getSinks(MethodSummary mSummary) throws UTFDataFormatException {
 		List<SinkSpec> sinks = Lists.newArrayList();
+		
+		MethodReference mRef = (MethodReference) mSummary.getMethod();
 		
 		//
 		// Add the args as EntryArgSinkSpecs:
 		// 
-		String className = methodRef.getDeclaringClass().getName().toUnicodeString();
-		String methodName = methodRef.getName().toUnicodeString();
-		String descriptor = methodRef.getDescriptor().toUnicodeString();
+		String className = mRef.getDeclaringClass().getName().toUnicodeString();
+		String methodName = mRef.getName().toUnicodeString();
+		String descriptor = mRef.getDescriptor().toUnicodeString();
 		MethodNamePattern pattern = new MethodNamePattern(className, methodName, descriptor);
 		
-		int[] argNums = new int[methodRef.getNumberOfParameters()];
+		int[] argNums = new int[mSummary.getNumberOfParameters()];
 		for (int i = 0; i < argNums.length; i++) {
 			argNums[i] = i;
 		}
 		sinks.add(new EntryArgSinkSpec(pattern, argNums));
 		
-		TypeReference typeRef = methodRef.getReturnType();
+		TypeReference typeRef = mRef.getReturnType();
 		if (! typeRef.equals(TypeReference.Void)) {
 			//
 			// Add the return value as a EntryRetSinkSpec
@@ -98,18 +101,19 @@ public class MethodSummarySpecs implements ISpecs {
 		return sinks;
 	}
 
-	private List<SourceSpec> getSources(MethodReference methodRef) throws UTFDataFormatException {
+	private List<SourceSpec> getSources(MethodSummary mSummary) throws UTFDataFormatException {
 		List<SourceSpec> sources = Lists.newArrayList();
+		MethodReference mRef = (MethodReference) mSummary.getMethod();
 		
 		//
 		// Add the args as EntryArgSourceSpecs:
 		// 
-		String className = methodRef.getDeclaringClass().getName().toUnicodeString();
-		String methodName = methodRef.getName().toUnicodeString();
-		String descriptor = methodRef.getDescriptor().toUnicodeString();
+		String className = mRef.getDeclaringClass().getName().toUnicodeString();
+		String methodName = mRef.getName().toUnicodeString();
+		String descriptor = mRef.getDescriptor().toUnicodeString();
 		MethodNamePattern pattern = new MethodNamePattern(className, methodName, descriptor);
 
-		int[] argNums = new int[methodRef.getNumberOfParameters()];
+		int[] argNums = new int[mSummary.getNumberOfParameters()];
 		for (int i = 0; i < argNums.length; i++) {
 			argNums[i] = i;
 		}
