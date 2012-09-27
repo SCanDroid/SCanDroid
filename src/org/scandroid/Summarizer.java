@@ -144,11 +144,12 @@ public class Summarizer<E extends ISSABasicBlock> {
 		MethodSummary summary = new MethodSummary(methodRef);
 
 		Collection<IMethod> entryMethods = cha.getPossibleTargets(methodRef);
-		if (entryMethods.size() != 1) {
+		if (entryMethods.size() != 1) {			
 			logger.error("More than one imethod found for: " + methodRef);
 		}
 
 		IMethod imethod = entryMethods.iterator().next();
+		
 
 		List<SSAInstruction> instructions = compileFlowMap(imethod, dfAnalysis);
 
@@ -415,51 +416,51 @@ public class Summarizer<E extends ISSABasicBlock> {
 						@Override
 						public void visitInvoke(SSAInvokeInstruction instruction) {
 
-							// get all the param refvals
-							int params[] = new int[instruction
-									.getNumberOfParameters()];
-							for (int paramIndex = 0; paramIndex < params.length; paramIndex++) {
-								params[paramIndex] = instruction
-										.getUse(paramIndex);
-							}
-
-							// make sure all params are in scope
-							for (int param : params) {
-								// LHS is a param?
-								completedChain = completedChain
-										|| param == lhsVal;
-								if (!refInScope.get(param)) {
-									// ref is not in scope yet, so find the SSA
-									// instruction that brings it into scope
-									SSAInstruction paramInst = du.getDef(param);
-									paramInst.visit(this);
-								}
-								// postcondition: param is now in scope
-								assert refInScope.get(param);
-							}
-							// postcondition: all params are now in scope
-
-							// if the chain is not yet completed, punt for now
-							// and let the next level in the stack handle it,
-							// since we don't know which param "ought" to have
-							// the link
-
-							insts.add(instruction);
-							// only set refInScope if non-void:
-							if (instruction.getNumberOfReturnValues() == 1) {
-								// if this val is already in scope, don't emit
-								// more
-								// instructions, but check for completed chain
-								final int def = instruction.getReturnValue(0);
-								completedChain = completedChain
-										|| def == lhsVal;
-								if (refInScope.get(def)) {
-									return;
-								} else {
-									insts.add(instruction);
-									refInScope.set(def);
-								}
-							}
+//							// get all the param refvals
+//							int params[] = new int[instruction
+//									.getNumberOfParameters()];
+//							for (int paramIndex = 0; paramIndex < params.length; paramIndex++) {
+//								params[paramIndex] = instruction
+//										.getUse(paramIndex);
+//							}
+//
+//							// make sure all params are in scope
+//							for (int param : params) {
+//								// LHS is a param?
+//								completedChain = completedChain
+//										|| param == lhsVal;
+//								if (!refInScope.get(param)) {
+//									// ref is not in scope yet, so find the SSA
+//									// instruction that brings it into scope
+//									SSAInstruction paramInst = du.getDef(param);
+//									paramInst.visit(this);
+//								}
+//								// postcondition: param is now in scope
+//								assert refInScope.get(param);
+//							}
+//							// postcondition: all params are now in scope
+//
+//							// if the chain is not yet completed, punt for now
+//							// and let the next level in the stack handle it,
+//							// since we don't know which param "ought" to have
+//							// the link
+//
+//							insts.add(instruction);
+//							// only set refInScope if non-void:
+//							if (instruction.getNumberOfReturnValues() == 1) {
+//								// if this val is already in scope, don't emit
+//								// more
+//								// instructions, but check for completed chain
+//								final int def = instruction.getReturnValue(0);
+//								completedChain = completedChain
+//										|| def == lhsVal;
+//								if (refInScope.get(def)) {
+//									return;
+//								} else {
+//									insts.add(instruction);
+//									refInScope.set(def);
+//								}
+//							}
 						}
 
 						@Override
@@ -491,22 +492,24 @@ public class Summarizer<E extends ISSABasicBlock> {
 								// use is not in scope yet
 								SSAInstruction useInst = du.getDef(use);
 								useInst.visit(this);
-								if (!completedChain) {
-									// shove into return value if chain not
-									// finished
-									if (!refInScope.get(lhsVal)) {
-										du.getDef(lhsVal).visit(this);
-										if (!completedChain) {
-											logger.error("can't bring LHS into scope!");
-										}
-									}
-									instruction = instFactory
-											.ReturnInstruction(
-													lhsVal,
-													instruction
-															.returnsPrimitiveType());
-								}
 							}
+							
+							if (!completedChain) {
+								// shove into return value if chain not
+								// finished
+								if (!refInScope.get(lhsVal)) {
+									du.getDef(lhsVal).visit(this);
+									if (!completedChain) {
+										logger.error("can't bring LHS into scope!");
+									}
+								}
+								instruction = instFactory
+										.ReturnInstruction(
+												lhsVal,
+												instruction
+												.returnsPrimitiveType());
+							}
+
 							// postcondition: use is now in scope, if present
 							assert (use == -1 || refInScope.get(use));
 							returns.add(instruction);
