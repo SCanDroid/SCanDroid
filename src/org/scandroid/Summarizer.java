@@ -82,7 +82,8 @@ import flow.types.ParameterFlow;
 import flow.types.ReturnFlow;
 
 public class Summarizer<E extends ISSABasicBlock> {
-	public static final Logger logger = LoggerFactory.getLogger(Summarizer.class);
+	public static final Logger logger = LoggerFactory
+			.getLogger(Summarizer.class);
 	public static final String WALA_NATIVES_XML = "wala/wala-src/com.ibm.wala.core/dat/natives.xml";
 
 	/**
@@ -106,10 +107,11 @@ public class Summarizer<E extends ISSABasicBlock> {
 
 		String appJar = args[0];
 		String methoddescriptor = args[1];
-		
-		Summarizer<IExplodedBasicBlock> s = new Summarizer<IExplodedBasicBlock>(appJar);
+
+		Summarizer<IExplodedBasicBlock> s = new Summarizer<IExplodedBasicBlock>(
+				appJar);
 		s.summarize(methoddescriptor);
-		
+
 		System.out.println(s.serialize());
 	}
 
@@ -119,21 +121,22 @@ public class Summarizer<E extends ISSABasicBlock> {
 	private PointerAnalysis pa;
 	private ISupergraph<BasicBlockInContext<IExplodedBasicBlock>, CGNode> graph;
 	private XMLSummaryWriter writer;
-	
-	public Summarizer(String appJar)
-			throws IOException, ClassHierarchyException,
-			IllegalArgumentException, CallGraphBuilderCancelException, ParserConfigurationException {
+
+	public Summarizer(String appJar) throws IOException,
+			ClassHierarchyException, IllegalArgumentException,
+			CallGraphBuilderCancelException, ParserConfigurationException {
 		this.scope = DexAnalysisScopeReader.makeAndroidBinaryAnalysisScope(
 				appJar, new File("conf/Java60RegressionExclusions.txt"));
 		this.cha = ClassHierarchy.make(scope);
 		writer = new XMLSummaryWriter();
 	}
 
-	public void summarize(String methodDescriptor) throws ClassHierarchyException,
-			CallGraphBuilderCancelException, IOException,
-			ParserConfigurationException {
-		
-		MethodReference methodRef = StringStuff.makeMethodReference(methodDescriptor);
+	public void summarize(String methodDescriptor)
+			throws ClassHierarchyException, CallGraphBuilderCancelException,
+			IOException, ParserConfigurationException {
+
+		MethodReference methodRef = StringStuff
+				.makeMethodReference(methodDescriptor);
 
 		Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> dfAnalysis = runDFAnalysis(methodRef);
 		logger.debug(dfAnalysis.toString());
@@ -164,23 +167,24 @@ public class Summarizer<E extends ISSABasicBlock> {
 	public String serialize() {
 		return writer.serialize();
 	}
-	
-	private Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> 
-	runDFAnalysis(MethodReference methodRef) throws IOException, ClassHierarchyException,
-			CallGraphBuilderCancelException {
-		
+
+	private Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> runDFAnalysis(
+			MethodReference methodRef) throws IOException,
+			ClassHierarchyException, CallGraphBuilderCancelException {
+
 		Iterable<Entrypoint> entrypoints = ImmutableList
 				.<Entrypoint> of(new DefaultEntrypoint(methodRef, cha));
 		AnalysisOptions options = new AnalysisOptions(scope, entrypoints);
-		CallGraphBuilder builder = makeCallgraph(scope, cha, options, WALA_NATIVES_XML);
+		CallGraphBuilder builder = makeCallgraph(scope, cha, options,
+				WALA_NATIVES_XML);
 		cg = builder.makeCallGraph(options, null);
 		pa = builder.getPointerAnalysis();
-		graph =	ICFGSupergraph.make(cg, builder.getAnalysisCache());
-		
+		graph = ICFGSupergraph.make(cg, builder.getAnalysisCache());
+
 		ISpecs specs = new MethodSummarySpecs(methodRef);
 
-		Map<BasicBlockInContext<IExplodedBasicBlock>, Map<FlowType<IExplodedBasicBlock>, Set<CodeElement>>> 
-		initialTaints = InflowAnalysis.analyze(cg, cha, graph, pa,
+		Map<BasicBlockInContext<IExplodedBasicBlock>, Map<FlowType<IExplodedBasicBlock>, Set<CodeElement>>> initialTaints = InflowAnalysis
+				.analyze(cg, cha, graph, pa,
 						new HashMap<InstanceKey, String>(), specs);
 
 		System.out.println("  InitialTaints count: " + initialTaints.size());
@@ -194,7 +198,7 @@ public class Summarizer<E extends ISSABasicBlock> {
 
 		return permissionOutflow;
 	}
-	
+
 	private CallGraphBuilder makeCallgraph(AnalysisScope scope,
 			ClassHierarchy cha, AnalysisOptions options,
 			String methodSummariesFile) throws FileNotFoundException {
@@ -332,13 +336,21 @@ public class Summarizer<E extends ISSABasicBlock> {
 
 							final int def = instruction.getDef();
 							if (!completedChain) {
+								if (!refInScope.get(lhsVal)) {
+									du.getDef(lhsVal).visit(this);									
+									if (!completedChain) {
+										logger.error("can't bring LHS into scope!");
+									}
+								}
 								// if we haven't completed the chain by now,
 								// stuff the lhsVal into the field
-								FieldReference field = instruction.getDeclaredField();
+								FieldReference field = instruction
+										.getDeclaredField();
 								if (instruction.isStatic()) {
 									logger.error("impossible");
 								} else {
-									instruction = instFactory.GetInstruction(def, lhsVal, field);
+									instruction = instFactory.GetInstruction(
+											def, lhsVal, field);
 								}
 							}
 
@@ -379,13 +391,22 @@ public class Summarizer<E extends ISSABasicBlock> {
 							assert refInScope.get(val);
 
 							if (!completedChain) {
+								if (!refInScope.get(lhsVal)) {
+									du.getDef(lhsVal).visit(this);									
+									if (!completedChain) {
+										logger.error("can't bring LHS into scope!");
+									}
+								}
 								// if we haven't completed the chain by now,
 								// stuff the lhsVal into the field
-								FieldReference field = instruction.getDeclaredField();
+								FieldReference field = instruction
+										.getDeclaredField();
 								if (instruction.isStatic()) {
-									instruction = instFactory.PutInstruction(lhsVal, field);
+									instruction = instFactory.PutInstruction(
+											lhsVal, field);
 								} else {
-									instruction = instFactory.PutInstruction(ref, lhsVal, field);
+									instruction = instFactory.PutInstruction(
+											ref, lhsVal, field);
 								}
 							}
 							insts.add(instruction);
@@ -473,10 +494,11 @@ public class Summarizer<E extends ISSABasicBlock> {
 								if (!completedChain) {
 									// shove into return value if chain not
 									// finished
-									useInst = du.getDef(lhsVal);
-									useInst.visit(this);
-									if (!completedChain) {
-										logger.error("can't bring LHS into scope!");
+									if (!refInScope.get(lhsVal)) {
+										du.getDef(lhsVal).visit(this);
+										if (!completedChain) {
+											logger.error("can't bring LHS into scope!");
+										}
 									}
 									instruction = instFactory
 											.ReturnInstruction(
@@ -567,15 +589,15 @@ public class Summarizer<E extends ISSABasicBlock> {
 										.next();
 								inst = realBlock.getLastInstruction();
 							}
-						} 
+						}
 						inst.visit(new PathWalker());
-						
-//						final PointerKey pkFromFlowType = getPKFromFlowType(
-//								method, flow);
-//						logger.debug("ReturnFlow PK: " + pkFromFlowType);
-//						logger.debug("Path from params: "
-//								+ getAccessPath(getInputPointerKeys(method),
-//										pkFromFlowType));
+
+						// final PointerKey pkFromFlowType = getPKFromFlowType(
+						// method, flow);
+						// logger.debug("ReturnFlow PK: " + pkFromFlowType);
+						// logger.debug("Path from params: "
+						// + getAccessPath(getInputPointerKeys(method),
+						// pkFromFlowType));
 						return Integer.valueOf(inst.getDef());
 					}
 				});
