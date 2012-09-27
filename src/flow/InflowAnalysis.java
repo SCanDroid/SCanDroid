@@ -60,6 +60,7 @@ import util.AndroidAppLoader;
 import util.MyLogger;
 import util.MyLogger.LogLevel;
 
+import com.google.common.collect.Maps;
 import com.ibm.wala.classLoader.IMethod;
 import com.ibm.wala.dataflow.IFDS.ISupergraph;
 import com.ibm.wala.ipa.callgraph.CGNode;
@@ -208,8 +209,7 @@ public class InflowAnalysis <E extends ISSABasicBlock> {
         System.out.println("* Running inflow analysis *");
         System.out.println("***************************");
 
-        Map<BasicBlockInContext<E>,Map<FlowType<E>,Set<CodeElement>>> taintMap =
-            new HashMap<BasicBlockInContext<E>,Map<FlowType<E>,Set<CodeElement>>>();
+        Map<BasicBlockInContext<E>, Map<FlowType<E>,Set<CodeElement>>> taintMap = Maps.newHashMap();
 
         SourceSpec[] ss = s.getSourceSpecs();
         MyLogger.log(LogLevel.DEBUG, ss.length + " Source Specs. ");
