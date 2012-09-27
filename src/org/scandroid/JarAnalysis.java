@@ -17,6 +17,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import java.util.logging.Logger;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.log4j.BasicConfigurator;
@@ -61,6 +62,7 @@ public class JarAnalysis {
 						for (String mDescr : methodDescriptors) {
 							try {
 								s.summarize(mDescr);
+								System.out.println("Summarized: "+mDescr);
 							} catch (Exception e) {
 								System.err
 										.println("Could not summarize method: "
@@ -121,23 +123,30 @@ public class JarAnalysis {
 		List<String> classes = getClasses(jarFile);
 		
 		for (String c : classes ) {
-			System.out.println(c);
-			
-			Class<?> clazz = Class.forName(c);
-			
-			// skip a bunch of class types that don't really have code:
-			if (clazz.isEnum() 
-			    || clazz.isInterface() 
-			    || clazz.isAnnotation() 
-				|| clazz.isAnonymousClass()
-				|| clazz.isPrimitive()
-				|| clazz.isSynthetic()
-				) {
+			//System.out.println(c);
+			Method[] methods;
+			Class<?> clazz;
+			try {
+				clazz = Class.forName(c);
+		
+				
+				// skip a bunch of class types that don't really have code:
+				if (clazz.isEnum() 
+				    || clazz.isInterface() 
+				    || clazz.isAnnotation() 
+					|| clazz.isAnonymousClass()
+					|| clazz.isPrimitive()
+					|| clazz.isSynthetic()
+					) {
+					continue;
+				}
+				
+				methods = clazz.getMethods();
+			} catch (Throwable e) {
+				System.out.println("Could not load class: "+c);
+				e.printStackTrace();
 				continue;
 			}
-			
-			Method[] methods = clazz.getMethods();
-			
 			for (Method m : methods) {				
 				// skip methods that are declared on other classes (eg: java/lang/Object)
 				if ( !m.getDeclaringClass().equals(clazz)
@@ -164,6 +173,7 @@ public class JarAnalysis {
 				
 				String packageName = clazz.getPackage().getName();
 				pkgMap.put(packageName, desc.toString());
+
 			}
 		}
 		return pkgMap;
