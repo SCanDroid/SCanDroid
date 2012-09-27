@@ -429,6 +429,15 @@ public class SSAtoXMLVisitor implements SSAInstruction.IVisitor {
             throws UTFDataFormatException {
         Atom className = fieldType.getName().getClassName();
         Atom pkgName = fieldType.getName().getPackage();
+        if ( null == pkgName && null != className ) {
+        	System.out.println("pkg name null for type ref: "+fieldType);
+        	return className.toUnicodeString();
+        }
+
+        if (null == className ) {
+        	System.out.println("className null for type ref: "+fieldType);
+        }
+        
         return pkgName.toUnicodeString() + "/" + className.toUnicodeString();
     }
 
