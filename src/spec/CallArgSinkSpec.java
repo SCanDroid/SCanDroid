@@ -46,6 +46,7 @@ import com.ibm.wala.ipa.callgraph.CGNode;
 import com.ibm.wala.ipa.callgraph.propagation.PointerAnalysis;
 import com.ibm.wala.ipa.cfg.BasicBlockInContext;
 import com.ibm.wala.ssa.ISSABasicBlock;
+import com.ibm.wala.ssa.SSAInvokeInstruction;
 
 import flow.types.FlowType;
 import flow.types.ParameterFlow;
@@ -54,7 +55,7 @@ public class CallArgSinkSpec extends SinkSpec {
 
     public CallArgSinkSpec(MethodNamePattern name, int[] args) {
         namePattern = name;
-        argNums = args; 
+        argNums = args;
     }
 
     @Override
@@ -62,6 +63,11 @@ public class CallArgSinkSpec extends SinkSpec {
             BasicBlockInContext<E> block) {
 
         HashSet<FlowType<E>> flowSet = new HashSet<FlowType<E>>();
+        if(argNums == null) {
+            SSAInvokeInstruction i = (SSAInvokeInstruction)block.getLastInstruction();
+            argNums = new int[i.getDeclaredTarget().getNumberOfParameters()];
+            for(int p = 0; p < argNums.length; p++) argNums[p] = p;
+        }
         for(int arg: argNums) {
             flowSet.add(new ParameterFlow<E>(block, arg, false));
         }

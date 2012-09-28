@@ -62,6 +62,13 @@ public class AndroidSpecs implements ISpecs {
 	static String ctx = "Landroid/content/Context";
 	static String http = "Landroid/net/AndroidHttpClient";
 	static String bnd = "Landroid/os/IBinder";
+	static String lm = "Landroid/location/LocationManager";
+	static String tm = "Landroid/telephony/TelephonyManager";
+	static String sms = "android/telephony/SmsManager";
+	static String smsGsm = "android/telephony/gsm/SmsManager";
+	static String ll = "Landroid/location/LocationListener";
+	static String gl = "Landroid/location/GpsStatus$Listener";
+	static String nl = "Landroid/location/GpsStatus$NmeaListener";
 
 	static MethodNamePattern actCreate =
 			new MethodNamePattern(act, "onCreate");
@@ -142,6 +149,19 @@ public class AndroidSpecs implements ISpecs {
 		new MethodNamePattern("Lcom/SCanDroid/AppModel", "entry")
 	};
 	
+	static MethodNamePattern llLocChanged =
+	        new MethodNamePattern(ll, "onLocationChanged");
+	static MethodNamePattern llProvDisabled =
+	        new MethodNamePattern(ll, "onProviderDisabled");
+	static MethodNamePattern llProvEnabled =
+	        new MethodNamePattern(ll, "onProviderEnabled");
+	static MethodNamePattern llStatusChanged =
+	        new MethodNamePattern(ll, "onStatusChanged");
+	static MethodNamePattern glStatusChanged =
+	        new MethodNamePattern(gl, "onGpsStatusChanged");
+    static MethodNamePattern nlNmeaRecvd =
+            new MethodNamePattern(nl, "onNmeaReceived");
+
 	private static MethodNamePattern[] defaultCallbacks = {
 		actCreate,
 		actStart,
@@ -161,9 +181,17 @@ public class AndroidSpecs implements ISpecs {
 		prvQuery,
 		prvInsert,
 		prvUpdate,
+
+		llLocChanged,
+		llProvDisabled,
+		llProvEnabled,
+		llStatusChanged,
+		glStatusChanged,
+		nlNmeaRecvd,
 	};
 	public MethodNamePattern[] getEntrypointSpecs() { return defaultCallbacks; }
-	
+
+
 	private static SourceSpec[] sourceSpecs = {
 //		new EntryArgSourceSpec( actCreate, null ),
 		//doesn't have any parameters
@@ -184,6 +212,13 @@ public class AndroidSpecs implements ISpecs {
 		
 		new EntryArgSourceSpec(bndOnTransact, new int[] { 2 }),
 
+		new EntryArgSourceSpec(llLocChanged, null),
+		new EntryArgSourceSpec(llProvDisabled, null),
+		new EntryArgSourceSpec(llProvEnabled, null),
+		new EntryArgSourceSpec(llStatusChanged, null),
+		new EntryArgSourceSpec(glStatusChanged, null),
+		new EntryArgSourceSpec(nlNmeaRecvd, null),
+
 		//doesn't exist
 		// new EntryArgSourceSpec( svcTransact, null ),
 
@@ -202,7 +237,13 @@ public class AndroidSpecs implements ISpecs {
 //		new CallRetSourceSpec(new MethodNamePattern("LTest/Apps/GenericSource", "getIntSource"), new int[]{}),
 		new CallRetSourceSpec(new MethodNamePattern("LTest/Apps/GenericSource", "getStringSource"), new int[]{}),
 
-
+        new CallRetSourceSpec(new MethodNamePattern(lm, "getProviders"), null),
+        new CallRetSourceSpec(new MethodNamePattern(lm, "getProvider"), null),
+        new CallRetSourceSpec(new MethodNamePattern(lm, "getLastKnownLocation"), null),
+        new CallRetSourceSpec(new MethodNamePattern(lm, "isProviderEnabled"), null),
+        new CallRetSourceSpec(new MethodNamePattern(lm, "getBestProvider"), null),
+        new CallRetSourceSpec(new MethodNamePattern(tm, "getNeighboringCellInfo"), null),
+        new CallRetSourceSpec(new MethodNamePattern(tm, "getCellLocation"), null),
 		
 	};
 	
@@ -234,6 +275,12 @@ public class AndroidSpecs implements ISpecs {
 		
 		new CallArgSinkSpec(new MethodNamePattern("LTest/Apps/GenericSink", "setSink"), new int[]{ 1 }),
 		
+        new CallArgSinkSpec(new MethodNamePattern(smsGsm, "sendTextMessage"), null),
+        new CallArgSinkSpec(new MethodNamePattern(sms, "sendMultipartTextMessage"), null),
+        new CallArgSinkSpec(new MethodNamePattern(smsGsm, "sendDataMessage"), null),
+        new CallArgSinkSpec(new MethodNamePattern(sms, "sendTextMessage"), null),
+        new CallArgSinkSpec(new MethodNamePattern(smsGsm, "sendMultipartTextMessage"), null),
+		new CallArgSinkSpec(new MethodNamePattern(sms, "sendDataMessage"), null),
 	};
 
 	public SinkSpec[] getSinkSpecs() { return sinkSpecs; }

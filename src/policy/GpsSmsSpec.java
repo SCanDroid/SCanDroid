@@ -15,8 +15,35 @@ public class GpsSmsSpec implements PolicySpec {
     private static final Set<String> smsDstMethods = new HashSet<String>();
     
     GpsSmsSpec() {
-        gpsEntryMethods.add("");
-        gpsSrcMethods.add("");
+        gpsEntryMethods.add("onNmeaReceived");
+        gpsEntryMethods.add("onGpsStatusChanged");
+        gpsEntryMethods.add("onLocationChanged");
+        gpsEntryMethods.add("onStatusChanged");
+        gpsEntryMethods.add("onProviderDisabled");
+        gpsEntryMethods.add("onProviderEnabled");
+
+        gpsSrcMethods.add("requestLocationUpdates");
+        gpsSrcMethods.add("getProviders");
+        gpsSrcMethods.add("requestSingleUpdate");
+        gpsSrcMethods.add("getProvider");
+        gpsSrcMethods.add("getLastKnownLocation");
+        gpsSrcMethods.add("isProviderEnabled");
+        gpsSrcMethods.add("addProximityAlert");
+        gpsSrcMethods.add("requestLocationUpdates");
+        gpsSrcMethods.add("getBestProvider");
+        gpsSrcMethods.add("getNeighboringCellInfo");
+        gpsSrcMethods.add("getCellLocation");
+        gpsSrcMethods.add("getProviders");
+        gpsSrcMethods.add("requestLocationUpdates");
+        gpsSrcMethods.add("requestLocationUpdates");
+        gpsSrcMethods.add("sendExtraCommand");
+        gpsSrcMethods.add("addNmeaListener");
+        gpsSrcMethods.add("requestSingleUpdate");
+        gpsSrcMethods.add("requestSingleUpdate");
+        gpsSrcMethods.add("addGpsStatusListener");
+        gpsSrcMethods.add("requestSingleUpdate");
+        gpsSrcMethods.add("requestLocationUpdates");
+
         smsDstMethods.add("sendTextMessage");
         smsDstMethods.add("sendMultipartTextMessage");
         smsDstMethods.add("sendDataMessage");
