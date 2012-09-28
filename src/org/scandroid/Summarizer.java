@@ -65,6 +65,7 @@ import com.ibm.wala.ssa.analysis.IExplodedBasicBlock;
 import com.ibm.wala.types.FieldReference;
 import com.ibm.wala.types.MemberReference;
 import com.ibm.wala.types.MethodReference;
+import com.ibm.wala.util.MonitorUtil.IProgressMonitor;
 import com.ibm.wala.util.collections.Filter;
 import com.ibm.wala.util.collections.Pair;
 import com.ibm.wala.util.graph.traverse.DFSPathFinder;
@@ -117,7 +118,7 @@ public class Summarizer<E extends ISSABasicBlock> {
 
 		Summarizer<IExplodedBasicBlock> s = new Summarizer<IExplodedBasicBlock>(
 				appJar);
-		s.summarize(methoddescriptor);
+		s.summarize(methoddescriptor, null);
 
 		System.out.println(s.serialize());
 	}
@@ -138,7 +139,7 @@ public class Summarizer<E extends ISSABasicBlock> {
 		writer = new XMLSummaryWriter();
 	}
 
-	public void summarize(String methodDescriptor)
+	public void summarize(String methodDescriptor, IProgressMonitor monitor)
 			throws ClassHierarchyException, CallGraphBuilderCancelException,
 			IOException, ParserConfigurationException {
 
@@ -154,7 +155,8 @@ public class Summarizer<E extends ISSABasicBlock> {
 		MethodSummary summary = new MethodSummary(methodRef);
 		summary.setStatic(imethod.isStatic());
 
-		Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> dfAnalysis = runDFAnalysis(summary);
+		Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> dfAnalysis = 
+				runDFAnalysis(summary, monitor);
 		logger.debug(dfAnalysis.toString());
 
 		List<SSAInstruction> instructions = compileFlowMap(imethod, dfAnalysis);
@@ -181,7 +183,7 @@ public class Summarizer<E extends ISSABasicBlock> {
 	}
 
 	private Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> runDFAnalysis(
-			MethodSummary mSummary) throws IOException,
+			MethodSummary mSummary, IProgressMonitor monitor) throws IOException,
 			ClassHierarchyException, CallGraphBuilderCancelException {
 
 		MethodReference methodRef = (MethodReference) mSummary.getMethod();
@@ -204,7 +206,7 @@ public class Summarizer<E extends ISSABasicBlock> {
 
 		IFDSTaintDomain<IExplodedBasicBlock> domain = new IFDSTaintDomain<IExplodedBasicBlock>();
 		TabulationResult<BasicBlockInContext<IExplodedBasicBlock>, CGNode, DomainElement> flowResult = FlowAnalysis
-				.analyze(graph, cg, pa, initialTaints, domain, null);
+				.analyze(graph, cg, pa, initialTaints, domain, null, monitor);
 
 		Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> permissionOutflow = OutflowAnalysis
 				.analyze(cg, cha, graph, pa, flowResult, domain, specs);

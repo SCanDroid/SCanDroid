@@ -159,7 +159,7 @@ public class SeparateEntryAnalysis {
             logger.info("Running flow analysis.");
             IFDSTaintDomain<IExplodedBasicBlock> domain = new IFDSTaintDomain<IExplodedBasicBlock>();
             TabulationResult<BasicBlockInContext<IExplodedBasicBlock>, CGNode, DomainElement> 
-              flowResult = FlowAnalysis.analyze(loader, initialTaints, domain, methodAnalysis);
+              flowResult = FlowAnalysis.analyze(loader, initialTaints, domain, methodAnalysis, null);
 
             logger.info("Running outflow analysis.");
             Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> permissionOutflow = OutflowAnalysis

@@ -6,6 +6,7 @@ package org.scandroid;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.Collection;
 import java.util.Enumeration;
 import java.util.List;
@@ -48,9 +49,12 @@ public class JarInspector {
 		final String appJar = args[0];
 		final Multimap<String, String> pkgMethods = getMethodsByPackage(appJar);
 		
+		int count = 0;
 		for (final String pkg : pkgMethods.keySet()) {
 			System.out.println(pkg+": "+pkgMethods.get(pkg).size());
+			count += pkgMethods.get(pkg).size();
 		}
+		System.out.println("Methods: "+count);
 	}
 
 	/**
@@ -100,10 +104,15 @@ public class JarInspector {
 						// skip synthetic methods (native?)
 						|| m.isSynthetic()
 						// skip varargs -- not sure summaries can support that.
-						|| m.isVarArgs()) {
+						|| m.isVarArgs()) { 
 					continue;
 				}
-
+                
+				// only look at public methods:
+				if (! Modifier.isPublic(m.getModifiers()) ){
+					continue;
+				}
+				
 				StringBuilder desc = new StringBuilder(c);
 
 				desc.append("."+m.getName());

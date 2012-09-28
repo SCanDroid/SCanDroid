@@ -70,6 +70,7 @@ import com.ibm.wala.ipa.cfg.BasicBlockInContext;
 import com.ibm.wala.ssa.ISSABasicBlock;
 import com.ibm.wala.util.CancelException;
 import com.ibm.wala.util.CancelRuntimeException;
+import com.ibm.wala.util.MonitorUtil.IProgressMonitor;
 
 import domain.CodeElement;
 import domain.DomainElement;
@@ -84,9 +85,9 @@ public class FlowAnalysis {
           Map<BasicBlockInContext<E>,
           Map<FlowType<E>,Set<CodeElement>>> initialTaints,
           IFDSTaintDomain<E> d,
-          MethodAnalysis<E> methodAnalysis
+          MethodAnalysis<E> methodAnalysis, IProgressMonitor progressMonitor
           ) throws CancelRuntimeException {
-        return analyze(loader.graph, loader.cg, loader.pa, initialTaints, d, methodAnalysis);
+        return analyze(loader.graph, loader.cg, loader.pa, initialTaints, d, methodAnalysis, progressMonitor);
     }
     
     
@@ -97,8 +98,8 @@ public class FlowAnalysis {
               PointerAnalysis pa,
               Map<BasicBlockInContext<E>, Map<FlowType<E>,Set<CodeElement>>> initialTaints,
               IFDSTaintDomain<E> d,
-              MethodAnalysis<E> methodAnalysis
-            ) throws CancelRuntimeException {
+              MethodAnalysis<E> methodAnalysis, IProgressMonitor progressMonitor
+            ) {
 
         System.out.println("*************************");
         System.out.println("* Running flow analysis *");
@@ -172,7 +173,7 @@ public class FlowAnalysis {
 
         };
         TabulationSolver<BasicBlockInContext<E>, CGNode, DomainElement> solver =
-            TabulationSolver.make(problem);
+            TabulationSolver.make(problem, progressMonitor);
 
         try {
         	TabulationResult<BasicBlockInContext<E>,CGNode, DomainElement> flowResult = solver.solve();

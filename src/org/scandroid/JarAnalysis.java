@@ -17,7 +17,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
-import java.util.logging.Logger;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.log4j.BasicConfigurator;
@@ -27,7 +26,9 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
+import com.google.common.collect.Sets.SetView;
 import com.ibm.wala.ssa.ISSABasicBlock;
+import com.ibm.wala.util.CancelRuntimeException;
 
 /**
  * @author creswick
@@ -35,6 +36,9 @@ import com.ibm.wala.ssa.ISSABasicBlock;
  */
 public class JarAnalysis {
 
+	private static final int TIME_LIMIT = 15 * 60;
+	private static final int THREAD_COUNT = 70;
+	protected static final String PRG = "[PRG] ";
 	private static String OUTPUT_DIR = "results";
 
 	/**
@@ -46,14 +50,25 @@ public class JarAnalysis {
 		BasicConfigurator.configure();
 		
 		final String appJar = args[0];
+		final String blacklistFile = args[1];
 		final Multimap<String, String> pkgMethods = getMethodsByPackage(appJar);
 
 		Set<Future<?>> futures = Sets.newHashSet(); 
-		ExecutorService pool = Executors.newCachedThreadPool();
+		ExecutorService pool = Executors.newFixedThreadPool(THREAD_COUNT);
 		
-		for (final String pkg : pkgMethods.keySet()) {
+		Set<String> blacklist = loadLinesAsSet(blacklistFile);
+		Set<String> fullPkgSet = pkgMethods.keySet();
+
+		SetView<String> interestingPkgs = Sets.difference(fullPkgSet, blacklist);
+		System.out.println("Working on:");
+		for (final String pkg : interestingPkgs) {
+			System.out.println(pkg);
+		}
+		
+		for (final String pkg : interestingPkgs) {
 			Runnable runner = new Runnable() {
 				public void run() {
+					System.out.println(PRG+"Starting work on: "+pkg);
 					Collection<String> methodDescriptors = pkgMethods.get(pkg);
 					try {
 						Summarizer<ISSABasicBlock> s = new Summarizer<ISSABasicBlock>(
@@ -61,12 +76,15 @@ public class JarAnalysis {
 
 						for (String mDescr : methodDescriptors) {
 							try {
-								System.out.println("Summarizing: "+mDescr);
-								s.summarize(mDescr);
-								System.out.println("Summarized: "+mDescr);
-							} catch (Exception e) {
+								System.out.println(PRG+"Summarizing: "+mDescr);
+								s.summarize(mDescr, new TimedMonitor(TIME_LIMIT));
+								System.out.println(PRG+"Summarized: "+mDescr);
+							} catch (CancelRuntimeException cre) { 
+								System.out.println(PRG+"Summary time out for: "+mDescr);
+								System.out.println(PRG+"   cause: "+cre.getCause().toString());
+							}catch (Exception e) {
 								System.err
-										.println("Could not summarize method: "
+										.println(PRG+"Could not summarize method: "
 												+ mDescr);
 								e.printStackTrace();
 							}
@@ -97,6 +115,11 @@ public class JarAnalysis {
 		}
 	}
 	
+	private static Set<String> loadLinesAsSet(String blacklistFile) throws IOException {
+		List<String> lines = FileUtils.readLines(new File(blacklistFile));
+		return Sets.newHashSet(lines);
+	}
+
 	private static void store(String pkg, String xml) {		
 		String pathname = OUTPUT_DIR+"/"+ pkg+".xml";
 		File file = new File(pathname);
