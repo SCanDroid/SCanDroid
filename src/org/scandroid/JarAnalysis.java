@@ -61,6 +61,7 @@ public class JarAnalysis {
 
 						for (String mDescr : methodDescriptors) {
 							try {
+								System.out.println("Summarizing: "+mDescr);
 								s.summarize(mDescr);
 								System.out.println("Summarized: "+mDescr);
 							} catch (Exception e) {
