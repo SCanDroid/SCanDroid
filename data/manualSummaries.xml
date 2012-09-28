@@ -207,5 +207,14 @@
         </method>
       </class>
     </package>
+    <package name="android/location">
+        <class name="Location">
+            <method descriptor="()Ljava/lang/String;" name="toString">
+                <return value="arg0" />
+            </method>
+        </class>
+    </package>
+
+
   </classloader>
 </summary-spec>
