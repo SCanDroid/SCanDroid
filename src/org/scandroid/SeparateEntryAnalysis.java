@@ -50,6 +50,9 @@ import org.apache.log4j.BasicConfigurator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import policy.GpsSmsSpec;
+import policy.PolicyChecker;
+
 import spec.AndroidSpecs;
 import spec.ISpecs;
 import synthMethod.MethodAnalysis;
@@ -191,7 +194,17 @@ public class SeparateEntryAnalysis {
                 for (FlowType t : e.getValue()) {
                     logger.info("    --> " + t);
                 }
-            }            
+            }
+
+            if (CLI.hasOption("check-policy")) {
+                PolicyChecker checker = new PolicyChecker(new GpsSmsSpec());
+                boolean good = checker.flowsSatisfyPolicy(permissionOutflow);
+                if (good) {
+                    logger.info("Passed policy check. No flows from GPS to SMS.");
+                } else {
+                    logger.error("Failed policy check! Flows exist from GPS to SMS.");
+                }
+            }
             
 //            System.out.println("DOMAIN ELEMENTS");
 //            for (int i = 1; i < domain.getSize(); i++) {

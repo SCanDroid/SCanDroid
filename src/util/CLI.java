@@ -108,6 +108,7 @@ public class CLI {
         options.addOption(OptionBuilder.withLongOpt("test-cgb")
         		           .withDescription("Only load the call graph, exit status indicates success")
         		           .create());
+        options.addOption("y", "check-policy", false, "Check conformance with built-in policy");
 		
 		options.addOption(OptionBuilder.withLongOpt( "android-lib" ).withDescription( "include ALIB in scope of analysis" ).hasArg().withArgName("ALIB").create() );
 		options.addOption(OptionBuilder.withLongOpt( "reflection" ).withDescription( "FULL, NO_FLOW_TO_CASTS, NO_METHOD_INVOKE, NO_FLOW_TO_CASTS_NO_METHOD_INVOKE, ONE_FLOW_TO_CASTS_NO_METHOD_INVOKE, NO_STRING_CONSTANTS, NONE (Default)").hasArg().withArgName("option").create() );	    

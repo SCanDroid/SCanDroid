@@ -3,16 +3,18 @@ package policy;
 import java.util.Map;
 import java.util.Set;
 
+import com.ibm.wala.ssa.ISSABasicBlock;
+
 import flow.types.FlowType;
 
-class PolicyChecker {
+public class PolicyChecker <E extends ISSABasicBlock> {
     private final PolicySpec spec;
 
-    PolicyChecker(PolicySpec spec) {
+    public PolicyChecker(PolicySpec spec) {
         this.spec = spec;
     }
 
-    boolean flowsSatisfyPolicy(Map<FlowType, Set<FlowType>> flows) {
+    public boolean flowsSatisfyPolicy(Map<FlowType<E>, Set<FlowType<E>>> flows) {
         for(FlowType src : flows.keySet()) {
             for(FlowType dest : flows.get(src)) {
                 if(!spec.allowed(src, dest)) return false;

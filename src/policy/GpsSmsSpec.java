@@ -14,7 +14,7 @@ public class GpsSmsSpec implements PolicySpec {
     private static final Set<String> gpsSrcMethods = new HashSet<String>();
     private static final Set<String> smsDstMethods = new HashSet<String>();
     
-    GpsSmsSpec() {
+    public GpsSmsSpec() {
         gpsEntryMethods.add("onNmeaReceived");
         gpsEntryMethods.add("onGpsStatusChanged");
         gpsEntryMethods.add("onLocationChanged");
