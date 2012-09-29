@@ -1,6 +1,70 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <summary-spec>
   <classloader name="Primordial">
+
+
+    <package name="android/view">
+      
+
+    </package>
+
+    <package name="android/app">
+      <!-- android.app.Activity.setContentView(I)V -->
+      <class name="Activity">
+        <method descriptor="(I)V" name="setContentView"/>
+
+        <!-- android.app.Activity.   onCreate(Landroid/os/Bundle;)V -->
+        <method descriptor="(Landroid/os/Bundle;)V" name="onCreate" />
+
+        <!-- android.app.Activity.findViewById(I)Landroid/view/View; -->
+        <method descriptor="(I)Landroid/view/View;" name="findViewById">
+          <new def="v"
+               class="Landroid/view/View" />
+
+          <return value="v"/>
+        </method>
+      </class>
+
+
+    </package>
+
+    <package name="android/content">
+
+      <class name="Intent">
+        <method descriptor="(Ljava/lang/String;)Landroid/content/Intent;" name="setAction">
+          <putfield class="Landroid/content/Intent" field="mAction"
+                    fieldType="Ljava/lang/String" ref="arg0" value="arg1"/>
+          <return value="arg0" />
+        </method>
+
+        <method descriptor="(Ljava/lang/String;)Landroid/content/Intent;" name="addCategory">
+          <!-- not type correct: -->
+          <putfield class="Landroid/content/Intent" field="mCategories"
+                    fieldType="Ljava/util/HashSet" ref="arg0" value="arg1"/>
+          <return value="arg0" />
+        </method>
+
+        <method descriptor="(Ljava/lang/String;Ljava/lang/String;)Landroid/content/Intent;" name="setClassName">
+          <!-- not type correct: -->
+          <putfield class="Landroid/content/Intent" field="mComponent"
+                    fieldType="Ljava/lang/String" ref="arg0" value="arg1"/>
+          <return value="arg0" />
+          <putfield class="Landroid/content/Intent" field="mComponent"
+                    fieldType="Ljava/lang/String" ref="arg0" value="arg2"/>
+          <return value="arg0" />
+        </method>
+
+        <method descriptor="(Ljava/lang/String;Ljava/lang/String;)Landroid/content/Intent;" name="putExtra">
+          <!-- not type correct: -->
+          <putfield class="Landroid/content/Intent" field="mExtras"
+                    fieldType="Ljava/lang/String" ref="arg0" value="arg1"/>
+          <return value="arg0" />
+          <putfield class="Landroid/content/Intent" field="mExtras"
+                    fieldType="Ljava/lang/String" ref="arg0" value="arg2"/>
+          <return value="arg0" />
+        </method>
+      </class>
+    </package>
     <package name="java/lang">
 
       <class name="Character">
@@ -48,6 +112,10 @@
 
         <!-- java.lang.String.substring(II)Ljava/lang/String; -->
         <method descriptor="(II)Ljava/lang/String;" name="substring">
+           <return value="arg0" />
+        </method>
+        <!-- java.lang.String.valueOf(Ljava/lang/Object;)Ljava/lang/String; -->
+        <method descriptor="(Ljava/lang/Object;)Ljava/lang/String;" name="valueOf" static="true">
            <return value="arg0" />
         </method>
 
@@ -131,51 +199,13 @@
       	</method>
       </class>
     </package>
-    <package name="java/text">
-    	<class name="BreakIterator">
-    		<method descriptor="([BI)I" name="getInt" static="true">
-    			<return value="arg0" />
-    		</method>
-
-        <method descriptor="([BI)S" name="getShort" static="true">
-    			<return value="arg0" />
-    		</method>
-    	</class>
+    <package name="java/net">
+      <class name="URLEncoder">
+        <!-- java.net.URLEncoder.    encode(Ljava/lang/String;)Ljava/lang/String; -->
+        <method descriptor="(Ljava/lang/String;)Ljava/lang/String;" name="encode" static="true">
+          <return value="arg0"/>
+        </method>
+      </class>
     </package>
-    <package name="java/util">
-    	<class name="Locale">
-        <!-- java.util.Locale.equals(Ljava/lang/Object;)Z -->
-    		<method descriptor="(Ljava/lang/Object;)Z" name="equals">
-          <constant name="t" type="boolean" value="true" />
-          <constant name="f" type="boolean" value="false" />
-
-          <return value="t" />
-          <return value="f" />
-    		</method>
-
-    	</class>
-    </package>
-
-
-<!-- 
-
-x (native) - 1099494 java.security.AccessController.doPrivileged(Ljava/security/PrivilegedAction;)Ljava/lang/Object;
-1102506 java.util.ResourceBundle$CacheKey.access$400(Ljava/util/ResourceBundle$CacheKey;)Ljava/lang/Throwable;
-x - 1114706 java.util.Locale.equals(Ljava/lang/Object;)Z
-x - 1122081 java.lang.StringBuilder.append(I)Ljava/lang/StringBuilder;
-1166650 java.io.BufferedInputStream.<init>(Ljava/io/InputStream;)V
-x - 1178208 java.lang.String.codePointAt(I)I
-x (native) - 1184805 java.lang.Thread.currentThread()Ljava/lang/Thread;
-x - 1219284 java.lang.Character.charCount(I)I
-1612944 java.util.concurrent.ConcurrentHashMap$Segment.unlock()V
-x - 1857674 java.lang.String.substring(II)Ljava/lang/String;
-x - 1874919 java.lang.String.length()I
-1893552 java.util.MissingResourceException.<init>(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
-x - 1898016 java.text.BreakIterator.getShort([BI)S
-x - 1911456 java.lang.Throwable.getCause()Ljava/lang/Throwable;
-x - 2913590 java.lang.String.charAt(I)C
-x - 3189937 java.lang.StringBuilder.append(Ljava/lang/Object;)Ljava/lang/StringBuilder;
-x - 6195264 java.text.BreakIterator.getInt([BI)I
--->
   </classloader>
 </summary-spec>

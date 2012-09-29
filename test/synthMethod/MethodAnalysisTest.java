@@ -763,7 +763,7 @@ public class MethodAnalysisTest {
         
         IFDSTaintDomain<IExplodedBasicBlock> domain = new IFDSTaintDomain<IExplodedBasicBlock>();
         TabulationResult<BasicBlockInContext<IExplodedBasicBlock>, CGNode, DomainElement> 
-          flowResult = FlowAnalysis.analyze(sg, cg, pa, initialTaints, domain, methodAnalysis);
+          flowResult = FlowAnalysis.analyze(sg, cg, pa, initialTaints, domain, methodAnalysis, null);
         
         Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>>
           permissionOutflow = OutflowAnalysis.analyze(cg, cha, sg, pa, flowResult, domain, specs);

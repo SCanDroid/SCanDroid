@@ -39,15 +39,12 @@
 
 package util;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import synthMethod.MethodAnalysis;
-import util.MyLogger.LogLevel;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -82,6 +79,7 @@ import com.ibm.wala.types.TypeReference;
 import com.ibm.wala.util.intset.BitVectorIntSet;
 import com.ibm.wala.util.intset.IntSet;
 import com.ibm.wala.util.intset.OrdinalSet;
+
 import domain.CodeElement;
 import domain.DomainElement;
 import domain.FieldElement;
@@ -90,6 +88,7 @@ import domain.InstanceKeyElement;
 import domain.LocalElement;
 import domain.ReturnElement;
 import flow.types.FlowType;
+import util.LoaderUtils;
 
 public class IFDSTaintFlowFunctionProvider<E extends ISSABasicBlock>
 implements IFlowFunctionMap<BasicBlockInContext<E>> {
@@ -436,10 +435,10 @@ implements IFlowFunctionMap<BasicBlockInContext<E>> {
 //		}
 		
 		
-		if ( LoaderUtils.fromLoader(src.getNode(), ClassLoaderReference.Application)
-		  && LoaderUtils.fromLoader(dest.getNode(), ClassLoaderReference.Primordial)) {
-			//System.out.println("Call to system: "+signature);
-		}
+//		if ( LoaderUtils.fromLoader(src.getNode(), ClassLoaderReference.Application)
+//		  && LoaderUtils.fromLoader(dest.getNode(), ClassLoaderReference.Primordial)) {
+//			System.out.println("Call to system: "+signature);
+//		}
 		
 //		if (! dest.getMethod().isSynthetic() 
 //		    && LoaderUtils.fromLoader(dest.getNode(), ClassLoaderReference.Primordial)) {

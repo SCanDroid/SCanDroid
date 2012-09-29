@@ -63,6 +63,7 @@ import com.ibm.wala.ipa.callgraph.propagation.InstanceKey;
 import com.ibm.wala.ipa.cfg.BasicBlockInContext;
 import com.ibm.wala.ssa.analysis.IExplodedBasicBlock;
 import com.ibm.wala.util.CancelException;
+import com.ibm.wala.util.MonitorUtil.IProgressMonitor;
 
 import domain.CodeElement;
 import domain.DomainElement;
@@ -111,11 +112,11 @@ public class SeparateEntryAnalysis {
                         loader.entries.size() + ": " + entry);
                 LinkedList<Entrypoint> localEntries = new LinkedList<Entrypoint>();
                 localEntries.add(entry);
-                analyze(loader, localEntries, methodAnalysis, summaryStream);
+                analyze(loader, localEntries, methodAnalysis, summaryStream, null);
                 i++;
             }
         } else {
-            analyze(loader, loader.entries, methodAnalysis, summaryStream);
+            analyze(loader, loader.entries, methodAnalysis, summaryStream, null);
         }
     }
 
@@ -123,13 +124,14 @@ public class SeparateEntryAnalysis {
      * @param loader
      * @param localEntries
      * @param methodAnalysis
+     * @param monitor 
      * @return the number of permission outflows detected
      */
     public static int 
         analyze(AndroidAppLoader<IExplodedBasicBlock> loader,
                  LinkedList<Entrypoint> localEntries, 
                  MethodAnalysis<IExplodedBasicBlock> methodAnalysis,
-                 InputStream summariesStream) {
+                 InputStream summariesStream, IProgressMonitor monitor) {
         try {
             loader.buildGraphs(localEntries, summariesStream);
 
@@ -159,7 +161,7 @@ public class SeparateEntryAnalysis {
             logger.info("Running flow analysis.");
             IFDSTaintDomain<IExplodedBasicBlock> domain = new IFDSTaintDomain<IExplodedBasicBlock>();
             TabulationResult<BasicBlockInContext<IExplodedBasicBlock>, CGNode, DomainElement> 
-              flowResult = FlowAnalysis.analyze(loader, initialTaints, domain, methodAnalysis, null);
+              flowResult = FlowAnalysis.analyze(loader, initialTaints, domain, methodAnalysis, monitor);
 
             logger.info("Running outflow analysis.");
             Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> permissionOutflow = OutflowAnalysis
