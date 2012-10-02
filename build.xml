@@ -210,4 +210,20 @@
             </batchtest>
         </junit>
     </target>
+	
+    <target name="test-jenkins" depends="build, build-tests">
+        <junit haltonerror="false" 
+        	   haltonfailure="false" 
+        	   fork="no" 
+        	   printsummary="withOutAndErr">
+        	<!-- Use the basic SCanDroid classpath: -->
+            <classpath refid="SimpleAnalysisPlugin.classpath"/>
+        	
+            <batchtest>
+                <fileset dir="${test-src-dir}" includes="**/*Test.java" />
+                <!-- basic output -->
+                <formatter type="xml" />
+            </batchtest>
+        </junit>
+    </target>
 </project>
