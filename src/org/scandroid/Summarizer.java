@@ -1,6 +1,7 @@
 package org.scandroid;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.BitSet;
@@ -53,7 +54,6 @@ import com.ibm.wala.ipa.summaries.MethodSummary;
 import com.ibm.wala.ssa.DefUse;
 import com.ibm.wala.ssa.ISSABasicBlock;
 import com.ibm.wala.ssa.SSACheckCastInstruction;
-import com.ibm.wala.ssa.SSAConversionInstruction;
 import com.ibm.wala.ssa.SSAGetInstruction;
 import com.ibm.wala.ssa.SSAInstruction;
 import com.ibm.wala.ssa.SSAInstructionFactory;
@@ -63,7 +63,6 @@ import com.ibm.wala.ssa.SSAPutInstruction;
 import com.ibm.wala.ssa.SSAReturnInstruction;
 import com.ibm.wala.ssa.analysis.IExplodedBasicBlock;
 import com.ibm.wala.types.FieldReference;
-import com.ibm.wala.types.MemberReference;
 import com.ibm.wala.types.MethodReference;
 import com.ibm.wala.util.MonitorUtil.IProgressMonitor;
 import com.ibm.wala.util.collections.Filter;
@@ -86,9 +85,11 @@ import flow.types.ParameterFlow;
 import flow.types.ReturnFlow;
 
 public class Summarizer<E extends ISSABasicBlock> {
-	public static final Logger logger = LoggerFactory
+	private static final Logger logger = LoggerFactory
 			.getLogger(Summarizer.class);
-	public static final String WALA_NATIVES_XML = "wala/wala-src/com.ibm.wala.core/dat/natives.xml";
+
+	private static final long TIME_LIMIT = 60 * 60;
+	public static final String WALA_NATIVES_XML = "../WALA/com.ibm.wala.core/dat/natives.xml";
 
 	/**
 	 * @param args
@@ -139,6 +140,12 @@ public class Summarizer<E extends ISSABasicBlock> {
 		writer = new XMLSummaryWriter();
 	}
 
+	public void summarize(String methodDescriptor)
+			throws ClassHierarchyException, CallGraphBuilderCancelException,
+			IOException, ParserConfigurationException {
+		summarize(methodDescriptor, new TimedMonitor(TIME_LIMIT));
+	}
+
 	public void summarize(String methodDescriptor, IProgressMonitor monitor)
 			throws ClassHierarchyException, CallGraphBuilderCancelException,
 			IOException, ParserConfigurationException {
@@ -155,8 +162,8 @@ public class Summarizer<E extends ISSABasicBlock> {
 		MethodSummary summary = new MethodSummary(methodRef);
 		summary.setStatic(imethod.isStatic());
 
-		Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> dfAnalysis = 
-				runDFAnalysis(summary, monitor);
+		Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> dfAnalysis = runDFAnalysis(
+				summary, WALA_NATIVES_XML, monitor);
 		logger.debug(dfAnalysis.toString());
 
 		List<SSAInstruction> instructions = compileFlowMap(imethod, dfAnalysis);
@@ -182,8 +189,24 @@ public class Summarizer<E extends ISSABasicBlock> {
 		return writer.serialize();
 	}
 
-	private Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> runDFAnalysis(
-			MethodSummary mSummary, IProgressMonitor monitor) throws IOException,
+	public Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> runDFAnalysis(
+			MethodSummary mSummary) throws ClassHierarchyException,
+			CallGraphBuilderCancelException, IOException {
+		return runDFAnalysis(mSummary, WALA_NATIVES_XML, new TimedMonitor(
+				TIME_LIMIT));
+	}
+
+	public Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> runDFAnalysis(
+			MethodSummary mSummary, String methodSummariesFile)
+			throws ClassHierarchyException, CallGraphBuilderCancelException,
+			IOException {
+		return runDFAnalysis(mSummary, methodSummariesFile, new TimedMonitor(
+				TIME_LIMIT));
+	}
+
+	public Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> runDFAnalysis(
+			MethodSummary mSummary, String methodSummariesFile,
+			IProgressMonitor monitor) throws IOException,
 			ClassHierarchyException, CallGraphBuilderCancelException {
 
 		MethodReference methodRef = (MethodReference) mSummary.getMethod();
@@ -191,7 +214,7 @@ public class Summarizer<E extends ISSABasicBlock> {
 				.<Entrypoint> of(new DefaultEntrypoint(methodRef, cha));
 		AnalysisOptions options = new AnalysisOptions(scope, entrypoints);
 		CallGraphBuilder builder = makeCallgraph(scope, cha, options,
-				WALA_NATIVES_XML);
+				methodSummariesFile);
 		cg = builder.makeCallGraph(options, null);
 		pa = builder.getPointerAnalysis();
 		graph = ICFGSupergraph.make(cg, builder.getAnalysisCache());
@@ -219,7 +242,8 @@ public class Summarizer<E extends ISSABasicBlock> {
 			String methodSummariesFile) throws FileNotFoundException {
 
 		CallGraphBuilder builder = AndroidAppLoader.makeZeroCFABuilder(options,
-				new AnalysisCache(), cha, scope, null, null, null, null);
+				new AnalysisCache(), cha, scope, null, null,
+				new FileInputStream(methodSummariesFile), null);
 
 		return builder;
 	}
