@@ -43,7 +43,9 @@ import com.ibm.wala.ipa.callgraph.CallGraphBuilderCancelException;
 import com.ibm.wala.ipa.callgraph.Entrypoint;
 import com.ibm.wala.ipa.callgraph.impl.DefaultEntrypoint;
 import com.ibm.wala.ipa.callgraph.impl.Everywhere;
+import com.ibm.wala.ipa.callgraph.propagation.ClassBasedInstanceKeys;
 import com.ibm.wala.ipa.callgraph.propagation.InstanceKey;
+import com.ibm.wala.ipa.callgraph.propagation.InstanceKeyFactory;
 import com.ibm.wala.ipa.callgraph.propagation.LocalPointerKey;
 import com.ibm.wala.ipa.callgraph.propagation.PointerAnalysis;
 import com.ibm.wala.ipa.callgraph.propagation.PointerKey;
@@ -53,6 +55,7 @@ import com.ibm.wala.ipa.cha.ClassHierarchyException;
 import com.ibm.wala.ipa.summaries.MethodSummary;
 import com.ibm.wala.ssa.DefUse;
 import com.ibm.wala.ssa.ISSABasicBlock;
+import com.ibm.wala.ssa.SSAArrayLoadInstruction;
 import com.ibm.wala.ssa.SSACheckCastInstruction;
 import com.ibm.wala.ssa.SSAGetInstruction;
 import com.ibm.wala.ssa.SSAInstruction;
@@ -130,6 +133,8 @@ public class Summarizer<E extends ISSABasicBlock> {
 	private PointerAnalysis pa;
 	private ISupergraph<BasicBlockInContext<IExplodedBasicBlock>, CGNode> graph;
 	private XMLSummaryWriter writer;
+
+	private AnalysisOptions options;
 
 	public Summarizer(String appJar) throws IOException,
 			ClassHierarchyException, IllegalArgumentException,
@@ -212,7 +217,8 @@ public class Summarizer<E extends ISSABasicBlock> {
 		MethodReference methodRef = (MethodReference) mSummary.getMethod();
 		Iterable<Entrypoint> entrypoints = ImmutableList
 				.<Entrypoint> of(new DefaultEntrypoint(methodRef, cha));
-		AnalysisOptions options = new AnalysisOptions(scope, entrypoints);
+		options = new AnalysisOptions(scope, entrypoints);
+
 		CallGraphBuilder builder = makeCallgraph(scope, cha, options,
 				methodSummariesFile);
 		cg = builder.makeCallGraph(options, null);
@@ -362,17 +368,60 @@ public class Summarizer<E extends ISSABasicBlock> {
 						}
 
 						@Override
+						public void visitArrayLoad(
+								SSAArrayLoadInstruction instruction) {
+//							final int ref = instruction.getArrayRef();
+//							if (ref != -1 && !refInScope.get(ref)) {
+//								// ref is not in scope yet, so find the SSA
+//								// instruction that brings it into scope
+//								SSAInstruction refInst = du.getDef(ref);
+//								if (refInst != null) {
+//									refInst.visit(this);
+//									completedChain = completedChain
+//											|| ref == lhsVal;
+//									// postcondition: ref is now in scope
+//									;
+//									assert ref == -1 || refInScope.get(ref)
+//											|| !completedChain;
+//								}
+//							}
+//
+//							final int def = instruction.getDef();
+//							// since wala can't read arrayload tags in
+//							// summaries, just turn this into a checked cast
+//							// (sloppy...)
+//							SSAInstruction newInstruction = instFactory
+//									.CheckCastInstruction(def,
+//											completedChain ? ref : lhsVal,
+//											instruction.getElementType(), true);
+//
+//							// if this val is already in scope, don't emit more
+//							// instructions
+//							if (refInScope.get(def)) {
+//								return;
+//							} else {
+//								insts.add(newInstruction);
+//								refInScope.set(def);
+//							}
+						}
+
+						@Override
 						public void visitGet(SSAGetInstruction instruction) {
 							final int ref = instruction.getRef();
 							if (ref != -1 && !refInScope.get(ref)) {
 								// ref is not in scope yet, so find the SSA
 								// instruction that brings it into scope
 								SSAInstruction refInst = du.getDef(ref);
-								refInst.visit(this);
+								if (refInst != null) {
+									refInst.visit(this);
+									completedChain = completedChain
+											|| ref == lhsVal;
+									// postcondition: ref is now in scope
+									;
+									assert ref == -1 || refInScope.get(ref)
+											|| !completedChain;
+								}
 							}
-							completedChain = completedChain || ref == lhsVal;
-							// postcondition: ref is now in scope
-							assert ref == -1 || refInScope.get(ref);
 
 							final int def = instruction.getDef();
 							if (!completedChain) {
@@ -413,22 +462,27 @@ public class Summarizer<E extends ISSABasicBlock> {
 								// ref is not in scope yet, so find the SSA
 								// instruction that brings it into scope
 								SSAInstruction refInst = du.getDef(ref);
+								assert refInst != null;
 								refInst.visit(this);
 							}
 							// postcondition: ref is now in scope
 							assert ref == -1 || refInScope.get(ref);
 
 							int val = instruction.getVal();
-							// LHS flows into target field
-							completedChain = completedChain || val == lhsVal;
 							if (!refInScope.get(val)) {
 								// if the RHS of the assignment is not in scope,
 								// recur
 								SSAInstruction valInst = du.getDef(val);
-								valInst.visit(this);
+								if (valInst != null) {
+									valInst.visit(this);
+									// LHS flows into target field
+									completedChain = completedChain
+											|| val == lhsVal;
+									// postcondition: val is now in scope
+									assert refInScope.get(val)
+											|| !completedChain;
+								}
 							}
-							// postcondition: val is now in scope
-							assert refInScope.get(val);
 
 							if (!completedChain) {
 								if (!refInScope.get(lhsVal)) {
@@ -507,19 +561,19 @@ public class Summarizer<E extends ISSABasicBlock> {
 
 						@Override
 						public void visitNew(SSANewInstruction instruction) {
-							final int def = instruction.getDef();
-							// I doubt this could complete a chain, but just in
-							// case:
-							completedChain = completedChain || def == lhsVal;
-							// if already in scope, do nothing
-							if (refInScope.get(def))
-								return;
-
-							// otherwise, just add the new instruction. Remember
-							// that constructors are handled as separate <init>
-							// methods
-							insts.add(instruction);
-							refInScope.set(def);
+//							final int def = instruction.getDef();
+//							// I doubt this could complete a chain, but just in
+//							// case:
+//							completedChain = completedChain || def == lhsVal;
+//							// if already in scope, do nothing
+//							if (refInScope.get(def))
+//								return;
+//
+//							// otherwise, just add the new instruction. Remember
+//							// that constructors are handled as separate <init>
+//							// methods
+//							insts.add(instruction);
+//							refInScope.set(def);
 						}
 
 						@Override
@@ -529,11 +583,18 @@ public class Summarizer<E extends ISSABasicBlock> {
 							// this
 							// instruction to the return list
 							int use = instruction.getUse(0);
-							completedChain = completedChain || use == lhsVal;
 							if (use != -1 && !refInScope.get(use)) {
 								// use is not in scope yet
 								SSAInstruction useInst = du.getDef(use);
-								useInst.visit(this);
+								if (useInst != null) {
+									completedChain = completedChain
+											|| use == lhsVal;
+									useInst.visit(this);
+									// postcondition: use is now in scope, if
+									// present
+									assert (use == -1 || refInScope.get(use) || !completedChain);
+								}
+
 							}
 
 							if (!completedChain) {
@@ -549,48 +610,49 @@ public class Summarizer<E extends ISSABasicBlock> {
 										lhsVal,
 										instruction.returnsPrimitiveType());
 							}
-
-							// postcondition: use is now in scope, if present
-							assert (use == -1 || refInScope.get(use));
 							returns.add(instruction);
 						}
 
 						@Override
 						public void visitCheckCast(
 								SSACheckCastInstruction instruction) {
-							final int val = instruction.getVal();
-							if (val != -1 && !refInScope.get(val)) {
-								// val is not in scope yet, so find the SSA
-								// instruction that brings it into scope
-								SSAInstruction valInst = du.getDef(val);
-								valInst.visit(this);
-							}
-							completedChain = completedChain || val == lhsVal;
-							// postcondition: val is now in scope
-							assert val == -1 || refInScope.get(val);
-
-							final int def = instruction.getDef();
-							if (!completedChain) {
-								if (!refInScope.get(lhsVal)) {
-									du.getDef(lhsVal).visit(this);
-									if (!completedChain) {
-										logger.error("can't bring LHS into scope!");
-									}
-								}
-								instruction = instFactory.CheckCastInstruction(
-										def, lhsVal,
-										instruction.getDeclaredResultTypes(),
-										instruction.isPEI());
-							}
-
-							// if this val is already in scope, don't emit more
-							// instructions
-							if (refInScope.get(def)) {
-								return;
-							} else {
-								insts.add(instruction);
-								refInScope.set(def);
-							}
+//							final int val = instruction.getVal();
+//							if (val != -1 && !refInScope.get(val)) {
+//								// val is not in scope yet, so find the SSA
+//								// instruction that brings it into scope
+//								SSAInstruction valInst = du.getDef(val);
+//								if (valInst != null) {
+//									valInst.visit(this);
+//									completedChain = completedChain
+//											|| val == lhsVal;
+//									// postcondition: val is now in scope
+//									assert val == -1 || refInScope.get(val)
+//											|| !completedChain;
+//								}
+//							}
+//
+//							final int def = instruction.getDef();
+//							if (!completedChain) {
+//								if (!refInScope.get(lhsVal)) {
+//									du.getDef(lhsVal).visit(this);
+//									if (!completedChain) {
+//										logger.error("can't bring LHS into scope!");
+//									}
+//								}
+//								instruction = instFactory.CheckCastInstruction(
+//										def, lhsVal,
+//										instruction.getDeclaredResultTypes(),
+//										instruction.isPEI());
+//							}
+//
+//							// if this val is already in scope, don't emit more
+//							// instructions
+//							if (refInScope.get(def)) {
+//								return;
+//							} else {
+//								returns.add(instruction);
+//								refInScope.set(def);
+//							}
 						}
 
 					}
@@ -665,7 +727,7 @@ public class Summarizer<E extends ISSABasicBlock> {
 						if (inst == null) {
 							Iterator<BasicBlockInContext<IExplodedBasicBlock>> it = graph
 									.getPredNodes(flow.getBlock());
-							while (it.hasNext()) {
+							while (it.hasNext() && inst == null) {
 								BasicBlockInContext<IExplodedBasicBlock> realBlock = it
 										.next();
 								inst = realBlock.getLastInstruction();
