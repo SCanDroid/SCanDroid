@@ -72,12 +72,13 @@ import com.ibm.wala.ssa.SSAInstruction;
 import com.ibm.wala.ssa.SSAInvokeInstruction;
 import com.ibm.wala.ssa.SSAPutInstruction;
 import com.ibm.wala.ssa.SSAReturnInstruction;
-import com.ibm.wala.types.ClassLoaderReference;
 import com.ibm.wala.types.FieldReference;
 import com.ibm.wala.types.MethodReference;
 import com.ibm.wala.types.TypeReference;
 import com.ibm.wala.util.intset.BitVectorIntSet;
 import com.ibm.wala.util.intset.IntSet;
+import com.ibm.wala.util.intset.MutableIntSet;
+import com.ibm.wala.util.intset.MutableSparseIntSet;
 import com.ibm.wala.util.intset.OrdinalSet;
 
 import domain.CodeElement;
@@ -88,7 +89,6 @@ import domain.InstanceKeyElement;
 import domain.LocalElement;
 import domain.ReturnElement;
 import flow.types.FlowType;
-import util.LoaderUtils;
 
 public class IFDSTaintFlowFunctionProvider<E extends ISSABasicBlock>
 implements IFlowFunctionMap<BasicBlockInContext<E>> {
@@ -390,7 +390,7 @@ implements IFlowFunctionMap<BasicBlockInContext<E>> {
             return staticField;
         }
 
-		private void addTargets(CodeElement d1, BitVectorIntSet set, FlowType<E> taintType)
+		private void addTargets(CodeElement d1, MutableIntSet set, FlowType<E> taintType)
 		{
 			//System.out.println(this.toString()+".addTargets("+d1+"...)");
 			for(UseDefSetPair p: useToDefList)
@@ -409,7 +409,8 @@ implements IFlowFunctionMap<BasicBlockInContext<E>> {
 
 		public IntSet getTargets(int d1) {
 			//System.out.println(this.toString()+".getTargets("+d1+") "+bb);
-			BitVectorIntSet set = new BitVectorIntSet();
+			//BitVectorIntSet set = new BitVectorIntSet();
+			MutableSparseIntSet set = MutableSparseIntSet.makeEmpty();
 			set.add(d1);
 			DomainElement de = domain.getMappedObject(d1);
 			if (de != null) {
