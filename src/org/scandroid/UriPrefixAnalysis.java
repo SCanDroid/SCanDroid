@@ -51,7 +51,7 @@ import prefixTransfer.PrefixTransferFunctionProvider;
 import prefixTransfer.PrefixVariable;
 import prefixTransfer.UriPrefixContextSelector;
 import prefixTransfer.UriPrefixTransferGraph;
-import util.AndroidAppLoader;
+import util.AndroidAnalysisContext;
 import util.EmptyProgressMonitor;
 
 import com.ibm.wala.classLoader.IMethod;
@@ -81,7 +81,7 @@ import com.ibm.wala.util.strings.StringStuff;
 
 public class UriPrefixAnalysis {
 
-    public static Map<InstanceKey,String> runAnalysis(AndroidAppLoader<IExplodedBasicBlock> appLoader) throws CancelRuntimeException
+    public static Map<InstanceKey,String> runAnalysis(AndroidAnalysisContext<IExplodedBasicBlock> appLoader) throws CancelRuntimeException
     {
         return runAnalysisHelper(appLoader.cg, appLoader.pa);
     }

@@ -60,22 +60,22 @@ public class GraphUtil{
 	private static Graph<CGNode> cg;
 	private static String suffix;
 
-	public static <E extends ISSABasicBlock>void makeCG(AndroidAppLoader<E> androidAppLoader) {
+	public static <E extends ISSABasicBlock>void makeCG(AndroidAnalysisContext<E> androidAppLoader) {
 		GraphUtil.cg =  androidAppLoader.cg;
 		GraphUtil.suffix = "FullCallGraph";
 		make();
 	}
-	public static<E extends ISSABasicBlock> void makePCG(AndroidAppLoader<E> loader) {
+	public static<E extends ISSABasicBlock> void makePCG(AndroidAnalysisContext<E> loader) {
 		GraphUtil.cg = loader.partialGraph;
 		GraphUtil.suffix = "PartialCallGraph";
 		make();
 	}
-	public static <E extends ISSABasicBlock> void makeOneLCG(AndroidAppLoader<E> loader) {
+	public static <E extends ISSABasicBlock> void makeOneLCG(AndroidAnalysisContext<E> loader) {
 		GraphUtil.cg = loader.oneLevelGraph;
 		GraphUtil.suffix = "OneLevelCallGraph";
 		make();
 	}  
-	public static <E extends ISSABasicBlock> void makeSystemToAPKCG(AndroidAppLoader<E> loader) {
+	public static <E extends ISSABasicBlock> void makeSystemToAPKCG(AndroidAnalysisContext<E> loader) {
         GraphUtil.cg = loader.systemToApkGraph;
         GraphUtil.suffix = "SystemToApkGraph";
         make();

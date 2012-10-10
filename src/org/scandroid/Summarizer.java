@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
 
 import spec.ISpecs;
 import synthMethod.XMLSummaryWriter;
-import util.AndroidAppLoader;
+import util.AndroidAnalysisContext;
 import util.ThrowingSSAInstructionVisitor;
 
 import com.google.common.collect.ImmutableList;
@@ -247,7 +247,7 @@ public class Summarizer<E extends ISSABasicBlock> {
 			ClassHierarchy cha, AnalysisOptions options,
 			String methodSummariesFile) throws FileNotFoundException {
 
-		CallGraphBuilder builder = AndroidAppLoader.makeZeroCFABuilder(options,
+		CallGraphBuilder builder = AndroidAnalysisContext.makeZeroCFABuilder(options,
 				new AnalysisCache(), cha, scope, null, null,
 				new FileInputStream(methodSummariesFile), null);
 

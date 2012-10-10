@@ -56,7 +56,7 @@ import policy.PolicyChecker;
 import spec.AndroidSpecs;
 import spec.ISpecs;
 import synthMethod.MethodAnalysis;
-import util.AndroidAppLoader;
+import util.AndroidAnalysisContext;
 import util.CLI;
 
 import com.ibm.wala.dataflow.IFDS.TabulationResult;
@@ -84,8 +84,8 @@ public class SeparateEntryAnalysis {
         CLI.parseArgs(args, true);
 
         logger.info("Loading app.");
-        AndroidAppLoader<IExplodedBasicBlock> loader =
-                new AndroidAppLoader<IExplodedBasicBlock>(CLI.getClasspath());
+        AndroidAnalysisContext<IExplodedBasicBlock> loader =
+                new AndroidAnalysisContext<IExplodedBasicBlock>(CLI.getClasspath());
         if (loader.entries == null || loader.entries.size() == 0) {
             throw new IOException("No Entrypoints Detected!");
         }
@@ -131,7 +131,7 @@ public class SeparateEntryAnalysis {
      * @return the number of permission outflows detected
      */
     public static int 
-        analyze(AndroidAppLoader<IExplodedBasicBlock> loader,
+        analyze(AndroidAnalysisContext<IExplodedBasicBlock> loader,
                  LinkedList<Entrypoint> localEntries, 
                  MethodAnalysis<IExplodedBasicBlock> methodAnalysis,
                  InputStream summariesStream, IProgressMonitor monitor) {

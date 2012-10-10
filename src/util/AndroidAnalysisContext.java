@@ -84,6 +84,7 @@ import com.ibm.wala.ipa.callgraph.MethodTargetSelector;
 import com.ibm.wala.ipa.callgraph.impl.PartialCallGraph;
 import com.ibm.wala.ipa.callgraph.impl.Util;
 import com.ibm.wala.ipa.callgraph.propagation.PointerAnalysis;
+import com.ibm.wala.ipa.callgraph.propagation.ReceiverTypeContextSelector;
 import com.ibm.wala.ipa.callgraph.propagation.SSAContextInterpreter;
 import com.ibm.wala.ipa.callgraph.propagation.SSAPropagationCallGraphBuilder;
 import com.ibm.wala.ipa.callgraph.propagation.cfa.ZeroXCFABuilder;
@@ -113,14 +114,13 @@ import com.ibm.wala.util.strings.Atom;
 import com.ibm.wala.util.warnings.Warning;
 import com.ibm.wala.util.warnings.Warnings;
 
-public class AndroidAppLoader<E extends ISSABasicBlock> {
-	public static final String methodSpec = "MethodSummaries.xml";
-	public static final String pathToSpec = "data";
+public class AndroidAnalysisContext<E extends ISSABasicBlock> {
+	private static final String methodSpec = "MethodSummaries.xml";
+	private static final String pathToSpec = "data";
 
-	public final AnalysisScope scope;
+	private final AnalysisScope scope;
 	public final ClassHierarchy cha;
 	public final LinkedList<Entrypoint> entries;
-	public final AndroidSpecs specs;
 
 	public CallGraph cg;
 	public PointerAnalysis pa;
@@ -129,14 +129,14 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
 	public Graph<CGNode> oneLevelGraph;
 	public Graph<CGNode> systemToApkGraph;
 
-	public AndroidAppLoader(String classpath) throws IllegalArgumentException,
+	public AndroidAnalysisContext(String classpath) throws IllegalArgumentException,
 			ClassHierarchyException, IOException, CancelException,
 			URISyntaxException {
 		this(classpath, new JarFile(CLI.getOption("android-lib")));
 	}
 
 	/**
-	 * 
+	 * @param exclusions
 	 * @param classpath
 	 * @param packagename
 	 * @throws IOException
@@ -145,14 +145,13 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
 	 * @throws ClassHierarchyException
 	 * @throws URISyntaxException
 	 */
-	public AndroidAppLoader(String classpath, JarFile androidLib)
+	public AndroidAnalysisContext(File exclusions, String classpath, JarFile androidLib)
 			throws IOException, IllegalArgumentException, CancelException,
 			ClassHierarchyException, URISyntaxException {
 
 		scope = DexAnalysisScopeReader.makeAndroidBinaryAnalysisScope(
 				classpath,
-				new FileProvider().getFile("conf" + File.separator
-						+ "Java60RegressionExclusions.txt"));
+				exclusions);
 
 		scope.setLoaderImpl(ClassLoaderReference.Application,
 				"com.ibm.wala.classLoader.WDexClassLoaderImpl");
@@ -166,19 +165,19 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
 		}
 		Warnings.clear();
 
-		specs = new AndroidSpecs();
-		AnalysisScope tempAndroidScope = DexAnalysisScopeReader
-				.makeAndroidBinaryAnalysisScope(
-						androidLib,
-						new FileProvider().getFile("conf" + File.separator
-								+ "Java60RegressionExclusions.txt"));
-		specs.addPossibleListeners(ClassHierarchy.make(tempAndroidScope));
-
 		// Try to look for entry points
 		EntryPoints ep = new EntryPoints(classpath, cha, this);
 		entries = ep.getEntries();
 	}
+	
+	public AndroidAnalysisContext(String classpath, JarFile androidLib)
+	            throws IOException, IllegalArgumentException, CancelException,
+	            ClassHierarchyException, URISyntaxException {
+	    this(new FileProvider().getFile("conf" + File.separator +
+                 "Java60RegressionExclusions.txt"), classpath, androidLib);
+	}
 
+	// ContextSelector, entry points, reflection options, IR Factory, call graph type, include library
 	public void buildGraphs(List<Entrypoint> localEntries,
 			InputStream summariesStream) throws CancelException {
 
@@ -194,14 +193,14 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
 					.getOption("reflection")));
 		else
 			options.setReflectionOptions(ReflectionOptions.NONE);
-
+		
 		AnalysisCache cache = new AnalysisCache(
 				(IRFactory<IMethod>) new DexIRFactory());
 		
 		SSAPropagationCallGraphBuilder cgb;
 
 		cgb = makeZeroCFABuilder(options, cache, cha, scope,
-				new UriPrefixContextSelector(options, cha), null,
+				new ReceiverTypeContextSelector(), null,
 				summariesStream, null);
 		
 		// CallGraphBuilder construction warnings
@@ -217,7 +216,7 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
 
 		boolean graphBuilt = true;
 		try {
-			cg = cgb.makeCallGraph(options);
+			cg = cgb.makeCallGraph(cgb.getOptions());
 		} catch (Exception e) {
 			graphBuilt = false;
 			e.printStackTrace();
@@ -466,7 +465,7 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
 			
 			s = new FileProvider().getInputStreamFromClassLoader(pathToSpec
 					+ File.separator + methodSpec,
-					AndroidAppLoader.class.getClassLoader());
+					AndroidAnalysisContext.class.getClassLoader());
 
 			XMLMethodSummaryReader nativeSummaries = loadMethodSummaries(scope,
 					s);
@@ -514,7 +513,7 @@ public class AndroidAppLoader<E extends ISSABasicBlock> {
 
 		try {
 			if (null == s) {
-				s = AndroidAppLoader.class.getClassLoader()
+				s = AndroidAnalysisContext.class.getClassLoader()
 						.getResourceAsStream(
 								pathToSpec + File.separator + methodSpec);
 			}

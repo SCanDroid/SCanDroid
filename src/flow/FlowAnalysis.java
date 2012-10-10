@@ -48,7 +48,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import synthMethod.MethodAnalysis;
-import util.AndroidAppLoader;
+import util.AndroidAnalysisContext;
 import util.CLI;
 import util.GraphUtil;
 import util.IFDSTaintFlowFunctionProvider;
@@ -81,7 +81,7 @@ public class FlowAnalysis {
 
     public static <E extends ISSABasicBlock>
     TabulationResult<BasicBlockInContext<E>, CGNode, DomainElement> 
-    analyze(final AndroidAppLoader<E> loader,
+    analyze(final AndroidAnalysisContext<E> loader,
           Map<BasicBlockInContext<E>,
           Map<FlowType<E>,Set<CodeElement>>> initialTaints,
           IFDSTaintDomain<E> d,

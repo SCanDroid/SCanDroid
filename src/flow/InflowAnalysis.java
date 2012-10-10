@@ -56,7 +56,7 @@ import spec.CallRetSourceSpec;
 import spec.EntryArgSourceSpec;
 import spec.ISpecs;
 import spec.SourceSpec;
-import util.AndroidAppLoader;
+import util.AndroidAnalysisContext;
 import util.MyLogger;
 import util.MyLogger.LogLevel;
 
@@ -191,7 +191,7 @@ public class InflowAnalysis <E extends ISSABasicBlock> {
 
     public static <E extends ISSABasicBlock>
       Map<BasicBlockInContext<E>,Map<FlowType<E>,Set<CodeElement>>> analyze(
-            AndroidAppLoader<E> loader, Map<InstanceKey, String> prefixes,
+            AndroidAnalysisContext<E> loader, Map<InstanceKey, String> prefixes,
             ISpecs s) {
         return analyze(loader.cg, loader.cha, loader.graph, loader.pa, prefixes, s);
     }

@@ -49,7 +49,7 @@ import com.ibm.wala.util.warnings.Warnings;
 import spec.AndroidSpecs;
 import spec.ISpecs;
 import spec.MethodNamePattern;
-import util.AndroidAppLoader;
+import util.AndroidAnalysisContext;
 import util.LoaderUtils;
 
 public class AppModelMethod {

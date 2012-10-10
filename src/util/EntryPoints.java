@@ -56,6 +56,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+import spec.AndroidSpecs;
 import spec.MethodNamePattern;
 
 import com.ibm.wala.classLoader.IMethod;
@@ -81,7 +82,7 @@ public class EntryPoints {
 
     private LinkedList<Entrypoint> entries;
 
-    public EntryPoints(String classpath, ClassHierarchy cha, AndroidAppLoader loader) {
+    public EntryPoints(String classpath, ClassHierarchy cha, AndroidAnalysisContext loader) {
         tempFolder = "temp";
         ActivityIntentList = new ArrayList<String[]>();
         ReceiverIntentList = new ArrayList<String[]>();
@@ -120,7 +121,7 @@ public class EntryPoints {
 
     }
 
-    public void listenerEntryPoints(ClassHierarchy cha, AndroidAppLoader loader) {
+    public void listenerEntryPoints(ClassHierarchy cha, AndroidAnalysisContext loader) {
         ArrayList<MethodReference> entryPointMRs = new ArrayList<MethodReference>();
 
         // onLocation
@@ -139,8 +140,8 @@ public class EntryPoints {
         }
     }
 
-    public void defaultEntryPoints(ClassHierarchy cha, AndroidAppLoader loader) {
-    	for (MethodNamePattern mnp:loader.specs.getEntrypointSpecs()) {
+    public void defaultEntryPoints(ClassHierarchy cha, AndroidAnalysisContext loader) {
+    	for (MethodNamePattern mnp:new AndroidSpecs().getEntrypointSpecs()) {
     		for (IMethod im: mnp.getPossibleTargets(cha)) {
     			log(DEBUG,"Considering target "+im.getSignature());
     			// limit to functions defined within the application
@@ -153,7 +154,7 @@ public class EntryPoints {
     	}
     }
     
-    public void activityModelEntry(ClassHierarchy cha, AndroidAppLoader loader) {
+    public void activityModelEntry(ClassHierarchy cha, AndroidAnalysisContext loader) {
         ArrayList<MethodReference> entryPointMRs =
                 new ArrayList<MethodReference>();
 
@@ -186,7 +187,7 @@ public class EntryPoints {
         }
     }
     
-    private void systemEntry(ClassHierarchy cha, AndroidAppLoader loader) {
+    private void systemEntry(ClassHierarchy cha, AndroidAnalysisContext loader) {
         String[] systemEntyPoints = { 
 //              "android.app.ActivityThread.main([Ljava/lang/String;)V"
 //              , "com.android.server.ServerThread.run()V"
@@ -215,7 +216,7 @@ public class EntryPoints {
     }
     
     
-    public void addTestEntry(ClassHierarchy cha, AndroidAppLoader loader) {
+    public void addTestEntry(ClassHierarchy cha, AndroidAnalysisContext loader) {
     	ArrayList<MethodReference> entryPointMRs =
     			new ArrayList<MethodReference>();
 

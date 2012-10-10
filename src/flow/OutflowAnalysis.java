@@ -54,7 +54,7 @@ import spec.EntryArgSinkSpec;
 import spec.EntryRetSinkSpec;
 import spec.ISpecs;
 import spec.SinkSpec;
-import util.AndroidAppLoader;
+import util.AndroidAnalysisContext;
 
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
@@ -309,7 +309,7 @@ public class OutflowAnalysis <E extends ISSABasicBlock> {
     }
 
     public static <E extends ISSABasicBlock> Map<FlowType<E>, Set<FlowType<E>>>
-      analyze(AndroidAppLoader<E> loader,
+      analyze(AndroidAnalysisContext<E> loader,
             TabulationResult<BasicBlockInContext<E>, CGNode, DomainElement> flowResult,
             IFDSTaintDomain<E> domain,
             ISpecs s) {
