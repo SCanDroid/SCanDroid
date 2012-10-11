@@ -13,6 +13,7 @@ import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
+import org.apache.commons.io.FileUtils;
 
 import com.ibm.wala.ipa.callgraph.AnalysisOptions.ReflectionOptions;
 
@@ -94,8 +95,7 @@ public class CLISCanDroidOptions implements ISCanDroidOptions {
 				.hasArg().withArgName("option").create());
 	}
 
-	public CLISCanDroidOptions(String[] args, boolean reqArgs)
-			throws URISyntaxException {
+	public CLISCanDroidOptions(String[] args, boolean reqArgs) {
 		try {
 			line = parser.parse(options, args);
 		} catch (ParseException exp) {
@@ -133,15 +133,15 @@ public class CLISCanDroidOptions implements ISCanDroidOptions {
 		}
 	}
 
-	private URI processURIArg(String arg) throws URISyntaxException {
+	private URI processURIArg(String arg) {
 		if (arg == null) {
 			return null;
 		} else {
-			return new URI("file", null, arg, null);
+			return new File(arg).toURI();
 		}
 	}
 
-	private URI processClasspath(boolean reqArgs) throws URISyntaxException {
+	private URI processClasspath(boolean reqArgs) {
 		// getArgs() returns all args that are not recognized;
 		String[] myargs = line.getArgs();
 		if ((myargs.length != 1 || !(myargs[0].endsWith(".apk") || myargs[0]
@@ -151,20 +151,11 @@ public class CLISCanDroidOptions implements ISCanDroidOptions {
 		}
 		return processURIArg(myargs[0]);
 	}
-	
+
 	private String processFilename() {
 		if (classpath == null)
 			return null;
-		String rawpath = classpath.getPath();
-		String[] path = rawpath.split(File.separatorChar == '\\' ? "\\\\"
-				: File.separator);
-		if (path.length > 0) {
-			return path[path.length - 1];
-		} else {
-			System.err.println("Usage: " + USAGE);
-			System.exit(0);
-			return null;
-		}
+		return new File(classpath).getName();
 	}
 
 	private ReflectionOptions processReflectionOptions() {
