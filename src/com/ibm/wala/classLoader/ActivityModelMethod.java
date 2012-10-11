@@ -41,7 +41,6 @@ import static org.jf.dexlib.ItemType.TYPE_CLASS_DEF_ITEM;
 
 import java.io.File;
 
-import org.apache.log4j.lf5.LogLevel;
 import org.jf.dexlib.ClassDataItem.EncodedMethod;
 import org.jf.dexlib.ClassDefItem;
 import org.jf.dexlib.DexFile;

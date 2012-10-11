@@ -13,7 +13,6 @@ package com.ibm.wala.ssa;
 
 import java.util.Iterator;
 
-import org.apache.log4j.lf5.LogLevel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

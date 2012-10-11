@@ -16,7 +16,6 @@ import java.util.Set;
 import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.log4j.BasicConfigurator;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -88,7 +87,7 @@ public class MethodAnalysisTest {
 
 	@BeforeClass
 	public static final void setup() {
-		BasicConfigurator.configure();
+		
 	}
 
 	@Before

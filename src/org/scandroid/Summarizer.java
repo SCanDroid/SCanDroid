@@ -15,7 +15,6 @@ import java.util.Set;
 
 import javax.xml.parsers.ParserConfigurationException;
 
-import org.apache.log4j.BasicConfigurator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,9 +42,7 @@ import com.ibm.wala.ipa.callgraph.CallGraphBuilderCancelException;
 import com.ibm.wala.ipa.callgraph.Entrypoint;
 import com.ibm.wala.ipa.callgraph.impl.DefaultEntrypoint;
 import com.ibm.wala.ipa.callgraph.impl.Everywhere;
-import com.ibm.wala.ipa.callgraph.propagation.ClassBasedInstanceKeys;
 import com.ibm.wala.ipa.callgraph.propagation.InstanceKey;
-import com.ibm.wala.ipa.callgraph.propagation.InstanceKeyFactory;
 import com.ibm.wala.ipa.callgraph.propagation.LocalPointerKey;
 import com.ibm.wala.ipa.callgraph.propagation.PointerAnalysis;
 import com.ibm.wala.ipa.callgraph.propagation.PointerKey;
@@ -105,7 +102,6 @@ public class Summarizer<E extends ISSABasicBlock> {
 			CallGraphBuilderCancelException, IOException,
 			ParserConfigurationException {
 
-		BasicConfigurator.configure();
 		if (args.length < 2) {
 			logger.error("Usage: Summarizer <jarfile> <methoddescriptor> [static|notstatic]");
 			logger.error("   methoddescriptor -- a specification of a java method, formatted as:");

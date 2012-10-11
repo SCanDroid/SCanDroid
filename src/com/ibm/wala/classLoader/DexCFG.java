@@ -18,7 +18,6 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.Set;
 
-import org.apache.log4j.lf5.LogLevel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

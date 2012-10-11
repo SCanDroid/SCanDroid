@@ -37,13 +37,17 @@
 
 package util;
 
-import java.io.File;
-import java.util.*;
-
-import org.apache.commons.cli.*;
-import org.apache.log4j.BasicConfigurator;
-
 import static java.lang.System.setProperty;
+
+import java.io.File;
+
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.OptionBuilder;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
+import org.apache.commons.cli.PosixParser;
 
 public class CLI {
 

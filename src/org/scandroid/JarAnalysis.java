@@ -19,7 +19,6 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.log4j.BasicConfigurator;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Lists;
@@ -48,8 +47,6 @@ public class JarAnalysis {
 	 */
 	public static void main(String[] args) throws IOException,
 			ClassNotFoundException {
-		BasicConfigurator.configure();
-
 		final String appJar = args[0];
 		final String blacklistFile = args.length == 2 ? args[1] : null;
 		Set<String> blacklist = loadLinesAsSet(blacklistFile);

@@ -12,8 +12,6 @@ import java.util.Map;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
-import org.apache.log4j.BasicConfigurator;
-
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -33,7 +31,6 @@ public class JarInspector {
 	 * @throws ClassNotFoundException 
 	 */
 	public static void main(String[] args) throws IOException, ClassNotFoundException {
-		BasicConfigurator.configure();
 		
 		final String appJar = args[0];
 		final Multimap<String, String> pkgMethods = getMethodsByPackage(appJar);

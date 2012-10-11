@@ -43,8 +43,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 
-import org.apache.log4j.BasicConfigurator;
-
 import util.IFDSTaintFlowFunctionProvider;
 
 import com.ibm.wala.classLoader.IMethod;
@@ -108,8 +106,7 @@ public class StringPrefixAnalysis {
      * @throws WalaException
      * @throws CloneNotSupportedException
      */
-    public static void main(String[] args) throws IOException, IllegalArgumentException, CancelException, WalaException, CloneNotSupportedException {
-    	BasicConfigurator.configure();
+    public static void main(String[] args) throws IOException, IllegalArgumentException, CancelException, WalaException, CloneNotSupportedException {    	
         //    AnalysisScope scope = AnalysisScopeReader.makeJavaBinaryAnalysisScope(args[0], new FileProvider().getFile(""));
         final AnalysisScope scope = AnalysisScopeReader.makeJavaBinaryAnalysisScope("/Users/scubafuchs/Documents/wala_workspace/HelloAndroid/simple_program.jar:/Users/scubafuchs/working/android-sdk-mac_x86-1.5_r1/platforms/android-1.1/android.jar", new FileProvider().getFile("bin/Java60RegressionExclusions.txt"));
         ClassHierarchy cha = ClassHierarchy.make(scope);

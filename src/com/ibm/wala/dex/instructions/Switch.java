@@ -39,7 +39,6 @@
 
 package com.ibm.wala.dex.instructions;
 
-import org.apache.log4j.lf5.LogLevel;
 import org.jf.dexlib.Code.Opcode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
