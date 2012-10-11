@@ -68,7 +68,7 @@ public class DexFileModule implements Module {
      *            the .dex or .apk file
      * @throws IllegalArgumentException
      */
-    public DexFileModule(File f) throws IllegalArgumentException {
+    public DexFileModule(File f) throws IllegalArgumentException {    	
         try {
             dexfile = new DexFile(f);
         } catch (IOException e) {

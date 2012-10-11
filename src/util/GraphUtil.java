@@ -48,40 +48,45 @@ import com.ibm.wala.ipa.callgraph.CGNode;
 import com.ibm.wala.ipa.cfg.BasicBlockInContext;
 import com.ibm.wala.properties.WalaProperties;
 import com.ibm.wala.ssa.ISSABasicBlock;
-import com.ibm.wala.ssa.analysis.IExplodedBasicBlock;
+import com.ibm.wala.util.WalaException;
 import com.ibm.wala.util.debug.Assertions;
 import com.ibm.wala.util.graph.Graph;
-import com.ibm.wala.util.WalaException;
 
 import domain.DomainElement;
 
-public class GraphUtil{
+public class GraphUtil {
 	private static String folderPath = "callgraphs";
-	private static Graph<CGNode> cg;
-	private static String suffix;
 
-	public static <E extends ISSABasicBlock>void makeCG(AndroidAnalysisContext<E> androidAppLoader) {
-		GraphUtil.cg =  androidAppLoader.cg;
-		GraphUtil.suffix = "FullCallGraph";
-		make();
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	public static <E extends ISSABasicBlock> void makeCG(
+			AndroidAnalysisContext<E> analysisContext) {
+		make(analysisContext.getOptions().getFilename(), (Graph) analysisContext.cg,
+				"FullCallGraph");
 	}
-	public static<E extends ISSABasicBlock> void makePCG(AndroidAnalysisContext<E> loader) {
-		GraphUtil.cg = loader.partialGraph;
-		GraphUtil.suffix = "PartialCallGraph";
-		make();
-	}
-	public static <E extends ISSABasicBlock> void makeOneLCG(AndroidAnalysisContext<E> loader) {
-		GraphUtil.cg = loader.oneLevelGraph;
-		GraphUtil.suffix = "OneLevelCallGraph";
-		make();
-	}  
-	public static <E extends ISSABasicBlock> void makeSystemToAPKCG(AndroidAnalysisContext<E> loader) {
-        GraphUtil.cg = loader.systemToApkGraph;
-        GraphUtil.suffix = "SystemToApkGraph";
-        make();
-    }
 
-	public static <E extends ISSABasicBlock> void exploreIFDS(TabulationResult<BasicBlockInContext<E>, CGNode, DomainElement> flowResult) {
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	public static <E extends ISSABasicBlock> void makePCG(
+			AndroidAnalysisContext<E> analysisContext) {
+		make(analysisContext.getOptions().getFilename(),
+				(Graph) analysisContext.partialGraph, "PartialCallGraph");
+	}
+
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	public static <E extends ISSABasicBlock> void makeOneLCG(
+			AndroidAnalysisContext<E> analysisContext) {
+		make(analysisContext.getOptions().getFilename(),
+				(Graph) analysisContext.oneLevelGraph, "OneLevelCallGraph");
+	}
+
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	public static <E extends ISSABasicBlock> void makeSystemToAPKCG(
+			AndroidAnalysisContext<E> analysisContext) {
+		make(analysisContext.getOptions().getFilename(),
+				(Graph) analysisContext.systemToApkGraph, "SystemToApkGraph");
+	}
+
+	public static <E extends ISSABasicBlock> void exploreIFDS(
+			TabulationResult<BasicBlockInContext<E>, CGNode, DomainElement> flowResult) {
 		Properties p = null;
 		try {
 			p = WalaProperties.loadProperties();
@@ -90,16 +95,17 @@ public class GraphUtil{
 			Assertions.UNREACHABLE();
 		}
 		IFDSExplorer.setDotExe(p.getProperty(WalaExamplesProperties.DOT_EXE));
-		IFDSExplorer.setGvExe(p.getProperty(WalaExamplesProperties.PDFVIEW_EXE));
+		IFDSExplorer
+				.setGvExe(p.getProperty(WalaExamplesProperties.PDFVIEW_EXE));
 		try {
 			IFDSExplorer.viewIFDS(flowResult);
-		} catch(Exception e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 
 	}
 
-	private static void make() {
+	private static void make(String filename, Graph<Object> cg, String suffix) {
 		Properties p = null;
 		try {
 			p = WalaProperties.loadProperties();
@@ -113,8 +119,10 @@ public class GraphUtil{
 			theDir.mkdir();
 
 		String pdfFile, dotFile, dotExe;
-		pdfFile = folderPath + File.separatorChar + CLI.getFilename() + "." + suffix + ".pdf";
-		dotFile = folderPath + File.separatorChar + CLI.getFilename() + PDFTypeHierarchy.DOT_FILE;
+		pdfFile = folderPath + File.separatorChar + filename + "." + suffix
+				+ ".pdf";
+		dotFile = folderPath + File.separatorChar + filename
+				+ PDFTypeHierarchy.DOT_FILE;
 		dotExe = p.getProperty(WalaExamplesProperties.DOT_EXE);
 		try {
 			DexDotUtil.dotify(cg, null, dotFile, pdfFile, dotExe);
@@ -123,7 +131,5 @@ public class GraphUtil{
 			Assertions.UNREACHABLE();
 		}
 	}
-
-
 
 }

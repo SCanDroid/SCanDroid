@@ -53,6 +53,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.jar.JarFile;
 
+import org.scandroid.util.ISCanDroidOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,7 +66,6 @@ import com.ibm.wala.dataflow.IFDS.ISupergraph;
 import com.ibm.wala.dex.util.config.DexAnalysisScopeReader;
 import com.ibm.wala.ipa.callgraph.AnalysisCache;
 import com.ibm.wala.ipa.callgraph.AnalysisOptions;
-import com.ibm.wala.ipa.callgraph.AnalysisOptions.ReflectionOptions;
 import com.ibm.wala.ipa.callgraph.AnalysisScope;
 import com.ibm.wala.ipa.callgraph.CGNode;
 import com.ibm.wala.ipa.callgraph.CallGraph;
@@ -112,6 +112,7 @@ public class AndroidAnalysisContext<E extends ISSABasicBlock> {
 	private static final String methodSpec = "MethodSummaries.xml";
 	private static final String pathToSpec = "data";
 
+	private final ISCanDroidOptions options;
 	private final AnalysisScope scope;
 	public final ClassHierarchy cha;
 	public final LinkedList<Entrypoint> entries;
@@ -123,10 +124,11 @@ public class AndroidAnalysisContext<E extends ISSABasicBlock> {
 	public Graph<CGNode> oneLevelGraph;
 	public Graph<CGNode> systemToApkGraph;
 
-	public AndroidAnalysisContext(String classpath)
+	public AndroidAnalysisContext(ISCanDroidOptions options)
 			throws IllegalArgumentException, ClassHierarchyException,
 			IOException, CancelException, URISyntaxException {
-		this(classpath, new JarFile(CLI.getOption("android-lib")));
+		this(options, new FileProvider().getFile("conf" + File.separator
+				+ "Java60RegressionExclusions.txt"));
 	}
 
 	/**
@@ -139,16 +141,17 @@ public class AndroidAnalysisContext<E extends ISSABasicBlock> {
 	 * @throws ClassHierarchyException
 	 * @throws URISyntaxException
 	 */
-	public AndroidAnalysisContext(File exclusions, String classpath,
-			JarFile androidLib) throws IOException, IllegalArgumentException,
-			CancelException, ClassHierarchyException, URISyntaxException {
-
+	public AndroidAnalysisContext(ISCanDroidOptions options, File exclusions)
+			throws IOException, IllegalArgumentException, CancelException,
+			ClassHierarchyException, URISyntaxException {
+		this.options = options;
 		scope = DexAnalysisScopeReader.makeAndroidBinaryAnalysisScope(
-				classpath, exclusions);
+				options.getClasspath(), exclusions);
 
 		scope.setLoaderImpl(ClassLoaderReference.Application,
 				"com.ibm.wala.classLoader.WDexClassLoaderImpl");
-		scope.addToScope(ClassLoaderReference.Primordial, androidLib);
+		scope.addToScope(ClassLoaderReference.Primordial, new JarFile(new File(
+				options.getAndroidLibrary())));
 		cha = ClassHierarchy.make(scope);
 
 		// log ClassHierarchy warnings
@@ -159,15 +162,8 @@ public class AndroidAnalysisContext<E extends ISSABasicBlock> {
 		Warnings.clear();
 
 		// Try to look for entry points
-		EntryPoints ep = new EntryPoints(classpath, cha, this);
+		EntryPoints ep = new EntryPoints(options, cha, this);
 		entries = ep.getEntries();
-	}
-
-	public AndroidAnalysisContext(String classpath, JarFile androidLib)
-			throws IOException, IllegalArgumentException, CancelException,
-			ClassHierarchyException, URISyntaxException {
-		this(new FileProvider().getFile("conf" + File.separator
-				+ "Java60RegressionExclusions.txt"), classpath, androidLib);
 	}
 
 	// ContextSelector, entry points, reflection options, IR Factory, call graph
@@ -175,25 +171,20 @@ public class AndroidAnalysisContext<E extends ISSABasicBlock> {
 	public void buildGraphs(List<Entrypoint> localEntries,
 			InputStream summariesStream) throws CancelException {
 
-		AnalysisOptions options = new AnalysisOptions(scope, localEntries);
+		AnalysisOptions analysisOptions = new AnalysisOptions(scope, localEntries);
 		for (Entrypoint e : localEntries) {
 			logger.debug("Entrypoint: " + e);
 		}
 
-		options.setEntrypoints(localEntries);
-
-		if (CLI.hasOption("reflection"))
-			options.setReflectionOptions(ReflectionOptions.valueOf(CLI
-					.getOption("reflection")));
-		else
-			options.setReflectionOptions(ReflectionOptions.NONE);
-
+		analysisOptions.setEntrypoints(localEntries);
+		analysisOptions.setReflectionOptions(options.getReflectionOptions());
+		
 		AnalysisCache cache = new AnalysisCache(
 				(IRFactory<IMethod>) new DexIRFactory());
 
 		SSAPropagationCallGraphBuilder cgb;
 
-		cgb = makeZeroCFABuilder(options, cache, cha, scope,
+		cgb = makeZeroCFABuilder(analysisOptions, cache, cha, scope,
 				new ReceiverTypeContextSelector(), null, summariesStream, null);
 
 		// CallGraphBuilder construction warnings
@@ -215,7 +206,8 @@ public class AndroidAnalysisContext<E extends ISSABasicBlock> {
 			e.printStackTrace();
 		}
 
-		if (CLI.hasOption("test-cgb")) {
+		if (options.testCGBuilder()) {
+			// TODO: this is too specialized for cmd-line apps
 			int status = graphBuilt ? 0 : 1;
 			System.exit(status);
 		}
@@ -249,7 +241,7 @@ public class AndroidAnalysisContext<E extends ISSABasicBlock> {
 		CallGraph pcg = PartialCallGraph.make(cg, cg.getEntrypointNodes(),
 				nodes);
 
-		if (CLI.hasOption("include-library"))
+		if (options.includeLibrary())
 			graph = (ISupergraph) ICFGSupergraph.make(cg, cache);
 		else
 			graph = (ISupergraph) ICFGSupergraph.make(pcg, cache);
@@ -322,16 +314,16 @@ public class AndroidAnalysisContext<E extends ISSABasicBlock> {
 			}
 		});
 
-		if (CLI.hasOption("c"))
+		if (options.pdfCG())
 			GraphUtil.makeCG(this);
-		if (CLI.hasOption("p"))
+		if (options.pdfPartialCG())
 			GraphUtil.makePCG(this);
-		if (CLI.hasOption("o"))
+		if (options.pdfOneLevelCG())
 			GraphUtil.makeOneLCG(this);
-		if (CLI.hasOption("s"))
+		if (options.systemToApkCG())
 			GraphUtil.makeSystemToAPKCG(this);
 
-		if (CLI.hasOption("a")) {
+		if (options.stdoutCG()) {
 			for (Iterator<CGNode> nodeI = cg.iterator(); nodeI.hasNext();) {
 				CGNode node = nodeI.next();
 
@@ -352,11 +344,11 @@ public class AndroidAnalysisContext<E extends ISSABasicBlock> {
 				SSACFG ssaCFG = node.getIR().getControlFlowGraph();
 				int totalBlocks = ssaCFG.getNumberOfNodes();
 				for (int i = 0; i < totalBlocks; i++) {
-					logger.debug("BLOCK #" + i);
+					logger.trace("BLOCK #" + i);
 					BasicBlock bb = ssaCFG.getBasicBlock(i);
 
 					for (SSAInstruction ssaI : bb.getAllInstructions()) {
-						logger.debug("\tInstruction: " + ssaI);
+						logger.trace("\tInstruction: " + ssaI);
 					}
 				}
 			}
@@ -447,7 +439,7 @@ public class AndroidAnalysisContext<E extends ISSABasicBlock> {
 				summaryClasses.addAll(newSummaryXML.getAllocatableClasses());
 				summaries.putAll(newSummaryXML.getSummaries());
 			}
-			logger.debug("loaded " + summaries.size() + " new summaries");			
+			logger.debug("loaded " + summaries.size() + " new summaries");
 			// for (MethodReference mr : summaries.keySet()) {
 			// logger.debug("summary loaded for: "+mr.getSignature());
 			// }
@@ -516,5 +508,9 @@ public class AndroidAnalysisContext<E extends ISSABasicBlock> {
 			}
 		}
 		return summary;
+	}
+	
+	public ISCanDroidOptions getOptions() {
+		return options;
 	}
 }

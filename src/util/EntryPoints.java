@@ -48,6 +48,7 @@ import java.util.StringTokenizer;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
+import org.scandroid.util.ISCanDroidOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -81,7 +82,7 @@ public class EntryPoints {
 
     private LinkedList<Entrypoint> entries;
 
-    public EntryPoints(String classpath, ClassHierarchy cha, AndroidAnalysisContext loader) {
+    public EntryPoints(ISCanDroidOptions options, ClassHierarchy cha, AndroidAnalysisContext loader) {
         tempFolder = "temp";
         ActivityIntentList = new ArrayList<String[]>();
         ReceiverIntentList = new ArrayList<String[]>();
@@ -102,9 +103,9 @@ public class EntryPoints {
 //      else
 //          defaultEntryPoints(cha, loader);
 
-        if(CLI.hasOption("thread-run-main")) {
+        if(options.useThreadRunMain()) {
             systemEntry(cha, loader);
-        } else if (CLI.hasOption("main-entrypoint")) {
+        } else if (options.addMainEntrypoints()) {
         	Iterable<Entrypoint> mainEntrypoints = Util.makeMainEntrypoints(cha.getScope(), cha);
         	//add main entry point -- however usually used for test suites?  android don't have mains
         	for (Entrypoint entry: mainEntrypoints) {

@@ -40,6 +40,7 @@ package com.ibm.wala.dex.util.config;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 import java.util.jar.JarFile;
 
 import com.ibm.wala.classLoader.BinaryDirectoryTreeModule;
@@ -95,6 +96,27 @@ public class DexAnalysisScopeReader extends AnalysisScopeReader {
 		ClassLoaderReference loader = scope
 				.getLoader(AnalysisScope.APPLICATION);
 		scope.addToScope(loader, classPath);
+		return scope;
+	}
+
+	public static AnalysisScope makeAndroidBinaryAnalysisScope(URI classPath,
+			File exclusionsFile) throws IOException {
+		if (classPath == null) {
+			throw new IllegalArgumentException("classPath null");
+		}
+		AnalysisScope scope = AnalysisScopeReader.readJavaScope(BASIC_FILE,
+				exclusionsFile, WALA_CLASSLOADER);
+		ClassLoaderReference loader = scope
+				.getLoader(AnalysisScope.APPLICATION);
+		
+		final String path = classPath.getPath();
+		if (path.endsWith(".jar")) {
+			scope.addToScope(loader, new JarFile(new File(classPath)));
+		} else if (path.endsWith(".apk")
+				|| path.endsWith(".dex")) {
+			scope.addToScope(loader, new DexFileModule(new File(classPath)));
+		}
+
 		return scope;
 	}
 

@@ -49,8 +49,6 @@ import org.slf4j.LoggerFactory;
 
 import synthMethod.MethodAnalysis;
 import util.AndroidAnalysisContext;
-import util.CLI;
-import util.GraphUtil;
 import util.IFDSTaintFlowFunctionProvider;
 
 import com.google.common.collect.Lists;
@@ -81,19 +79,20 @@ public class FlowAnalysis {
 
     public static <E extends ISSABasicBlock>
     TabulationResult<BasicBlockInContext<E>, CGNode, DomainElement> 
-    analyze(final AndroidAnalysisContext<E> loader,
+    analyze(final AndroidAnalysisContext<E> analysisContext,
           Map<BasicBlockInContext<E>,
           Map<FlowType<E>,Set<CodeElement>>> initialTaints,
           IFDSTaintDomain<E> d,
           MethodAnalysis<E> methodAnalysis, IProgressMonitor progressMonitor
           ) throws CancelRuntimeException {
-        return analyze(loader.graph, loader.cg, loader.pa, initialTaints, d, methodAnalysis, progressMonitor);
+        return analyze(analysisContext.graph, analysisContext.cg, analysisContext.pa, initialTaints, d, methodAnalysis, progressMonitor);
     }
     
     
     public static <E extends ISSABasicBlock>
       TabulationResult<BasicBlockInContext<E>, CGNode, DomainElement> 
-      analyze(final ISupergraph<BasicBlockInContext<E>, CGNode> graph,
+      analyze(final ISupergraph<BasicBlockInContext<E>, 
+    		  CGNode> graph,
               CallGraph cg,
               PointerAnalysis pa,
               Map<BasicBlockInContext<E>, Map<FlowType<E>,Set<CodeElement>>> initialTaints,
@@ -177,12 +176,12 @@ public class FlowAnalysis {
 
         try {
         	TabulationResult<BasicBlockInContext<E>,CGNode, DomainElement> flowResult = solver.solve();
-        	if (CLI.hasOption("IFDS-Explorer")) {
-        		for (int i = 1; i < domain.getSize(); i++) {        			
-                    logger.debug("DomainElement #"+i+" = " + domain.getMappedObject(i));        			
-        		}
-        		GraphUtil.exploreIFDS(flowResult);
-        	}
+//        	if (options.ifdsExplorer()) {
+//        		for (int i = 1; i < domain.getSize(); i++) {        			
+//                    logger.debug("DomainElement #"+i+" = " + domain.getMappedObject(i));        			
+//        		}
+//        		GraphUtil.exploreIFDS(flowResult);
+//        	}
             return flowResult;
         } catch (CancelException e) {
             throw new CancelRuntimeException(e);

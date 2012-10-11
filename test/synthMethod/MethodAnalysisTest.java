@@ -82,6 +82,7 @@ public class MethodAnalysisTest {
 			+ "testJar-1.0-SNAPSHOT.jar";
 	private static final Predicate<IMethod> MAIN_METHODS = MethodPredicates
 			.isNamed("main");
+	
 	private ClassHierarchy cha;
 	private AnalysisScope scope;
 
