@@ -25,6 +25,8 @@ import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.DOMException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -33,7 +35,6 @@ import org.w3c.dom.NodeList;
 import com.ibm.wala.classLoader.IClass;
 import com.ibm.wala.classLoader.IMethod;
 import com.ibm.wala.ipa.callgraph.propagation.InstanceKey;
-import com.ibm.wala.ssa.SSAGetInstruction;
 import com.ibm.wala.ssa.analysis.IExplodedBasicBlock;
 import com.ibm.wala.types.FieldReference;
 import com.ibm.wala.util.intset.OrdinalSet;
@@ -46,6 +47,7 @@ import flow.types.FlowType;
 import flow.types.ParameterFlow;
 
 public class XMLMethodSummaryWriter {
+	private static final Logger logger = LoggerFactory.getLogger(XMLMethodSummaryWriter.class);
 	public static String outputFile = "newMethodSummaries.xml";
 	public static String outputPath = "data";
 
@@ -182,8 +184,7 @@ public class XMLMethodSummaryWriter {
         try {
             doc = createXML(methodAnalysis);
         } catch (ParserConfigurationException e) {
-            System.err.println("Could not create XML: ");
-            e.printStackTrace();
+            logger.error("Could not create XML", e);
             return;
         }
         

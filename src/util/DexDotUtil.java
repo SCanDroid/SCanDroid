@@ -12,9 +12,6 @@
 
 package util;
 
-import static util.MyLogger.LogLevel.DEBUG;
-import static util.MyLogger.LogLevel.ERROR;
-
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileWriter;
@@ -22,16 +19,19 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.StringTokenizer;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.ibm.wala.util.WalaException;
 import com.ibm.wala.util.collections.Iterator2Collection;
 import com.ibm.wala.util.debug.Assertions;
 import com.ibm.wala.util.graph.Graph;
-import com.ibm.wala.util.WalaException;
 import com.ibm.wala.viz.DotUtil;
 import com.ibm.wala.viz.NodeDecorator;
 
 public class DexDotUtil extends DotUtil {
+	private static final Logger logger = LoggerFactory.getLogger(DexDotUtil.class);
 
      /**
        * possible output formats for dot
@@ -98,7 +98,7 @@ public class DexDotUtil extends DotUtil {
           throw new IllegalArgumentException("dotFile is null");
         }
         String[] cmdarray = { dotExe, outputTypeCmdLineParam(), "-o", outputFile, "-v", dotFile.getAbsolutePath() };
-        MyLogger.log(DEBUG, "spawning process " + Arrays.toString(cmdarray));
+        logger.debug("spawning process " + Arrays.toString(cmdarray));
         BufferedInputStream output = null;
         BufferedInputStream error = null;
         try {
@@ -116,18 +116,18 @@ public class DexDotUtil extends DotUtil {
             if (output.available() > 0) {
               byte[] data = new byte[output.available()];
               int nRead = output.read(data);
-              MyLogger.log(ERROR, "read " + nRead + " bytes from output stream");
+              logger.error("read " + nRead + " bytes from output stream");
             }
             if (error.available() > 0) {
               byte[] data = new byte[error.available()];
               int nRead = error.read(data);
-              MyLogger.log(ERROR, "read " + nRead + " bytes from error stream");
+              logger.error("read " + nRead + " bytes from error stream");
             }
             try {
               p.exitValue();
               // if we get here, the process has terminated
               repeat = false;
-              MyLogger.log(DEBUG, "process terminated with exit code " + p.exitValue());
+              logger.debug("process terminated with exit code " + p.exitValue());
             } catch (IllegalThreadStateException e) {
               // this means the process has not yet terminated.
               repeat = true;

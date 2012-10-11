@@ -51,14 +51,15 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import spec.CallArgSourceSpec;
 import spec.CallRetSourceSpec;
 import spec.EntryArgSourceSpec;
 import spec.ISpecs;
 import spec.SourceSpec;
 import util.AndroidAnalysisContext;
-import util.MyLogger;
-import util.MyLogger.LogLevel;
 
 import com.google.common.collect.Maps;
 import com.ibm.wala.classLoader.IMethod;
@@ -79,6 +80,7 @@ import flow.types.FlowType;
 import flow.types.IKFlow;
 
 public class InflowAnalysis <E extends ISSABasicBlock> {
+	private static final Logger logger = LoggerFactory.getLogger(InflowAnalysis.class);
 
     public static <E extends ISSABasicBlock>
     void addDomainElements(
@@ -205,14 +207,14 @@ public class InflowAnalysis <E extends ISSABasicBlock> {
           Map<InstanceKey, String> prefixes,
           ISpecs s) {
 
-        System.out.println("***************************");
-        System.out.println("* Running inflow analysis *");
-        System.out.println("***************************");
+        logger.debug("***************************");
+        logger.debug("* Running inflow analysis *");
+        logger.debug("***************************");
 
         Map<BasicBlockInContext<E>, Map<FlowType<E>,Set<CodeElement>>> taintMap = Maps.newHashMap();
 
         SourceSpec[] ss = s.getSourceSpecs();
-        MyLogger.log(LogLevel.DEBUG, ss.length + " Source Specs. ");
+        logger.debug(ss.length + " Source Specs. ");
         
         ArrayList<SourceSpec> ssAL = new ArrayList<SourceSpec>();
         for (int i = 0; i < ss.length; i++) {
@@ -226,9 +228,9 @@ public class InflowAnalysis <E extends ISSABasicBlock> {
         if (!ssAL.isEmpty())
         	processFunctionCalls(taintMap, ssAL, graph, pa, cha, cg);
 
-        System.out.println("************");
-        System.out.println("* Results: *");
-        System.out.println("************");
+        logger.debug("************");
+        logger.debug("* Results: *");
+        logger.debug("************");
         for(Entry<BasicBlockInContext<E>, Map<FlowType<E>,Set<CodeElement>>> e:taintMap.entrySet())
         {
             for(Entry<FlowType<E>,Set<CodeElement>> e2:e.getValue().entrySet())
@@ -238,9 +240,9 @@ public class InflowAnalysis <E extends ISSABasicBlock> {
                     if (e2.getKey() instanceof IKFlow) {
                     	InstanceKey e2IK = ((IKFlow)e2.getKey()).getIK();
                     	if (prefixes.containsKey(e2IK))
-                    			System.out.println("Uri Prefix: " + prefixes.get(e2IK));                    	
+                    			logger.debug("Uri Prefix: " + prefixes.get(e2IK));                    	
                     }
-                    System.out.println("\tBasicBlockInContext: "+e.getKey()+"\n\tFlowType: "+e2.getKey()+"\n\tCodeElement: "+o+"\n");
+                    logger.debug("\tBasicBlockInContext: "+e.getKey()+"\n\tFlowType: "+e2.getKey()+"\n\tCodeElement: "+o+"\n");
 
                 }
             }

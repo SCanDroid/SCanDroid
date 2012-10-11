@@ -39,14 +39,15 @@
 
 package com.ibm.wala.dex.instructions;
 
+import org.apache.log4j.lf5.LogLevel;
 import org.jf.dexlib.Code.Opcode;
-
-import util.MyLogger;
-import util.MyLogger.LogLevel;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.ibm.wala.classLoader.DexIMethod;
 
 public class Switch extends Instruction {
+	private static final Logger logger = LoggerFactory.getLogger(Switch.class);
 
     public final int regA;
     public final int tableAddressOffset;
@@ -73,12 +74,12 @@ public class Switch extends Instruction {
             casesAndLabels[i] = method.getInstructionIndex(pc+casesAndLabels[i]);
 
         defaultLabel = method.getInstructionIndex(pc + pad.getDefaultOffset());
-        MyLogger.log(LogLevel.DEBUG, "SwitchInstruction");
+        logger.debug("SwitchInstruction");
         for (int i = 0; i < casesAndLabels.length; i+=2) {
-        	MyLogger.log(LogLevel.DEBUG, "\tcase: " + casesAndLabels[i] + 
+        	logger.debug("\tcase: " + casesAndLabels[i] + 
         			" label: "+casesAndLabels[i+1]);
         }
-        MyLogger.log(LogLevel.DEBUG, "\tdefaultLabel: " + defaultLabel);
+        logger.debug("\tdefaultLabel: " + defaultLabel);
     }
 
     public int[] getOffsets()

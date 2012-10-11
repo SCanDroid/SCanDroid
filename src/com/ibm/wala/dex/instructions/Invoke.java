@@ -39,16 +39,16 @@
 
 package com.ibm.wala.dex.instructions;
 
-import static util.MyLogger.log;
-import static util.MyLogger.LogLevel.DEBUG;
-
 import org.jf.dexlib.Code.Opcode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.ibm.wala.classLoader.DexIMethod;
 import com.ibm.wala.shrikeBT.IInvokeInstruction;
 import com.ibm.wala.shrikeBT.IInvokeInstruction.IDispatch;
 
 public abstract class Invoke extends Instruction {
+	private static final Logger logger = LoggerFactory.getLogger(Invoke.class);
 
     public final int [] args;
     public final String clazzName;
@@ -71,7 +71,7 @@ public abstract class Invoke extends Instruction {
                 String clazzName, String methodName, String descriptor,
                 int[] args, Opcode opcode, DexIMethod method) {
             super(instLoc, clazzName, methodName, descriptor, args, opcode, method);
-            log(DEBUG, "constructing "+toString());
+            logger.debug("constructing "+toString());
         }
         @Override
         public IDispatch getInvocationCode() {
@@ -100,7 +100,7 @@ public abstract class Invoke extends Instruction {
                 String clazzName, String methodName, String descriptor,
                 int[] args, Opcode opcode, DexIMethod method) {
             super(instLoc, clazzName, methodName, descriptor, args, opcode, method);
-            log(DEBUG, "constructing "+toString());
+            logger.debug("constructing "+toString());
 
         }
         @Override
@@ -132,7 +132,7 @@ public abstract class Invoke extends Instruction {
                 String clazzName, String methodName, String descriptor,
                 int[] args, Opcode opcode, DexIMethod method) {
             super(instLoc, clazzName, methodName, descriptor, args, opcode, method);
-            log(DEBUG, toString());
+            logger.debug(toString());
         }
         @Override
         public IDispatch getInvocationCode() {
@@ -163,7 +163,7 @@ public abstract class Invoke extends Instruction {
                 String clazzName, String methodName, String descriptor,
                 int[] args, Opcode opcode, DexIMethod method) {
             super(instLoc, clazzName, methodName, descriptor, args, opcode, method);
-            log(DEBUG, "constructing "+toString());
+            logger.debug("constructing "+toString());
         }
         @Override
         public IDispatch getInvocationCode() {
@@ -193,7 +193,7 @@ public abstract class Invoke extends Instruction {
                 String clazzName, String methodName, String descriptor,
                 int[] args, Opcode opcode, DexIMethod method) {
             super(instLoc, clazzName, methodName, descriptor, args, opcode, method);
-            log(DEBUG, "constructing "+toString());
+            logger.debug("constructing "+toString());
         }
 
         @Override

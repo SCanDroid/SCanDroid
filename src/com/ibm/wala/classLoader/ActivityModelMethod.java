@@ -41,18 +41,20 @@ import static org.jf.dexlib.ItemType.TYPE_CLASS_DEF_ITEM;
 
 import java.io.File;
 
+import org.apache.log4j.lf5.LogLevel;
 import org.jf.dexlib.ClassDataItem.EncodedMethod;
 import org.jf.dexlib.ClassDefItem;
 import org.jf.dexlib.DexFile;
 import org.jf.dexlib.Section;
 import org.jf.dexlib.Code.Opcode;
-
-import util.MyLogger;
-import util.MyLogger.LogLevel;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.ibm.wala.dex.instructions.Invoke;
 
 public class ActivityModelMethod extends DexIMethod {
+	private static final Logger logger = LoggerFactory
+			.getLogger(ActivityModelMethod.class);
 	private static EncodedMethod ActivityModelM;
 
 	public ActivityModelMethod(EncodedMethod encodedMethod, DexIClass klass) {
@@ -226,10 +228,9 @@ public class ActivityModelMethod extends DexIMethod {
 		}
 		instructions.add(new Invoke.InvokeVirtual(instLoc, cname, mname, pname,
 				args, opcode, this));
-		MyLogger.log(LogLevel.DEBUG,
-				"\tActivityModelMethod " + opcode.toString() + " class: "
-						+ cname + ", method name: " + mname
-						+ ", prototype string: " + pname);
+		logger.debug("\tActivityModelMethod " + opcode.toString() + " class: "
+				+ cname + ", method name: " + mname + ", prototype string: "
+				+ pname);
 
 	}
 }

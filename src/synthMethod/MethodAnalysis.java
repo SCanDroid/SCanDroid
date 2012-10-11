@@ -35,23 +35,19 @@
  *
  */
 
-
 package synthMethod;
 
-import static util.MyLogger.LogLevel.DEBUG;
-
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import util.IFDSTaintFlowFunctionProvider;
 import util.LoaderUtils;
-import util.MyLogger;
-import util.MyLogger.LogLevel;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -97,94 +93,90 @@ import flow.types.FieldFlow;
 import flow.types.FlowType;
 import flow.types.ParameterFlow;
 
+public class MethodAnalysis<E extends ISSABasicBlock> {
+	private static final Logger logger = LoggerFactory
+			.getLogger(MethodAnalysis.class);
 
-public class MethodAnalysis <E extends ISSABasicBlock>  {
-	
-	//contains a mapping from an IMethod to a mapping of flows
-	//parameters and fields to returns or other fields.
-	public final Map<IMethod, Map<FlowType<E>, Set<CodeElement>>> newSummaries =
-	        Maps.newHashMap();
-	
-	//contains a mapping from an IMethod to a mapping of Integers
-	//(which represent the parameter #) to their respective instancekey set
-	public final Map<IMethod, Map<Integer, OrdinalSet<InstanceKey>>> methodTaints = 
-	        Maps.newHashMap();
-	
+	// contains a mapping from an IMethod to a mapping of flows
+	// parameters and fields to returns or other fields.
+	public final Map<IMethod, Map<FlowType<E>, Set<CodeElement>>> newSummaries = Maps
+			.newHashMap();
+
+	// contains a mapping from an IMethod to a mapping of Integers
+	// (which represent the parameter #) to their respective instancekey set
+	public final Map<IMethod, Map<Integer, OrdinalSet<InstanceKey>>> methodTaints = Maps
+			.newHashMap();
+
 	private final Set<MethodReference> blacklist = Sets.newHashSet();
-			
-	
+
 	private Predicate<IMethod> isConstructor = new Predicate<IMethod>() {
 		@Override
 		public boolean test(IMethod t) {
 			return t.isInit();
 		}
 	};
-	
-	private Predicate<IMethod> p = new Predicate<IMethod>(){
+
+	private Predicate<IMethod> p = new Predicate<IMethod>() {
+		@Override
+		public boolean test(IMethod im) {
+			if (im.isSynthetic())
+				return false;
+			if (newSummaries.containsKey(im))
+				return false;
+			return true;
+		}
+	}.and(isConstructor.not()); // the summary files can't summarize
+								// constructors.
+
+	public MethodAnalysis() {
+		this.p = this.p.and(new Predicate<IMethod>() {
 			@Override
 			public boolean test(IMethod im) {
-				if (im.isSynthetic())
-					return false;
-				if (newSummaries.containsKey(im))
-					return false;
-				return true;
+				return LoaderUtils.fromLoader(im,
+						ClassLoaderReference.Primordial);
 			}
-		}.and(isConstructor.not()); // the summary files can't summarize constructors.
-	
-	public MethodAnalysis() {
-	    this.p = this.p.and(new Predicate<IMethod>() {
-            @Override
-            public boolean test(IMethod im) {
-                return LoaderUtils.fromLoader(im, ClassLoaderReference.Primordial);
-            }
-	    });
+		});
 	}
-	
+
 	public MethodAnalysis(Predicate<IMethod> pred) {
 		this.p = this.p.and(pred);
 	}
-	
+
 	private boolean shouldSummarize(IMethod entryMethod) {
 		return p.test(entryMethod);
 	}
-	
+
 	/**
 	 * Summarize a method.
 	 * 
 	 * @param graph
 	 * @param pa
-	 * @param callerBlock The block where this method is *invoked*.  This should
-	 *        be set to null if you are invoking this method directly -- the mutual recursion 
-	 *        that causes subsequent invocations will provide caller blocks for the
-	 *        purposes of tracking the blacklist. 
-	 * @param methEntryBlock  The entry block for the method that is to be summarized.
+	 * @param callerBlock
+	 *            The block where this method is *invoked*. This should be set
+	 *            to null if you are invoking this method directly -- the mutual
+	 *            recursion that causes subsequent invocations will provide
+	 *            caller blocks for the purposes of tracking the blacklist.
+	 * @param methEntryBlock
+	 *            The entry block for the method that is to be summarized.
 	 * @throws CancelRuntimeException
 	 */
 	public void analyze(
-            final ISupergraph<BasicBlockInContext<E>, CGNode> graph,
-            final PointerAnalysis pa,
-            final BasicBlockInContext<E> callerBlock,
-            final BasicBlockInContext<E> methEntryBlock // TODO make this into a node or IMethod
-            ) throws CancelRuntimeException {
-		
-		boolean DEBUG = false;
-		if (DEBUG) {
-			String signature = methEntryBlock.getMethod().getSignature();
-			System.out.print("   Method Analysis working on: "+signature);
-		}
-        final IFDSTaintDomain<E> domain = new IFDSTaintDomain<E>();
-    
-        IMethod entryMethod = methEntryBlock.getMethod();
+			final ISupergraph<BasicBlockInContext<E>, CGNode> graph,
+			final PointerAnalysis pa, final BasicBlockInContext<E> callerBlock,
+			final BasicBlockInContext<E> methEntryBlock // TODO make this into a
+														// node or IMethod
+	) throws CancelRuntimeException {
+
+		String signature = methEntryBlock.getMethod().getSignature();
+		logger.debug("   Method Analysis working on: " + signature);
+
+		final IFDSTaintDomain<E> domain = new IFDSTaintDomain<E>();
+
+		IMethod entryMethod = methEntryBlock.getMethod();
 
 		if (!shouldSummarize(entryMethod)) {
-			if (DEBUG) {
-				System.out.println(" (but not summarizing)");
-			}
+			logger.debug(" (but not summarizing)");
 			return;
-		} else {
-			if (DEBUG) {
-				System.out.println();
-			}
 		}
 
 		Map<FlowType<E>, Set<CodeElement>> methodFlows = Maps.newHashMap();
@@ -194,44 +186,42 @@ public class MethodAnalysis <E extends ISSABasicBlock>  {
 		Map<Integer, OrdinalSet<InstanceKey>> pTaintIKMap = Maps.newHashMap();
 		methodTaints.put(entryMethod, pTaintIKMap);
 
-		final List<PathEdge<BasicBlockInContext<E>>>
-		         initialEdges = Lists.newArrayList();
-		
+		final List<PathEdge<BasicBlockInContext<E>>> initialEdges = Lists
+				.newArrayList();
+
 		Set<DomainElement> initialTaints = Sets.newHashSet();
 
-		// Add PathEdges to the initial taints.  
+		// Add PathEdges to the initial taints.
 		// In this case, taint all parameters into the method call
 		for (int i = 0; i < entryMethod.getNumberOfParameters(); i++) {
-			//int id = entryMethod.isStatic()?i:i+1;
-			OrdinalSet<InstanceKey> pointsToSet = 
-			        pa.getPointsToSet(
-			                new LocalPointerKey(methEntryBlock.getNode(),
-			                		methEntryBlock.getNode().getIR().getParameter(i)
-			                        ));
+			// int id = entryMethod.isStatic()?i:i+1;
+			OrdinalSet<InstanceKey> pointsToSet = pa
+					.getPointsToSet(new LocalPointerKey(methEntryBlock
+							.getNode(), methEntryBlock.getNode().getIR()
+							.getParameter(i)));
 
-            pTaintIKMap.put(i, pointsToSet);
+			pTaintIKMap.put(i, pointsToSet);
 
 			DomainElement de = new DomainElement(new LocalElement(i + 1),
-			                         new ParameterFlow<E>(methEntryBlock, i, true));
+					new ParameterFlow<E>(methEntryBlock, i, true));
 			initialTaints.add(de);
 
 			// taint the parameter:
 			int taint = domain.getMappedIndex(de);
-			initialEdges.add(PathEdge.createPathEdge(methEntryBlock, 0, methEntryBlock, 
-					taint));
-			
+			initialEdges.add(PathEdge.createPathEdge(methEntryBlock, 0,
+					methEntryBlock, taint));
+
 			// taint the fields on the parameter:
 			TypeReference paramTR = entryMethod.getParameterType(i);
 			IClass paramClass = pa.getClassHierarchy().lookupClass(paramTR);
-			
-			if (paramTR.isPrimitiveType() 
-			 || paramTR.isArrayType()
-			 || paramClass == null ) {
+
+			if (paramTR.isPrimitiveType() || paramTR.isArrayType()
+					|| paramClass == null) {
 				continue;
 			}
-			
+
 			Collection<IField> fields = paramClass.getAllFields();
-			
+
 			for (IField iField : fields) {
 				taintField(pa, iField, pointsToSet, methEntryBlock, domain,
 						initialTaints, initialEdges, Sets.newHashSet(paramTR));
@@ -242,26 +232,24 @@ public class MethodAnalysis <E extends ISSABasicBlock>  {
 			// we need to taint the static fields of the enclosing class.
 			// if the method is *not* static, then these will have been tainted
 			// during the tainting of parameters above.
-			for (IField field : entryMethod.getDeclaringClass().getAllStaticFields() ){
-				Iterable<InstanceKey> staticInstances = 
-						pa.getPointsToSet(new StaticFieldKey(field));
-				
-				taintField(pa, field, staticInstances, 
-						methEntryBlock, domain, initialTaints,
-						initialEdges, Sets.<TypeReference>newHashSet());
+			for (IField field : entryMethod.getDeclaringClass()
+					.getAllStaticFields()) {
+				Iterable<InstanceKey> staticInstances = pa
+						.getPointsToSet(new StaticFieldKey(field));
+
+				taintField(pa, field, staticInstances, methEntryBlock, domain,
+						initialTaints, initialEdges,
+						Sets.<TypeReference> newHashSet());
 			}
 		}
 
 		// TODO we don't currently taint static globals outside of the enclosing
 		// class / method params.
 
-		
-		final IFlowFunctionMap<BasicBlockInContext<E>> functionMap =
-				new IFDSTaintFlowFunctionProvider<E>(domain, graph, pa, this);
+		final IFlowFunctionMap<BasicBlockInContext<E>> functionMap = new IFDSTaintFlowFunctionProvider<E>(
+				domain, graph, pa, this);
 
-		final TabulationProblem<BasicBlockInContext<E>, CGNode, DomainElement>
-		   problem =
-		     new TabulationProblem<BasicBlockInContext<E>, CGNode, DomainElement>() {
+		final TabulationProblem<BasicBlockInContext<E>, CGNode, DomainElement> problem = new TabulationProblem<BasicBlockInContext<E>, CGNode, DomainElement>() {
 
 			public TabulationDomain<DomainElement, BasicBlockInContext<E>> getDomain() {
 				return domain;
@@ -283,181 +271,184 @@ public class MethodAnalysis <E extends ISSABasicBlock>  {
 				return initialEdges;
 			}
 		};
-		TabulationSolver<BasicBlockInContext<E>, CGNode, DomainElement> solver =
-				TabulationSolver.make(problem);
+		TabulationSolver<BasicBlockInContext<E>, CGNode, DomainElement> solver = TabulationSolver
+				.make(problem);
 
 		try {
-			TabulationResult<BasicBlockInContext<E>,CGNode, DomainElement> flowResult = solver.solve();
+			TabulationResult<BasicBlockInContext<E>, CGNode, DomainElement> flowResult = solver
+					.solve();
 			if (blacklist.contains(methEntryBlock.getMethod().getReference()))
 				blacklist.add(callerBlock.getMethod().getReference());
 			else
-				checkResults(domain, flowResult, initialTaints, graph, methEntryBlock, methodFlows);
+				checkResults(domain, flowResult, initialTaints, graph,
+						methEntryBlock, methodFlows);
 
-			//       	if (CLI.hasOption("IFDS-Explorer")) {
-			//       		for (int i = 1; i < domain.getSize(); i++) {        			
-			//                   MyLogger.log(DEBUG,"DomainElement #"+i+" = " + domain.getMappedObject(i));        			
-			//       		}
-			//       		GraphUtil.exploreIFDS(flowResult);
-			//       	}
-//			return flowResult;
+			// if (CLI.hasOption("IFDS-Explorer")) {
+			// for (int i = 1; i < domain.getSize(); i++) {
+			// logger.debug("DomainElement #"+i+" = " +
+			// domain.getMappedObject(i));
+			// }
+			// GraphUtil.exploreIFDS(flowResult);
+			// }
+			// return flowResult;
 		} catch (CancelException e) {
 			throw new CancelRuntimeException(e);
 		}
 	}
 
-	private void taintField(PointerAnalysis pa, 
-			IField myField,
+	private void taintField(PointerAnalysis pa, IField myField,
 			Iterable<InstanceKey> parentPointsToSet,
-			BasicBlockInContext<E> methEntryBlock,
-			IFDSTaintDomain<E> domain,
+			BasicBlockInContext<E> methEntryBlock, IFDSTaintDomain<E> domain,
 			Set<DomainElement> initialTaints,
 			List<PathEdge<BasicBlockInContext<E>>> initialEdges,
 			Set<TypeReference> taintedTypes) {
 
-	    TypeReference tr = myField.getFieldTypeReference();
-	    
-	    if ( taintedTypes.contains(tr) ){
-	    	//MyLogger.log(LogLevel.DEBUG, "*not* re-tainting tainted type: "+myField);
-	    	return;
-	    }
-	    
-	    //MyLogger.log(LogLevel.DEBUG, "tainting field: "+myField);
-	    taintedTypes.add(tr);
-		
-	    Collection<PointerKey> pointerKeys = Lists.newArrayList();
-	    if (myField.isStatic()) {
-	        pointerKeys.add(new StaticFieldKey(myField));
-	    } else {
-	    	for (InstanceKey ik : parentPointsToSet) {
-	    		pointerKeys.add(new InstanceFieldKey(ik, myField));
-	    	}
-	    } 
+		TypeReference tr = myField.getFieldTypeReference();
 
-    	for (InstanceKey ik: parentPointsToSet) {
-			DomainElement de = new DomainElement(
-			        new FieldElement(ik, myField.getReference(), myField.isStatic()), 
+		if (taintedTypes.contains(tr)) {
+			// MyLogger.log(LogLevel.DEBUG,
+			// "*not* re-tainting tainted type: "+myField);
+			return;
+		}
+
+		// MyLogger.log(LogLevel.DEBUG, "tainting field: "+myField);
+		taintedTypes.add(tr);
+
+		Collection<PointerKey> pointerKeys = Lists.newArrayList();
+		if (myField.isStatic()) {
+			pointerKeys.add(new StaticFieldKey(myField));
+		} else {
+			for (InstanceKey ik : parentPointsToSet) {
+				pointerKeys.add(new InstanceFieldKey(ik, myField));
+			}
+		}
+
+		for (InstanceKey ik : parentPointsToSet) {
+			DomainElement de = new DomainElement(new FieldElement(ik,
+					myField.getReference(), myField.isStatic()),
 					new FieldFlow<E>(methEntryBlock, myField, true));
 			initialTaints.add(de);
-			initialEdges.add(PathEdge.createPathEdge(methEntryBlock, 0, methEntryBlock, 
-					domain.getMappedIndex(de)));
-    	}
-    	
-    	// We need the all the instance keys for the field we're currently 
-	    // tainting for the recursive case
-	    List<InstanceKey> iks = Lists.newArrayList();
-	    for (PointerKey pk : pointerKeys ) {
-	    	for (InstanceKey ik: pa.getPointsToSet(pk)) {
+			initialEdges.add(PathEdge.createPathEdge(methEntryBlock, 0,
+					methEntryBlock, domain.getMappedIndex(de)));
+		}
+
+		// We need the all the instance keys for the field we're currently
+		// tainting for the recursive case
+		List<InstanceKey> iks = Lists.newArrayList();
+		for (PointerKey pk : pointerKeys) {
+			for (InstanceKey ik : pa.getPointsToSet(pk)) {
 				iks.add(ik);
 			}
-	    }
-	    
-	    IClassHierarchy cha = myField.getClassHierarchy();
-	    IClass fieldClass = cha.lookupClass(tr);
-	    
-	    // recurse on the fields of the myField:
-	    
-	    // Terminate recursion if myField is a primitive or an array
-	    // because they don't have fields.
-	    // Also, if the type is in the exclusions file (or doesn't exist for 
-	    // some other reason...) then the class reference will be null.
-	    if (tr.isPrimitiveType() 
-	     || tr.isArrayType() 
-	     || fieldClass == null ) {
-	    	return;
-	    }
-	    
+		}
+
+		IClassHierarchy cha = myField.getClassHierarchy();
+		IClass fieldClass = cha.lookupClass(tr);
+
+		// recurse on the fields of the myField:
+
+		// Terminate recursion if myField is a primitive or an array
+		// because they don't have fields.
+		// Also, if the type is in the exclusions file (or doesn't exist for
+		// some other reason...) then the class reference will be null.
+		if (tr.isPrimitiveType() || tr.isArrayType() || fieldClass == null) {
+			return;
+		}
+
 		Collection<IField> fields = fieldClass.getAllFields();
-	    
-		for(IField field : fields) {
-			taintField(pa, field, iks, methEntryBlock, domain, 
-					initialTaints, initialEdges, taintedTypes);
+
+		for (IField field : fields) {
+			taintField(pa, field, iks, methEntryBlock, domain, initialTaints,
+					initialEdges, taintedTypes);
 		}
 	}
 
-	private static<E extends ISSABasicBlock> void checkResults(
-	        IFDSTaintDomain<E> domain,
-			TabulationResult<BasicBlockInContext<E>,CGNode, DomainElement> flowResult, 
+	private static <E extends ISSABasicBlock> void checkResults(
+			IFDSTaintDomain<E> domain,
+			TabulationResult<BasicBlockInContext<E>, CGNode, DomainElement> flowResult,
 			Set<DomainElement> initialTaints,
-			ISupergraph<BasicBlockInContext<E>, CGNode> graph, 
-			BasicBlockInContext<E> methEntryBlock, 
+			ISupergraph<BasicBlockInContext<E>, CGNode> graph,
+			BasicBlockInContext<E> methEntryBlock,
 			Map<FlowType<E>, Set<CodeElement>> methodFlows) {
-		MyLogger.log(DEBUG,"***************");	 
-		MyLogger.log(DEBUG,"Method Analysis");
-		MyLogger.log(DEBUG,methEntryBlock.getMethod().getSignature());
-		MyLogger.log(DEBUG,"***************");
+		logger.debug("***************");
+		logger.debug("Method Analysis");
+		logger.debug(methEntryBlock.getMethod().getSignature());
+		logger.debug("***************");
 
-
-		Set<FlowType<E>> initialFlowSet = new HashSet<FlowType<E>> ();
-		for (DomainElement de:initialTaints) {
+		Set<FlowType<E>> initialFlowSet = new HashSet<FlowType<E>>();
+		for (DomainElement de : initialTaints) {
 			initialFlowSet.add(de.taintSource);
 		}
-				
-		
-		BasicBlockInContext<E> exitBlocks[] = graph.getExitsForProcedure(methEntryBlock.getNode());
-		
-		System.out.println("     exitBlock count: "+exitBlocks.length);
-		for (BasicBlockInContext<E> exitBlock:exitBlocks) {
+
+		BasicBlockInContext<E> exitBlocks[] = graph
+				.getExitsForProcedure(methEntryBlock.getNode());
+
+		logger.debug("     exitBlock count: " + exitBlocks.length);
+		for (BasicBlockInContext<E> exitBlock : exitBlocks) {
 			IntSet exitResults = flowResult.getResult(exitBlock);
-			
-//			System.out.println("     exitResult count: "+exitResults.size());
-			
+
+			// System.out.println("     exitResult count: "+exitResults.size());
+
 			for (IntIterator intI = exitResults.intIterator(); intI.hasNext();) {
 				int i = intI.next();
 				DomainElement de = domain.getMappedObject(i);
 				assert (de != null);
-				
-				//Ignore parameters flowing to itself.  And Fields flowing to itself.
-				//Also only take into consideration flows which originate from the current 
-				//method we are summarizing
+
+				// Ignore parameters flowing to itself. And Fields flowing to
+				// itself.
+				// Also only take into consideration flows which originate from
+				// the current
+				// method we are summarizing
 				if (initialTaints.contains(de)) {
-//					System.out.println("     initialTaints contains domain element: "+de);
+					// System.out.println("     initialTaints contains domain element: "+de);
 					continue;
 				}
 				if (!initialFlowSet.contains(de.taintSource)) {
-//					System.out.println("     initialFlowSet does not contain domain element: "+de);
+					// System.out.println("     initialFlowSet does not contain domain element: "+de);
 					continue;
 				}
-				
-//				System.out.println(de.taintSource + " FLOWS into " + de.codeElement);
-				
+
+				// System.out.println(de.taintSource + " FLOWS into " +
+				// de.codeElement);
+
 				if (de.codeElement instanceof FieldElement) {
-				    // TODO make sure this covers static fields too.
-//					MyLogger.log(DEBUG,de.taintSource +" FLOWS into FIELD " + de.codeElement);
+					// TODO make sure this covers static fields too.
+					// logger.debug(de.taintSource +" FLOWS into FIELD " +
+					// de.codeElement);
 					addToFlow(de.taintSource, de.codeElement, methodFlows);
 				} else if (de.codeElement instanceof ReturnElement) {
-				    
-//					MyLogger.log(DEBUG,de.taintSource + " FLOWS into RETURNELEMENT " + de.codeElement);
+
+					// logger.debug(de.taintSource +
+					// " FLOWS into RETURNELEMENT " + de.codeElement);
 					addToFlow(de.taintSource, de.codeElement, methodFlows);
 				}
 			}
 		}
 
-//		IClass myClass = methEntryBlock.getMethod().getDeclaringClass();
-//		String classloadername = myClass.getReference().getClassLoader().getName().toString();
-//		String classname = myClass.getName().getClassName().toString();
-//		String packagename = myClass.getName().getPackage().toString();
-//		String methodname = methEntryBlock.getMethod().getName().toString();
-//		String descriptor = methEntryBlock.getMethod().getDescriptor().toString();
-//
-//		System.out.println("classloader: " + classloadername);
-//		System.out.println("class: " + classname);
-//		System.out.println("package: " + packagename);
-//		System.out.println("method: " + methodname);
-//		System.out.println("descriptor: " + descriptor);
+		// IClass myClass = methEntryBlock.getMethod().getDeclaringClass();
+		// String classloadername =
+		// myClass.getReference().getClassLoader().getName().toString();
+		// String classname = myClass.getName().getClassName().toString();
+		// String packagename = myClass.getName().getPackage().toString();
+		// String methodname = methEntryBlock.getMethod().getName().toString();
+		// String descriptor =
+		// methEntryBlock.getMethod().getDescriptor().toString();
+		//
+		// System.out.println("classloader: " + classloadername);
+		// System.out.println("class: " + classname);
+		// System.out.println("package: " + packagename);
+		// System.out.println("method: " + methodname);
+		// System.out.println("descriptor: " + descriptor);
 
 	}
 
-	public static <E extends ISSABasicBlock> 
-	void addToFlow (FlowType<E> ft, 
-	                CodeElement ce,  
-	                Map<FlowType<E>, Set<CodeElement>> methodFlows) {
+	public static <E extends ISSABasicBlock> void addToFlow(FlowType<E> ft,
+			CodeElement ce, Map<FlowType<E>, Set<CodeElement>> methodFlows) {
 		Set<CodeElement> ceSet = methodFlows.get(ft);
 		if (ceSet == null) {
 			ceSet = new HashSet<CodeElement>();
-			methodFlows.put(ft,  ceSet);
+			methodFlows.put(ft, ceSet);
 		}
 		ceSet.add(ce);
 	}
-
 
 }

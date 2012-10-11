@@ -38,17 +38,15 @@
  */
 
 package prefixTransfer;
-import static util.MyLogger.LogLevel.WARNING;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import util.MyLogger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.ibm.wala.classLoader.CallSiteReference;
 import com.ibm.wala.ipa.callgraph.CGNode;
@@ -64,6 +62,7 @@ import com.ibm.wala.ssa.SSAInvokeInstruction;
 import com.ibm.wala.types.ClassLoaderReference;
 
 public class StringBuilderUseAnalysis {
+	private static final Logger logger = LoggerFactory.getLogger(StringBuilderUseAnalysis.class);
 
 	final InstanceKey sbik;
 	final CGNode node;
@@ -154,7 +153,7 @@ public class StringBuilderUseAnalysis {
 							nominatedNode = lpk.getNode();
 						else if(nominatedNode != lpk.getNode())
 						{
-							MyLogger.log(WARNING, "got conflicting nodes: "+nominatedNode+" <> "+lpk.getNode());
+							logger.warn("got conflicting nodes: "+nominatedNode+" <> "+lpk.getNode());
 							return null;
 						}
 					}
@@ -178,7 +177,7 @@ public class StringBuilderUseAnalysis {
 				// if this pointer key points to our instance key then we have to give up -- we can only analyze local pointer keys
 				if(pa.getPointsToSet(pk).contains(ik))
 				{
-					MyLogger.log(WARNING, "Found non LocalPointerKey refering to our ik: "+pk);
+					logger.warn("Found non LocalPointerKey refering to our ik: "+pk);
 					return null;
 				}
 			}
@@ -266,7 +265,7 @@ public class StringBuilderUseAnalysis {
 		ISSABasicBlock bbs[] = node.getIR().getBasicBlocksForCall(csr);
 		if(bbs.length != 1)
 		{
-			MyLogger.log(WARNING, "Got wrong number of basic blocks for call site: "+node.getMethod().getSignature() + " blocks:" +bbs.length);
+			logger.warn("Got wrong number of basic blocks for call site: "+node.getMethod().getSignature() + " blocks:" +bbs.length);
 		}
 		bNext = bbs[0];
 		ISSABasicBlock bPrev = bNext;
@@ -286,9 +285,9 @@ public class StringBuilderUseAnalysis {
 			// detect loops
 			if(blocksSeen.contains(bNext))
 			{
-				MyLogger.log(WARNING, "Loop detected in string builder use analysis for "+sbik+"!");
-				MyLogger.log(WARNING, "bPrev: "+bPrev);
-				MyLogger.log(WARNING, "bNext: "+bNext);
+				logger.warn("Loop detected in string builder use analysis for "+sbik+"!");
+				logger.warn("bPrev: "+bPrev);
+				logger.warn("bNext: "+bNext);
 				return null;
 			}
 			blocksSeen.add(bNext);
@@ -321,7 +320,7 @@ public class StringBuilderUseAnalysis {
 			bPrev = bNext;
 			bNext = blockOrdering.get(bNext);
 		}
-		MyLogger.log(WARNING, "Ran out of parents before getting to <init> on SB: "+csr+ " with builder "+sbik);
+		logger.warn("Ran out of parents before getting to <init> on SB: "+csr+ " with builder "+sbik);
 		return null;
 		//      for(Entry<ISSABasicBlock, ISSABasicBlock> e : this.blockOrdering.entrySet())
 		//      {

@@ -39,9 +39,6 @@
 
 package prefixTransfer;
 
-import static util.MyLogger.LogLevel.DEBUG;
-import static util.MyLogger.LogLevel.WARNING;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -51,34 +48,33 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import prefixTransfer.StringBuilderUseAnalysis.StringBuilderToStringInstanceKeySite;
 import prefixTransfer.modeledAllocations.ConstantString;
 import prefixTransfer.modeledAllocations.UriAppendString;
 import prefixTransfer.modeledAllocations.UriParseString;
-import util.MyLogger;
 
-import com.ibm.wala.cast.ipa.callgraph.ScopeMappingInstanceKeys.ScopeMappingInstanceKey;
 import com.ibm.wala.classLoader.CallSiteReference;
 import com.ibm.wala.classLoader.IMethod;
 import com.ibm.wala.ipa.callgraph.CGNode;
 import com.ibm.wala.ipa.callgraph.Context;
 import com.ibm.wala.ipa.callgraph.ContextKey;
-import com.ibm.wala.ipa.callgraph.propagation.AllocationSite;
 import com.ibm.wala.ipa.callgraph.propagation.AllocationSiteInNode;
-import com.ibm.wala.ipa.callgraph.propagation.ConcreteTypeKey;
 import com.ibm.wala.ipa.callgraph.propagation.ConstantKey;
 import com.ibm.wala.ipa.callgraph.propagation.InstanceKey;
 import com.ibm.wala.ipa.callgraph.propagation.LocalPointerKey;
 import com.ibm.wala.ipa.callgraph.propagation.NormalAllocationInNode;
 import com.ibm.wala.ipa.callgraph.propagation.PointerAnalysis;
 import com.ibm.wala.ipa.callgraph.propagation.PointerKey;
-import com.ibm.wala.ipa.callgraph.propagation.StringConstantCharArray;
 import com.ibm.wala.ssa.SSAInvokeInstruction;
 import com.ibm.wala.types.ClassLoaderReference;
 import com.ibm.wala.util.graph.Graph;
 import com.ibm.wala.util.intset.OrdinalSet;
 
 public class UriPrefixTransferGraph implements Graph<InstanceKeySite> {
+	private static final Logger logger = LoggerFactory.getLogger(UriPrefixTransferGraph.class);
 
     public final Map<InstanceKey, InstanceKeySite> nodeMap = new HashMap<InstanceKey, InstanceKeySite>();
     private final List<InstanceKeySite> nodes = new ArrayList<InstanceKeySite>();
@@ -107,29 +103,29 @@ public class UriPrefixTransferGraph implements Graph<InstanceKeySite> {
                         }
                         catch(Exception e)
                         {
-                            MyLogger.log(WARNING, "SBUA failed: "+e.getMessage());
+                            logger.warn("SBUA failed", e);
                             continue;
                         }
 //                      for(Entry<ISSABasicBlock, ISSABasicBlock> e : sbua.blockOrdering.entrySet())
 //                      {
-//                          System.out.println(e.getKey().toString()+" --> "+e.getValue().toString());
+//                          logger.debug(e.getKey().toString()+" --> "+e.getValue().toString());
 //                          SSAInstruction inst = e.getKey().getLastInstruction();
 //                          if (inst instanceof SSAInvokeInstruction) {
-//                              System.out.println("Call Site \t" + ((SSAInvokeInstruction) inst).getCallSite());
+//                              logger.debug("Call Site \t" + ((SSAInvokeInstruction) inst).getCallSite());
 //                          }
 //                      }
                         sbuaMap.put(k, sbua); // map k to sbua in some global map
                     }
                     continue;
                 }
-                MyLogger.log(WARNING, "Skipping StringBuilder InstanceKey: "+k);
-                MyLogger.log(WARNING, "\tClass loader reference: "+k.getConcreteType().getClassLoader().getReference());
+                logger.warn("Skipping StringBuilder InstanceKey: "+k);
+                logger.warn("\tClass loader reference: "+k.getConcreteType().getClassLoader().getReference());
             }
         }
         InstanceKeySite node = null;
         for (InstanceKey k:instanceKeys)
         {
-            //System.out.println("checking type: " + k.getConcreteType().getName());
+            //logger.debug("checking type: " + k.getConcreteType().getName());
 
             // create a node for each InstanceKey of type string
 
@@ -139,22 +135,22 @@ public class UriPrefixTransferGraph implements Graph<InstanceKeySite> {
                 {
                     node = new ConstantString(pa.getInstanceKeyMapping().getMappedIndex(k), (String)((ConstantKey)k).getValue());
                     addNode(node);
-//                	System.out.println(node);
+//                	logger.debug(node);
                     nodeMap.put(k, node);
                 }
                 else if(k instanceof NormalAllocationInNode)
                 {
-//                  System.out.println("NormalAllocationInNode: "+k);
+//                  logger.debug("NormalAllocationInNode: "+k);
                     IMethod m = ((NormalAllocationInNode) k).getNode().getMethod();
                     if (m.getSignature().equals("java.lang.StringBuilder.toString()Ljava/lang/String;")) {
                         Context context = ((NormalAllocationInNode) k).getNode().getContext();
                         CGNode caller = (CGNode) context.get(ContextKey.CALLER);
                         CallSiteReference csr = (CallSiteReference) context.get(ContextKey.CALLSITE);
                         InstanceKey receiver = (InstanceKey) context.get(ContextKey.RECEIVER);
-//                        System.out.println("StringBuilder.toString() caller: " + caller +"\n\tcsr: "+csr+"\n\treceiver: "+receiver);
+//                        logger.debug("StringBuilder.toString() caller: " + caller +"\n\tcsr: "+csr+"\n\treceiver: "+receiver);
                         if (caller != null && caller.getMethod().getReference().getDeclaringClass().getClassLoader().equals(ClassLoaderReference.Application))
                         {
-//                        	System.out.println("Found StringBuilder receiver for toString call");
+//                        	logger.debug("Found StringBuilder receiver for toString call");
                             if (sbuaMap.get(receiver) != null) {
                                 node = sbuaMap.get(receiver).getNode(csr,k);
                                 if(node == null)
@@ -167,47 +163,47 @@ public class UriPrefixTransferGraph implements Graph<InstanceKeySite> {
                                 for (Integer i: ((StringBuilderToStringInstanceKeySite) node).concatenatedInstanceKeys) {
                                     iks.add(pa.getInstanceKeyMapping().getMappedObject(i));
                                 }
-                                MyLogger.log(DEBUG, "adding to UnresolvedDependencies => node: " + node + " => iks: " + iks);
+                                logger.debug("adding to UnresolvedDependencies => node: " + node + " => iks: " + iks);
                                 unresolvedDependencies.put(node, iks);
                                 // TODO: if this string is created inside the toString function of a string builder, find the StringBuilderUseAnalysis for that string builder and call getNode(k) to get the node for this instance key
                                 // - this may have to be done in another phase
                                 //                          NormalAllocationInNode ak = (NormalAllocationInNode)k;
                                 //                          SSAInstruction inst = ak.getNode().getIR().getPEI(ak.getSite());
-                                //                          System.out.println("NormalAllocationInNode inst: "+inst);
-                                //                          System.out.println("NormalAllocationInNode uses:");
+                                //                          logger.debug("NormalAllocationInNode inst: "+inst);
+                                //                          logger.debug("NormalAllocationInNode uses:");
                                 //                          for(int i = 0; i < inst.getNumberOfUses(); i++)
                                 //                          {
                                 //                              int use = inst.getUse(i);
                                 //                              OrdinalSet<InstanceKey> useKeys = pa.getPointsToSet(new LocalPointerKey(ak.getNode(), use));
-                                //                              System.out.println("\tUse "+use+": "+useKeys);
+                                //                              logger.debug("\tUse "+use+": "+useKeys);
                                 //                          }
-                                //                          System.out.println("NormalAllocationInNode defs:");
+                                //                          logger.debug("NormalAllocationInNode defs:");
                                 //                          for(int i = 0; i < inst.getNumberOfDefs(); i++)
                                 //                          {
                                 //                              int def = inst.getDef(i);
                                 //                              OrdinalSet<InstanceKey> useKeys = pa.getPointsToSet(new LocalPointerKey(ak.getNode(), def));
-                                //                              System.out.println("\tDef "+def+": "+useKeys);
+                                //                              logger.debug("\tDef "+def+": "+useKeys);
                                 //                          }
                             }
                             else {
-                                MyLogger.log(WARNING, "Receiver instancekey is null in UriPrefixTransferGraph, Method: " + ((NormalAllocationInNode) receiver).getNode().getMethod().getSignature());
+                                logger.warn("Receiver instancekey is null in UriPrefixTransferGraph, Method: " + ((NormalAllocationInNode) receiver).getNode().getMethod().getSignature());
                             }
                         }
                     }
                 }
 //              else if(k instanceof AllocationSite)
 //              {
-//                  System.out.println("AllocationSite: "+k);
+//                  logger.debug("AllocationSite: "+k);
 //              }
 //              else
 //              {
-//                  System.out.println("Unknown type: "+k.toString());
+//                  logger.debug("Unknown type: "+k.toString());
 //              }
                 // create an edge for dependencies used in the creation of each instance key
             }
 //          else
 //          {
-//              System.out.println("Got IK of other type "+k);
+//              logger.debug("Got IK of other type "+k);
 //          }
         }
 
@@ -230,12 +226,12 @@ public class UriPrefixTransferGraph implements Graph<InstanceKeySite> {
         						InstanceKey stringKey = points.iterator().next();
 
         						OrdinalSet<InstanceKey> returnSet = pa.getPointsToSet(new LocalPointerKey(caller, invoke.getReturnValue(0)));
-        						System.out.println("Sizeof returnset: " + returnSet.size() +"--"+pk);
+        						logger.debug("Sizeof returnset: " + returnSet.size() +"--"+pk);
         						for (Iterator<InstanceKey> rIK=returnSet.iterator(); rIK.hasNext(); ) {
         							InstanceKey returnIK = rIK.next();
         							node = new UriAppendString(pa.getInstanceKeyMapping().getMappedIndex(returnIK), pa.getInstanceKeyMapping().getMappedIndex(uriKey), pa.getInstanceKeyMapping().getMappedIndex(stringKey));
-        							MyLogger.log(DEBUG, "\t Uri.withAppendedPath(): "+ invoke + ", returnIK: " +returnIK+ ", uriKey: " + uriKey + ", stringKey: " + stringKey);
-        							MyLogger.log(DEBUG, "\t returnIK_Index:"+pa.getInstanceKeyMapping().getMappedIndex(returnIK)+ ", uriKey_Index: " + pa.getInstanceKeyMapping().getMappedIndex(uriKey) + ", stringKey_Index: " + pa.getInstanceKeyMapping().getMappedIndex(stringKey));
+        							logger.debug("\t Uri.withAppendedPath(): "+ invoke + ", returnIK: " +returnIK+ ", uriKey: " + uriKey + ", stringKey: " + stringKey);
+        							logger.debug("\t returnIK_Index:"+pa.getInstanceKeyMapping().getMappedIndex(returnIK)+ ", uriKey_Index: " + pa.getInstanceKeyMapping().getMappedIndex(uriKey) + ", stringKey_Index: " + pa.getInstanceKeyMapping().getMappedIndex(stringKey));
         							
         							if (!nodeMap.containsKey(returnIK)) {
         								addNode(node);
@@ -256,7 +252,7 @@ public class UriPrefixTransferGraph implements Graph<InstanceKeySite> {
         for (InstanceKey ik: pa.getInstanceKeys()) {
             if (ik instanceof NormalAllocationInNode) {
                 IMethod m = ((NormalAllocationInNode) ik).getNode().getMethod();
-//                System.out.println("method sig: " + m.getSignature()+", ik " + ik);
+//                logger.debug("method sig: " + m.getSignature()+", ik " + ik);
                 Context context = ((NormalAllocationInNode) ik).getNode().getContext();
                 CGNode caller = (CGNode) context.get(ContextKey.CALLER);
                 CallSiteReference csr = (CallSiteReference) context.get(ContextKey.CALLSITE);
@@ -264,14 +260,14 @@ public class UriPrefixTransferGraph implements Graph<InstanceKeySite> {
                 if (caller != null && caller.getMethod().getReference().getDeclaringClass().getClassLoader().equals(ClassLoaderReference.Application)) {                	
                     if (m.getSignature().equals("android.net.Uri.parse(Ljava/lang/String;)Landroid/net/Uri;")) {
                         SSAInvokeInstruction invoke = (SSAInvokeInstruction) caller.getIR().getBasicBlocksForCall(csr)[0].getLastInstruction();
-                        MyLogger.log(DEBUG, "invoke inst: " + invoke + " getuse: " + invoke.getUse(0));
-                        MyLogger.log(DEBUG, "in node: " + caller);
+                        logger.debug("invoke inst: " + invoke + " getuse: " + invoke.getUse(0));
+                        logger.debug("in node: " + caller);
                         OrdinalSet<InstanceKey> points = pa.getPointsToSet(new LocalPointerKey(caller, invoke.getUse(0)));
-//                        System.out.println("Size of pointsParse: " + points.size());
+//                        logger.debug("Size of pointsParse: " + points.size());
                         if(!points.isEmpty()) {
                             InstanceKey stringKey = points.iterator().next();
                             node = new UriParseString(pa.getInstanceKeyMapping().getMappedIndex(ik), pa.getInstanceKeyMapping().getMappedIndex(stringKey));
-                            MyLogger.log(DEBUG, "\t Uri.parse(): "+ invoke + "..." + stringKey);
+                            logger.debug("\t Uri.parse(): "+ invoke + "..." + stringKey);
                             addNode(node);
                             nodeMap.put(ik, node);
                             HashSet<InstanceKey> iks = new HashSet<InstanceKey>();
@@ -281,7 +277,7 @@ public class UriPrefixTransferGraph implements Graph<InstanceKeySite> {
                     }
                     //Doesn't seem to be entering this else with the current android jar -- reimplemented above using LocalPointerKey
                     else if (m.getSignature().equals("android.net.Uri.withAppendedPath(Landroid/net/Uri;Ljava/lang/String;)Landroid/net/Uri;")) {
-                        MyLogger.log(DEBUG, "android.net.Uri.withAppendedPath(Landroid/net/Uri;Ljava/lang/String;)Landroid/net/Uri call: " + caller);
+                        logger.debug("android.net.Uri.withAppendedPath(Landroid/net/Uri;Ljava/lang/String;)Landroid/net/Uri call: " + caller);
                         SSAInvokeInstruction invoke = (SSAInvokeInstruction) caller.getIR().getBasicBlocksForCall(csr)[0].getLastInstruction();
                         LocalPointerKey lkey = new LocalPointerKey(caller, invoke.getUse(0));
                         if (pa.getPointsToSet(lkey).iterator().hasNext()) {
@@ -290,7 +286,7 @@ public class UriPrefixTransferGraph implements Graph<InstanceKeySite> {
                             if(!points.isEmpty()) {
                                 InstanceKey stringKey = points.iterator().next();
                                 node = new UriAppendString(pa.getInstanceKeyMapping().getMappedIndex(ik), pa.getInstanceKeyMapping().getMappedIndex(uriKey), pa.getInstanceKeyMapping().getMappedIndex(stringKey));
-                                MyLogger.log(DEBUG, "\t Uri.withAppendedPath(): "+ invoke + "..." + uriKey + "..." + stringKey);
+                                logger.debug("\t Uri.withAppendedPath(): "+ invoke + "..." + uriKey + "..." + stringKey);
                                 addNode(node);
                                 nodeMap.put(ik, node);
                                 HashSet<InstanceKey> iks = new HashSet<InstanceKey>();
@@ -309,14 +305,14 @@ public class UriPrefixTransferGraph implements Graph<InstanceKeySite> {
 //      HashMap<Integer, InstanceKeySite> uriNodeMap = new HashMap<Integer, InstanceKeySite>();
 //
 //      for (Entry<Integer,String> s : stringConstants.entrySet()) {
-//          System.out.println("Constant: "+ s.getValue());
+//          logger.debug("Constant: "+ s.getValue());
 //          node = new ConstantString(maxInstanceID + s.getKey(), s.getValue());
 //          addNode(node);
 //          uriNodeMap.put(maxInstanceID + s.getKey(), node);
 //      }
 //
 //      for (Entry<Integer,LocalPointerKey> p : parseMap.entrySet()) {
-//          System.out.println("Parse: "+ p.getValue());
+//          logger.debug("Parse: "+ p.getValue());
 //          OrdinalSet<InstanceKey> ikeys = pa.getPointsToSet(p.getValue());
 //          if (ikeys.isEmpty()) {
 //              node = new UriParseString(maxInstanceID + p.getKey(), maxInstanceID + p.getValue().getValueNumber());
@@ -335,7 +331,7 @@ public class UriPrefixTransferGraph implements Graph<InstanceKeySite> {
 //
 //      for (Entry<Integer,LocalPointerKey> p : appendUriMap.entrySet()) {
 //          LocalPointerKey stringLPK = appendStringMap.get(p.getKey());
-//          System.out.println("Append: " + p.getValue() + " + " + stringLPK);
+//          logger.debug("Append: " + p.getValue() + " + " + stringLPK);
 //          OrdinalSet<InstanceKey> ikeys = pa.getPointsToSet(stringLPK);
 //          if (ikeys.isEmpty()) {
 //              node = new UriAppendString(maxInstanceID + p.getKey(), maxInstanceID + p.getValue().getValueNumber(), maxInstanceID + stringLPK.getValueNumber());
@@ -359,7 +355,7 @@ public class UriPrefixTransferGraph implements Graph<InstanceKeySite> {
         {
             for(InstanceKey dep:deps.getValue())
             {
-                //System.out.println("Trying to match dependency: " + dep);
+                //logger.debug("Trying to match dependency: " + dep);
                 InstanceKeySite depSite = nodeMap.get(dep);
 //              if(depSite == null)
 //              {

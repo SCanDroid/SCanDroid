@@ -39,12 +39,7 @@
 
 package util;
 
-import static util.MyLogger.log;
-import static util.MyLogger.LogLevel.DEBUG;
-import static util.MyLogger.LogLevel.INFO;
-
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -58,11 +53,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.jar.JarFile;
 
-import model.AppModelMethod;
-import prefixTransfer.UriPrefixContextSelector;
-import spec.AndroidSpecs;
-import util.MyLogger.LogLevel;
-import util.LoaderUtils;
+import org.apache.log4j.lf5.LogLevel;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -115,6 +108,8 @@ import com.ibm.wala.util.warnings.Warning;
 import com.ibm.wala.util.warnings.Warnings;
 
 public class AndroidAnalysisContext<E extends ISSABasicBlock> {
+	private static final Logger logger = LoggerFactory
+			.getLogger(AndroidAnalysisContext.class);
 	private static final String methodSpec = "MethodSummaries.xml";
 	private static final String pathToSpec = "data";
 
@@ -129,9 +124,9 @@ public class AndroidAnalysisContext<E extends ISSABasicBlock> {
 	public Graph<CGNode> oneLevelGraph;
 	public Graph<CGNode> systemToApkGraph;
 
-	public AndroidAnalysisContext(String classpath) throws IllegalArgumentException,
-			ClassHierarchyException, IOException, CancelException,
-			URISyntaxException {
+	public AndroidAnalysisContext(String classpath)
+			throws IllegalArgumentException, ClassHierarchyException,
+			IOException, CancelException, URISyntaxException {
 		this(classpath, new JarFile(CLI.getOption("android-lib")));
 	}
 
@@ -145,13 +140,12 @@ public class AndroidAnalysisContext<E extends ISSABasicBlock> {
 	 * @throws ClassHierarchyException
 	 * @throws URISyntaxException
 	 */
-	public AndroidAnalysisContext(File exclusions, String classpath, JarFile androidLib)
-			throws IOException, IllegalArgumentException, CancelException,
-			ClassHierarchyException, URISyntaxException {
+	public AndroidAnalysisContext(File exclusions, String classpath,
+			JarFile androidLib) throws IOException, IllegalArgumentException,
+			CancelException, ClassHierarchyException, URISyntaxException {
 
 		scope = DexAnalysisScopeReader.makeAndroidBinaryAnalysisScope(
-				classpath,
-				exclusions);
+				classpath, exclusions);
 
 		scope.setLoaderImpl(ClassLoaderReference.Application,
 				"com.ibm.wala.classLoader.WDexClassLoaderImpl");
@@ -161,7 +155,7 @@ public class AndroidAnalysisContext<E extends ISSABasicBlock> {
 		// log ClassHierarchy warnings
 		for (Iterator<Warning> wi = Warnings.iterator(); wi.hasNext();) {
 			Warning w = wi.next();
-			log(w);
+			logger.warn(w.getMsg());
 		}
 		Warnings.clear();
 
@@ -169,21 +163,22 @@ public class AndroidAnalysisContext<E extends ISSABasicBlock> {
 		EntryPoints ep = new EntryPoints(classpath, cha, this);
 		entries = ep.getEntries();
 	}
-	
+
 	public AndroidAnalysisContext(String classpath, JarFile androidLib)
-	            throws IOException, IllegalArgumentException, CancelException,
-	            ClassHierarchyException, URISyntaxException {
-	    this(new FileProvider().getFile("conf" + File.separator +
-                 "Java60RegressionExclusions.txt"), classpath, androidLib);
+			throws IOException, IllegalArgumentException, CancelException,
+			ClassHierarchyException, URISyntaxException {
+		this(new FileProvider().getFile("conf" + File.separator
+				+ "Java60RegressionExclusions.txt"), classpath, androidLib);
 	}
 
-	// ContextSelector, entry points, reflection options, IR Factory, call graph type, include library
+	// ContextSelector, entry points, reflection options, IR Factory, call graph
+	// type, include library
 	public void buildGraphs(List<Entrypoint> localEntries,
 			InputStream summariesStream) throws CancelException {
 
 		AnalysisOptions options = new AnalysisOptions(scope, localEntries);
 		for (Entrypoint e : localEntries) {
-			MyLogger.log(DEBUG, "Entrypoint: " + e);
+			logger.debug("Entrypoint: " + e);
 		}
 
 		options.setEntrypoints(localEntries);
@@ -193,26 +188,25 @@ public class AndroidAnalysisContext<E extends ISSABasicBlock> {
 					.getOption("reflection")));
 		else
 			options.setReflectionOptions(ReflectionOptions.NONE);
-		
+
 		AnalysisCache cache = new AnalysisCache(
 				(IRFactory<IMethod>) new DexIRFactory());
-		
+
 		SSAPropagationCallGraphBuilder cgb;
 
 		cgb = makeZeroCFABuilder(options, cache, cha, scope,
-				new ReceiverTypeContextSelector(), null,
-				summariesStream, null);
-		
+				new ReceiverTypeContextSelector(), null, summariesStream, null);
+
 		// CallGraphBuilder construction warnings
 		for (Iterator<Warning> wi = Warnings.iterator(); wi.hasNext();) {
 			Warning w = wi.next();
-			MyLogger.log(w);
+			logger.warn(w.getMsg());
 		}
 		Warnings.clear();
 
-		MyLogger.log(INFO, "*************************");
-		MyLogger.log(INFO, "* Building Call Graph   *");
-		MyLogger.log(INFO, "*************************");
+		logger.info("*************************");
+		logger.info("* Building Call Graph   *");
+		logger.info("*************************");
 
 		boolean graphBuilt = true;
 		try {
@@ -221,16 +215,16 @@ public class AndroidAnalysisContext<E extends ISSABasicBlock> {
 			graphBuilt = false;
 			e.printStackTrace();
 		}
-		
-		if (CLI.hasOption("test-cgb")){
+
+		if (CLI.hasOption("test-cgb")) {
 			int status = graphBuilt ? 0 : 1;
 			System.exit(status);
 		}
-		
+
 		// makeCallGraph warnings
 		for (Iterator<Warning> wi = Warnings.iterator(); wi.hasNext();) {
 			Warning w = wi.next();
-			MyLogger.log(w);
+			logger.warn(w.getMsg());
 		}
 		Warnings.clear();
 
@@ -342,10 +336,10 @@ public class AndroidAnalysisContext<E extends ISSABasicBlock> {
 			for (Iterator<CGNode> nodeI = cg.iterator(); nodeI.hasNext();) {
 				CGNode node = nodeI.next();
 
-				System.out.println("CGNode: " + node);
+				logger.debug("CGNode: " + node);
 				for (Iterator<CGNode> succI = cg.getSuccNodes(node); succI
 						.hasNext();) {
-					System.out.println("\tSuccCGNode: "
+					logger.debug("\tSuccCGNode: "
 							+ succI.next().getMethod().getSignature());
 				}
 			}
@@ -353,17 +347,17 @@ public class AndroidAnalysisContext<E extends ISSABasicBlock> {
 		for (Iterator<CGNode> nodeI = cg.iterator(); nodeI.hasNext();) {
 			CGNode node = nodeI.next();
 			if (node.getMethod().isSynthetic()) {
-				System.out.println("Synthetic Method: "
+				logger.debug("Synthetic Method: "
 						+ node.getMethod().getSignature());
-				System.out.println(node.getIR().getControlFlowGraph());
+				logger.debug(node.getIR().getControlFlowGraph().toString());
 				SSACFG ssaCFG = node.getIR().getControlFlowGraph();
 				int totalBlocks = ssaCFG.getNumberOfNodes();
 				for (int i = 0; i < totalBlocks; i++) {
-					System.out.println("BLOCK #" + i);
+					logger.debug("BLOCK #" + i);
 					BasicBlock bb = ssaCFG.getBasicBlock(i);
 
 					for (SSAInstruction ssaI : bb.getAllInstructions()) {
-						System.out.println("\tInstruction: " + ssaI);
+						logger.debug("\tInstruction: " + ssaI);
 					}
 				}
 			}
@@ -454,15 +448,11 @@ public class AndroidAnalysisContext<E extends ISSABasicBlock> {
 				summaryClasses.addAll(newSummaryXML.getAllocatableClasses());
 				summaries.putAll(newSummaryXML.getSummaries());
 			}
-			MyLogger.log(LogLevel.DEBUG, "loaded " + summaries.size()
-					+ " new summaries");
-			System.out.println("loaded " + summaries.size()
-					+ " new summaries");
-//			for (MethodReference mr : summaries.keySet()) {
-//				System.out.println("summary loaded for: "+mr.getSignature());
-//			}
-			
-			
+			logger.debug("loaded " + summaries.size() + " new summaries");			
+			// for (MethodReference mr : summaries.keySet()) {
+			// logger.debug("summary loaded for: "+mr.getSignature());
+			// }
+
 			s = new FileProvider().getInputStreamFromClassLoader(pathToSpec
 					+ File.separator + methodSpec,
 					AndroidAnalysisContext.class.getClassLoader());
@@ -470,8 +460,7 @@ public class AndroidAnalysisContext<E extends ISSABasicBlock> {
 			XMLMethodSummaryReader nativeSummaries = loadMethodSummaries(scope,
 					s);
 
-			MyLogger.log(LogLevel.DEBUG, "loaded "
-					+ nativeSummaries.getSummaries().size()
+			logger.debug("loaded " + nativeSummaries.getSummaries().size()
 					+ " native summaries");
 
 			summaries.putAll(nativeSummaries.getSummaries());

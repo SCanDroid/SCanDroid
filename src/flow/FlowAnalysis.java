@@ -39,20 +39,19 @@
 
 package flow;
 
-import static util.MyLogger.LogLevel.DEBUG;
-
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import synthMethod.MethodAnalysis;
 import util.AndroidAnalysisContext;
 import util.CLI;
 import util.GraphUtil;
 import util.IFDSTaintFlowFunctionProvider;
-import util.MyLogger;
 
 import com.google.common.collect.Lists;
 import com.ibm.wala.dataflow.IFDS.IFlowFunctionMap;
@@ -78,6 +77,7 @@ import domain.IFDSTaintDomain;
 import flow.types.FlowType;
 
 public class FlowAnalysis {
+	private static final Logger logger = LoggerFactory.getLogger(FlowAnalysis.class);
 
     public static <E extends ISSABasicBlock>
     TabulationResult<BasicBlockInContext<E>, CGNode, DomainElement> 
@@ -101,9 +101,9 @@ public class FlowAnalysis {
               MethodAnalysis<E> methodAnalysis, IProgressMonitor progressMonitor
             ) {
 
-        System.out.println("*************************");
-        System.out.println("* Running flow analysis *");
-        System.out.println("*************************");
+        logger.debug("*************************");
+        logger.debug("* Running flow analysis *");
+        logger.debug("*************************");
 
         final IFDSTaintDomain<E> domain = d;
 
@@ -179,7 +179,7 @@ public class FlowAnalysis {
         	TabulationResult<BasicBlockInContext<E>,CGNode, DomainElement> flowResult = solver.solve();
         	if (CLI.hasOption("IFDS-Explorer")) {
         		for (int i = 1; i < domain.getSize(); i++) {        			
-                    MyLogger.log(DEBUG,"DomainElement #"+i+" = " + domain.getMappedObject(i));        			
+                    logger.debug("DomainElement #"+i+" = " + domain.getMappedObject(i));        			
         		}
         		GraphUtil.exploreIFDS(flowResult);
         	}

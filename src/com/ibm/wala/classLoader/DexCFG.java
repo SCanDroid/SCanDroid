@@ -18,8 +18,9 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.Set;
 
-import util.MyLogger;
-import util.MyLogger.LogLevel;
+import org.apache.log4j.lf5.LogLevel;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.ibm.wala.cfg.AbstractCFG;
 import com.ibm.wala.cfg.IBasicBlock;
@@ -43,6 +44,7 @@ import com.ibm.wala.util.warnings.Warning;
 import com.ibm.wala.util.warnings.Warnings;
 
 public class DexCFG extends AbstractCFG<Instruction, DexCFG.BasicBlock>{
+	private static final Logger logger = LoggerFactory.getLogger(DexCFG.class);
 
     //public class ShrikeCFG extends AbstractCFG<IInstruction, ShrikeCFG.BasicBlock> {
 
@@ -82,9 +84,9 @@ public class DexCFG extends AbstractCFG<Instruction, DexCFG.BasicBlock>{
         computeI2BMapping();
         computeEdges();
 
-        MyLogger.log(LogLevel.DEBUG, "Method: " + method.getSignature() + " edges: " +tempTE);
+        logger.debug("Method: " + method.getSignature() + " edges: " +tempTE);
         if (DEBUG) {
-            MyLogger.log(LogLevel.DEBUG, this.toString());
+            logger.debug(this.toString());
         }
     }
 
@@ -245,7 +247,7 @@ public class DexCFG extends AbstractCFG<Instruction, DexCFG.BasicBlock>{
 
         private void computeOutgoingEdges() {
             if (DEBUG) {
-                MyLogger.log(LogLevel.DEBUG, "Block " + this + ": computeOutgoingEdges()");
+                logger.debug("Block " + this + ": computeOutgoingEdges()");
             }
 
             Instruction last = getInstructions()[getLastInstructionIndex()];
@@ -318,16 +320,16 @@ public class DexCFG extends AbstractCFG<Instruction, DexCFG.BasicBlock>{
 
                     for (int j = 0; j < hs.length; j++) {
                         if (DEBUG) {
-                            MyLogger.log(LogLevel.DEBUG, " handler " + hs[j]);
+                            logger.debug(" handler " + hs[j]);
                         }
                         BasicBlock b = getBlockForInstruction(hs[j].getHandler());
                         if (DEBUG) {
-                            MyLogger.log(LogLevel.DEBUG, " target " + b);
+                            logger.debug(" target " + b);
                         }
                         if (goToAllHandlers) {
                             // add an edge to the catch block.
                             if (DEBUG) {
-                                MyLogger.log(LogLevel.DEBUG, " gotoAllHandlers " + b);
+                                logger.debug(" gotoAllHandlers " + b);
                             }
                             addExceptionalEdgeTo(b);
                         } else {
@@ -336,7 +338,7 @@ public class DexCFG extends AbstractCFG<Instruction, DexCFG.BasicBlock>{
                                 ClassLoaderReference loader = DexCFG.this.getMethod().getDeclaringClass().getReference().getClassLoader();
                                 caughtException = ShrikeUtil.makeTypeReference(loader, hs[j].getCatchClass());
                                 if (DEBUG) {
-                                    MyLogger.log(LogLevel.DEBUG, " caughtException " + caughtException);
+                                    logger.debug(" caughtException " + caughtException);
                                 }
                                 IClass caughtClass = cha.lookupClass(caughtException);
                                 if (caughtClass == null) {
@@ -348,7 +350,7 @@ public class DexCFG extends AbstractCFG<Instruction, DexCFG.BasicBlock>{
                                 }
                             } else {
                                 if (DEBUG) {
-                                    MyLogger.log(LogLevel.DEBUG, " catchClass() == null");
+                                    logger.debug(" catchClass() == null");
                                 }
                                 // hs[j].getCatchClass() == null.
                                 // this means that the handler catches all exceptions.

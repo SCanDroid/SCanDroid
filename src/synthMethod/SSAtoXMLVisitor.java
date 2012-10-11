@@ -4,6 +4,8 @@ import java.io.UTFDataFormatException;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -38,6 +40,7 @@ import com.ibm.wala.types.TypeReference;
 import com.ibm.wala.util.strings.Atom;
 
 public class SSAtoXMLVisitor implements SSAInstruction.IVisitor {
+	private static final Logger logger = LoggerFactory.getLogger(SSAtoXMLVisitor.class);
 
     /**
      * A counter to use for generating unique local definition names.
@@ -430,12 +433,12 @@ public class SSAtoXMLVisitor implements SSAInstruction.IVisitor {
         Atom className = fieldType.getName().getClassName();
         Atom pkgName = fieldType.getName().getPackage();
         if ( null == pkgName && null != className ) {
-        	System.out.println("pkg name null for type ref: "+fieldType);
+        	logger.debug("pkg name null for type ref: "+fieldType);
         	return className.toUnicodeString();
         }
 
         if (null == className ) {
-        	System.out.println("className null for type ref: "+fieldType);
+        	logger.debug("className null for type ref: "+fieldType);
         }
         
         return pkgName.toUnicodeString() + "/" + className.toUnicodeString();

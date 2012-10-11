@@ -43,6 +43,8 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 
+import org.apache.log4j.BasicConfigurator;
+
 import util.IFDSTaintFlowFunctionProvider;
 
 import com.ibm.wala.classLoader.IMethod;
@@ -80,6 +82,7 @@ import com.ibm.wala.ssa.SSAOptions;
 import com.ibm.wala.ssa.analysis.IExplodedBasicBlock;
 import com.ibm.wala.types.ClassLoaderReference;
 import com.ibm.wala.util.CancelException;
+import com.ibm.wala.util.WalaException;
 import com.ibm.wala.util.collections.Filter;
 import com.ibm.wala.util.config.AnalysisScopeReader;
 import com.ibm.wala.util.debug.Assertions;
@@ -90,13 +93,12 @@ import com.ibm.wala.util.intset.OrdinalSetMapping;
 import com.ibm.wala.util.io.FileProvider;
 import com.ibm.wala.util.strings.Atom;
 import com.ibm.wala.util.strings.StringStuff;
-import com.ibm.wala.util.WalaException;
 
 import domain.DomainElement;
 import domain.IFDSTaintDomain;
 import domain.LocalElement;
 
-public class StringPrefixAnalysis {
+public class StringPrefixAnalysis {	
 
     /**
      * @param args
@@ -107,6 +109,7 @@ public class StringPrefixAnalysis {
      * @throws CloneNotSupportedException
      */
     public static void main(String[] args) throws IOException, IllegalArgumentException, CancelException, WalaException, CloneNotSupportedException {
+    	BasicConfigurator.configure();
         //    AnalysisScope scope = AnalysisScopeReader.makeJavaBinaryAnalysisScope(args[0], new FileProvider().getFile(""));
         final AnalysisScope scope = AnalysisScopeReader.makeJavaBinaryAnalysisScope("/Users/scubafuchs/Documents/wala_workspace/HelloAndroid/simple_program.jar:/Users/scubafuchs/working/android-sdk-mac_x86-1.5_r1/platforms/android-1.1/android.jar", new FileProvider().getFile("bin/Java60RegressionExclusions.txt"));
         ClassHierarchy cha = ClassHierarchy.make(scope);

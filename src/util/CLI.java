@@ -41,10 +41,9 @@ import java.io.File;
 import java.util.*;
 
 import org.apache.commons.cli.*;
+import org.apache.log4j.BasicConfigurator;
+
 import static java.lang.System.setProperty;
-import static util.MyLogger.log;
-import static util.MyLogger.LogLevel.DEBUG;
-import static util.MyLogger.LogLevel.INFO;
 
 public class CLI {
 
@@ -62,7 +61,7 @@ public class CLI {
 			line = parser.parse(options, args);
 		}
 		catch (ParseException exp) {
-			MyLogger.log(DEBUG, "Unexpected exception: " + exp.getMessage());
+			System.err.println("Unexpected exception: " + exp.getMessage());
 			System.err.println("Usage: " + USAGE);
 			System.exit(0);
 		}
@@ -73,7 +72,8 @@ public class CLI {
     		System.exit(0);
     	}
     	
-    	if (CLI.hasOption("verbose")) {    		
+    	if (CLI.hasOption("verbose")) {
+    		
     		setProperty("LOG_LEVEL", line.getOptionValue("verbose"));
     	}
     	

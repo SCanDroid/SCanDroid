@@ -39,10 +39,6 @@
 
 package prefixTransfer;
 
-import static util.MyLogger.LogLevel.DEBUG;
-import static util.MyLogger.LogLevel.ERROR;
-import static util.MyLogger.LogLevel.WARNING;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -52,9 +48,11 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import prefixTransfer.StringBuilderUseAnalysis.StringBuilderToStringInstanceKeySite;
 import prefixTransfer.modeledAllocations.ConstantString;
-import util.MyLogger;
 
 import com.ibm.wala.classLoader.CallSiteReference;
 import com.ibm.wala.classLoader.IMethod;
@@ -74,6 +72,7 @@ import com.ibm.wala.types.ClassLoaderReference;
 import com.ibm.wala.util.graph.Graph;
 
 public class PrefixTransferGraph implements Graph<InstanceKeySite> {
+	private static final Logger logger = LoggerFactory.getLogger(PrefixTransferGraph.class);
 
     private final Map<InstanceKey, InstanceKeySite> nodeMap = new HashMap<InstanceKey, InstanceKeySite>();
     private final List<InstanceKeySite> nodes = new ArrayList<InstanceKeySite>();
@@ -102,23 +101,23 @@ public class PrefixTransferGraph implements Graph<InstanceKeySite> {
                         }
                         catch(Exception e)
                         {
-                            MyLogger.log(ERROR, "SBUA failed: "+e.getMessage());
+                            logger.error("SBUA failed", e);
                             continue;
                         }
                         for(Entry<ISSABasicBlock, ISSABasicBlock> e : sbua.blockOrdering.entrySet())
                         {
-                            System.out.println(e.getKey().toString()+" --> "+e.getValue().toString());
+                            logger.debug(e.getKey().toString()+" --> "+e.getValue().toString());
                             SSAInstruction inst = e.getKey().getLastInstruction();
                             if (inst instanceof SSAInvokeInstruction) {
-                                System.out.println("Call Site \t" + ((SSAInvokeInstruction) inst).getCallSite());
+                                logger.debug("Call Site \t" + ((SSAInvokeInstruction) inst).getCallSite());
                             }
                         }
                         sbuaMap.put(k, sbua); // map k to sbua in some global map
                     }
                     continue;
                 }
-                MyLogger.log(WARNING, "Skipping StringBuilder InstanceKey: "+k);
-                MyLogger.log(WARNING, "\tClass loader reference: "+k.getConcreteType().getClassLoader().getReference());
+                logger.warn("Skipping StringBuilder InstanceKey: "+k);
+                logger.warn("\tClass loader reference: "+k.getConcreteType().getClassLoader().getReference());
             }
         }
         InstanceKeySite node = null;
@@ -129,24 +128,24 @@ public class PrefixTransferGraph implements Graph<InstanceKeySite> {
             {
                 if(k instanceof ConstantKey)
                 {
-                    MyLogger.log(DEBUG, "ConstantKey: "+((ConstantKey)k).getValue());
+                    logger.debug("ConstantKey: "+((ConstantKey)k).getValue());
                     node = new ConstantString(pa.getInstanceKeyMapping().getMappedIndex(k), (String)((ConstantKey)k).getValue());
                     addNode(node);
                     nodeMap.put(k, node);
                 }
                 else if(k instanceof NormalAllocationInNode)
                 {
-                    MyLogger.log(DEBUG, "NormalAllocationInNode: "+k);
+                    logger.debug("NormalAllocationInNode: "+k);
                     IMethod m = ((NormalAllocationInNode) k).getNode().getMethod();
                     if (m.getSignature().equals("java.lang.StringBuilder.toString()Ljava/lang/String;")) {
                         Context context = ((NormalAllocationInNode) k).getNode().getContext();
                         CGNode caller = (CGNode) context.get(ContextKey.CALLER);
                         CallSiteReference csr = (CallSiteReference) context.get(ContextKey.CALLSITE);
                         InstanceKey receiver = (InstanceKey) context.get(ContextKey.RECEIVER);
-                        MyLogger.log(DEBUG, "StringBuilder.toString() csr: "+csr+" context: "+context+" receiver: "+receiver);
+                        logger.debug("StringBuilder.toString() csr: "+csr+" context: "+context+" receiver: "+receiver);
                         if (caller != null && caller.getMethod().getReference().getDeclaringClass().getClassLoader().equals(ClassLoaderReference.Application))
                         {
-                            MyLogger.log(DEBUG, "Found StringBuilder receiver for toString call");
+                            logger.debug("Found StringBuilder receiver for toString call");
                             node = sbuaMap.get(receiver).getNode(csr,k);
                             if(node == null)
                             {
@@ -163,37 +162,37 @@ public class PrefixTransferGraph implements Graph<InstanceKeySite> {
                             // - this may have to be done in another phase
 //                          NormalAllocationInNode ak = (NormalAllocationInNode)k;
 //                          SSAInstruction inst = ak.getNode().getIR().getPEI(ak.getSite());
-//                          System.out.println("NormalAllocationInNode inst: "+inst);
-//                          System.out.println("NormalAllocationInNode uses:");
+//                          logger.debug("NormalAllocationInNode inst: "+inst);
+//                          logger.debug("NormalAllocationInNode uses:");
 //                          for(int i = 0; i < inst.getNumberOfUses(); i++)
 //                          {
 //                              int use = inst.getUse(i);
 //                              OrdinalSet<InstanceKey> useKeys = pa.getPointsToSet(new LocalPointerKey(ak.getNode(), use));
-//                              System.out.println("\tUse "+use+": "+useKeys);
+//                              logger.debug("\tUse "+use+": "+useKeys);
 //                          }
-//                          System.out.println("NormalAllocationInNode defs:");
+//                          logger.debug("NormalAllocationInNode defs:");
 //                          for(int i = 0; i < inst.getNumberOfDefs(); i++)
 //                          {
 //                              int def = inst.getDef(i);
 //                              OrdinalSet<InstanceKey> useKeys = pa.getPointsToSet(new LocalPointerKey(ak.getNode(), def));
-//                              System.out.println("\tDef "+def+": "+useKeys);
+//                              logger.debug("\tDef "+def+": "+useKeys);
 //                          }
                         }
                     }
                 }
                 else if(k instanceof AllocationSite)
                 {
-                    MyLogger.log(DEBUG, "AllocationSite: "+k);
+                    logger.debug("AllocationSite: "+k);
                 }
                 else
                 {
-                    MyLogger.log(DEBUG, "Unknown type: "+k.toString());
+                    logger.debug("Unknown type: "+k.toString());
                 }
                 // create an edge for dependencies used in the creation of each instance key
             }
             else
             {
-                MyLogger.log(DEBUG, "Got IK of other type "+k);
+                logger.debug("Got IK of other type "+k);
             }
         }
         for(Entry<InstanceKeySite, Set<InstanceKey>> deps:unresolvedDependencies.entrySet())

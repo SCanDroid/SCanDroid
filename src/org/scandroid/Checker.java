@@ -43,6 +43,9 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.ibm.wala.ipa.callgraph.propagation.InstanceKey;
 import com.ibm.wala.ipa.callgraph.propagation.NormalAllocationInNode;
 import com.ibm.wala.ipa.callgraph.propagation.PointerAnalysis;
@@ -52,6 +55,7 @@ import flow.types.IKFlow;
 
 
 public class Checker {
+	private static final Logger logger = LoggerFactory.getLogger(Checker.class);
 
     private static boolean addFlow(IKFlow source, IKFlow dest, Map<IKFlow, Set<IKFlow>> flow)
     {
@@ -168,16 +172,16 @@ public class Checker {
             if (prefix.getKey() instanceof NormalAllocationInNode) {
                 NormalAllocationInNode ik = (NormalAllocationInNode) prefix.getKey();
                 if (ik.getConcreteType().getName().toString().contains("Landroid/net/Uri")) {
-//                  System.out.println(pa.getInstanceKeyMapping().getMappedIndex(ik) + " << " + perms.readPerms(prefix.getValue()));
+//                  logger.debug(pa.getInstanceKeyMapping().getMappedIndex(ik) + " << " + perms.readPerms(prefix.getValue()));
                     readPerms.put(ik, perms.readPerms(prefix.getValue()));
-//                  System.out.println(pa.getInstanceKeyMapping().getMappedIndex(ik) + " >> " + perms.writePerms(prefix.getValue()));
+//                  logger.debug(pa.getInstanceKeyMapping().getMappedIndex(ik) + " >> " + perms.writePerms(prefix.getValue()));
                     writePerms.put(ik, perms.writePerms(prefix.getValue()));
                 }
             }
         }
-        System.out.println("*********************");
-        System.out.println("*    Constraints    *");
-        System.out.println("*********************");
+        logger.debug("*********************");
+        logger.debug("*    Constraints    *");
+        logger.debug("*********************");
 
         /*
         for (Entry<IKFlow, Set<IKFlow>> e: uriFlow.entrySet()) {
@@ -189,14 +193,14 @@ public class Checker {
                         if(f instanceof IKFlow)
                         {
                             if (readPerms.containsKey(((IKFlow)f).ik))
-                                System.out.println(readPerms.get(((IKFlow)f).ik) + " can read " + readPerms.get(sourceIK));
+                                logger.debug(readPerms.get(((IKFlow)f).ik) + " can read " + readPerms.get(sourceIK));
                         }
                     }
                 }
                 if (writePerms.containsKey(sourceIK)) {
                     for (FlowType f: e.getValue()) {
                         if(f instanceof IKFlow)
-                            if (writePerms.containsKey(((IKFlow)f).ik)) System.out.println(writePerms.get(sourceIK) + " can write " + writePerms.get(((IKFlow)f).ik));
+                            if (writePerms.containsKey(((IKFlow)f).ik)) logger.debug(writePerms.get(sourceIK) + " can write " + writePerms.get(((IKFlow)f).ik));
                     }
                 }
             }
@@ -223,25 +227,25 @@ public class Checker {
             if (prefix.getKey() instanceof NormalAllocationInNode) {
                 NormalAllocationInNode ik = (NormalAllocationInNode) prefix.getKey();
                 if (ik.getConcreteType().getName().toString().equals("Landroid/net/Uri")) {
-                    System.out.println(pa.getInstanceKeyMapping().getMappedIndex(ik) + " << " + perms.readPerms(prefix.getValue()));
+                    logger.debug(pa.getInstanceKeyMapping().getMappedIndex(ik) + " << " + perms.readPerms(prefix.getValue()));
                     readPerms.put(ik, perms.readPerms(prefix.getValue()));
-                    System.out.println(pa.getInstanceKeyMapping().getMappedIndex(ik) + " >> " + perms.writePerms(prefix.getValue()));
+                    logger.debug(pa.getInstanceKeyMapping().getMappedIndex(ik) + " >> " + perms.writePerms(prefix.getValue()));
                     writePerms.put(ik, perms.writePerms(prefix.getValue()));
                 }
             }
         }
-        System.out.println("*********************");
-        System.out.println("*    Constraints    *");
-        System.out.println("*********************");
+        logger.debug("*********************");
+        logger.debug("*    Constraints    *");
+        logger.debug("*********************");
         for (Entry<InstanceKey, Set<InstanceKey>> e: permissionOutflow.entrySet()) {
             if (readPerms.containsKey(e.getKey())) {
                 for (InstanceKey k: e.getValue()) {
-                    if (readPerms.containsKey(k)) System.out.println(readPerms.get(k) + " can read " + readPerms.get(e.getKey()));
+                    if (readPerms.containsKey(k)) logger.debug(readPerms.get(k) + " can read " + readPerms.get(e.getKey()));
                 }
             }
             if (writePerms.containsKey(e.getKey())) {
                 for (InstanceKey k: e.getValue()) {
-                    if (writePerms.containsKey(k)) System.out.println(writePerms.get(e.getKey()) + " can write " + writePerms.get(k));
+                    if (writePerms.containsKey(k)) logger.debug(writePerms.get(e.getKey()) + " can write " + writePerms.get(k));
                 }
             }
         }

@@ -37,9 +37,6 @@
 
 package util;
 
-import static util.MyLogger.log;
-import static util.MyLogger.LogLevel.DEBUG;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -51,6 +48,8 @@ import java.util.StringTokenizer;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -61,9 +60,7 @@ import spec.MethodNamePattern;
 
 import com.ibm.wala.classLoader.IMethod;
 import com.ibm.wala.ipa.callgraph.Entrypoint;
-import com.ibm.wala.ipa.callgraph.impl.ArgumentTypeEntrypoint;
 import com.ibm.wala.ipa.callgraph.impl.DefaultEntrypoint;
-import com.ibm.wala.ipa.callgraph.impl.SubtypesEntrypoint;
 import com.ibm.wala.ipa.callgraph.impl.Util;
 import com.ibm.wala.ipa.cha.ClassHierarchy;
 import com.ibm.wala.types.ClassLoaderReference;
@@ -72,6 +69,8 @@ import com.ibm.wala.util.strings.StringStuff;
 
 
 public class EntryPoints {
+	private static final Logger logger = LoggerFactory.getLogger(EntryPoints.class);
+	
     private String pathToApkFile;
     private String pathToApkTool;
     private String pathToJava;
@@ -129,12 +128,12 @@ public class EntryPoints {
         for(MethodReference mr:entryPointMRs)
         for(IMethod im:cha.getPossibleTargets(mr))
         {
-            log(DEBUG,"Considering target "+im.getSignature());
+            logger.debug("Considering target "+im.getSignature());
 
             // limit to functions defined within the application
             if(im.getReference().getDeclaringClass().getClassLoader().
                                 equals(ClassLoaderReference.Application)) {
-                log(DEBUG,"Adding entry point: "+im.getSignature());
+                logger.debug("Adding entry point: "+im.getSignature());
                 entries.add(new DefaultEntrypoint(im, cha));
             }
         }
@@ -143,11 +142,11 @@ public class EntryPoints {
     public void defaultEntryPoints(ClassHierarchy cha, AndroidAnalysisContext loader) {
     	for (MethodNamePattern mnp:new AndroidSpecs().getEntrypointSpecs()) {
     		for (IMethod im: mnp.getPossibleTargets(cha)) {
-    			log(DEBUG,"Considering target "+im.getSignature());
+    			logger.debug("Considering target "+im.getSignature());
     			// limit to functions defined within the application
     			if(LoaderUtils.fromLoader(im, ClassLoaderReference.Application))
     			{
-    				log(DEBUG,"Adding entry point: "+im.getSignature());
+    				logger.debug("Adding entry point: "+im.getSignature());
     				entries.add(new DefaultEntrypoint(im, cha));
     			}
     		}
@@ -175,12 +174,12 @@ public class EntryPoints {
                     StringStuff.makeMethodReference(methodReferences[i]);
             
             for (IMethod im : cha.getPossibleTargets(mr)) {
-                log(DEBUG, "Considering target " + im.getSignature());
+                logger.debug("Considering target " + im.getSignature());
 
                 // limit to functions defined within the application
                 if (im.getReference().getDeclaringClass().getClassLoader()
                         .equals(ClassLoaderReference.Application)) {
-                    log(DEBUG, "Adding entry point: " + im.getSignature());
+                    logger.debug("Adding entry point: " + im.getSignature());
                     entries.add(new DefaultEntrypoint(im, cha));
                 }
             }
@@ -209,7 +208,7 @@ public class EntryPoints {
                        StringStuff.makeMethodReference(systemEntyPoints[i]);
 
                for (IMethod im : cha.getPossibleTargets(methodRef)) {
-                   log(DEBUG, "Adding entry point: " + im.getSignature());
+                   logger.debug("Adding entry point: " + im.getSignature());
                    entries.add(new DefaultEntrypoint(im, cha));
                }
            }
@@ -235,7 +234,7 @@ public class EntryPoints {
     				StringStuff.makeMethodReference(methodReferences[i]);
 
     		for (IMethod im : cha.getPossibleTargets(mr)) {
-    			log(DEBUG, "Adding entry point: " + im.getSignature());
+    			logger.debug("Adding entry point: " + im.getSignature());
     			entries.add(new DefaultEntrypoint(im, cha));
     		}
     	}
@@ -268,15 +267,15 @@ public class EntryPoints {
                     InputStreamReader(p.getErrorStream()));
 
             // read the output from the command
-            MyLogger.log(DEBUG, "Here is the standard output of the command:\n");
+            logger.debug("Here is the standard output of the command:\n");
             while ((s = stdInput.readLine()) != null) {
-                MyLogger.log(DEBUG, s);
+                logger.debug(s);
             }
 
             // read any errors from the attempted command
-            MyLogger.log(DEBUG, "Here is the standard error of the command (if any):\n");
+            logger.debug("Here is the standard error of the command (if any):\n");
             while ((s = stdError.readLine()) != null) {
-                MyLogger.log(DEBUG, s);
+                logger.debug(s);
             }
 
         } catch (IOException e) {
@@ -369,7 +368,7 @@ public class EntryPoints {
         for (String[] intent: ActivityIntentList) {
             //method = IntentToMethod(intent[0]);
             method = "onCreate(Landroid/os/Bundle;)V";
-            MyLogger.log(DEBUG, "activity intent method: "+intent[1]+"."+method);
+            logger.debug("activity intent method: "+intent[1]+"."+method);
             if (method != null)
                 im = cha.resolveMethod(StringStuff.makeMethodReference(intent[1]+"."+method));
             if (im!=null)
@@ -380,7 +379,7 @@ public class EntryPoints {
             //Seems that every broadcast receiver can be an entrypoints?
 //          method = IntentToMethod(intent[0]);
             method = "onReceive(Landroid/content/Context;Landroid/content/Intent;)V";
-            MyLogger.log(DEBUG, "receiver intent method: "+intent[1]+"."+method);
+            logger.debug("receiver intent method: "+intent[1]+"."+method);
             if (method != null)
                 im = cha.resolveMethod(StringStuff.makeMethodReference(intent[1]+"."+method));
             if (im!=null)
@@ -424,13 +423,13 @@ public class EntryPoints {
     private void outputIntentList() {
         if (ActivityIntentList != null)
         for (int i = 0; i < ActivityIntentList.size(); i++)
-            MyLogger.log(DEBUG, "Activity Intent: " + ActivityIntentList.get(i)[0] + " ~> " + ActivityIntentList.get(i)[1]);
+            logger.debug("Activity Intent: " + ActivityIntentList.get(i)[0] + " ~> " + ActivityIntentList.get(i)[1]);
         if (ReceiverIntentList != null)
         for (int i = 0; i < ReceiverIntentList.size(); i++)
-            MyLogger.log(DEBUG, "Receiver Intent: " + ReceiverIntentList.get(i)[0] + " ~> " + ReceiverIntentList.get(i)[1]);
+            logger.debug("Receiver Intent: " + ReceiverIntentList.get(i)[0] + " ~> " + ReceiverIntentList.get(i)[1]);
         if (ServiceIntentList != null)
         for (int i = 0; i < ServiceIntentList.size(); i++)
-            MyLogger.log(DEBUG, "Service Intent: " + ServiceIntentList.get(i)[0] + " ~> " + ServiceIntentList.get(i)[1]);
+            logger.debug("Service Intent: " + ServiceIntentList.get(i)[0] + " ~> " + ServiceIntentList.get(i)[1]);
     }
 
     public LinkedList<Entrypoint> getEntries() {

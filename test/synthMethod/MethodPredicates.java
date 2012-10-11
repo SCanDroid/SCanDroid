@@ -1,5 +1,8 @@
 package synthMethod;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import spec.MethodNamePattern;
 
 import com.ibm.wala.classLoader.IMethod;
@@ -8,6 +11,7 @@ import com.ibm.wala.util.Predicate;
 import com.ibm.wala.util.strings.Atom;
 
 public class MethodPredicates {
+	private static final Logger logger = LoggerFactory.getLogger(MethodPredicates.class);
 	
 	@SuppressWarnings("unchecked")
 	public static final Predicate<IMethod> every = Predicate.TRUE;
@@ -48,9 +52,9 @@ public class MethodPredicates {
 				String fullClassName = "L"+testPkgName + "/" + testClassName;
 				boolean matchFound = needleClassName.equals(fullClassName);
 				
-				System.out.println("Comparing class: "+fullClassName+"\n"+
+				logger.debug("Comparing class: "+fullClassName+"\n"+
 						"with: "+needleClassName);
-				System.out.println(" matches? "+matchFound);
+				logger.debug(" matches? "+matchFound);
 				
 				return matchFound;
 			}

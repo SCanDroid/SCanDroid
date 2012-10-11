@@ -49,7 +49,6 @@ import static org.jf.dexlib.Util.AccessFlags.PUBLIC;
 import static org.jf.dexlib.Util.AccessFlags.STATIC;
 import static org.jf.dexlib.Util.AccessFlags.SYNTHETIC;
 import static org.jf.dexlib.Util.AccessFlags.VOLATILE;
-import static util.MyLogger.LogLevel.DEBUG;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -92,9 +91,8 @@ import org.jf.dexlib.Code.Format.PackedSwitchDataPseudoInstruction;
 import org.jf.dexlib.Code.Format.SparseSwitchDataPseudoInstruction;
 import org.jf.dexlib.EncodedValue.ArrayEncodedValue;
 import org.jf.dexlib.EncodedValue.TypeEncodedValue;
-
-import util.MyLogger;
-import util.MyLogger.LogLevel;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.ibm.wala.dex.instructions.ArrayFill;
 import com.ibm.wala.dex.instructions.ArrayGet;
@@ -142,6 +140,7 @@ import com.ibm.wala.util.strings.ImmutableByteArray;
  * A wrapper around a EncodedMethod object (from dexlib) that represents a method.
  */
 public class DexIMethod implements IBytecodeMethod {
+	private static final Logger logger = LoggerFactory.getLogger(DexIMethod.class);
 
 	/**
 	 * The EncodedMethod object for which this DexIMethod is a wrapper.
@@ -209,7 +208,7 @@ public class DexIMethod implements IBytecodeMethod {
 		if (annotationSet != null) {
 			for (AnnotationItem annotationItem: annotationSet.getAnnotations())
 			{
-				MyLogger.log(DEBUG,"getDeclaredExceptions() AnnotationItem: " +  annotationItem.getEncodedAnnotation().annotationType.getTypeDescriptor());
+				logger.debug("getDeclaredExceptions() AnnotationItem: " +  annotationItem.getEncodedAnnotation().annotationType.getTypeDescriptor());
 				if (annotationItem.getEncodedAnnotation().annotationType.getTypeDescriptor().contentEquals("Ldalvik/annotation/Throws;")) {
 					for (int i = 0; i < annotationItem.getEncodedAnnotation().values.length; i++) {
 						for (int j = 0; j < ((ArrayEncodedValue)annotationItem.getEncodedAnnotation().values[i]).values.length; j++) {
@@ -231,7 +230,7 @@ public class DexIMethod implements IBytecodeMethod {
 		TypeReference[] result = new TypeReference[strings.size()];
 		for (int i = 0; i < result.length; i++) {
 			result[i] = TypeReference.findOrCreate(loader, TypeName.findOrCreate(ImmutableByteArray.make(strings.get(i))));
-			MyLogger.log(DEBUG,"getDeclaredExceptions() result["+i+"]: " + result[i] );
+			logger.debug("getDeclaredExceptions() result["+i+"]: " + result[i] );
 		}
 		return result;
 	}
@@ -247,7 +246,7 @@ public class DexIMethod implements IBytecodeMethod {
 	 * @see com.ibm.wala.classLoader.IMethod#getMaxLocals()
 	 */
 	public int getMaxLocals() {
-		MyLogger.log(DEBUG, "Max Local Register Count: " + eMethod.codeItem.getRegisterCount() + " + 2");
+		logger.debug("Max Local Register Count: " + eMethod.codeItem.getRegisterCount() + " + 2");
 		return eMethod.codeItem.getRegisterCount() + 2;
 	}
 
@@ -680,11 +679,11 @@ public class DexIMethod implements IBytecodeMethod {
 		if (instructions == null)
 			parseBytecode();
 
-		MyLogger.log(DEBUG, "Got " + instructions.size()
+		logger.debug("Got " + instructions.size()
 				+ " instructions for method " + myClass.toString() + "."
 				+ eMethod.toString() + ":");
 		for (Instruction inst : instructions()) {
-			MyLogger.log(DEBUG, "\t" + inst.getClass());
+			logger.debug("\t" + inst.getClass());
 		}
 		throw new UnsupportedOperationException(
 				"DexMethod doesn't use IInstruction - try getDexInstructions instead");
@@ -693,7 +692,7 @@ public class DexIMethod implements IBytecodeMethod {
 
 
 	protected void parseBytecode() {
-		MyLogger.log(DEBUG, "DexIMethod: parseByteCode() : " + eMethod.getClass().getSimpleName() + ":" + eMethod.method.getMethodString());
+		logger.debug("DexIMethod: parseByteCode() : " + eMethod.getClass().getSimpleName() + ":" + eMethod.method.getMethodString());
 
 		org.jf.dexlib.Code.Instruction[] instrucs = eMethod.codeItem.getInstructions();
 
@@ -802,7 +801,7 @@ public class DexIMethod implements IBytecodeMethod {
 		//          }
 		//      }
 
-		MyLogger.log(LogLevel.DEBUG, "Total DexLib instructions for Method: " + eMethod.method.getMethodString() + " : " + instrucs.length);
+		logger.debug("Total DexLib instructions for Method: " + eMethod.method.getMethodString() + " : " + instrucs.length);
 
 		//if (eMethod.method.getMethodString().contentEquals("Lorg/xbill/DNS/Name;-><init>([B)V") && instrucs.length == 4)
 		//  System.out.println("debug here");
@@ -821,7 +820,7 @@ public class DexIMethod implements IBytecodeMethod {
 			//          instLoc = pc - instCounter;
 			instLoc = currentCodeAddress;
 			//pc += inst.getFormat().size;
-			MyLogger.log(LogLevel.DEBUG, "Instruction: " + instCounter + ", Address: " + instLoc + ", OpCode: " + inst.opcode.name() + ", Format: " + inst.getFormat());
+			logger.debug("Instruction: " + instCounter + ", Address: " + instLoc + ", OpCode: " + inst.opcode.name() + ", Format: " + inst.getFormat());
 			switch(inst.opcode)
 			{
 			case NOP:
@@ -984,18 +983,18 @@ public class DexIMethod implements IBytecodeMethod {
 			case CONST_4: {
 				instructions.add(new Constant.IntConstant(instLoc,
 						(int)((Instruction11n)inst).getLiteral(),((Instruction11n)inst).getRegisterA(), inst.opcode, this));
-				MyLogger.log(LogLevel.DEBUG, "\tRegister: " + ((Instruction11n)inst).getRegisterA() + ", Value: " + ((Instruction11n)inst).getLiteral());
+				logger.debug("\tRegister: " + ((Instruction11n)inst).getRegisterA() + ", Value: " + ((Instruction11n)inst).getLiteral());
 				break;
 			}
 			case CONST_16:
 				instructions.add(new Constant.IntConstant(instLoc,
 						(int)((Instruction21s)inst).getLiteral(), ((Instruction21s)inst).getRegisterA(), inst.opcode, this));
-				MyLogger.log(LogLevel.DEBUG, "\tRegister: " + ((Instruction21s)inst).getRegisterA() + ", Value: " + ((Instruction21s)inst).getLiteral());
+				logger.debug("\tRegister: " + ((Instruction21s)inst).getRegisterA() + ", Value: " + ((Instruction21s)inst).getLiteral());
 				break;
 			case CONST:
 				instructions.add(new Constant.IntConstant(instLoc,
 						(int)((Instruction31i)inst).getLiteral(), ((Instruction31i)inst).getRegisterA(), inst.opcode, this));
-				MyLogger.log(LogLevel.DEBUG, "\tRegister: " + ((Instruction31i)inst).getRegisterA() + ", Value: " + ((Instruction31i)inst).getLiteral());
+				logger.debug("\tRegister: " + ((Instruction31i)inst).getRegisterA() + ", Value: " + ((Instruction31i)inst).getLiteral());
 
 				break;
 			case CONST_HIGH16:
@@ -1005,7 +1004,7 @@ public class DexIMethod implements IBytecodeMethod {
 			case CONST_WIDE_16:
 				instructions.add(new Constant.LongConstant(instLoc,
 						((Instruction21s)inst).getLiteral(), ((Instruction21s)inst).getRegisterA(), inst.opcode, this));
-				MyLogger.log(LogLevel.DEBUG, "\tRegister: " + ((Instruction21s)inst).getRegisterA() + ", Value: " + ((Instruction21s)inst).getLiteral());
+				logger.debug("\tRegister: " + ((Instruction21s)inst).getRegisterA() + ", Value: " + ((Instruction21s)inst).getLiteral());
 
 				break;
 			case CONST_WIDE_32:
@@ -1019,21 +1018,21 @@ public class DexIMethod implements IBytecodeMethod {
 			case CONST_WIDE_HIGH16:
 				instructions.add(new Constant.LongConstant(instLoc,
 						((Instruction21h)inst).getLiteral(), ((Instruction21h)inst).getRegisterA(), inst.opcode, this));
-				MyLogger.log(LogLevel.DEBUG, "\tRegister: " + ((Instruction21h)inst).getRegisterA() + ", Value: " + ((Instruction21h)inst).getLiteral());
+				logger.debug("\tRegister: " + ((Instruction21h)inst).getRegisterA() + ", Value: " + ((Instruction21h)inst).getLiteral());
 				break;
 			case CONST_STRING:
 
 				instructions.add(new Constant.StringConstant(instLoc,
 						((StringIdItem)((Instruction21c)inst).getReferencedItem()).getStringValue(),
 						((Instruction21c)inst).getRegisterA(), inst.opcode, this));
-				MyLogger.log(LogLevel.DEBUG, inst.opcode.toString() + " value: "+
+				logger.debug(inst.opcode.toString() + " value: "+
 						((StringIdItem)((Instruction21c)inst).getReferencedItem()).getStringValue());
 				break;
 			case CONST_STRING_JUMBO:
 				instructions.add(new Constant.StringConstant(instLoc,
 						((StringIdItem)((Instruction31c)inst).getReferencedItem()).getStringValue(),
 						((Instruction31c)inst).getRegisterA(), inst.opcode, this));
-				MyLogger.log(LogLevel.DEBUG, inst.opcode.toString() + " value: "+
+				logger.debug(inst.opcode.toString() + " value: "+
 						((StringIdItem)((Instruction31c)inst).getReferencedItem()).getStringValue());
 				break;
 			case CONST_CLASS: {
@@ -1043,8 +1042,8 @@ public class DexIMethod implements IBytecodeMethod {
 				instructions.add(new Constant.ClassConstant(instLoc,
 						this.myClass.loader.lookupClass(TypeName.findOrCreate(cname)),
 						((Instruction21c)inst).getRegisterA(), inst.opcode, this));
-				MyLogger.log(LogLevel.DEBUG, inst.opcode.toString() + " classname: "+cname+ " value: "+this.myClass.loader.lookupClass(TypeName.findOrCreate(cname)));
-				//MyLogger.log(LogLevel.DEBUG, "myClass found name: " + this.myClass.loader.lookupClass(TypeName.findOrCreate(cname)).toString());
+				logger.debug(inst.opcode.toString() + " classname: "+cname+ " value: "+this.myClass.loader.lookupClass(TypeName.findOrCreate(cname)));
+				//logger.debug("myClass found name: " + this.myClass.loader.lookupClass(TypeName.findOrCreate(cname)).toString());
 				break;
 			}
 			case MONITOR_ENTER:
@@ -1054,7 +1053,7 @@ public class DexIMethod implements IBytecodeMethod {
 				instructions.add(new Monitor(instLoc, false, ((Instruction11x)inst).getRegisterA(), inst.opcode, this));
 				break;
 			case CHECK_CAST: {
-				MyLogger.log(LogLevel.DEBUG, inst.opcode.toString() + " value: "+((TypeIdItem)((Instruction21c)inst).getReferencedItem()).getTypeDescriptor());
+				logger.debug(inst.opcode.toString() + " value: "+((TypeIdItem)((Instruction21c)inst).getReferencedItem()).getTypeDescriptor());
 				String cname = ((TypeIdItem)((Instruction21c)inst).getReferencedItem()).getTypeDescriptor();
 				if (cname.endsWith(";"))
 					cname = cname.substring(0,cname.length()-1);
@@ -1067,7 +1066,7 @@ public class DexIMethod implements IBytecodeMethod {
 				break;
 			}
 			case INSTANCE_OF: {
-				MyLogger.log(LogLevel.DEBUG, inst.opcode.toString() + " value: "+((TypeIdItem)((Instruction22c)inst).getReferencedItem()).getTypeDescriptor());
+				logger.debug(inst.opcode.toString() + " value: "+((TypeIdItem)((Instruction22c)inst).getReferencedItem()).getTypeDescriptor());
 				String cname = ((TypeIdItem)((Instruction22c)inst).getReferencedItem()).getTypeDescriptor();
 				if (cname.endsWith(";"))
 					cname = cname.substring(0,cname.length()-1);
@@ -1085,12 +1084,12 @@ public class DexIMethod implements IBytecodeMethod {
 				break;
 			case NEW_INSTANCE: {
 				//newsitereference use instLoc or pc?
-				MyLogger.log(LogLevel.DEBUG, inst.opcode.toString() + " value: "+((TypeIdItem)((Instruction21c)inst).getReferencedItem()).getTypeDescriptor());
+				logger.debug(inst.opcode.toString() + " value: "+((TypeIdItem)((Instruction21c)inst).getReferencedItem()).getTypeDescriptor());
 				String cname = ((TypeIdItem)((Instruction21c)inst).getReferencedItem()).getTypeDescriptor();
 				if (cname.endsWith(";"))
 					cname = cname.substring(0,cname.length()-1);
 
-				MyLogger.log(LogLevel.INFO, "Type: " +((TypeIdItem)((Instruction21c)inst).getReferencedItem()).getTypeDescriptor());
+				logger.info("Type: " +((TypeIdItem)((Instruction21c)inst).getReferencedItem()).getTypeDescriptor());
 				instructions.add(new New(instLoc,
 						((Instruction21c)inst).getRegisterA(),
 						NewSiteReference.make(instLoc, TypeReference.findOrCreate(myClass.loader.getReference(),
@@ -1103,7 +1102,7 @@ public class DexIMethod implements IBytecodeMethod {
 				params[0] = ((Instruction22c)inst).getRegisterB();
 				//              MyLogger.log(LogLevel.INFO, "Type: " +((TypeIdItem)((Instruction22c)inst).getReferencedItem()).getTypeDescriptor());
 
-				MyLogger.log(LogLevel.DEBUG, inst.opcode.toString() + " value: "+((TypeIdItem)((Instruction22c)inst).getReferencedItem()).getTypeDescriptor());
+				logger.debug(inst.opcode.toString() + " value: "+((TypeIdItem)((Instruction22c)inst).getReferencedItem()).getTypeDescriptor());
 				String cname = ((TypeIdItem)((Instruction22c)inst).getReferencedItem()).getTypeDescriptor();
 				if (cname.endsWith(";"))
 					cname = cname.substring(0,cname.length()-1);
@@ -1146,7 +1145,7 @@ public class DexIMethod implements IBytecodeMethod {
 					}
 				}
 
-				MyLogger.log(LogLevel.DEBUG, inst.opcode.toString() + " value: "+((TypeIdItem)((Instruction35c)inst).getReferencedItem()).getTypeDescriptor());
+				logger.debug(inst.opcode.toString() + " value: "+((TypeIdItem)((Instruction35c)inst).getReferencedItem()).getTypeDescriptor());
 				String cname = ((TypeIdItem)((Instruction35c)inst).getReferencedItem()).getTypeDescriptor();
 				if (cname.endsWith(";"))
 					cname = cname.substring(0,cname.length()-1);
@@ -1160,12 +1159,12 @@ public class DexIMethod implements IBytecodeMethod {
 
 
 
-				MyLogger.log(LogLevel.DEBUG, "Type: " + ((TypeIdItem)((Instruction35c)inst).getReferencedItem()).getTypeDescriptor() +
+				logger.debug("Type: " + ((TypeIdItem)((Instruction35c)inst).getReferencedItem()).getTypeDescriptor() +
 						", Register Count: "+ ((Instruction35c)inst).getRegCount());
-				MyLogger.log(LogLevel.DEBUG, registerCount + " registers");
+				logger.debug(registerCount + " registers");
 
 				for (int temp_i = 0; temp_i < registerCount; temp_i++)
-					MyLogger.log(LogLevel.DEBUG, "  " + args[temp_i]);
+					logger.debug("  " + args[temp_i]);
 
 				break;
 			}
@@ -1178,7 +1177,7 @@ public class DexIMethod implements IBytecodeMethod {
 				for (int i = 0; i < registerCount; i++)
 					args[i] = ((Instruction3rc)inst).getStartRegister() + i;
 
-				MyLogger.log(LogLevel.DEBUG, inst.opcode.toString() + " value: "+((TypeIdItem)((Instruction3rc)inst).getReferencedItem()).getTypeDescriptor());
+				logger.debug(inst.opcode.toString() + " value: "+((TypeIdItem)((Instruction3rc)inst).getReferencedItem()).getTypeDescriptor());
 				String cname = ((TypeIdItem)((Instruction3rc)inst).getReferencedItem()).getTypeDescriptor();
 				if (cname.endsWith(";"))
 					cname = cname.substring(0,cname.length()-1);
@@ -1213,7 +1212,7 @@ public class DexIMethod implements IBytecodeMethod {
 				break;
 			case GOTO:
 				instructions.add(new Goto(instLoc, ((Instruction10t)inst).getTargetAddressOffset(), inst.opcode, this));
-				MyLogger.log(LogLevel.DEBUG, "Offset: " + ((Instruction10t)inst).getTargetAddressOffset());
+				logger.debug("Offset: " + ((Instruction10t)inst).getTargetAddressOffset());
 				break;
 			case GOTO_16:
 				instructions.add(new Goto(instLoc, ((Instruction20t)inst).getTargetAddressOffset(), inst.opcode, this));
@@ -1225,7 +1224,7 @@ public class DexIMethod implements IBytecodeMethod {
 			case PACKED_SWITCH:
 			case SPARSE_SWITCH:
 				instructions.add(new Switch(instLoc, ((Instruction31t)inst).getRegisterA(), ((Instruction31t)inst).getTargetAddressOffset(), inst.opcode, this));
-				MyLogger.log(LogLevel.DEBUG, inst.opcode.toString() + ", format: " + inst.getFormat());
+				logger.debug(inst.opcode.toString() + ", format: " + inst.getFormat());
 				break;
 
 			case CMPL_FLOAT:
@@ -1257,74 +1256,74 @@ public class DexIMethod implements IBytecodeMethod {
 				instructions.add(new Branch.BinaryBranch(instLoc, ((Instruction22t)inst).getTargetAddressOffset(),
 						Branch.BinaryBranch.CompareOp.EQ, ((Instruction22t)inst).getRegisterA(),
 						((Instruction22t)inst).getRegisterB(), inst.opcode, this));
-				MyLogger.log(LogLevel.DEBUG, "Register1: " + ((Instruction22t)inst).getRegisterA() + ", Register2: " + ((Instruction22t)inst).getRegisterB() + ", Offset: " + ((Instruction22t)inst).getTargetAddressOffset());
+				logger.debug("Register1: " + ((Instruction22t)inst).getRegisterA() + ", Register2: " + ((Instruction22t)inst).getRegisterB() + ", Offset: " + ((Instruction22t)inst).getTargetAddressOffset());
 				break;
 			case IF_NE:
 				instructions.add(new Branch.BinaryBranch(instLoc, ((Instruction22t)inst).getTargetAddressOffset(),
 						Branch.BinaryBranch.CompareOp.NE, ((Instruction22t)inst).getRegisterA(),
 						((Instruction22t)inst).getRegisterB(), inst.opcode, this));
-				MyLogger.log(LogLevel.DEBUG, "Register1: " + ((Instruction22t)inst).getRegisterA() + ", Register2: " + ((Instruction22t)inst).getRegisterB() + ", Offset: " + ((Instruction22t)inst).getTargetAddressOffset());
+				logger.debug("Register1: " + ((Instruction22t)inst).getRegisterA() + ", Register2: " + ((Instruction22t)inst).getRegisterB() + ", Offset: " + ((Instruction22t)inst).getTargetAddressOffset());
 				break;
 			case IF_LT:
 				instructions.add(new Branch.BinaryBranch(instLoc, ((Instruction22t)inst).getTargetAddressOffset(),
 						Branch.BinaryBranch.CompareOp.LT, ((Instruction22t)inst).getRegisterA(),
 						((Instruction22t)inst).getRegisterB(), inst.opcode, this));
-				MyLogger.log(LogLevel.DEBUG, "Register1: " + ((Instruction22t)inst).getRegisterA() + ", Register2: " + ((Instruction22t)inst).getRegisterB() + ", Offset: " + ((Instruction22t)inst).getTargetAddressOffset());
-				//              MyLogger.log(LogLevel.DEBUG, "Offset: " + ((Instruction22t)inst).getTargetAddressOffset() + ", Value: " + ((Instruction22t)inst).getLiteral());
+				logger.debug("Register1: " + ((Instruction22t)inst).getRegisterA() + ", Register2: " + ((Instruction22t)inst).getRegisterB() + ", Offset: " + ((Instruction22t)inst).getTargetAddressOffset());
+				//              logger.debug("Offset: " + ((Instruction22t)inst).getTargetAddressOffset() + ", Value: " + ((Instruction22t)inst).getLiteral());
 				break;
 			case IF_GE:
 				instructions.add(new Branch.BinaryBranch(instLoc, ((Instruction22t)inst).getTargetAddressOffset(),
 						Branch.BinaryBranch.CompareOp.GE, ((Instruction22t)inst).getRegisterA(),
 						((Instruction22t)inst).getRegisterB(), inst.opcode, this));
-				MyLogger.log(LogLevel.DEBUG, "Register1: " + ((Instruction22t)inst).getRegisterA() + ", Register2: " + ((Instruction22t)inst).getRegisterB() + ", Offset: " + ((Instruction22t)inst).getTargetAddressOffset());
+				logger.debug("Register1: " + ((Instruction22t)inst).getRegisterA() + ", Register2: " + ((Instruction22t)inst).getRegisterB() + ", Offset: " + ((Instruction22t)inst).getTargetAddressOffset());
 				break;
 			case IF_GT:
 				instructions.add(new Branch.BinaryBranch(instLoc, ((Instruction22t)inst).getTargetAddressOffset(),
 						Branch.BinaryBranch.CompareOp.GT, ((Instruction22t)inst).getRegisterA(),
 						((Instruction22t)inst).getRegisterB(), inst.opcode, this));
-				MyLogger.log(LogLevel.DEBUG, "Register1: " + ((Instruction22t)inst).getRegisterA() + ", Register2: " + ((Instruction22t)inst).getRegisterB() + ", Offset: " + ((Instruction22t)inst).getTargetAddressOffset());
+				logger.debug("Register1: " + ((Instruction22t)inst).getRegisterA() + ", Register2: " + ((Instruction22t)inst).getRegisterB() + ", Offset: " + ((Instruction22t)inst).getTargetAddressOffset());
 				break;
 			case IF_LE:
 				instructions.add(new Branch.BinaryBranch(instLoc, ((Instruction22t)inst).getTargetAddressOffset(),
 						Branch.BinaryBranch.CompareOp.LE, ((Instruction22t)inst).getRegisterA(),
 						((Instruction22t)inst).getRegisterB(), inst.opcode, this));
-				MyLogger.log(LogLevel.DEBUG, "Register1: " + ((Instruction22t)inst).getRegisterA() + ", Register2: " + ((Instruction22t)inst).getRegisterB() + ", Offset: " + ((Instruction22t)inst).getTargetAddressOffset());
+				logger.debug("Register1: " + ((Instruction22t)inst).getRegisterA() + ", Register2: " + ((Instruction22t)inst).getRegisterB() + ", Offset: " + ((Instruction22t)inst).getTargetAddressOffset());
 				break;
 			case IF_EQZ:
 				instructions.add(new Branch.UnaryBranch(instLoc,
 						((Instruction21t)inst).getTargetAddressOffset(), Branch.UnaryBranch.CompareOp.EQZ,
 						((Instruction21t)inst).getRegisterA(), inst.opcode, this));
-				MyLogger.log(LogLevel.DEBUG, "Register1: " + ((Instruction21t)inst).getRegisterA() + ", Offset: " + ((Instruction21t)inst).getTargetAddressOffset());
+				logger.debug("Register1: " + ((Instruction21t)inst).getRegisterA() + ", Offset: " + ((Instruction21t)inst).getTargetAddressOffset());
 				break;
 			case IF_NEZ:
 				instructions.add(new Branch.UnaryBranch(instLoc,
 						((Instruction21t)inst).getTargetAddressOffset(), Branch.UnaryBranch.CompareOp.NEZ,
 						((Instruction21t)inst).getRegisterA(), inst.opcode, this));
-				MyLogger.log(LogLevel.DEBUG, "Register1: " + ((Instruction21t)inst).getRegisterA() + ", Offset: " + ((Instruction21t)inst).getTargetAddressOffset());
+				logger.debug("Register1: " + ((Instruction21t)inst).getRegisterA() + ", Offset: " + ((Instruction21t)inst).getTargetAddressOffset());
 				break;
 			case IF_LTZ:
 				instructions.add(new Branch.UnaryBranch(instLoc,
 						((Instruction21t)inst).getTargetAddressOffset(), Branch.UnaryBranch.CompareOp.LTZ,
 						((Instruction21t)inst).getRegisterA(), inst.opcode, this));
-				MyLogger.log(LogLevel.DEBUG, "Register1: " + ((Instruction21t)inst).getRegisterA() + ", Offset: " + ((Instruction21t)inst).getTargetAddressOffset());
+				logger.debug("Register1: " + ((Instruction21t)inst).getRegisterA() + ", Offset: " + ((Instruction21t)inst).getTargetAddressOffset());
 				break;
 			case IF_GEZ:
 				instructions.add(new Branch.UnaryBranch(instLoc,
 						((Instruction21t)inst).getTargetAddressOffset(), Branch.UnaryBranch.CompareOp.GEZ,
 						((Instruction21t)inst).getRegisterA(), inst.opcode, this));
-				MyLogger.log(LogLevel.DEBUG, "Register1: " + ((Instruction21t)inst).getRegisterA() + ", Offset: " + ((Instruction21t)inst).getTargetAddressOffset());
+				logger.debug("Register1: " + ((Instruction21t)inst).getRegisterA() + ", Offset: " + ((Instruction21t)inst).getTargetAddressOffset());
 				break;
 			case IF_GTZ:
 				instructions.add(new Branch.UnaryBranch(instLoc,
 						((Instruction21t)inst).getTargetAddressOffset(), Branch.UnaryBranch.CompareOp.GTZ,
 						((Instruction21t)inst).getRegisterA(), inst.opcode, this));
-				MyLogger.log(LogLevel.DEBUG, "Register1: " + ((Instruction21t)inst).getRegisterA() + ", Offset: " + ((Instruction21t)inst).getTargetAddressOffset());
+				logger.debug("Register1: " + ((Instruction21t)inst).getRegisterA() + ", Offset: " + ((Instruction21t)inst).getTargetAddressOffset());
 				break;
 			case IF_LEZ:
 				instructions.add(new Branch.UnaryBranch(instLoc,
 						((Instruction21t)inst).getTargetAddressOffset(), Branch.UnaryBranch.CompareOp.LEZ,
 						((Instruction21t)inst).getRegisterA(), inst.opcode, this));
-				MyLogger.log(LogLevel.DEBUG, "Register1: " + ((Instruction21t)inst).getRegisterA() + ", Offset: " + ((Instruction21t)inst).getTargetAddressOffset());
+				logger.debug("Register1: " + ((Instruction21t)inst).getRegisterA() + ", Offset: " + ((Instruction21t)inst).getTargetAddressOffset());
 				break;
 			case AGET:
 				instructions.add(new ArrayGet(instLoc, ((Instruction23x)inst).getRegisterA(),
@@ -1389,7 +1388,7 @@ public class DexIMethod implements IBytecodeMethod {
 			case IGET_BYTE:
 			case IGET_CHAR:
 			case IGET_SHORT: {
-				MyLogger.log(LogLevel.DEBUG, inst.opcode.toString() + " class: "+((FieldIdItem)((Instruction22c)inst).getReferencedItem()).getContainingClass().getTypeDescriptor() + ", field name: " + ((FieldIdItem)((Instruction22c)inst).getReferencedItem()).getFieldName().getStringValue() + ", field type: " + ((FieldIdItem)((Instruction22c)inst).getReferencedItem()).getFieldType().getTypeDescriptor());
+				logger.debug(inst.opcode.toString() + " class: "+((FieldIdItem)((Instruction22c)inst).getReferencedItem()).getContainingClass().getTypeDescriptor() + ", field name: " + ((FieldIdItem)((Instruction22c)inst).getReferencedItem()).getFieldName().getStringValue() + ", field type: " + ((FieldIdItem)((Instruction22c)inst).getReferencedItem()).getFieldType().getTypeDescriptor());
 				String cname = ((FieldIdItem)((Instruction22c)inst).getReferencedItem()).getContainingClass().getTypeDescriptor();
 				String fname = ((FieldIdItem)((Instruction22c)inst).getReferencedItem()).getFieldName().getStringValue();
 				String ftname = ((FieldIdItem)((Instruction22c)inst).getReferencedItem()).getFieldType().getTypeDescriptor();
@@ -1413,7 +1412,7 @@ public class DexIMethod implements IBytecodeMethod {
 			case IPUT_BYTE:
 			case IPUT_CHAR:
 			case IPUT_SHORT: {
-				MyLogger.log(LogLevel.DEBUG, inst.opcode.toString() + " class: "+((FieldIdItem)((Instruction22c)inst).getReferencedItem()).getContainingClass().getTypeDescriptor() + ", field name: " + ((FieldIdItem)((Instruction22c)inst).getReferencedItem()).getFieldName().getStringValue() + ", field type: " + ((FieldIdItem)((Instruction22c)inst).getReferencedItem()).getFieldType().getTypeDescriptor());
+				logger.debug(inst.opcode.toString() + " class: "+((FieldIdItem)((Instruction22c)inst).getReferencedItem()).getContainingClass().getTypeDescriptor() + ", field name: " + ((FieldIdItem)((Instruction22c)inst).getReferencedItem()).getFieldName().getStringValue() + ", field type: " + ((FieldIdItem)((Instruction22c)inst).getReferencedItem()).getFieldType().getTypeDescriptor());
 				String cname = ((FieldIdItem)((Instruction22c)inst).getReferencedItem()).getContainingClass().getTypeDescriptor();
 				String fname = ((FieldIdItem)((Instruction22c)inst).getReferencedItem()).getFieldName().getStringValue();
 				String ftname = ((FieldIdItem)((Instruction22c)inst).getReferencedItem()).getFieldType().getTypeDescriptor();
@@ -1437,7 +1436,7 @@ public class DexIMethod implements IBytecodeMethod {
 			case SGET_BYTE:
 			case SGET_CHAR:
 			case SGET_SHORT: {
-				MyLogger.log(LogLevel.DEBUG, inst.opcode.toString() + " class: "+((FieldIdItem)((Instruction21c)inst).getReferencedItem()).getContainingClass().getTypeDescriptor() + ", field name: " + ((FieldIdItem)((Instruction21c)inst).getReferencedItem()).getFieldName().getStringValue() + ", field type: " + ((FieldIdItem)((Instruction21c)inst).getReferencedItem()).getFieldType().getTypeDescriptor());
+				logger.debug(inst.opcode.toString() + " class: "+((FieldIdItem)((Instruction21c)inst).getReferencedItem()).getContainingClass().getTypeDescriptor() + ", field name: " + ((FieldIdItem)((Instruction21c)inst).getReferencedItem()).getFieldName().getStringValue() + ", field type: " + ((FieldIdItem)((Instruction21c)inst).getReferencedItem()).getFieldType().getTypeDescriptor());
 				String cname = ((FieldIdItem)((Instruction21c)inst).getReferencedItem()).getContainingClass().getTypeDescriptor();
 				String fname = ((FieldIdItem)((Instruction21c)inst).getReferencedItem()).getFieldName().getStringValue();
 				String ftname = ((FieldIdItem)((Instruction21c)inst).getReferencedItem()).getFieldType().getTypeDescriptor();
@@ -1460,7 +1459,7 @@ public class DexIMethod implements IBytecodeMethod {
 			case SPUT_BYTE:
 			case SPUT_CHAR:
 			case SPUT_SHORT: {
-				MyLogger.log(LogLevel.DEBUG, inst.opcode.toString() + " class: "+((FieldIdItem)((Instruction21c)inst).getReferencedItem()).getContainingClass().getTypeDescriptor() + ", field name: " + ((FieldIdItem)((Instruction21c)inst).getReferencedItem()).getFieldName().getStringValue() + ", field type: " + ((FieldIdItem)((Instruction21c)inst).getReferencedItem()).getFieldType().getTypeDescriptor());
+				logger.debug(inst.opcode.toString() + " class: "+((FieldIdItem)((Instruction21c)inst).getReferencedItem()).getContainingClass().getTypeDescriptor() + ", field name: " + ((FieldIdItem)((Instruction21c)inst).getReferencedItem()).getFieldName().getStringValue() + ", field type: " + ((FieldIdItem)((Instruction21c)inst).getReferencedItem()).getFieldType().getTypeDescriptor());
 				String cname = ((FieldIdItem)((Instruction21c)inst).getReferencedItem()).getContainingClass().getTypeDescriptor();
 				String fname = ((FieldIdItem)((Instruction21c)inst).getReferencedItem()).getFieldName().getStringValue();
 				String ftname = ((FieldIdItem)((Instruction21c)inst).getReferencedItem()).getFieldType().getTypeDescriptor();
@@ -1520,7 +1519,7 @@ public class DexIMethod implements IBytecodeMethod {
 
 				handleINVOKE_VIRTUAL(instLoc, cname, mname, pname, args, inst.opcode);
 				//instructions.add(new Invoke.InvokeVirtual(instLoc, cname, mname, pname, args, inst.opcode, this));
-				//MyLogger.log(LogLevel.DEBUG, "\t" + inst.opcode.toString() + " class: "+ cname + ", method name: " + mname + ", prototype string: " + pname);
+				//logger.debug("\t" + inst.opcode.toString() + " class: "+ cname + ", method name: " + mname + ", prototype string: " + pname);
 
 				break;
 			}
@@ -1552,7 +1551,7 @@ public class DexIMethod implements IBytecodeMethod {
 					}
 				}
 
-				MyLogger.log(LogLevel.DEBUG, inst.opcode.toString() + " class: "+((MethodIdItem)((Instruction35c)inst).getReferencedItem()).getContainingClass().getTypeDescriptor() + ", method name: " + ((MethodIdItem)((Instruction35c)inst).getReferencedItem()).getMethodName().getStringValue() + ", prototype string: " + ((MethodIdItem)((Instruction35c)inst).getReferencedItem()).getPrototype().getPrototypeString());
+				logger.debug(inst.opcode.toString() + " class: "+((MethodIdItem)((Instruction35c)inst).getReferencedItem()).getContainingClass().getTypeDescriptor() + ", method name: " + ((MethodIdItem)((Instruction35c)inst).getReferencedItem()).getMethodName().getStringValue() + ", prototype string: " + ((MethodIdItem)((Instruction35c)inst).getReferencedItem()).getPrototype().getPrototypeString());
 				String cname = ((MethodIdItem)((Instruction35c)inst).getReferencedItem()).getContainingClass().getTypeDescriptor();
 				String mname = ((MethodIdItem)((Instruction35c)inst).getReferencedItem()).getMethodName().getStringValue();
 				String pname = ((MethodIdItem)((Instruction35c)inst).getReferencedItem()).getPrototype().getPrototypeString();
@@ -1563,7 +1562,7 @@ public class DexIMethod implements IBytecodeMethod {
 
 				instructions.add(new Invoke.InvokeSuper(instLoc,
 						cname, mname, pname, args, inst.opcode, this));
-				MyLogger.log(LogLevel.DEBUG, "Super class name: " + cname + ", Method name: " + mname + ", Prototype String" + pname);
+				logger.debug("Super class name: " + cname + ", Method name: " + mname + ", Prototype String" + pname);
 				break;
 			}
 			case INVOKE_DIRECT: {
@@ -1594,7 +1593,7 @@ public class DexIMethod implements IBytecodeMethod {
 					}
 				}
 
-				//              MyLogger.log(LogLevel.DEBUG, inst.opcode.toString() + " class: "+((MethodIdItem)((Instruction35c)inst).getReferencedItem()).getContainingClass().getTypeDescriptor() + ", method name: " + ((MethodIdItem)((Instruction35c)inst).getReferencedItem()).getMethodName().getStringValue() + ", prototype string: " + ((MethodIdItem)((Instruction35c)inst).getReferencedItem()).getPrototype().getPrototypeString());
+				//              logger.debug(inst.opcode.toString() + " class: "+((MethodIdItem)((Instruction35c)inst).getReferencedItem()).getContainingClass().getTypeDescriptor() + ", method name: " + ((MethodIdItem)((Instruction35c)inst).getReferencedItem()).getMethodName().getStringValue() + ", prototype string: " + ((MethodIdItem)((Instruction35c)inst).getReferencedItem()).getPrototype().getPrototypeString());
 				String cname = ((MethodIdItem)((Instruction35c)inst).getReferencedItem()).getContainingClass().getTypeDescriptor();
 				String mname = ((MethodIdItem)((Instruction35c)inst).getReferencedItem()).getMethodName().getStringValue();
 				String pname = ((MethodIdItem)((Instruction35c)inst).getReferencedItem()).getPrototype().getPrototypeString();
@@ -1606,7 +1605,7 @@ public class DexIMethod implements IBytecodeMethod {
 				instructions.add(new Invoke.InvokeDirect(instLoc,
 						cname, mname, pname, args, inst.opcode, this));
 
-				MyLogger.log(LogLevel.DEBUG, "Class: " + ((MethodIdItem)((Instruction35c)inst).getReferencedItem()).getContainingClass().getTypeDescriptor() +
+				logger.debug("Class: " + ((MethodIdItem)((Instruction35c)inst).getReferencedItem()).getContainingClass().getTypeDescriptor() +
 						", Method: " + ((MethodIdItem)((Instruction35c)inst).getReferencedItem()).getMethodName().getStringValue() +
 						", Descriptor: " + ((MethodIdItem)((Instruction35c)inst).getReferencedItem()).getPrototype().getPrototypeString() +
 						", Register Count: "+ ((Instruction35c)inst).getRegCount());
@@ -1645,7 +1644,7 @@ public class DexIMethod implements IBytecodeMethod {
 					}
 				}
 
-				//MyLogger.log(LogLevel.DEBUG, inst.opcode.toString() + " class: "+((MethodIdItem)((Instruction35c)inst).getReferencedItem()).getContainingClass().getTypeDescriptor() + ", method name: " + ((MethodIdItem)((Instruction35c)inst).getReferencedItem()).getMethodName().getStringValue() + ", prototype string: " + ((MethodIdItem)((Instruction35c)inst).getReferencedItem()).getPrototype().getPrototypeString());
+				//logger.debug(inst.opcode.toString() + " class: "+((MethodIdItem)((Instruction35c)inst).getReferencedItem()).getContainingClass().getTypeDescriptor() + ", method name: " + ((MethodIdItem)((Instruction35c)inst).getReferencedItem()).getMethodName().getStringValue() + ", prototype string: " + ((MethodIdItem)((Instruction35c)inst).getReferencedItem()).getPrototype().getPrototypeString());
 				String cname = ((MethodIdItem)((Instruction35c)inst).getReferencedItem()).getContainingClass().getTypeDescriptor();
 				String mname = ((MethodIdItem)((Instruction35c)inst).getReferencedItem()).getMethodName().getStringValue();
 				String pname = ((MethodIdItem)((Instruction35c)inst).getReferencedItem()).getPrototype().getPrototypeString();
@@ -1657,7 +1656,7 @@ public class DexIMethod implements IBytecodeMethod {
 
 				instructions.add(new Invoke.InvokeStatic(instLoc, cname, mname, pname, args, inst.opcode, this));
 
-				MyLogger.log(LogLevel.DEBUG, "Class: " + ((MethodIdItem)((Instruction35c)inst).getReferencedItem()).getContainingClass().getTypeDescriptor() +
+				logger.debug("Class: " + ((MethodIdItem)((Instruction35c)inst).getReferencedItem()).getContainingClass().getTypeDescriptor() +
 						", Method: " + ((MethodIdItem)((Instruction35c)inst).getReferencedItem()).getMethodName().getStringValue() +
 						", Descriptor: " + ((MethodIdItem)((Instruction35c)inst).getReferencedItem()).getPrototype().getPrototypeString() +
 						", Register Count: "+ ((Instruction35c)inst).getRegCount());
@@ -1692,7 +1691,7 @@ public class DexIMethod implements IBytecodeMethod {
 					}
 				}
 
-				MyLogger.log(LogLevel.DEBUG, inst.opcode.toString() + " class: "+((MethodIdItem)((Instruction35c)inst).getReferencedItem()).getContainingClass().getTypeDescriptor() + ", method name: " + ((MethodIdItem)((Instruction35c)inst).getReferencedItem()).getMethodName().getStringValue() + ", prototype string: " + ((MethodIdItem)((Instruction35c)inst).getReferencedItem()).getPrototype().getPrototypeString());
+				logger.debug(inst.opcode.toString() + " class: "+((MethodIdItem)((Instruction35c)inst).getReferencedItem()).getContainingClass().getTypeDescriptor() + ", method name: " + ((MethodIdItem)((Instruction35c)inst).getReferencedItem()).getMethodName().getStringValue() + ", prototype string: " + ((MethodIdItem)((Instruction35c)inst).getReferencedItem()).getPrototype().getPrototypeString());
 				String cname = ((MethodIdItem)((Instruction35c)inst).getReferencedItem()).getContainingClass().getTypeDescriptor();
 				String mname = ((MethodIdItem)((Instruction35c)inst).getReferencedItem()).getMethodName().getStringValue();
 				String pname = ((MethodIdItem)((Instruction35c)inst).getReferencedItem()).getPrototype().getPrototypeString();
@@ -1712,7 +1711,7 @@ public class DexIMethod implements IBytecodeMethod {
 				for (int i = 0; i < registerCount; i++)
 					args[i] = ((Instruction3rc)inst).getStartRegister() + i;
 
-				MyLogger.log(LogLevel.DEBUG, inst.opcode.toString() + " class: "+((MethodIdItem)((Instruction3rc)inst).getReferencedItem()).getContainingClass().getTypeDescriptor() + ", method name: " + ((MethodIdItem)((Instruction3rc)inst).getReferencedItem()).getMethodName().getStringValue() + ", prototype string: " + ((MethodIdItem)((Instruction3rc)inst).getReferencedItem()).getPrototype().getPrototypeString());
+				logger.debug(inst.opcode.toString() + " class: "+((MethodIdItem)((Instruction3rc)inst).getReferencedItem()).getContainingClass().getTypeDescriptor() + ", method name: " + ((MethodIdItem)((Instruction3rc)inst).getReferencedItem()).getMethodName().getStringValue() + ", prototype string: " + ((MethodIdItem)((Instruction3rc)inst).getReferencedItem()).getPrototype().getPrototypeString());
 				String cname = ((MethodIdItem)((Instruction3rc)inst).getReferencedItem()).getContainingClass().getTypeDescriptor();
 				String mname = ((MethodIdItem)((Instruction3rc)inst).getReferencedItem()).getMethodName().getStringValue();
 				String pname = ((MethodIdItem)((Instruction3rc)inst).getReferencedItem()).getPrototype().getPrototypeString();
@@ -1732,7 +1731,7 @@ public class DexIMethod implements IBytecodeMethod {
 				for (int i = 0; i < registerCount; i++)
 					args[i] = ((Instruction3rc)inst).getStartRegister() + i;
 
-				MyLogger.log(LogLevel.DEBUG, inst.opcode.toString() + " class: "+((MethodIdItem)((Instruction3rc)inst).getReferencedItem()).getContainingClass().getTypeDescriptor() + ", method name: " + ((MethodIdItem)((Instruction3rc)inst).getReferencedItem()).getMethodName().getStringValue() + ", prototype string: " + ((MethodIdItem)((Instruction3rc)inst).getReferencedItem()).getPrototype().getPrototypeString());
+				logger.debug(inst.opcode.toString() + " class: "+((MethodIdItem)((Instruction3rc)inst).getReferencedItem()).getContainingClass().getTypeDescriptor() + ", method name: " + ((MethodIdItem)((Instruction3rc)inst).getReferencedItem()).getMethodName().getStringValue() + ", prototype string: " + ((MethodIdItem)((Instruction3rc)inst).getReferencedItem()).getPrototype().getPrototypeString());
 				String cname = ((MethodIdItem)((Instruction3rc)inst).getReferencedItem()).getContainingClass().getTypeDescriptor();
 				String mname = ((MethodIdItem)((Instruction3rc)inst).getReferencedItem()).getMethodName().getStringValue();
 				String pname = ((MethodIdItem)((Instruction3rc)inst).getReferencedItem()).getPrototype().getPrototypeString();
@@ -1751,7 +1750,7 @@ public class DexIMethod implements IBytecodeMethod {
 				for (int i = 0; i < registerCount; i++)
 					args[i] = ((Instruction3rc)inst).getStartRegister() + i;
 
-				MyLogger.log(LogLevel.DEBUG, inst.opcode.toString() + " class: "+((MethodIdItem)((Instruction3rc)inst).getReferencedItem()).getContainingClass().getTypeDescriptor() + ", method name: " + ((MethodIdItem)((Instruction3rc)inst).getReferencedItem()).getMethodName().getStringValue() + ", prototype string: " + ((MethodIdItem)((Instruction3rc)inst).getReferencedItem()).getPrototype().getPrototypeString());
+				logger.debug(inst.opcode.toString() + " class: "+((MethodIdItem)((Instruction3rc)inst).getReferencedItem()).getContainingClass().getTypeDescriptor() + ", method name: " + ((MethodIdItem)((Instruction3rc)inst).getReferencedItem()).getMethodName().getStringValue() + ", prototype string: " + ((MethodIdItem)((Instruction3rc)inst).getReferencedItem()).getPrototype().getPrototypeString());
 				String cname = ((MethodIdItem)((Instruction3rc)inst).getReferencedItem()).getContainingClass().getTypeDescriptor();
 				String mname = ((MethodIdItem)((Instruction3rc)inst).getReferencedItem()).getMethodName().getStringValue();
 				String pname = ((MethodIdItem)((Instruction3rc)inst).getReferencedItem()).getPrototype().getPrototypeString();
@@ -1770,7 +1769,7 @@ public class DexIMethod implements IBytecodeMethod {
 				for (int i = 0; i < registerCount; i++)
 					args[i] = ((Instruction3rc)inst).getStartRegister() + i;
 
-				MyLogger.log(LogLevel.DEBUG, inst.opcode.toString() + " class: "+((MethodIdItem)((Instruction3rc)inst).getReferencedItem()).getContainingClass().getTypeDescriptor() + ", method name: " + ((MethodIdItem)((Instruction3rc)inst).getReferencedItem()).getMethodName().getStringValue() + ", prototype string: " + ((MethodIdItem)((Instruction3rc)inst).getReferencedItem()).getPrototype().getPrototypeString());
+				logger.debug(inst.opcode.toString() + " class: "+((MethodIdItem)((Instruction3rc)inst).getReferencedItem()).getContainingClass().getTypeDescriptor() + ", method name: " + ((MethodIdItem)((Instruction3rc)inst).getReferencedItem()).getMethodName().getStringValue() + ", prototype string: " + ((MethodIdItem)((Instruction3rc)inst).getReferencedItem()).getPrototype().getPrototypeString());
 				String cname = ((MethodIdItem)((Instruction3rc)inst).getReferencedItem()).getContainingClass().getTypeDescriptor();
 				String mname = ((MethodIdItem)((Instruction3rc)inst).getReferencedItem()).getMethodName().getStringValue();
 				String pname = ((MethodIdItem)((Instruction3rc)inst).getReferencedItem()).getPrototype().getPrototypeString();
@@ -1790,7 +1789,7 @@ public class DexIMethod implements IBytecodeMethod {
 				for (int i = 0; i < registerCount; i++)
 					args[i] = ((Instruction3rc)inst).getStartRegister() + i;
 
-				MyLogger.log(LogLevel.DEBUG, inst.opcode.toString() + " class: "+((MethodIdItem)((Instruction3rc)inst).getReferencedItem()).getContainingClass().getTypeDescriptor() + ", method name: " + ((MethodIdItem)((Instruction3rc)inst).getReferencedItem()).getMethodName().getStringValue() + ", prototype string: " + ((MethodIdItem)((Instruction3rc)inst).getReferencedItem()).getPrototype().getPrototypeString());
+				logger.debug(inst.opcode.toString() + " class: "+((MethodIdItem)((Instruction3rc)inst).getReferencedItem()).getContainingClass().getTypeDescriptor() + ", method name: " + ((MethodIdItem)((Instruction3rc)inst).getReferencedItem()).getMethodName().getStringValue() + ", prototype string: " + ((MethodIdItem)((Instruction3rc)inst).getReferencedItem()).getPrototype().getPrototypeString());
 				String cname = ((MethodIdItem)((Instruction3rc)inst).getReferencedItem()).getContainingClass().getTypeDescriptor();
 				String mname = ((MethodIdItem)((Instruction3rc)inst).getReferencedItem()).getMethodName().getStringValue();
 				String pname = ((MethodIdItem)((Instruction3rc)inst).getReferencedItem()).getPrototype().getPrototypeString();
@@ -2377,7 +2376,7 @@ public class DexIMethod implements IBytecodeMethod {
 		//          UnresolvedOdexInstruction(null, -1, false),
 		//*/
 		//          case Format10t: { //goto
-		//              MyLogger.log(DEBUG,instruction.opcode.name + " - 10t");
+		//              logger.debug(instruction.opcode.name + " - 10t");
 		//
 		//              Instruction10t dInst = (Instruction10t)instruction;
 		//
@@ -2387,7 +2386,7 @@ public class DexIMethod implements IBytecodeMethod {
 		//              break;
 		//          }
 		//          case Format10x: {
-		//              MyLogger.log(DEBUG,instruction.opcode.name + " - 10x");
+		//              logger.debug(instruction.opcode.name + " - 10x");
 		//              switch(instruction.opcode) {
 		//              case RETURN_VOID: {
 		//                  instructions.add(new Return.ReturnVoid(i));
@@ -2401,7 +2400,7 @@ public class DexIMethod implements IBytecodeMethod {
 		//          }
 		//
 		//          case Format11n: {
-		//              MyLogger.log(DEBUG,instruction.opcode.name + " - 11n");
+		//              logger.debug(instruction.opcode.name + " - 11n");
 		//              Instruction11n dInst = (Instruction11n) instruction;
 		//
 		//              System.out.println("here1");
@@ -2432,7 +2431,7 @@ public class DexIMethod implements IBytecodeMethod {
 		//    MONITOR_EXIT((byte)0x1e, "monitor-exit", ReferenceType.none, Format.Format11x, Opcode.CAN_THROW | Opcode.CAN_CONTINUE),
 		//    THROW((byte)0x27, "throw", ReferenceType.none, Format.Format11x, Opcode.CAN_THROW),
 		//               */
-		//              MyLogger.log(DEBUG,instruction.opcode.name + " - 11x");
+		//              logger.debug(instruction.opcode.name + " - 11x");
 		//              Instruction11x dInst = (Instruction11x) instruction;
 		//
 		//              switch (dInst.opcode) {
@@ -2497,7 +2496,7 @@ public class DexIMethod implements IBytecodeMethod {
 		//          }
 		//
 		//          case Format12x: {
-		//              MyLogger.log(DEBUG,instruction.opcode.name + " - 12x");
+		//              logger.debug(instruction.opcode.name + " - 12x");
 		//              Instruction12x dInst = (Instruction12x) instruction;
 		//              int destination = dInst.getRegisterA();
 		//              int source = dInst.getRegisterB();
@@ -2939,7 +2938,7 @@ public class DexIMethod implements IBytecodeMethod {
 		//          }
 		//
 		//          case Format20t: { //goto/16
-		//              MyLogger.log(DEBUG,instruction.opcode.name + " - 20t");
+		//              logger.debug(instruction.opcode.name + " - 20t");
 		//
 		//              Instruction20t dInst = (Instruction20t)instruction;
 		//
@@ -2948,7 +2947,7 @@ public class DexIMethod implements IBytecodeMethod {
 		//              break;
 		//          }
 		//          case Format30t: { //goto/32
-		//              MyLogger.log(DEBUG,instruction.opcode.name + " - 30t");
+		//              logger.debug(instruction.opcode.name + " - 30t");
 		//
 		//              Instruction30t dInst = (Instruction30t)instruction;
 		//
@@ -2959,7 +2958,7 @@ public class DexIMethod implements IBytecodeMethod {
 		//
 		//          case Format21c: {
 		//              Instruction21c dInst = (Instruction21c) instruction;
-		//              MyLogger.log(DEBUG,instruction.opcode.name + " - 21c");
+		//              logger.debug(instruction.opcode.name + " - 21c");
 		//
 		//              switch (dInst.opcode) {
 		//              //CONST_STRING((byte)0x1a, "const-string", ReferenceType.string, Format.Format21c, Opcode.CAN_THROW | Opcode.CAN_CONTINUE | Opcode.SETS_REGISTER),
@@ -3081,7 +3080,7 @@ public class DexIMethod implements IBytecodeMethod {
 		//                          offset, Branch.UnaryBranch.CompareOp.LEZ, oper1));
 		//                  break;
 		//              default:
-		//                  MyLogger.log(DEBUG,instruction.opcode.name + " - " + instruction.getFormat().toString());
+		//                  logger.debug(instruction.opcode.name + " - " + instruction.getFormat().toString());
 		//                  break;
 		//              }
 		//              /*
@@ -3129,7 +3128,7 @@ public class DexIMethod implements IBytecodeMethod {
 		//                          Branch.BinaryBranch.CompareOp.LE, oper1, oper2));
 		//                  break;
 		//              default:
-		//                  MyLogger.log(DEBUG,instruction.opcode.name + " - " + instruction.getFormat().toString());
+		//                  logger.debug(instruction.opcode.name + " - " + instruction.getFormat().toString());
 		//                  break;
 		//              }
 		///*                IF_EQ((byte)0x32, "if-eq", ReferenceType.none, Format.Format22t, Opcode.CAN_CONTINUE),
@@ -3156,7 +3155,7 @@ public class DexIMethod implements IBytecodeMethod {
 		//
 		//
 		//          case Format35c: {
-		//              MyLogger.log(DEBUG,instruction.opcode.name + " - 11c");
+		//              logger.debug(instruction.opcode.name + " - 11c");
 		//              // = invoke virtual
 		//              //iinstructions[i] = new IInstruction35c((Instruction35c)instruction, this);
 		//              break;
@@ -3164,7 +3163,7 @@ public class DexIMethod implements IBytecodeMethod {
 		//
 		//
 		//          default:
-		//              MyLogger.log(DEBUG,instruction.opcode.name + " - " + instruction.getFormat().toString());
+		//              logger.debug(instruction.opcode.name + " - " + instruction.getFormat().toString());
 		//              break;
 		//          }
 		//
@@ -3173,7 +3172,7 @@ public class DexIMethod implements IBytecodeMethod {
 		//
 		//      //comment out stop
 
-		MyLogger.log(LogLevel.DEBUG, "DexIMethod: " + this.toString() + "parseByteCode() done");
+		logger.debug("DexIMethod: " + this.toString() + "parseByteCode() done");
 
 		// TODO Auto-generated method stub
 		//return iinstructions;
@@ -3182,7 +3181,7 @@ public class DexIMethod implements IBytecodeMethod {
 
 	protected void handleINVOKE_VIRTUAL(int instLoc, String cname, String mname, String pname, int[] args, Opcode opcode ) {
 		instructions.add(new Invoke.InvokeVirtual(instLoc, cname, mname, pname, args, opcode, this));
-		MyLogger.log(LogLevel.DEBUG, "\tDexIMethod " + opcode.toString() + " class: "+ cname + ", method name: " + mname + ", prototype string: " + pname);
+		logger.debug("\tDexIMethod " + opcode.toString() + " class: "+ cname + ", method name: " + mname + ", prototype string: " + pname);
 	}
 
 	public Instruction[] getDexInstructions() {
@@ -3242,7 +3241,7 @@ public class DexIMethod implements IBytecodeMethod {
 //		if ( mIdItem.equals(eMethod.method) ){
 //			AnnotationItem[] items = anoSet.getAnnotations();
 //			for (AnnotationItem item : items) {
-//				MyLogger.log(LogLevel.DEBUG, "ANNOTATION"+item.toString());
+//				logger.debug("ANNOTATION"+item.toString());
 //			}
 //
 //		}

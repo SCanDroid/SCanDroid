@@ -11,17 +11,13 @@
  *******************************************************************************/
 package com.ibm.wala.ssa;
 
-import static util.MyLogger.log;
-import static util.MyLogger.LogLevel.DEBUG;
-import static util.MyLogger.LogLevel.ERROR;
-
 import java.nio.ByteBuffer;
 import java.util.Iterator;
 
+import org.apache.log4j.lf5.LogLevel;
 import org.jf.dexlib.Code.Format.ArrayDataPseudoInstruction.ArrayElement;
-
-import util.MyLogger;
-import util.MyLogger.LogLevel;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.ibm.wala.cfg.IBasicBlock;
 import com.ibm.wala.classLoader.CallSiteReference;
@@ -89,6 +85,7 @@ import com.ibm.wala.util.intset.IntPair;
  * abstraction and moving to a register-transfer language in SSA form.
  */
 public class DexSSABuilder extends AbstractIntRegisterMachine {
+	private static final Logger logger = LoggerFactory.getLogger(DexSSABuilder.class);
 
     public static DexSSABuilder make(DexIMethod method, SSACFG cfg, DexCFG scfg, SSAInstruction[] instructions,
             SymbolTable symbolTable, boolean buildLocalMap, SSAPiNodePolicy piNodePolicy) throws IllegalArgumentException {
@@ -384,7 +381,7 @@ public class DexSSABuilder extends AbstractIntRegisterMachine {
         }
 
         private void emitInstruction(SSAInstruction s) {
-            log(DEBUG,"Setting instruction "+getCurrentInstructionIndex()+" to "+s);
+            logger.debug("Setting instruction "+getCurrentInstructionIndex()+" to "+s);
             instructions[getCurrentInstructionIndex()] = s;
             for (int i = 0; i < s.getNumberOfDefs(); i++) {
                 if (creators.length < (s.getDef(i) + 1)) {
@@ -535,7 +532,7 @@ public class DexSSABuilder extends AbstractIntRegisterMachine {
                         value = symbolTable.getConstant((byte_buffer.get() == 1)?true:false);
                     else
                     {
-                        MyLogger.log(ERROR, "Unhandled Primitive Type in visitArrayFill");
+                        logger.error("Unhandled Primitive Type in visitArrayFill");
                         value = 0;
                     }
                     emitInstruction(insts.ArrayStoreInstruction(arrayRef, index, value, t));
@@ -805,12 +802,12 @@ public class DexSSABuilder extends AbstractIntRegisterMachine {
             @Override
             public void visitInvoke(Invoke instruction) {
                 // TODO: can other methods do indirect reads from a dex method?
-                MyLogger.log(DEBUG, "Visiting invoke for "+instruction);
+                logger.debug("Visiting invoke for "+instruction);
                 if (workingState.getLocals() != null) {
-                    MyLogger.log(DEBUG, "workingState: ");
+                    logger.debug("workingState: ");
                     for(int i = 0; i < workingState.getLocals().length; i++)
                     {
-                        MyLogger.log(DEBUG, "  "+i+":"+workingState.getLocal(i)+",");
+                        logger.debug("  "+i+":"+workingState.getLocal(i)+",");
                     }
                 }
 //              doIndirectReads(bytecodeIndirections.indirectlyReadLocals(getCurrentInstructionIndex()));
@@ -824,7 +821,7 @@ public class DexSSABuilder extends AbstractIntRegisterMachine {
 
                 Language lang = dexCFG.getMethod().getDeclaringClass().getClassLoader().getLanguage();
                 // TODO: check that the signature needed by findOrCreate can use the descriptor
-                MyLogger.log(DEBUG, "****" + instruction.clazzName + "****" + instruction.methodName + "****" + instruction.descriptor);
+                logger.debug("****" + instruction.clazzName + "****" + instruction.methodName + "****" + instruction.descriptor);
                 MethodReference m = MethodReference.findOrCreate(lang, loader, instruction.clazzName, instruction.methodName, instruction.descriptor);
 
 
@@ -834,7 +831,7 @@ public class DexSSABuilder extends AbstractIntRegisterMachine {
 //              ((Instruction21c)inst).getRegisterA()));
 
 
-                MyLogger.log(DEBUG, "Created method reference "+m+" from "+instruction.clazzName+" descriptor "+m.getReturnType());
+                logger.debug("Created method reference "+m+" from "+instruction.clazzName+" descriptor "+m.getReturnType());
                 IInvokeInstruction.IDispatch code = instruction.getInvocationCode();
                 CallSiteReference site = CallSiteReference.make(getCurrentProgramCounter(), m, code);
                 int exc = reuseOrCreateException();
@@ -852,7 +849,7 @@ public class DexSSABuilder extends AbstractIntRegisterMachine {
                 if (n == m.getNumberOfParameters()) {
                     for (int i = 0; i < n; i++) {
                         params[i] = workingState.getLocal(instruction.args[arg_i]);
-                        MyLogger.log(LogLevel.INFO, "visitInvoke param["+i+"] = "+params[i]);
+                        logger.info("visitInvoke param["+i+"] = "+params[i]);
                         if (m.getParameterType(i) == TypeReference.Double || m.getParameterType(i) == TypeReference.Long)
                             arg_i++;
                         arg_i++;
@@ -861,11 +858,11 @@ public class DexSSABuilder extends AbstractIntRegisterMachine {
                 //there is a "this" parameter in this invoke call
                 else if (n == m.getNumberOfParameters()+1) {
                     params[0] = workingState.getLocal(instruction.args[0]);
-                    MyLogger.log(LogLevel.INFO, "visitInvoke param[0] = "+params[0]);
+                    logger.info("visitInvoke param[0] = "+params[0]);
                     arg_i = 1;
                     for (int i = 0; i < (n-1); i++) {
                         params[i+1] = workingState.getLocal(instruction.args[arg_i]);
-                        MyLogger.log(LogLevel.INFO, "visitInvoke param["+(i+1)+"] = "+params[i+1]);
+                        logger.info("visitInvoke param["+(i+1)+"] = "+params[i+1]);
                         if (m.getParameterType(i) == TypeReference.Double || m.getParameterType(i) == TypeReference.Long)
                             arg_i++;
                         arg_i++;

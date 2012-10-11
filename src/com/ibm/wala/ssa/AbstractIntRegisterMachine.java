@@ -13,8 +13,9 @@ package com.ibm.wala.ssa;
 
 import java.util.Iterator;
 
-import util.MyLogger;
-import util.MyLogger.LogLevel;
+import org.apache.log4j.lf5.LogLevel;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.ibm.wala.classLoader.DexCFG;
 import com.ibm.wala.classLoader.DexCFG.BasicBlock;
@@ -44,9 +45,9 @@ import com.ibm.wala.dex.instructions.Throw;
 import com.ibm.wala.dex.instructions.UnaryOperation;
 import com.ibm.wala.fixpoint.AbstractStatement;
 import com.ibm.wala.fixpoint.AbstractVariable;
-import com.ibm.wala.fixpoint.UnaryOperator;
 import com.ibm.wala.fixpoint.FixedPointConstants;
 import com.ibm.wala.fixpoint.IVariable;
+import com.ibm.wala.fixpoint.UnaryOperator;
 import com.ibm.wala.shrikeBT.ArrayLengthInstruction;
 import com.ibm.wala.shrikeBT.ConstantInstruction;
 import com.ibm.wala.shrikeBT.IArrayLoadInstruction;
@@ -74,6 +75,7 @@ import com.ibm.wala.util.debug.UnimplementedError;
  * In this implementation, each dataflow variable value is an integer, and the "meeter" object provides the meets
  */
 public abstract class AbstractIntRegisterMachine implements FixedPointConstants {
+	private static final Logger logger = LoggerFactory.getLogger(AbstractIntRegisterMachine.class);
 
     private static final boolean DEBUG = false;
 
@@ -420,7 +422,7 @@ public abstract class AbstractIntRegisterMachine implements FixedPointConstants 
         //System.out.println("dMethod local size: " + dMethod.getExceptionReg() + " - local size: " + L.locals.length);
         assert(L.locals.length == dMethod.getExceptionReg()+1);
         for (int i = 0; i < L.locals.length; i++)
-        MyLogger.log(LogLevel.DEBUG, "local: " + L.locals[i]);
+        logger.debug("local: " + L.locals[i]);
 
         int meet = meeter.meetStackAtCatchBlock(bb);
         if (L.locals[dMethod.getExceptionReg()] == TOP) {
@@ -911,14 +913,14 @@ public abstract class AbstractIntRegisterMachine implements FixedPointConstants 
             currentSuccessorBlock = null;
             Instruction[] instructions = getInstructions();
             if (DEBUG) {
-                MyLogger.log(LogLevel.DEBUG, ("Entry to BB" + cfg.getNumber(basicBlock) + " " + workingState));
+                logger.debug(("Entry to BB" + cfg.getNumber(basicBlock) + " " + workingState));
             }
             for (int i = basicBlock.getFirstInstructionIndex(); i <= basicBlock.getLastInstructionIndex(); i++) {
                 currentInstructionIndex = i;
                 instructions[i].visit(visitor);
 
                 if (DEBUG) {
-                    MyLogger.log(LogLevel.DEBUG, ("After " + instructions[i] + " " + workingState));
+                    logger.debug(("After " + instructions[i] + " " + workingState));
                 }
             }
             return workingState;
@@ -930,13 +932,13 @@ public abstract class AbstractIntRegisterMachine implements FixedPointConstants 
             currentSuccessorBlock = to;
             Instruction[] instructions = getInstructions();
             if (DEBUG) {
-                MyLogger.log(LogLevel.DEBUG, ("Entry to BB" + cfg.getNumber(from) + " " + workingState));
+                logger.debug(("Entry to BB" + cfg.getNumber(from) + " " + workingState));
             }
             for (int i = from.getFirstInstructionIndex(); i <= from.getLastInstructionIndex(); i++) {
                 currentInstructionIndex = i;
                 instructions[i].visit(edgeVisitor);
                 if (DEBUG) {
-                    MyLogger.log(LogLevel.DEBUG, ("After " + instructions[i] + " " + workingState));
+                    logger.debug(("After " + instructions[i] + " " + workingState));
                 }
             }
             return workingState;

@@ -40,99 +40,102 @@
 package com.ibm.wala.dex.instructions;
 
 import org.jf.dexlib.Code.Opcode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.ibm.wala.classLoader.DexIMethod;
 
 public abstract class Instruction {
 
     public static class Visitor {
+    	private static final Logger logger = LoggerFactory.getLogger(Instruction.Visitor.class);
 
         public void visitArrayLength(ArrayLength instruction) {
-            System.err.println("visitArrayLength not overridden");
+            logger.error("visitArrayLength not overridden");
         }
 
         public void visitArrayGet(ArrayGet instruction) {
-            System.err.println("visitArrayGet not overridden");
+            logger.error("visitArrayGet not overridden");
         }
 
         public void visitArrayPut(ArrayPut instruction) {
-            System.err.println("visitArrayPut not overridden");
+            logger.error("visitArrayPut not overridden");
         }
 
         public void visitArrayFill(ArrayFill instruction) {
-            System.err.println("visitArrayFill not overridden");
+            logger.error("visitArrayFill not overridden");
         }
 
         public void visitBinaryOperation(BinaryOperation instruction) {
-            System.err.println("visitBinaryOperation not overridden");
+            logger.error("visitBinaryOperation not overridden");
         }
 
         public void visitBinaryLiteral(BinaryLiteralOperation binaryLiteralOperation) {
-            System.err.println("visitBinaryLiteral not overridden");
+            logger.error("visitBinaryLiteral not overridden");
         }
 
         public void visitBranch(Branch instruction) {
-            System.err.println("visitBranch not overridden");
+            logger.error("visitBranch not overridden");
         }
 
         public void visitCheckCast(CheckCast checkCast) {
-            System.err.println("visitCheckCast not overridden");
+            logger.error("visitCheckCast not overridden");
         }
 
         public void visitConstant(Constant instruction) {
-            System.err.println("visitConstant not overridden");
+            logger.error("visitConstant not overridden");
         }
 
         public void visitGetField(GetField instruction) {
-            System.err.println("visitGetField not overridden");
+            logger.error("visitGetField not overridden");
         }
 
         public void visitGoto(Goto inst) {
-            System.err.println("visitGoto not overridden");
+            logger.error("visitGoto not overridden");
         }
 
         public void visitInstanceof(InstanceOf instruction) {
-            System.err.println("visitInstanceof not overridden");
+            logger.error("visitInstanceof not overridden");
         }
 
         public void visitInvoke(Invoke instruction) {
-            System.err.println("visitInvoke not overridden");
+            logger.error("visitInvoke not overridden");
         }
 
         public void visitMonitor(Monitor instruction) {
-            System.err.println("visitMonitor not overridden");
+            logger.error("visitMonitor not overridden");
         }
 
         public void visitNew(New instruction) {
-            System.err.println("visitNew not overridden");
+            logger.error("visitNew not overridden");
         }
 
         public void visitNewArray(NewArray newArray) {
-            System.err.println("visitNewArray not overridden");
+            logger.error("visitNewArray not overridden");
         }
 
         public void visitNewArrayFilled(NewArrayFilled newArrayFilled) {
-            System.err.println("visitNewArrayFilled not overridden");
+            logger.error("visitNewArrayFilled not overridden");
         }
 
         public void visitPutField(PutField instruction) {
-            System.err.println("visitPutField not overridden");
+            logger.error("visitPutField not overridden");
         }
 
         public void visitReturn(Return return1) {
-            System.err.println("visitReturn not overridden");
+            logger.error("visitReturn not overridden");
         }
 
         public void visitSwitch(Switch instruction) {
-            System.err.println("visitSwitch not overridden");
+            logger.error("visitSwitch not overridden");
         }
 
         public void visitThrow(Throw instruction) {
-            System.err.println("visitThrow not overridden");
+            logger.error("visitThrow not overridden");
         }
 
         public void visitUnaryOperation(UnaryOperation instruction) {
-            System.err.println("visitUnaryOperation not overridden");
+            logger.error("visitUnaryOperation not overridden");
         }
 
 

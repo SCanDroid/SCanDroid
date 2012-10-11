@@ -1,20 +1,21 @@
 package model;
 
-import static util.MyLogger.log;
-import static util.MyLogger.LogLevel.DEBUG;
-
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.Stack;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import spec.AndroidSpecs;
+import spec.MethodNamePattern;
+import util.LoaderUtils;
 
 import com.ibm.wala.classLoader.ArrayClass;
 import com.ibm.wala.classLoader.CallSiteReference;
@@ -23,9 +24,6 @@ import com.ibm.wala.classLoader.IMethod;
 import com.ibm.wala.classLoader.Language;
 import com.ibm.wala.classLoader.NewSiteReference;
 import com.ibm.wala.ipa.callgraph.AnalysisScope;
-import com.ibm.wala.ipa.callgraph.Entrypoint;
-import com.ibm.wala.ipa.callgraph.impl.DefaultEntrypoint;
-import com.ibm.wala.ipa.callgraph.impl.Everywhere;
 import com.ibm.wala.ipa.cha.IClassHierarchy;
 import com.ibm.wala.ipa.summaries.MethodSummary;
 import com.ibm.wala.shrikeBT.IInvokeInstruction;
@@ -41,18 +39,12 @@ import com.ibm.wala.types.MethodReference;
 import com.ibm.wala.types.TypeName;
 import com.ibm.wala.types.TypeReference;
 import com.ibm.wala.util.collections.HashMapFactory;
-import com.ibm.wala.util.debug.Assertions;
 import com.ibm.wala.util.debug.UnimplementedError;
 import com.ibm.wala.util.strings.Atom;
-import com.ibm.wala.util.warnings.Warnings;
-
-import spec.AndroidSpecs;
-import spec.ISpecs;
-import spec.MethodNamePattern;
-import util.AndroidAnalysisContext;
-import util.LoaderUtils;
 
 public class AppModelMethod {
+	private final static Logger logger = LoggerFactory.getLogger(AppModelMethod.class);
+	
 	int nextLocal;
     /**
      * A mapping from String (variable name) -> Integer (local number)
@@ -185,7 +177,7 @@ public class AppModelMethod {
     				callBacks.add(new MethodParams(im));
     				TypeReference tr = im.getDeclaringClass().getReference(); 
     				if (!typeToID.containsKey(tr)) {
-						log(DEBUG,"AppModel Mapping type "+tr.getName()+" to id " + nextLocal);
+						logger.debug("AppModel Mapping type "+tr.getName()+" to id " + nextLocal);
 						typeToID.put(tr, nextLocal++);
     					//class is an innerclass
     					if (tr.getName().getClassName().toString().contains("$")) {
@@ -209,7 +201,7 @@ public class AppModelMethod {
     		TypeReference innerTR = TypeReference.findOrCreate(ClassLoaderReference.Application, packageName+outerClassName);
     		trLL.push(innerTR);    		
     		if (!typeToID.containsKey(innerTR)) {
-				log(DEBUG,"AppModel Mapping type "+innerTR.getName()+" to id " + nextLocal);
+				logger.debug("AppModel Mapping type "+innerTR.getName()+" to id " + nextLocal);
     			typeToID.put(innerTR, nextLocal++);
     			aClassToTR.put(innerTR, tr);
     		}

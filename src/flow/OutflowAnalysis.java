@@ -326,9 +326,9 @@ public class OutflowAnalysis <E extends ISSABasicBlock> {
           IFDSTaintDomain<E> domain,
           ISpecs s) {
          
-        System.out.println("****************************");
-        System.out.println("* Running outflow analysis *");
-        System.out.println("****************************");
+        logger.debug("****************************");
+        logger.debug("* Running outflow analysis *");
+        logger.debug("****************************");
 
         Map<FlowType<E>, Set<FlowType<E>>> taintFlow = Maps.newHashMap();
 
@@ -349,28 +349,28 @@ public class OutflowAnalysis <E extends ISSABasicBlock> {
         if (!ssAL.isEmpty())
         	processArgSinks(flowResult, domain, taintFlow, ssAL, cha, pa, graph, cg);
 
-        System.out.println("************");
-        System.out.println("* Results: *");
-        System.out.println("************");
+        logger.debug("************");
+        logger.debug("* Results: *");
+        logger.debug("************");
 
         /* TODO: re-enable this soon! */
         /*
         for(Entry<FlowType,Set<FlowType>> e: taintFlow.entrySet())
         {
             WalaGraphToJGraphT walaJgraphT = new WalaGraphToJGraphT(flowResult, domain, e.getKey(), graph, cg);
-        	System.out.println("Source: " + e.getKey());
+        	logger.debug("Source: " + e.getKey());
             for(FlowType target:e.getValue())
             {
-            	System.out.println("\t=> Sink: " + target);
-            	//System.out.println("SourceNode: "+ e.getKey().getRelevantNode() + "\nSinkNode: "+target.getRelevantNode());
+            	logger.debug("\t=> Sink: " + target);
+            	//logger.debug("SourceNode: "+ e.getKey().getRelevantNode() + "\nSinkNode: "+target.getRelevantNode());
                 walaJgraphT.calcPath(e.getKey().getRelevantNode(), target.getRelevantNode());
                 Iterator<DefaultEdge> edgeI = walaJgraphT.getPath().getEdgeList().iterator();
                 if (edgeI.hasNext())
-                	System.out.println("\t::Method Trace::");
+                	logger.debug("\t::Method Trace::");
                 int counter = 1;
                 while (edgeI.hasNext()) {
                     DefaultEdge edge = edgeI.next();
-                    System.out.println("\t\t#"+counter+": " + walaJgraphT.getJGraphT().getEdgeSource(edge).getMethod().getSignature()
+                    logger.debug("\t\t#"+counter+": " + walaJgraphT.getJGraphT().getEdgeSource(edge).getMethod().getSignature()
                             + " ==> " + walaJgraphT.getJGraphT().getEdgeTarget(edge).getMethod().getSignature());              
                 }
 

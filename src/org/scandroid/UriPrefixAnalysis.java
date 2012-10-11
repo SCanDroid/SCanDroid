@@ -38,48 +38,36 @@ package org.scandroid;
  *
  */
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.Map;
 import java.util.Map.Entry;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import prefixTransfer.InstanceKeySite;
 import prefixTransfer.PrefixTransferFunctionProvider;
 import prefixTransfer.PrefixVariable;
-import prefixTransfer.UriPrefixContextSelector;
 import prefixTransfer.UriPrefixTransferGraph;
 import util.AndroidAnalysisContext;
 import util.EmptyProgressMonitor;
 
-import com.ibm.wala.classLoader.IMethod;
 import com.ibm.wala.dataflow.graph.DataflowSolver;
 import com.ibm.wala.dataflow.graph.IKilldallFramework;
 import com.ibm.wala.dataflow.graph.ITransferFunctionProvider;
-import com.ibm.wala.ipa.callgraph.AnalysisCache;
-import com.ibm.wala.ipa.callgraph.AnalysisOptions;
-import com.ibm.wala.ipa.callgraph.AnalysisScope;
 import com.ibm.wala.ipa.callgraph.CallGraph;
-import com.ibm.wala.ipa.callgraph.Entrypoint;
-import com.ibm.wala.ipa.callgraph.impl.DefaultEntrypoint;
-import com.ibm.wala.ipa.callgraph.impl.Util;
 import com.ibm.wala.ipa.callgraph.propagation.InstanceKey;
 import com.ibm.wala.ipa.callgraph.propagation.PointerAnalysis;
-import com.ibm.wala.ipa.callgraph.propagation.SSAPropagationCallGraphBuilder;
-import com.ibm.wala.ipa.cha.ClassHierarchy;
-import com.ibm.wala.ipa.cha.ClassHierarchyException;
 import com.ibm.wala.ssa.analysis.IExplodedBasicBlock;
 import com.ibm.wala.util.CancelException;
 import com.ibm.wala.util.CancelRuntimeException;
-import com.ibm.wala.util.config.AnalysisScopeReader;
 import com.ibm.wala.util.graph.Graph;
-import com.ibm.wala.util.io.FileProvider;
-import com.ibm.wala.util.strings.StringStuff;
 
 
 public class UriPrefixAnalysis {
+	private static final Logger logger = LoggerFactory.getLogger(UriPrefixAnalysis.class);
 
     public static Map<InstanceKey,String> runAnalysis(AndroidAnalysisContext<IExplodedBasicBlock> appLoader) throws CancelRuntimeException
     {
@@ -98,20 +86,20 @@ public class UriPrefixAnalysis {
     public static Map<InstanceKey,String> runAnalysisHelper(CallGraph cg, PointerAnalysis pa) throws CancelRuntimeException
     {
 
-        System.out.println("*******************************************************");
-        System.out.println("* Prefix Analysis: Constructing Prefix Transfer Graph *");
+        logger.debug("*******************************************************");
+        logger.debug("* Prefix Analysis: Constructing Prefix Transfer Graph *");
 
 
         final Graph<InstanceKeySite> g = new UriPrefixTransferGraph(pa);
-        System.out.println("* The Graph:                                          *");
-        System.out.println("*******************************************************");
+        logger.debug("* The Graph:                                          *");
+        logger.debug("*******************************************************");
         Iterator<InstanceKeySite> iksI = g.iterator();
         while (iksI.hasNext()) {
             InstanceKeySite iks = iksI.next();
-            System.out.println("# " + iks);
+            logger.debug("# " + iks);
             Iterator<InstanceKeySite> edgesI = g.getSuccNodes(iks);
             while (edgesI.hasNext()) {
-                System.out.println("? \t -->" + edgesI.next());
+                logger.debug("? \t -->" + edgesI.next());
             }
         }
         final PrefixTransferFunctionProvider tfp = new PrefixTransferFunctionProvider();
@@ -155,8 +143,8 @@ public class UriPrefixAnalysis {
 
         };
 
-        System.out.println("\n**************************************************");
-        System.out.println("* Running Analysis");
+        logger.debug("\n**************************************************");
+        logger.debug("* Running Analysis");
 
         try {
             dfs.solve(new EmptyProgressMonitor());
@@ -168,12 +156,12 @@ public class UriPrefixAnalysis {
         while (iksI.hasNext()) {
             InstanceKeySite iks = iksI.next();
             prefixes.put(pa.getInstanceKeyMapping().getMappedObject(iks.instanceID()), dfs.getOut(iks).knownPrefixes.get(iks.instanceID()));
-//          System.out.println(iks + " ~> " + dfs.getOut(iks));
+//          logger.debug(iks + " ~> " + dfs.getOut(iks));
         }
-//      System.out.println("\nLocalPointerKeys that point to String constants: \n" + stringConstants);
+//      logger.debug("\nLocalPointerKeys that point to String constants: \n" + stringConstants);
 
         for (Entry<InstanceKey,String> e : prefixes.entrySet()) {
-            System.out.println(pa.getInstanceKeyMapping().getMappedIndex(e.getKey()) + "\t~> " + e.getValue());
+            logger.debug(pa.getInstanceKeyMapping().getMappedIndex(e.getKey()) + "\t~> " + e.getValue());
         }
 
         // TODO: populate prefixes

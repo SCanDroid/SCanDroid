@@ -26,14 +26,12 @@ import org.scandroid.Summarizer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import spec.CallArgSinkSpec;
 import spec.CallArgSourceSpec;
 import spec.EntryArgSourceSpec;
 import spec.ISpecs;
 import spec.MethodNamePattern;
-import spec.SinkSpec;
 import spec.SourceSpec;
-import util.AndroidAppLoader;
+import util.AndroidAnalysisContext;
 import util.LoaderUtils;
 
 import com.google.common.collect.Lists;
@@ -72,6 +70,8 @@ import flow.OutflowAnalysis;
 import flow.types.FlowType;
 
 public class MethodAnalysisTest {
+	private static final Logger logger = LoggerFactory.getLogger(MethodAnalysisTest.class);
+	
 	/**
 	 * Path to the original natives.xml file.
 	 * 
@@ -81,8 +81,6 @@ public class MethodAnalysisTest {
 	private static final String TEST_DATA_DIR = "data/testdata/";
 	private static final String TEST_JAR = TEST_DATA_DIR
 			+ "testJar-1.0-SNAPSHOT.jar";
-	private static final Logger logger = LoggerFactory
-			.getLogger(MethodAnalysisTest.class);
 	private static final Predicate<IMethod> MAIN_METHODS = MethodPredicates
 			.isNamed("main");
 	private ClassHierarchy cha;
@@ -640,7 +638,7 @@ public class MethodAnalysisTest {
 	private CallGraphBuilder makeCallgraph(AnalysisOptions options,
 			File methodSummariesFile) throws FileNotFoundException {
 		InputStream summaryStream = new FileInputStream(methodSummariesFile);
-		CallGraphBuilder builder = AndroidAppLoader.makeZeroCFABuilder(options,
+		CallGraphBuilder builder = AndroidAnalysisContext.makeZeroCFABuilder(options,
 				new AnalysisCache(), cha, scope, null, null, summaryStream,
 				null);
 
