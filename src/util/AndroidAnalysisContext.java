@@ -114,15 +114,11 @@ public class AndroidAnalysisContext<E extends ISSABasicBlock> {
 
 	private final ISCanDroidOptions options;
 	private final AnalysisScope scope;
-	public final ClassHierarchy cha;
-	public final LinkedList<Entrypoint> entries;
-
-	public CallGraph cg;
-	public PointerAnalysis pa;
-	public ISupergraph<BasicBlockInContext<E>, CGNode> graph;
-	public Graph<CGNode> partialGraph;
-	public Graph<CGNode> oneLevelGraph;
-	public Graph<CGNode> systemToApkGraph;
+	private final ClassHierarchy cha;
+	
+	public AndroidAnalysisContext() {
+		throw new IllegalArgumentException();
+	}
 
 	public AndroidAnalysisContext(ISCanDroidOptions options)
 			throws IllegalArgumentException, ClassHierarchyException,
@@ -160,10 +156,6 @@ public class AndroidAnalysisContext<E extends ISSABasicBlock> {
 			logger.warn(w.getMsg());
 		}
 		Warnings.clear();
-
-		// Try to look for entry points
-		EntryPoints ep = new EntryPoints(options, cha, this);
-		entries = ep.getEntries();
 	}
 
 	// ContextSelector, entry points, reflection options, IR Factory, call graph
@@ -171,188 +163,7 @@ public class AndroidAnalysisContext<E extends ISSABasicBlock> {
 	public void buildGraphs(List<Entrypoint> localEntries,
 			InputStream summariesStream) throws CancelException {
 
-		AnalysisOptions analysisOptions = new AnalysisOptions(scope, localEntries);
-		for (Entrypoint e : localEntries) {
-			logger.debug("Entrypoint: " + e);
-		}
-
-		analysisOptions.setEntrypoints(localEntries);
-		analysisOptions.setReflectionOptions(options.getReflectionOptions());
 		
-		AnalysisCache cache = new AnalysisCache(
-				(IRFactory<IMethod>) new DexIRFactory());
-
-		SSAPropagationCallGraphBuilder cgb;
-
-		cgb = makeZeroCFABuilder(analysisOptions, cache, cha, scope,
-				new ReceiverTypeContextSelector(), null, summariesStream, null);
-
-		// CallGraphBuilder construction warnings
-		for (Iterator<Warning> wi = Warnings.iterator(); wi.hasNext();) {
-			Warning w = wi.next();
-			logger.warn(w.getMsg());
-		}
-		Warnings.clear();
-
-		logger.info("*************************");
-		logger.info("* Building Call Graph   *");
-		logger.info("*************************");
-
-		boolean graphBuilt = true;
-		try {
-			cg = cgb.makeCallGraph(cgb.getOptions());
-		} catch (Exception e) {
-			graphBuilt = false;
-			e.printStackTrace();
-		}
-
-		if (options.testCGBuilder()) {
-			// TODO: this is too specialized for cmd-line apps
-			int status = graphBuilt ? 0 : 1;
-			System.exit(status);
-		}
-
-		// makeCallGraph warnings
-		for (Iterator<Warning> wi = Warnings.iterator(); wi.hasNext();) {
-			Warning w = wi.next();
-			logger.warn(w.getMsg());
-		}
-		Warnings.clear();
-
-		pa = cgb.getPointerAnalysis();
-
-		// TODO: prune out a lot more stuff
-		partialGraph = GraphSlicer.prune(cg, new Predicate<CGNode>() {
-			@Override
-			// CallGraph composed of APK nodes
-			public boolean test(CGNode node) {
-				return LoaderUtils.fromLoader(node,
-						ClassLoaderReference.Application)
-						|| node.getMethod().isSynthetic();
-			}
-		});
-
-		Collection<CGNode> nodes = new HashSet<CGNode>();
-
-		for (Iterator<CGNode> nIter = partialGraph.iterator(); nIter.hasNext();) {
-			nodes.add(nIter.next());
-		}
-
-		CallGraph pcg = PartialCallGraph.make(cg, cg.getEntrypointNodes(),
-				nodes);
-
-		if (options.includeLibrary())
-			graph = (ISupergraph) ICFGSupergraph.make(cg, cache);
-		else
-			graph = (ISupergraph) ICFGSupergraph.make(pcg, cache);
-
-		oneLevelGraph = GraphSlicer.prune(cg, new Predicate<CGNode>() {
-			@Override
-			public boolean test(CGNode node) {
-				// Node in APK
-				if (LoaderUtils.fromLoader(node,
-						ClassLoaderReference.Application)) {
-					return true;
-				} else {
-					Iterator<CGNode> n = cg.getPredNodes(node);
-					while (n.hasNext()) {
-						// Primordial node has a successor in APK
-						if (LoaderUtils.fromLoader(n.next(),
-								ClassLoaderReference.Application))
-							return true;
-					}
-					n = cg.getSuccNodes(node);
-					while (n.hasNext()) {
-						// Primordial node has a predecessor in APK
-						if (LoaderUtils.fromLoader(n.next(),
-								ClassLoaderReference.Application))
-							return true;
-					}
-					// Primordial node with no direct successors or predecessors
-					// to APK code
-					return false;
-				}
-			}
-		});
-
-		systemToApkGraph = GraphSlicer.prune(cg, new Predicate<CGNode>() {
-			@Override
-			public boolean test(CGNode node) {
-
-				if (LoaderUtils.fromLoader(node,
-						ClassLoaderReference.Primordial)) {
-					Iterator<CGNode> succs = cg.getSuccNodes(node);
-					while (succs.hasNext()) {
-						CGNode n = succs.next();
-
-						if (LoaderUtils.fromLoader(n,
-								ClassLoaderReference.Application)) {
-							return true;
-						}
-					}
-					// Primordial method, with no link to APK code:
-					return false;
-				} else if (LoaderUtils.fromLoader(node,
-						ClassLoaderReference.Application)) {
-					// see if this is an APK method that was
-					// invoked by a Primordial method:
-					Iterator<CGNode> preds = cg.getPredNodes(node);
-					while (preds.hasNext()) {
-						CGNode n = preds.next();
-
-						if (LoaderUtils.fromLoader(n,
-								ClassLoaderReference.Primordial)) {
-							return true;
-						}
-					}
-					// APK code, no link to Primordial:
-					return false;
-				}
-
-				// who knows, not interesting:
-				return false;
-			}
-		});
-
-		if (options.pdfCG())
-			GraphUtil.makeCG(this);
-		if (options.pdfPartialCG())
-			GraphUtil.makePCG(this);
-		if (options.pdfOneLevelCG())
-			GraphUtil.makeOneLCG(this);
-		if (options.systemToApkCG())
-			GraphUtil.makeSystemToAPKCG(this);
-
-		if (options.stdoutCG()) {
-			for (Iterator<CGNode> nodeI = cg.iterator(); nodeI.hasNext();) {
-				CGNode node = nodeI.next();
-
-				logger.debug("CGNode: " + node);
-				for (Iterator<CGNode> succI = cg.getSuccNodes(node); succI
-						.hasNext();) {
-					logger.debug("\tSuccCGNode: "
-							+ succI.next().getMethod().getSignature());
-				}
-			}
-		}
-		for (Iterator<CGNode> nodeI = cg.iterator(); nodeI.hasNext();) {
-			CGNode node = nodeI.next();
-			if (node.getMethod().isSynthetic()) {
-				logger.debug("Synthetic Method: "
-						+ node.getMethod().getSignature());
-				logger.debug(node.getIR().getControlFlowGraph().toString());
-				SSACFG ssaCFG = node.getIR().getControlFlowGraph();
-				int totalBlocks = ssaCFG.getNumberOfNodes();
-				for (int i = 0; i < totalBlocks; i++) {
-					logger.trace("BLOCK #" + i);
-					BasicBlock bb = ssaCFG.getBasicBlock(i);
-
-					for (SSAInstruction ssaI : bb.getAllInstructions()) {
-						logger.trace("\tInstruction: " + ssaI);
-					}
-				}
-			}
-		}
 
 	}
 
@@ -391,6 +202,8 @@ public class AndroidAnalysisContext<E extends ISSABasicBlock> {
 	 * @return a 0-CFA Call Graph Builder.
 	 * @throws IllegalArgumentException
 	 *             if options is null
+	 *             
+     * TODO: move
 	 */
 	public static SSAPropagationCallGraphBuilder makeZeroCFABuilder(
 			AnalysisOptions options, AnalysisCache cache, IClassHierarchy cha,
@@ -512,5 +325,13 @@ public class AndroidAnalysisContext<E extends ISSABasicBlock> {
 	
 	public ISCanDroidOptions getOptions() {
 		return options;
+	}
+	
+	public AnalysisScope getScope() {
+		return scope;
+	}
+	
+	public ClassHierarchy getClassHierarchy() {
+		return cha;
 	}
 }

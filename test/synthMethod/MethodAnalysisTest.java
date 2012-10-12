@@ -703,10 +703,6 @@ public class MethodAnalysisTest {
 			ClassHierarchyException, CallGraphBuilderCancelException {
 
 		@SuppressWarnings("unchecked")
-		MethodAnalysis<IExplodedBasicBlock> methodAnalysis = null;
-		// don't summarize the interesting entry points.
-		// new MethodAnalysis<IExplodedBasicBlock>(interestingEntrypoint.not());
-		// new MethodAnalysis<IExplodedBasicBlock>(Predicate.TRUE);
 
 		Collection<Entrypoint> entrypoints = getEntrypoints(methodPred);
 
@@ -729,8 +725,7 @@ public class MethodAnalysisTest {
 
 		IFDSTaintDomain<IExplodedBasicBlock> domain = new IFDSTaintDomain<IExplodedBasicBlock>();
 		TabulationResult<BasicBlockInContext<IExplodedBasicBlock>, CGNode, DomainElement> flowResult = FlowAnalysis
-				.analyze(sg, cg, pa, initialTaints, domain, methodAnalysis,
-						null);
+				.analyze(sg, cg, pa, initialTaints, domain, null);
 
 		Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> permissionOutflow = OutflowAnalysis
 				.analyze(cg, cha, sg, pa, flowResult, domain, specs);

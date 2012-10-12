@@ -51,7 +51,7 @@ import prefixTransfer.InstanceKeySite;
 import prefixTransfer.PrefixTransferFunctionProvider;
 import prefixTransfer.PrefixVariable;
 import prefixTransfer.UriPrefixTransferGraph;
-import util.AndroidAnalysisContext;
+import util.CGAnalysisContext;
 import util.EmptyProgressMonitor;
 
 import com.ibm.wala.dataflow.graph.DataflowSolver;
@@ -69,9 +69,9 @@ import com.ibm.wala.util.graph.Graph;
 public class UriPrefixAnalysis {
 	private static final Logger logger = LoggerFactory.getLogger(UriPrefixAnalysis.class);
 
-    public static Map<InstanceKey,String> runAnalysis(AndroidAnalysisContext<IExplodedBasicBlock> appLoader) throws CancelRuntimeException
+    public static Map<InstanceKey,String> runAnalysis(CGAnalysisContext<IExplodedBasicBlock> analysisContext) throws CancelRuntimeException
     {
-        return runAnalysisHelper(appLoader.cg, appLoader.pa);
+        return runAnalysisHelper(analysisContext.cg, analysisContext.pa);
     }
 
     public static ArrayList<InstanceKey> locateKeys(Map<InstanceKey,String> prefixes, String s) {

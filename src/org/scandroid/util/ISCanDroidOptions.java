@@ -10,9 +10,6 @@ import com.ibm.wala.ipa.callgraph.AnalysisOptions.ReflectionOptions;
  *         An abstraction of the options for a SCanDroid execution
  */
 public interface ISCanDroidOptions {
-	public enum VerbosityLevel {
-		ERROR, WARNING, INFO, DEBUG, TRACE
-	};
 
 	/**
 	 * @return whether to create a full call graph pdf
@@ -65,7 +62,7 @@ public interface ISCanDroidOptions {
 	 * @return whether to use ServerThread.run as the entry point for analysis
 	 */
 	public boolean useThreadRunMain();
-	
+
 	/**
 	 * @return whether to run string prefix analysis
 	 */
@@ -85,12 +82,12 @@ public interface ISCanDroidOptions {
 	 * @return the URI pointing to the jar or apk to analyze
 	 */
 	public URI getClasspath();
-	
+
 	/**
 	 * @return the filename portion of the classpath to analyze
 	 */
-	public String getFilename();	
-	
+	public String getFilename();
+
 	/**
 	 * @return a URI to the Android library jar
 	 */
@@ -105,4 +102,5 @@ public interface ISCanDroidOptions {
 	 * @return a URI to the XML method summaries file
 	 */
 	public URI getSummariesURI();
+
 }

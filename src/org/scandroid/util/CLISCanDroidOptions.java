@@ -1,10 +1,7 @@
 package org.scandroid.util;
 
-import static java.lang.System.setProperty;
-
 import java.io.File;
 import java.net.URI;
-import java.net.URISyntaxException;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -13,7 +10,10 @@ import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
-import org.apache.commons.io.FileUtils;
+import org.slf4j.LoggerFactory;
+
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
 
 import com.ibm.wala.ipa.callgraph.AnalysisOptions.ReflectionOptions;
 
@@ -52,7 +52,7 @@ public class CLISCanDroidOptions implements ISCanDroidOptions {
 		options.addOption(OptionBuilder
 				.withLongOpt(VERBOSE)
 				.withDescription(
-						"set desired debugging outout level \"ERROR (0), WARNING (1), INFO (2), DEBUG (3)\"")
+						"logging level (default INFO) [OFF, ERROR, WARN, INFO, DEBUG, TRACE, ALL]")
 				.hasArg().withArgName("level").create());
 		options.addOption("c", CALL_GRAPH, false, "create full call graph pdf");
 		options.addOption("p", PARTIAL_CALL_GRAPH, false,
@@ -110,10 +110,13 @@ public class CLISCanDroidOptions implements ISCanDroidOptions {
 			System.exit(0);
 		}
 
-		if (hasOption(VERBOSE)) {
+		// handle verbosity
+		// parse this arg as a Logback level, then set the root logger level
+		// appropriately
+		Level level = Level.toLevel(getOption(VERBOSE), Level.INFO);
+		Logger root = (Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
+		root.setLevel(level);
 
-			setProperty("LOG_LEVEL", line.getOptionValue(VERBOSE));
-		}
 
 		if (!hasOption(ANDROID_LIB)) {
 			System.err.println("Please specify an android library");

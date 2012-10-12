@@ -54,7 +54,7 @@ import spec.EntryArgSinkSpec;
 import spec.EntryRetSinkSpec;
 import spec.ISpecs;
 import spec.SinkSpec;
-import util.AndroidAnalysisContext;
+import util.CGAnalysisContext;
 
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
@@ -73,7 +73,6 @@ import com.ibm.wala.ipa.cfg.BasicBlockInContext;
 import com.ibm.wala.ipa.cha.ClassHierarchy;
 import com.ibm.wala.ssa.ISSABasicBlock;
 import com.ibm.wala.ssa.SSAInvokeInstruction;
-import com.ibm.wala.util.intset.IntIterator;
 import com.ibm.wala.util.intset.IntSet;
 
 import domain.DomainElement;
@@ -309,11 +308,11 @@ public class OutflowAnalysis <E extends ISSABasicBlock> {
     }
 
     public static <E extends ISSABasicBlock> Map<FlowType<E>, Set<FlowType<E>>>
-      analyze(AndroidAnalysisContext<E> loader,
+      analyze(CGAnalysisContext<E> analysisContext,
             TabulationResult<BasicBlockInContext<E>, CGNode, DomainElement> flowResult,
             IFDSTaintDomain<E> domain,
             ISpecs s) {
-        return analyze(loader.cg, loader.cha, loader.graph, loader.pa, 
+        return analyze(analysisContext.cg, analysisContext.getClassHierarchy(), analysisContext.graph, analysisContext.pa, 
                 flowResult, domain, s);
     }
      

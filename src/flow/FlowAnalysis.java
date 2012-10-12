@@ -47,8 +47,7 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import synthMethod.MethodAnalysis;
-import util.AndroidAnalysisContext;
+import util.CGAnalysisContext;
 import util.IFDSTaintFlowFunctionProvider;
 
 import com.google.common.collect.Lists;
@@ -79,13 +78,13 @@ public class FlowAnalysis {
 
     public static <E extends ISSABasicBlock>
     TabulationResult<BasicBlockInContext<E>, CGNode, DomainElement> 
-    analyze(final AndroidAnalysisContext<E> analysisContext,
+    analyze(final CGAnalysisContext<E> analysisContext,
           Map<BasicBlockInContext<E>,
           Map<FlowType<E>,Set<CodeElement>>> initialTaints,
           IFDSTaintDomain<E> d,
-          MethodAnalysis<E> methodAnalysis, IProgressMonitor progressMonitor
+          IProgressMonitor progressMonitor
           ) throws CancelRuntimeException {
-        return analyze(analysisContext.graph, analysisContext.cg, analysisContext.pa, initialTaints, d, methodAnalysis, progressMonitor);
+        return analyze(analysisContext.graph, analysisContext.cg, analysisContext.pa, initialTaints, d, progressMonitor);
     }
     
     
@@ -97,7 +96,7 @@ public class FlowAnalysis {
               PointerAnalysis pa,
               Map<BasicBlockInContext<E>, Map<FlowType<E>,Set<CodeElement>>> initialTaints,
               IFDSTaintDomain<E> d,
-              MethodAnalysis<E> methodAnalysis, IProgressMonitor progressMonitor
+              IProgressMonitor progressMonitor
             ) {
 
         logger.debug("*************************");
@@ -135,7 +134,7 @@ public class FlowAnalysis {
         }
 
         final IFlowFunctionMap<BasicBlockInContext<E>> functionMap =
-            new IFDSTaintFlowFunctionProvider<E>(domain, graph, pa, methodAnalysis);
+            new IFDSTaintFlowFunctionProvider<E>(domain, graph, pa);
         
         final TabulationProblem<BasicBlockInContext<E>, CGNode, DomainElement>
           problem =

@@ -59,28 +59,28 @@ public class GraphUtil {
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public static <E extends ISSABasicBlock> void makeCG(
-			AndroidAnalysisContext<E> analysisContext) {
+			CGAnalysisContext<E> analysisContext) {
 		make(analysisContext.getOptions().getFilename(), (Graph) analysisContext.cg,
 				"FullCallGraph");
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public static <E extends ISSABasicBlock> void makePCG(
-			AndroidAnalysisContext<E> analysisContext) {
+			CGAnalysisContext<E> analysisContext) {
 		make(analysisContext.getOptions().getFilename(),
 				(Graph) analysisContext.partialGraph, "PartialCallGraph");
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public static <E extends ISSABasicBlock> void makeOneLCG(
-			AndroidAnalysisContext<E> analysisContext) {
+			CGAnalysisContext<E> analysisContext) {
 		make(analysisContext.getOptions().getFilename(),
 				(Graph) analysisContext.oneLevelGraph, "OneLevelCallGraph");
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public static <E extends ISSABasicBlock> void makeSystemToAPKCG(
-			AndroidAnalysisContext<E> analysisContext) {
+			CGAnalysisContext<E> analysisContext) {
 		make(analysisContext.getOptions().getFilename(),
 				(Graph) analysisContext.systemToApkGraph, "SystemToApkGraph");
 	}

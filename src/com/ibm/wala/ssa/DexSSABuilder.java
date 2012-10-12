@@ -848,7 +848,7 @@ public class DexSSABuilder extends AbstractIntRegisterMachine {
                 if (n == m.getNumberOfParameters()) {
                     for (int i = 0; i < n; i++) {
                         params[i] = workingState.getLocal(instruction.args[arg_i]);
-                        logger.info("visitInvoke param["+i+"] = "+params[i]);
+                        logger.trace("visitInvoke param["+i+"] = "+params[i]);
                         if (m.getParameterType(i) == TypeReference.Double || m.getParameterType(i) == TypeReference.Long)
                             arg_i++;
                         arg_i++;
@@ -857,11 +857,11 @@ public class DexSSABuilder extends AbstractIntRegisterMachine {
                 //there is a "this" parameter in this invoke call
                 else if (n == m.getNumberOfParameters()+1) {
                     params[0] = workingState.getLocal(instruction.args[0]);
-                    logger.info("visitInvoke param[0] = "+params[0]);
+                    logger.trace("visitInvoke param[0] = "+params[0]);
                     arg_i = 1;
                     for (int i = 0; i < (n-1); i++) {
                         params[i+1] = workingState.getLocal(instruction.args[arg_i]);
-                        logger.info("visitInvoke param["+(i+1)+"] = "+params[i+1]);
+                        logger.trace("visitInvoke param["+(i+1)+"] = "+params[i+1]);
                         if (m.getParameterType(i) == TypeReference.Double || m.getParameterType(i) == TypeReference.Long)
                             arg_i++;
                         arg_i++;

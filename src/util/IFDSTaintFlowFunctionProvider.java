@@ -44,8 +44,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import synthMethod.MethodAnalysis;
-
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -96,17 +94,14 @@ implements IFlowFunctionMap<BasicBlockInContext<E>> {
 	private final IFDSTaintDomain<E> domain;
 	private final ISupergraph<BasicBlockInContext<E>,CGNode> graph;
 	private final PointerAnalysis pa;
-	private final MethodAnalysis<E> methodAnalysis;
 
 	public IFDSTaintFlowFunctionProvider(IFDSTaintDomain<E> domain,
 			ISupergraph<BasicBlockInContext<E>, CGNode> graph, 
-			PointerAnalysis pa,
-			MethodAnalysis<E> methodAnalysis)
+			PointerAnalysis pa)
 	{
 		this.domain = domain;
 		this.graph = graph;
 		this.pa = pa;
-		this.methodAnalysis = methodAnalysis;
 	}
 
 	// instruction has a valid def set
@@ -446,10 +441,6 @@ implements IFlowFunctionMap<BasicBlockInContext<E>> {
 //		    
 //            MyLogger.log(DEBUG,"Primordial and No Summary! (getCallFlowFunction) - " + dest.getMethod().getReference());
 //		}
-		
-		if (null != methodAnalysis) {
-			methodAnalysis.analyze(graph, pa, src, dest);
-		}
 
 		final Map<CodeElement,CodeElement> parameterMap = Maps.newHashMap();
 		for (int i = 0; i < instruction.getNumberOfParameters(); i++) {

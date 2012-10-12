@@ -43,6 +43,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.StringTokenizer;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -59,6 +60,7 @@ import org.w3c.dom.NodeList;
 import spec.AndroidSpecs;
 import spec.MethodNamePattern;
 
+import com.google.common.collect.Lists;
 import com.ibm.wala.classLoader.IMethod;
 import com.ibm.wala.ipa.callgraph.Entrypoint;
 import com.ibm.wala.ipa.callgraph.impl.DefaultEntrypoint;
@@ -82,45 +84,6 @@ public class EntryPoints {
 
     private LinkedList<Entrypoint> entries;
 
-    public EntryPoints(ISCanDroidOptions options, ClassHierarchy cha, AndroidAnalysisContext loader) {
-        tempFolder = "temp";
-        ActivityIntentList = new ArrayList<String[]>();
-        ReceiverIntentList = new ArrayList<String[]>();
-        ServiceIntentList = new ArrayList<String[]>();
-        entries = new LinkedList<Entrypoint>();
-
-
-//        StringTokenizer st = new StringTokenizer(classpath, File.pathSeparator);
-//        String filename = st.nextToken();
-//      if (filename.endsWith(".apk"))
-//      {
-//          unpackApk(classpath);
-//          readXMLFile();
-//          populateEntryPoints(cha);
-//          outputIntentList();
-//          ListenerEntryPoints(cha,loader);
-//      }
-//      else
-//          defaultEntryPoints(cha, loader);
-
-        if(options.useThreadRunMain()) {
-            systemEntry(cha, loader);
-        } else if (options.addMainEntrypoints()) {
-        	Iterable<Entrypoint> mainEntrypoints = Util.makeMainEntrypoints(cha.getScope(), cha);
-        	//add main entry point -- however usually used for test suites?  android don't have mains
-        	for (Entrypoint entry: mainEntrypoints) {
-        		entries.add(entry);
-        	}
-        }  else {
-            defaultEntryPoints(cha, loader);
-        }
-
-//      activityModelEntry(cha,loader);
-//      addTestEntry(cha,loader);
-
-
-    }
-
     public void listenerEntryPoints(ClassHierarchy cha, AndroidAnalysisContext loader) {
         ArrayList<MethodReference> entryPointMRs = new ArrayList<MethodReference>();
 
@@ -140,7 +103,8 @@ public class EntryPoints {
         }
     }
 
-    public void defaultEntryPoints(ClassHierarchy cha, AndroidAnalysisContext loader) {
+    public static List<Entrypoint> defaultEntryPoints(ClassHierarchy cha) {
+    	List<Entrypoint> entries = Lists.newArrayList();
     	for (MethodNamePattern mnp:new AndroidSpecs().getEntrypointSpecs()) {
     		for (IMethod im: mnp.getPossibleTargets(cha)) {
     			logger.debug("Considering target "+im.getSignature());
@@ -152,6 +116,7 @@ public class EntryPoints {
     			}
     		}
     	}
+    	return entries;
     }
     
     public void activityModelEntry(ClassHierarchy cha, AndroidAnalysisContext loader) {

@@ -231,7 +231,7 @@ public class Summarizer<E extends ISSABasicBlock> {
 
 		IFDSTaintDomain<IExplodedBasicBlock> domain = new IFDSTaintDomain<IExplodedBasicBlock>();
 		TabulationResult<BasicBlockInContext<IExplodedBasicBlock>, CGNode, DomainElement> flowResult = FlowAnalysis
-				.analyze(graph, cg, pa, initialTaints, domain, null, monitor);
+				.analyze(graph, cg, pa, initialTaints, domain, monitor);
 
 		Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> permissionOutflow = OutflowAnalysis
 				.analyze(cg, cha, graph, pa, flowResult, domain, specs);

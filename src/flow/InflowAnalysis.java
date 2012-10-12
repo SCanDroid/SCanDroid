@@ -59,7 +59,7 @@ import spec.CallRetSourceSpec;
 import spec.EntryArgSourceSpec;
 import spec.ISpecs;
 import spec.SourceSpec;
-import util.AndroidAnalysisContext;
+import util.CGAnalysisContext;
 
 import com.google.common.collect.Maps;
 import com.ibm.wala.classLoader.IMethod;
@@ -193,9 +193,9 @@ public class InflowAnalysis <E extends ISSABasicBlock> {
 
     public static <E extends ISSABasicBlock>
       Map<BasicBlockInContext<E>,Map<FlowType<E>,Set<CodeElement>>> analyze(
-            AndroidAnalysisContext<E> loader, Map<InstanceKey, String> prefixes,
+            CGAnalysisContext<E> analysisContext, Map<InstanceKey, String> prefixes,
             ISpecs s) {
-        return analyze(loader.cg, loader.cha, loader.graph, loader.pa, prefixes, s);
+        return analyze(analysisContext.cg, analysisContext.getClassHierarchy(), analysisContext.graph, analysisContext.pa, prefixes, s);
     }
 
     public static <E extends ISSABasicBlock>
