@@ -57,6 +57,7 @@ import org.scandroid.util.ISCanDroidOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.ibm.wala.classLoader.DexIRFactory;
@@ -203,19 +204,48 @@ public class AndroidAnalysisContext<E extends ISSABasicBlock> {
 	 * @throws IllegalArgumentException
 	 *             if options is null
 	 *             
-     * TODO: move
+	 * TODO: move
 	 */
 	public static SSAPropagationCallGraphBuilder makeZeroCFABuilder(
 			AnalysisOptions options, AnalysisCache cache, IClassHierarchy cha,
 			AnalysisScope scope, ContextSelector customSelector,
 			SSAContextInterpreter customInterpreter,
 			InputStream summariesStream, MethodSummary extraSummary) {
+				return makeZeroCFABuilder(options, cache, cha, scope,
+						customSelector, customInterpreter, Lists.newArrayList(summariesStream),
+						extraSummary);
+			}
+
+	/**
+	 * @param options
+	 *            options that govern call graph construction
+	 * @param cha
+	 *            governing class hierarchy
+	 * @param scope
+	 *            representation of the analysis scope
+	 * @param customSelector
+	 *            user-defined context selector, or null if none
+	 * @param customInterpreter
+	 *            user-defined context interpreter, or null if none
+	 * @return a 0-CFA Call Graph Builder.
+	 * @throws IllegalArgumentException
+	 *             if options is null
+	 *             
+     * TODO: move
+	 */
+	public static SSAPropagationCallGraphBuilder makeZeroCFABuilder(
+			AnalysisOptions options, AnalysisCache cache, IClassHierarchy cha,
+			AnalysisScope scope, ContextSelector customSelector,
+			SSAContextInterpreter customInterpreter,
+			Collection<InputStream> summariesStreams, MethodSummary extraSummary) {
 
 		if (options == null) {
 			throw new IllegalArgumentException("options is null");
 		}
 		Util.addDefaultSelectors(options, cha);
-		addBypassLogic(options, scope, summariesStream, cha, extraSummary);
+		for (InputStream stream : summariesStreams) {
+			addBypassLogic(options, scope, stream, cha, extraSummary);
+		}
 
 		return ZeroXCFABuilder.make(cha, options, cache, customSelector,
 				customInterpreter, ZeroXInstanceKeys.NONE);

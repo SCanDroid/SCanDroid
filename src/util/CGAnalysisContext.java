@@ -3,6 +3,8 @@ package util;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -65,7 +67,12 @@ public class CGAnalysisContext<E extends ISSABasicBlock> {
 	public Graph<CGNode> systemToApkGraph;
 
 	public CGAnalysisContext(AndroidAnalysisContext<E> analysisContext,
-			IEntryPointSpecifier specifier) throws IOException {
+	IEntryPointSpecifier specifier) throws IOException {
+		this(analysisContext, specifier, new ArrayList<InputStream>());
+	}
+
+	public CGAnalysisContext(AndroidAnalysisContext<E> analysisContext,
+			IEntryPointSpecifier specifier, Collection<InputStream> extraSummaries) throws IOException {
 		this.analysisContext = analysisContext;
 		final AnalysisScope scope = analysisContext.getScope();
 		final ClassHierarchy cha = analysisContext.getClassHierarchy();
@@ -86,9 +93,10 @@ public class CGAnalysisContext<E extends ISSABasicBlock> {
 
 		SSAPropagationCallGraphBuilder cgb;
 
+		extraSummaries.add(new FileInputStream(new File(options.getSummariesURI())));
 		cgb = AndroidAnalysisContext.makeZeroCFABuilder(analysisOptions, cache,
 				cha, scope, new ReceiverTypeContextSelector(), null,
-				new FileInputStream(new File(options.getSummariesURI())), null);
+				extraSummaries, null);
 
 		// CallGraphBuilder construction warnings
 		for (Iterator<Warning> wi = Warnings.iterator(); wi.hasNext();) {
