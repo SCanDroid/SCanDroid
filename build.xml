@@ -26,7 +26,7 @@
         <pathelement location="${LIBS}/dexlib-1.3.4-dev.jar"/>
         <pathelement location="${LIBS}/guava-12.0.1.jar"/>
         <pathelement location="${LIBS}/jgrapht-0.8.3.jar"/>
-        <pathelement location="${LIBS}/junit-4.9b2.jar"/>
+        <pathelement location="${LIBS}/junit-4.11-beta-1.jar"/>
     	<pathelement location="${LIBS}/commons-cli-1.2.jar"/>
     	<pathelement location="${LIBS}/commons-io-2.4.jar"/>
     	<pathelement location="${LIBS}/slf4j-api-1.7.1.jar"/>
