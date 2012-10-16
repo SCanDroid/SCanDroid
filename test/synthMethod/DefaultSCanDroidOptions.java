@@ -41,7 +41,7 @@ public abstract class DefaultSCanDroidOptions implements ISCanDroidOptions {
 	public boolean includeLibrary() {
 		// TODO is this right? we haven't summarized with CLI options set, so
 		// this is what we've been doing...
-		return false;
+		return true;
 	}
 
 	@Override

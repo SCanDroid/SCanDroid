@@ -127,7 +127,8 @@ public class MethodAnalysisTest {
 	}
 	
 	private static boolean isEclipse() {
-		return System.getProperty("sun.java.command").startsWith("org.eclipse.jdt.internal.junit.runner.RemoteTestRunner");
+		final String command = System.getProperty("sun.java.command");
+		return command != null && command.startsWith("org.eclipse.jdt.internal.junit.runner.RemoteTestRunner");
 	}
 
 	public final Entrypoint entrypoint;
