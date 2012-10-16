@@ -78,9 +78,9 @@ public class MethodAnalysisTest {
 	 * Hack alert: since @Parameters-annotated methods are run before every
 	 * other JUnit method, we have to do setup of the analysis context here
 	 */
-	@Parameters(name="{0}")
+	@Parameters(name = "{0}")
 	public static Collection<Object[]> setup() throws Throwable {
-		
+
 		List<Object[]> entrypoints = Lists.newArrayList();
 
 		analysisContext = new AndroidAnalysisContext(
@@ -100,24 +100,41 @@ public class MethodAnalysisTest {
 		Iterator<IClass> classIt = loader.iterateAllClasses();
 		while (classIt.hasNext()) {
 			IClass clazz = classIt.next();
-			logger.trace("Adding entrypoints from {}", clazz);
+			if (clazz.isInterface()) {
+				continue;
+			}
+			logger.debug("Adding entrypoints from {}", clazz);
+			logger.debug("abstract={}", clazz.isAbstract());
 			for (IMethod method : clazz.getAllMethods()) {
-				if (method.getDeclaringClass().getClassLoader().getReference().equals(scope.getApplicationLoader())) {
-					logger.trace("Adding entrypoint for {}", method);
-					entrypoints.add(new Object[] { URLEncoder.encode(method.getSignature(), "UTF-8"), new DefaultEntrypoint(method, cha) });
+				IClass declClass = method.getDeclaringClass();
+				if (method.isAbstract() || method.isSynthetic()
+						|| (declClass.isAbstract() && method.isInit())
+						|| (declClass.isAbstract() && !method.isStatic())) {
+					continue;
+				}
+				if (method.getDeclaringClass().getClassLoader().getReference()
+						.equals(scope.getApplicationLoader())) {
+					logger.debug("Adding entrypoint for {}", method);
+					logger.debug("abstract={}, static={}, init={}, clinit={}, synthetic={}", method.isAbstract(), method.isStatic(), method.isInit(), method.isClinit(), method.isSynthetic());
+					entrypoints.add(new Object[] {
+							URLEncoder.encode(method.getSignature(), "UTF-8"),
+							new DefaultEntrypoint(method, cha) });
 				}
 			}
 		}
+//		System.exit(0);
 		return entrypoints;
 	}
 
 	public final Entrypoint entrypoint;
 
 	private InputStream summaryStream;
-	
+
 	/**
-	 * @param methodDescriptor only used to name tests
-	 * @param entrypoint the method to test
+	 * @param methodDescriptor
+	 *            only used to name tests
+	 * @param entrypoint
+	 *            the method to test
 	 */
 	public MethodAnalysisTest(String methodDescriptor, Entrypoint entrypoint) {
 		this.entrypoint = entrypoint;
@@ -140,8 +157,9 @@ public class MethodAnalysisTest {
 	}
 
 	private String summaryFileName() throws Throwable {
-		return URLEncoder
-				.encode(entrypoint.getMethod().getSignature(), "UTF-8");
+		return "summary-"
+				+ URLEncoder.encode(entrypoint.getMethod().getSignature(),
+						"UTF-8");
 	}
 
 	@Test
@@ -163,12 +181,16 @@ public class MethodAnalysisTest {
 						return Lists.newArrayList(entrypoint);
 					}
 				}, Lists.newArrayList(summaryStream));
-		
-		ISpecs specs = new MethodSummarySpecs(new MethodSummary(entrypoint.getMethod().getReference()));
-		
+
+		final MethodSummary methodSummary = new MethodSummary(entrypoint
+				.getMethod().getReference());
+		methodSummary.setStatic(entrypoint.getMethod().isStatic());
+		ISpecs specs = new MethodSummarySpecs(methodSummary);
+
 		long startTime = System.currentTimeMillis();
 
-		Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> directResults = runDFAnalysis(noSummaryContext, specs);
+		Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> directResults = runDFAnalysis(
+				noSummaryContext, specs);
 
 		long directRunTime = System.currentTimeMillis() - startTime;
 
@@ -187,7 +209,8 @@ public class MethodAnalysisTest {
 		System.out.println("Speedup of: " + (directRunTime - summaryRunTime)
 				+ " ms");
 
-		Assert.assertSame("Flows did not match.", directResults.size(), summarizedResults.size());
+		Assert.assertSame("Flows did not match.", directResults.size(),
+				summarizedResults.size());
 		System.out.println("Direct Flows: \n" + flowMapToString(directResults));
 		System.out.println("Summary Flows: \n"
 				+ flowMapToString(summarizedResults));

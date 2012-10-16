@@ -1,5 +1,6 @@
 package org.scandroid.testing;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -29,6 +30,10 @@ public class LLTestIter extends SourceSink {
         for (String s : in) {
             out.add(s);
         }
+    }
+    
+    public void shrink(List<String> out) {
+    	out.add(null);
     }
     
     /**

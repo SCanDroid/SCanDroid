@@ -114,7 +114,11 @@ public class CGAnalysisContext<E extends ISSABasicBlock> {
 			cg = cgb.makeCallGraph(cgb.getOptions());
 		} catch (Exception e) {
 			graphBuilt = false;
-			e.printStackTrace();
+			if (!options.testCGBuilder()) { 
+				throw new RuntimeException(e);
+			} else {
+				e.printStackTrace();
+			}
 		}
 
 		if (options.testCGBuilder()) {
