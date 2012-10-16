@@ -117,13 +117,17 @@ public class MethodAnalysisTest {
 					logger.debug("Adding entrypoint for {}", method);
 					logger.debug("abstract={}, static={}, init={}, clinit={}, synthetic={}", method.isAbstract(), method.isStatic(), method.isInit(), method.isClinit(), method.isSynthetic());
 					entrypoints.add(new Object[] {
-							URLEncoder.encode(method.getSignature(), "UTF-8"),
+							isEclipse() ? URLEncoder.encode(method.getSignature(), "UTF-8") : method.getSignature(),
 							new DefaultEntrypoint(method, cha) });
 				}
 			}
 		}
 //		System.exit(0);
 		return entrypoints;
+	}
+	
+	private static boolean isEclipse() {
+		return System.getProperty("sun.java.command").startsWith("org.eclipse.jdt.internal.junit.runner.RemoteTestRunner");
 	}
 
 	public final Entrypoint entrypoint;
