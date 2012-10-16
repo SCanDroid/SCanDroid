@@ -90,7 +90,7 @@ public class Summarizer<E extends ISSABasicBlock> {
 			.getLogger(Summarizer.class);
 
 	private static final long TIME_LIMIT = 60 * 60;
-	public static final String WALA_NATIVES_XML = "../WALA/com.ibm.wala.core/dat/natives.xml";
+	public static final String WALA_NATIVES_XML = "data/MethodSummaries.xml";
 
 	/**
 	 * @param args
