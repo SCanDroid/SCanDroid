@@ -59,6 +59,7 @@ import com.ibm.wala.ssa.SSAInstruction;
 import com.ibm.wala.ssa.SSAInstructionFactory;
 import com.ibm.wala.ssa.SSAInvokeInstruction;
 import com.ibm.wala.ssa.SSANewInstruction;
+import com.ibm.wala.ssa.SSAPhiInstruction;
 import com.ibm.wala.ssa.SSAPutInstruction;
 import com.ibm.wala.ssa.SSAReturnInstruction;
 import com.ibm.wala.ssa.analysis.IExplodedBasicBlock;
@@ -649,6 +650,11 @@ public class Summarizer<E extends ISSABasicBlock> {
 //								returns.add(instruction);
 //								refInScope.set(def);
 //							}
+						}
+						
+						@Override
+						public void visitPhi(SSAPhiInstruction instruction) {
+							
 						}
 
 					}
