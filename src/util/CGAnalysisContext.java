@@ -25,6 +25,7 @@ import com.ibm.wala.ipa.callgraph.AnalysisScope;
 import com.ibm.wala.ipa.callgraph.CGNode;
 import com.ibm.wala.ipa.callgraph.CallGraph;
 import com.ibm.wala.ipa.callgraph.Entrypoint;
+import com.ibm.wala.ipa.callgraph.impl.Everywhere;
 import com.ibm.wala.ipa.callgraph.impl.PartialCallGraph;
 import com.ibm.wala.ipa.callgraph.propagation.PointerAnalysis;
 import com.ibm.wala.ipa.callgraph.propagation.ReceiverTypeContextSelector;
@@ -284,5 +285,9 @@ public class CGAnalysisContext<E extends ISSABasicBlock> {
 	
 	public List<Entrypoint> getEntrypoints() {
 		return entrypoints;
+	}
+	
+	public CGNode nodeForMethod(IMethod method) {
+		return cg.getNode(method, Everywhere.EVERYWHERE);
 	}
 }
