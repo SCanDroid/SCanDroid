@@ -86,8 +86,7 @@ public class SeparateEntryAnalysis {
 		CLISCanDroidOptions options = new CLISCanDroidOptions(args, true);
 
 		logger.info("Loading app.");
-		AndroidAnalysisContext<IExplodedBasicBlock> analysisContext = new AndroidAnalysisContext<IExplodedBasicBlock>(
-				options);
+		AndroidAnalysisContext analysisContext = new AndroidAnalysisContext(options);
 
 		URI summariesURI = options.getSummariesURI();
 		InputStream summaryStream = null;

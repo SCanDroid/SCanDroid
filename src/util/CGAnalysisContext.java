@@ -56,7 +56,7 @@ public class CGAnalysisContext<E extends ISSABasicBlock> {
 	private static final Logger logger = LoggerFactory
 			.getLogger(CGAnalysisContext.class);
 
-	public final AndroidAnalysisContext<E> analysisContext;
+	public final AndroidAnalysisContext analysisContext;
 
 	private List<Entrypoint> entrypoints;
 	public CallGraph cg;
@@ -66,12 +66,12 @@ public class CGAnalysisContext<E extends ISSABasicBlock> {
 	public Graph<CGNode> oneLevelGraph;
 	public Graph<CGNode> systemToApkGraph;
 
-	public CGAnalysisContext(AndroidAnalysisContext<E> analysisContext,
+	public CGAnalysisContext(AndroidAnalysisContext analysisContext,
 	IEntryPointSpecifier specifier) throws IOException {
 		this(analysisContext, specifier, new ArrayList<InputStream>());
 	}
 
-	public CGAnalysisContext(AndroidAnalysisContext<E> analysisContext,
+	public CGAnalysisContext(AndroidAnalysisContext analysisContext,
 			IEntryPointSpecifier specifier, Collection<InputStream> extraSummaries) throws IOException {
 		this.analysisContext = analysisContext;
 		final AnalysisScope scope = analysisContext.getScope();
