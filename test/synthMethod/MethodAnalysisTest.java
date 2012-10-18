@@ -30,7 +30,6 @@ import org.slf4j.LoggerFactory;
 import spec.ISpecs;
 import util.AndroidAnalysisContext;
 import util.CGAnalysisContext;
-import ch.qos.logback.classic.Level;
 
 import com.google.common.collect.Lists;
 import com.ibm.wala.classLoader.IClass;
@@ -127,8 +126,9 @@ public class MethodAnalysisTest {
 	}
 	
 	private static boolean isEclipse() {
-		final String command = System.getProperty("sun.java.command");
-		return command != null && command.startsWith("org.eclipse.jdt.internal.junit.runner.RemoteTestRunner");
+		return true;
+//		final String command = System.getProperty("sun.java.command");
+//		return command != null && command.startsWith("org.eclipse.jdt.internal.junit.runner.RemoteTestRunner");
 	}
 
 	public final Entrypoint entrypoint;
