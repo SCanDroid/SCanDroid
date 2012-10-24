@@ -1,10 +1,8 @@
 package util;
 
 import java.util.List;
-import java.util.Set;
 
 import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import com.ibm.wala.dataflow.IFDS.IFlowFunction;
 import com.ibm.wala.dataflow.IFDS.IFlowFunctionMap;
 import com.ibm.wala.dataflow.IFDS.ISupergraph;
@@ -17,6 +15,7 @@ import com.ibm.wala.util.intset.IntSet;
 import com.ibm.wala.util.intset.MutableSparseIntSet;
 
 import domain.CodeElement;
+import domain.DomainElement;
 import domain.IFDSTaintDomain;
 
 public class TaintTransferFunctions <E extends ISSABasicBlock> implements
@@ -62,6 +61,8 @@ public class TaintTransferFunctions <E extends ISSABasicBlock> implements
         @Override
         public IntSet getTargets(int d) {
             MutableSparseIntSet set = MutableSparseIntSet.makeEmpty();
+            
+            DomainElement de = domain.getMappedObject(d);
             if(d == 0) {
                 /* Here we list what facts we add. All taints affecting uses of
                  * this instruction also affect its definitions.
@@ -73,6 +74,38 @@ public class TaintTransferFunctions <E extends ISSABasicBlock> implements
                  * unless we created a new definition of its associated
                  * CodeElement.
                  */
+            	
+            	// see if D is still true; if so, pass it through:
+            	// (this corresponds to the vertical 'pass through' arrows in the RHS paper)
+            	set.add(d);
+            	for (UseDefPair udPair : useToDefList) {
+					CodeElement def = udPair.getDef();
+					
+					if (def.equals(de.codeElement)) {
+						// this instruction redefined D, so we 
+						// do *not* pass it through - this conditional has 
+						// contradicted our assumption that D should be passed through,
+						// so remove it from the set:
+						set.remove(d);
+						break;
+					}
+				}
+            	
+            	////////////////////////////////////////////////////////////////
+            	// see if the taints associated with D also flow through to any 
+            	// other domain elements:
+            	
+            	for (UseDefPair udPair : useToDefList) {
+					CodeElement use = udPair.getUse();
+					
+					if (use.equals(de.codeElement)) {
+						// ok, the d element flows to the def, so we add that def
+						// and keep looking.
+						DomainElement newDE = 
+						     new DomainElement(udPair.getDef(), de.taintSource);
+						set.add(domain.getMappedIndex(newDE));
+					}
+            	}	
             }
             return set;
         }
