@@ -74,6 +74,16 @@ public interface ISCanDroidOptions {
 	public boolean testCGBuilder();
 
 	/**
+	 * @return whether to log class hierarchy warnings
+	 */
+	public boolean classHierarchyWarnings();
+
+	/**
+	 * @return whether to log call graph builder warnings
+	 */
+	public boolean cgBuilderWarnings();
+
+	/**
 	 * @return whether to check conformance to built-in policy
 	 */
 	public boolean useDefaultPolicy();

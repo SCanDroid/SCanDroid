@@ -267,4 +267,16 @@ public class CLISCanDroidOptions implements ISCanDroidOptions {
 	public URI getSummariesURI() {
 		return summariesFile;
 	}
+	
+	@Override
+	public boolean classHierarchyWarnings() {
+		// TODO Auto-generated method stub
+		return true;
+	}
+	
+	@Override
+	public boolean cgBuilderWarnings() {
+		// TODO Auto-generated method stub
+		return true;
+	}
 }

@@ -44,6 +44,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -131,10 +132,13 @@ public class AndroidAnalysisContext {
 				options.getAndroidLibrary())));
 		cha = ClassHierarchy.make(scope);
 
-		// log ClassHierarchy warnings
-		for (Iterator<Warning> wi = Warnings.iterator(); wi.hasNext();) {
-			Warning w = wi.next();
-			logger.warn(w.getMsg());
+		
+		if (options.classHierarchyWarnings()) {
+			// log ClassHierarchy warnings
+			for (Iterator<Warning> wi = Warnings.iterator(); wi.hasNext();) {
+				Warning w = wi.next();
+				logger.warn(w.getMsg());
+			}
 		}
 		Warnings.clear();
 	}
@@ -260,6 +264,9 @@ public class AndroidAnalysisContext {
 				XMLMethodSummaryReader newSummaryXML = loadMethodSummaries(
 						scope, xmlIStream);
 				summaryClasses.addAll(newSummaryXML.getAllocatableClasses());
+				for (MethodSummary summary : newSummaryXML.getSummaries().values()) {
+					logger.trace("SSA instructions for summary of {}:\n{}", summary.getMethod().getSignature().toString(), Arrays.toString(summary.getStatements()));					
+				}
 				summaries.putAll(newSummaryXML.getSummaries());
 			}
 			logger.debug("loaded " + summaries.size() + " new summaries");

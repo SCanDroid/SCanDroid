@@ -351,6 +351,8 @@ public class OutflowAnalysis <E extends ISSABasicBlock> {
         logger.debug("************");
         logger.debug("* Results: *");
         logger.debug("************");
+        
+        logger.debug("{}", taintFlow.toString());
 
         /* TODO: re-enable this soon! */
         /*

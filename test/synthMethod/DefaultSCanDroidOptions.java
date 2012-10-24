@@ -32,7 +32,7 @@ public abstract class DefaultSCanDroidOptions implements ISCanDroidOptions {
 
 	@Override
 	public boolean stdoutCG() {
-		return false;
+		return true;
 	}
 
 	@Override
@@ -106,6 +106,16 @@ public abstract class DefaultSCanDroidOptions implements ISCanDroidOptions {
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
+	}
+	
+	@Override
+	public boolean classHierarchyWarnings() {
+		return false;
+	}
+	
+	@Override
+	public boolean cgBuilderWarnings() {
+		return false;
 	}
 
 }

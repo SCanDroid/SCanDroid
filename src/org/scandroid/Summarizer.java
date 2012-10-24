@@ -208,6 +208,7 @@ public class Summarizer<E extends ISSABasicBlock> {
 	 * @return
 	 */
 	public String serialize() {
+		logger.debug("Generated summary:\n{}", writer.serialize());
 		return writer.serialize();
 	}
 

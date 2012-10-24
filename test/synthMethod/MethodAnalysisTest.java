@@ -31,6 +31,8 @@ import spec.ISpecs;
 import util.AndroidAnalysisContext;
 import util.CGAnalysisContext;
 
+import ch.qos.logback.classic.Level;
+
 import com.google.common.collect.Lists;
 import com.ibm.wala.classLoader.IClass;
 import com.ibm.wala.classLoader.IClassLoader;
@@ -79,7 +81,8 @@ public class MethodAnalysisTest {
 	 */
 	@Parameters(name = "{0}")
 	public static Collection<Object[]> setup() throws Throwable {
-
+		ch.qos.logback.classic.Logger root = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
+//		root.setLevel(Level.TRACE);
 		List<Object[]> entrypoints = Lists.newArrayList();
 
 		analysisContext = new AndroidAnalysisContext(
@@ -106,6 +109,8 @@ public class MethodAnalysisTest {
 			logger.debug("abstract={}", clazz.isAbstract());
 			for (IMethod method : clazz.getAllMethods()) {
 				IClass declClass = method.getDeclaringClass();
+				if (!declClass.getName().toString().endsWith("LLTestIter"))
+					continue;
 				if (method.isAbstract() || method.isSynthetic()
 						|| (declClass.isAbstract() && method.isInit())
 						|| (declClass.isAbstract() && !method.isStatic())) {
@@ -148,7 +153,7 @@ public class MethodAnalysisTest {
 	public void makeSummary() throws Throwable {
 		Summarizer summarizer = new Summarizer(TEST_JAR);
 		summarizer.summarize(entrypoint.getMethod().getSignature());
-		File summaryFile = new File(FileUtils.getTempDirectory(),
+		File summaryFile = new File(".", // FileUtils.getTempDirectory(),
 				summaryFileName());
 		FileUtils.writeStringToFile(summaryFile, summarizer.serialize());
 		summaryStream = FileUtils.openInputStream(summaryFile);

@@ -36,6 +36,10 @@ public class LLTestIter extends SourceSink {
     	out.add(null);
     }
     
+    public void shrinkNull() {
+    	shrink(null);
+    }
+    
     public void shrink2() {
     	List<String> ls = new ArrayList<String>();
     	ls.add(null);

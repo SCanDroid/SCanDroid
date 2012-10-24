@@ -68,12 +68,13 @@ public class CGAnalysisContext<E extends ISSABasicBlock> {
 	public Graph<CGNode> systemToApkGraph;
 
 	public CGAnalysisContext(AndroidAnalysisContext analysisContext,
-	IEntryPointSpecifier specifier) throws IOException {
+			IEntryPointSpecifier specifier) throws IOException {
 		this(analysisContext, specifier, new ArrayList<InputStream>());
 	}
 
 	public CGAnalysisContext(AndroidAnalysisContext analysisContext,
-			IEntryPointSpecifier specifier, Collection<InputStream> extraSummaries) throws IOException {
+			IEntryPointSpecifier specifier,
+			Collection<InputStream> extraSummaries) throws IOException {
 		this.analysisContext = analysisContext;
 		final AnalysisScope scope = analysisContext.getScope();
 		final ClassHierarchy cha = analysisContext.getClassHierarchy();
@@ -94,15 +95,18 @@ public class CGAnalysisContext<E extends ISSABasicBlock> {
 
 		SSAPropagationCallGraphBuilder cgb;
 
-		extraSummaries.add(new FileInputStream(new File(options.getSummariesURI())));
+		extraSummaries.add(new FileInputStream(new File(options
+				.getSummariesURI())));
 		cgb = AndroidAnalysisContext.makeZeroCFABuilder(analysisOptions, cache,
 				cha, scope, new ReceiverTypeContextSelector(), null,
 				extraSummaries, null);
 
-		// CallGraphBuilder construction warnings
-		for (Iterator<Warning> wi = Warnings.iterator(); wi.hasNext();) {
-			Warning w = wi.next();
-			logger.warn(w.getMsg());
+		if (analysisContext.getOptions().cgBuilderWarnings()) {
+			// CallGraphBuilder construction warnings
+			for (Iterator<Warning> wi = Warnings.iterator(); wi.hasNext();) {
+				Warning w = wi.next();
+				logger.warn(w.getMsg());
+			}
 		}
 		Warnings.clear();
 
@@ -115,7 +119,7 @@ public class CGAnalysisContext<E extends ISSABasicBlock> {
 			cg = cgb.makeCallGraph(cgb.getOptions());
 		} catch (Exception e) {
 			graphBuilt = false;
-			if (!options.testCGBuilder()) { 
+			if (!options.testCGBuilder()) {
 				throw new RuntimeException(e);
 			} else {
 				e.printStackTrace();
@@ -254,17 +258,18 @@ public class CGAnalysisContext<E extends ISSABasicBlock> {
 		for (Iterator<CGNode> nodeI = cg.iterator(); nodeI.hasNext();) {
 			CGNode node = nodeI.next();
 			if (node.getMethod().isSynthetic()) {
-				logger.debug("Synthetic Method: "
-						+ node.getMethod().getSignature());
-				logger.debug(node.getIR().getControlFlowGraph().toString());
+				logger.trace("Synthetic Method: {}", node.getMethod()
+						.getSignature());
+				logger.trace("{}", node.getIR().getControlFlowGraph()
+						.toString());
 				SSACFG ssaCFG = node.getIR().getControlFlowGraph();
 				int totalBlocks = ssaCFG.getNumberOfNodes();
 				for (int i = 0; i < totalBlocks; i++) {
-					logger.trace("BLOCK #" + i);
+					logger.trace("BLOCK #{}", i);
 					BasicBlock bb = ssaCFG.getBasicBlock(i);
 
 					for (SSAInstruction ssaI : bb.getAllInstructions()) {
-						logger.trace("\tInstruction: " + ssaI);
+						logger.trace("\tInstruction: {}", ssaI);
 					}
 				}
 			}
@@ -282,11 +287,11 @@ public class CGAnalysisContext<E extends ISSABasicBlock> {
 	public AnalysisScope getScope() {
 		return analysisContext.getScope();
 	}
-	
+
 	public List<Entrypoint> getEntrypoints() {
 		return entrypoints;
 	}
-	
+
 	public CGNode nodeForMethod(IMethod method) {
 		return cg.getNode(method, Everywhere.EVERYWHERE);
 	}
