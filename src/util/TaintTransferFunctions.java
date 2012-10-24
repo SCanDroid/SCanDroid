@@ -1,7 +1,11 @@
 package util;
 
 
+import java.util.List;
+import java.util.Set;
+
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.ibm.wala.dataflow.IFDS.IFlowFunction;
 import com.ibm.wala.dataflow.IFDS.IFlowFunctionMap;
 import com.ibm.wala.dataflow.IFDS.ISupergraph;
@@ -10,7 +14,9 @@ import com.ibm.wala.ipa.callgraph.CGNode;
 import com.ibm.wala.ipa.callgraph.propagation.PointerAnalysis;
 import com.ibm.wala.ipa.cfg.BasicBlockInContext;
 import com.ibm.wala.ssa.ISSABasicBlock;
+import com.ibm.wala.ssa.SSAInstruction;
 
+import domain.CodeElement;
 import domain.IFDSTaintDomain;
 
 public class TaintTransferFunctions <E extends ISSABasicBlock> implements
@@ -57,11 +63,52 @@ public class TaintTransferFunctions <E extends ISSABasicBlock> implements
     public IUnaryFlowFunction getNormalFlowFunction(
             BasicBlockInContext<E> src,
             BasicBlockInContext<E> dest) {
-        // TODO Auto-generated method stub
-        return null;
+    	List<UseDefPair> pairs = Lists.newArrayList();
+    	
+    	SSAInstruction inst = dest.getLastInstruction();
+    	CGNode node = dest.getNode();
+    	
+    	Set<CodeElement> inCodeElts  = getInCodeElts(node, inst);
+    	Set<CodeElement> outCodeElts = getOutCodeElts(node, inst);
+    	
+    	// for now, take the Cartesian product of the inputs and outputs:
+    	// TODO specialize this on a per-instruction basis to improve precision.
+    	for (CodeElement use : inCodeElts) {
+			for(CodeElement def : outCodeElts) {
+				pairs.add(new UseDefPair(use, def));
+			}
+		}
+    	
+        return new DefUse<E>(domain, pairs);
     }
 
-    @Override
+    private Set<CodeElement> getOutCodeElts(CGNode node, SSAInstruction inst) {
+    	int defNo = inst.getNumberOfDefs();
+    	Set<CodeElement> elts = Sets.newHashSet();
+    	
+    	for (int i =0; i < defNo; i++) {
+    		int valNo = inst.getDef(i);
+    		
+    		elts.addAll(CodeElement.valueElements(pa, node, valNo));
+    	}
+    	
+    	return elts;
+	}
+
+	private Set<CodeElement> getInCodeElts(CGNode node, SSAInstruction inst) {
+    	int useNo = inst.getNumberOfUses();
+    	Set<CodeElement> elts = Sets.newHashSet();
+    	
+    	for (int i =0; i < useNo; i++) {
+    		int valNo = inst.getUse(i);
+    		
+    		elts.addAll(CodeElement.valueElements(pa, node, valNo));
+    	}
+    	
+    	return elts;
+	}
+
+	@Override
     public IFlowFunction getReturnFlowFunction(
             BasicBlockInContext<E> call,
             BasicBlockInContext<E> src,
