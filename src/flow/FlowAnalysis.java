@@ -49,6 +49,7 @@ import org.slf4j.LoggerFactory;
 
 import util.CGAnalysisContext;
 import util.IFDSTaintFlowFunctionProvider;
+import util.TaintTransferFunctions;
 
 import com.google.common.collect.Lists;
 import com.ibm.wala.dataflow.IFDS.IFlowFunctionMap;
@@ -134,7 +135,8 @@ public class FlowAnalysis {
         }
 
         final IFlowFunctionMap<BasicBlockInContext<E>> functionMap =
-            new IFDSTaintFlowFunctionProvider<E>(domain, graph, pa);
+        		new TaintTransferFunctions<E>(domain, graph, pa);
+            //new IFDSTaintFlowFunctionProvider<E>(domain, graph, pa);
         
         final TabulationProblem<BasicBlockInContext<E>, CGNode, DomainElement>
           problem =

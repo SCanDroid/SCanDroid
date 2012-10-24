@@ -44,6 +44,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 
 import util.IFDSTaintFlowFunctionProvider;
+import util.TaintTransferFunctions;
 
 import com.ibm.wala.classLoader.IMethod;
 import com.ibm.wala.dataflow.IFDS.ICFGSupergraph;
@@ -211,7 +212,9 @@ public class StringPrefixAnalysis {
                 (ISupergraph) ICFGSupergraph.make(pcg, cache);
 
         //    pdfGraph(graph, "supergraph");
-        final IFlowFunctionMap<BasicBlockInContext<IExplodedBasicBlock>> functionMap = new IFDSTaintFlowFunctionProvider(domain, graph, pa);
+        final IFlowFunctionMap<BasicBlockInContext<IExplodedBasicBlock>> functionMap =
+        		new TaintTransferFunctions<IExplodedBasicBlock>(domain, graph, pa);
+        		//new IFDSTaintFlowFunctionProvider(domain, graph, pa);
 
         TabulationProblem<BasicBlockInContext<IExplodedBasicBlock>,CGNode,DomainElement> problem = new TabulationProblem<BasicBlockInContext<IExplodedBasicBlock>,CGNode,DomainElement>() {
 
