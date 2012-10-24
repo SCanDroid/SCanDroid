@@ -38,7 +38,7 @@
 
 package domain;
 
-public class LocalElement extends CodeElement {
+public final class LocalElement extends CodeElement {
     int id;
     public LocalElement(int id)
     {

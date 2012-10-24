@@ -15,9 +15,13 @@ import com.ibm.wala.ipa.callgraph.propagation.PointerAnalysis;
 import com.ibm.wala.ipa.cfg.BasicBlockInContext;
 import com.ibm.wala.ssa.ISSABasicBlock;
 import com.ibm.wala.ssa.SSAInstruction;
+import com.ibm.wala.util.intset.IntSet;
+import com.ibm.wala.util.intset.MutableSparseIntSet;
 
 import domain.CodeElement;
+import domain.DomainElement;
 import domain.IFDSTaintDomain;
+import domain.LocalElement;
 
 public class TaintTransferFunctions <E extends ISSABasicBlock> implements
         IFlowFunctionMap<BasicBlockInContext<E>> {
@@ -55,8 +59,7 @@ public class TaintTransferFunctions <E extends ISSABasicBlock> implements
     public IUnaryFlowFunction getCallToReturnFlowFunction(
             BasicBlockInContext<E> src,
             BasicBlockInContext<E> dest) {
-        // TODO Auto-generated method stub
-        return null;
+    	return new CallToReturnFunction<E>(domain);
     }
 
     @Override
