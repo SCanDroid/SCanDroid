@@ -21,14 +21,21 @@ public class ContiguousIntSet implements IntSet {
 	 * Creates an int set that contains all the ints between min and max, 
 	 * including min, excluding max.
 	 * 
+	 * Creates an empty set if max is less than min.
+	 * 
 	 * In otherwords, the range: @code [min max) @code
 	 * 
 	 * @param min
 	 * @param max
 	 */
 	public ContiguousIntSet(int min, int max) {
-		this.min = min;
-		this.max = max;
+		if (max < min) {
+			this.max = 0;
+			this.min = 0;
+		} else {
+			this.min = min;
+			this.max = max;
+		}
 	}
 
 	/* (non-Javadoc)
