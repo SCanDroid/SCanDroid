@@ -22,6 +22,9 @@ public class CallToReturnFunction <E extends ISSABasicBlock>
 	public IntSet getTargets(int d) {
 		MutableSparseIntSet set = MutableSparseIntSet.makeEmpty();
         
+		// Local elements (and the 0 element) flow through CallToReturn edges, 
+		// but nothing else does (everything else is subject to whatever 
+		// happened in the invoked function)
         if (0 == d) {
         	set.add(d);
         } else {

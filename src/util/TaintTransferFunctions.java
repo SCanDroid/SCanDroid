@@ -10,11 +10,13 @@ import com.ibm.wala.dataflow.IFDS.IFlowFunction;
 import com.ibm.wala.dataflow.IFDS.IFlowFunctionMap;
 import com.ibm.wala.dataflow.IFDS.ISupergraph;
 import com.ibm.wala.dataflow.IFDS.IUnaryFlowFunction;
+import com.ibm.wala.dex.instructions.InstanceOf;
 import com.ibm.wala.ipa.callgraph.CGNode;
 import com.ibm.wala.ipa.callgraph.propagation.PointerAnalysis;
 import com.ibm.wala.ipa.cfg.BasicBlockInContext;
 import com.ibm.wala.ssa.ISSABasicBlock;
 import com.ibm.wala.ssa.SSAInstruction;
+import com.ibm.wala.ssa.SSAInvokeInstruction;
 import com.ibm.wala.util.intset.IntSet;
 import com.ibm.wala.util.intset.MutableSparseIntSet;
 
@@ -43,16 +45,53 @@ public class TaintTransferFunctions <E extends ISSABasicBlock> implements
             BasicBlockInContext<E> src,
             BasicBlockInContext<E> dest,
             BasicBlockInContext<E> ret) {
-        // TODO Auto-generated method stub
-        return null;
+    	List<UseDefPair> pairs = Lists.newArrayList();
+    	
+    	SSAInstruction inst = dest.getLastInstruction();
+    	CGNode node = dest.getNode();
+    	
+    	// each use in an invoke instruction is a parameter to the invoked method,
+    	// these are the uses:
+    	Set<CodeElement> parameters  = getInCodeElts(node, inst);
+
+    	// the 'defs' are LocalElements (actual parameters, from the callee's perspective)
+    	// but local elements only use their parameter to identify unique local elements,
+    	// so we just make sure that each local element we create here is unique
+    	// with respect to the other elements, 
+    	//
+    	// ****and it will have to match the domain elements on the other side***
+    	//
+    	// With that in hand, we simply map each parameter to a local element.
+    	int i = 0;
+    	for (CodeElement param : parameters) {
+    		// just generate a unique (for this node) local element:
+    		pairs.add(new UseDefPair(param, new LocalElement(i++)));
+    	}
+    	
+        return new DefUse<E>(domain, pairs);
     }
 
     @Override
     public IUnaryFlowFunction getCallNoneToReturnFlowFunction(
             BasicBlockInContext<E> src,
             BasicBlockInContext<E> dest) {
-        // TODO Auto-generated method stub
-        return null;
+        return new IUnaryFlowFunction() {
+			@Override
+			public IntSet getTargets(int d1) {
+		        // We don't know anything about the function called,
+				// so we have to make some assumptions.  The safest assumption
+				// is that everything goes to everything:
+		        // The following code assumes that domain elements are *never removed*
+		        
+		        assert (domain.getSize() != domain.getMaximumIndex());
+		        if (domain.getSize() != domain.getMaximumIndex()) {
+		        	System.err.println("ASSUMPTION VIOLATED! (*and* you're not running with assertions on!)");
+		        	System.err.println("Elements appear to have been removed from the domain -- The TaintTransferFunction is failing.");
+		        }
+		        
+		        return new ContiguousIntSet(0, domain.getSize());
+			}
+		};
     }
 
     @Override
@@ -85,6 +124,16 @@ public class TaintTransferFunctions <E extends ISSABasicBlock> implements
         return new DefUse<E>(domain, pairs);
     }
 
+	@Override
+    public IFlowFunction getReturnFlowFunction(
+            BasicBlockInContext<E> call,
+            BasicBlockInContext<E> src,
+            BasicBlockInContext<E> dest) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+
     private Set<CodeElement> getOutCodeElts(CGNode node, SSAInstruction inst) {
     	int defNo = inst.getNumberOfDefs();
     	Set<CodeElement> elts = Sets.newHashSet();
@@ -110,14 +159,5 @@ public class TaintTransferFunctions <E extends ISSABasicBlock> implements
     	
     	return elts;
 	}
-
-	@Override
-    public IFlowFunction getReturnFlowFunction(
-            BasicBlockInContext<E> call,
-            BasicBlockInContext<E> src,
-            BasicBlockInContext<E> dest) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
+	
 }

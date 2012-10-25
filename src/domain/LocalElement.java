@@ -39,13 +39,12 @@
 package domain;
 
 public final class LocalElement extends CodeElement {
-    int id;
+    private final int id;
+    
     public LocalElement(int id)
     {
         this.id = id;
     }
-
-    
 
     @Override
 	public int hashCode() {
