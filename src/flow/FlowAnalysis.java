@@ -88,8 +88,33 @@ public class FlowAnalysis {
         return analyze(analysisContext.graph, analysisContext.cg, analysisContext.pa, initialTaints, d, progressMonitor);
     }
     
+    public static <E extends ISSABasicBlock>
+    TabulationResult<BasicBlockInContext<E>, CGNode, DomainElement> 
+    analyze(final CGAnalysisContext<E> analysisContext,
+          Map<BasicBlockInContext<E>,
+          Map<FlowType<E>,Set<CodeElement>>> initialTaints,
+          IFDSTaintDomain<E> d,
+          IProgressMonitor progressMonitor,
+          IFlowFunctionMap<BasicBlockInContext<E>> flowFunctionMap
+          ) throws CancelRuntimeException {
+        return analyze(analysisContext.graph, analysisContext.cg, analysisContext.pa, initialTaints, d, progressMonitor, flowFunctionMap);
+    }
     
     public static <E extends ISSABasicBlock>
+	  TabulationResult<BasicBlockInContext<E>, CGNode, DomainElement> 
+	  analyze(final ISupergraph<BasicBlockInContext<E>, 
+			  CGNode> graph,
+	          CallGraph cg,
+	          PointerAnalysis pa,
+	          Map<BasicBlockInContext<E>, Map<FlowType<E>,Set<CodeElement>>> initialTaints,
+	          IFDSTaintDomain<E> d,
+	          IProgressMonitor progressMonitor
+	        ) {
+				return analyze(graph, cg, pa, initialTaints, d,
+						progressMonitor, new TaintTransferFunctions<E>(d, graph, pa));
+			}
+
+	public static <E extends ISSABasicBlock>
       TabulationResult<BasicBlockInContext<E>, CGNode, DomainElement> 
       analyze(final ISupergraph<BasicBlockInContext<E>, 
     		  CGNode> graph,
@@ -97,7 +122,8 @@ public class FlowAnalysis {
               PointerAnalysis pa,
               Map<BasicBlockInContext<E>, Map<FlowType<E>,Set<CodeElement>>> initialTaints,
               IFDSTaintDomain<E> d,
-              IProgressMonitor progressMonitor
+              IProgressMonitor progressMonitor, 
+              final IFlowFunctionMap<BasicBlockInContext<E>> flowFunctionMap
             ) {
 
         logger.debug("*************************");
@@ -133,10 +159,6 @@ public class FlowAnalysis {
         	for (int i = 0; i < bbic.length; i++)
         		initialEdges.add(PathEdge.createPathEdge(bbic[i], 0, bbic[i], 0));
         }
-
-        final IFlowFunctionMap<BasicBlockInContext<E>> functionMap =
-        		new TaintTransferFunctions<E>(domain, graph, pa);
-            //new IFDSTaintFlowFunctionProvider<E>(domain, graph, pa);
         
         final TabulationProblem<BasicBlockInContext<E>, CGNode, DomainElement>
           problem =
@@ -147,7 +169,7 @@ public class FlowAnalysis {
             }
 
             public IFlowFunctionMap<BasicBlockInContext<E>> getFunctionMap() {
-                return functionMap;
+                return flowFunctionMap;
             }
 
             public IMergeFunction getMergeFunction() {
