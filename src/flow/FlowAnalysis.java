@@ -112,6 +112,9 @@ public class FlowAnalysis {
 	        ) {
 				return analyze(graph, cg, pa, initialTaints, d,
 						progressMonitor, new TaintTransferFunctions<E>(d, graph, pa));
+
+//				return analyze(graph, cg, pa, initialTaints, d,
+//						progressMonitor, new IFDSTaintFlowFunctionProvider<E>(d, graph, pa));
 			}
 
 	public static <E extends ISSABasicBlock>

@@ -127,4 +127,8 @@ public class IFDSTaintDomain <E extends ISSABasicBlock>
     public Iterator<DomainElement> iterator() {
         return table.keySet().iterator();
     }
+    
+    public Set<CodeElement> codeElements () {
+    	return elementIndex.keySet();
+    }
 }
