@@ -1,6 +1,7 @@
 package util;
 
 
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -102,8 +103,8 @@ public class TaintTransferFunctions <E extends ISSABasicBlock> implements
     	}
     	CGNode node = dest.getNode();
     	
-    	Set<CodeElement> inCodeElts  = getInCodeElts(node, inst);
-    	Set<CodeElement> outCodeElts = getOutCodeElts(node, inst);
+    	Iterable<CodeElement> inCodeElts  = getInCodeElts(node, inst);
+    	Iterable<CodeElement> outCodeElts = getOutCodeElts(node, inst);
     	
     	// for now, take the Cartesian product of the inputs and outputs:
     	// TODO specialize this on a per-instruction basis to improve precision.
@@ -146,39 +147,58 @@ public class TaintTransferFunctions <E extends ISSABasicBlock> implements
     		return IDENTITY_FN;
     	}
     	
-		Set<CodeElement> returnedVals = getInCodeElts(src.getNode(), srcInst);
-		Set<CodeElement> returnedLocs = getOutCodeElts(call.getNode(), callInst);
+		Iterable<CodeElement> returnedVals = getInCodeElts(src.getNode(), srcInst);
+		Iterable<CodeElement> returnedLocs = getOutCodeElts(call.getNode(), callInst);
 		
 		return union(new GlobalIdenityFunction<E>(domain),
 					 new ReturnFlowFunction<E>(domain, returnedVals, returnedLocs));
     }
+	
+	private Iterable<CodeElement> getOutCodeElts(CGNode node,
+			SSAInstruction inst) {
+		int defNo = inst.getNumberOfDefs();
+		Set<CodeElement> elts = Sets.newHashSet();
 
+		for (int i = 0; i < defNo; i++) {
+			int valNo = inst.getDef(i);
 
-    private Set<CodeElement> getOutCodeElts(CGNode node, SSAInstruction inst) {
-    	int defNo = inst.getNumberOfDefs();
-    	Set<CodeElement> elts = Sets.newHashSet();
-    	
-    	for (int i =0; i < defNo; i++) {
-    		int valNo = inst.getDef(i);
-    		
-    		elts.addAll(CodeElement.valueElements(pa, node, valNo));
-    	}
-    	
-    	return elts;
+			elts.addAll(CodeElement.valueElements(pa, node, valNo));
+		}
+
+		return elts;
 	}
 
-	private Set<CodeElement> getInCodeElts(CGNode node, SSAInstruction inst) {
-    	int useNo = inst.getNumberOfUses();
-    	Set<CodeElement> elts = Sets.newHashSet();
-    	
-    	for (int i =0; i < useNo; i++) {
-    		int valNo = inst.getUse(i);
-    		
-    		elts.addAll(CodeElement.valueElements(pa, node, valNo));
-    	}
-    	
-    	return elts;
+	private Iterable<CodeElement> getInCodeElts(CGNode node, SSAInstruction inst) {
+		int useNo = inst.getNumberOfUses();
+		Set<CodeElement> elts = Sets.newHashSet();
+
+		for (int i = 0; i < useNo; i++) {
+			int valNo = inst.getUse(i);
+
+			elts.addAll(CodeElement.valueElements(pa, node, valNo));
+		}
+
+		return elts;
 	}
+	
+		
+//    private Iterable<CodeElement> getOutCodeElts(final CGNode node, final SSAInstruction inst) {
+//    	return new Iterable<CodeElement>() {
+//			@Override
+//			public Iterator<CodeElement> iterator() {
+//				return new DefEltIterator(node, inst);
+//			}
+//		};
+//	}
+//
+//	private Iterable<CodeElement> getInCodeElts(final CGNode node, final SSAInstruction inst) {    	
+//    	return new Iterable<CodeElement>() {
+//			@Override
+//			public Iterator<CodeElement> iterator() {
+//				return new UseEltIterator(node, inst);
+//			}
+//		};
+//	}
 
 
 	private List<Set<CodeElement>> getOrdInCodeElts(CGNode node, SSAInstruction inst) {
@@ -203,4 +223,93 @@ public class TaintTransferFunctions <E extends ISSABasicBlock> implements
 			}
 		};
 	}
+	/*
+	private class UseEltIterator implements Iterator<CodeElement> {
+		private int idx = 0;
+		private Iterator<CodeElement> subIt;
+		private final CGNode node;
+		private final SSAInstruction inst;
+		private final int count;
+		
+		public UseEltIterator(CGNode node, SSAInstruction inst) {
+			this.node = node;
+			this.inst = inst;
+			count = inst.getNumberOfUses();
+			updateIterator(node, inst);
+		}
+
+		private void updateIterator(final CGNode node,
+				final SSAInstruction inst) {
+			int valNo = inst.getUse(idx);
+			idx++;
+			Set<CodeElement> elements = 
+					CodeElement.valueElements(pa, node, valNo);
+			subIt = elements.iterator();
+		}
+		
+		@Override
+		public boolean hasNext() {
+			if (subIt.hasNext()) {
+				return true;
+			} else if (idx < count) {
+				updateIterator(node, inst);
+				return hasNext();
+			} else {
+				return false;
+			}
+		}
+
+		@Override
+		public CodeElement next() {
+			return subIt.next();
+		}
+
+		@Override
+		public void remove() {}
+	}
+	
+	private class DefEltIterator implements Iterator<CodeElement> {
+		private int idx = 0;
+		private Iterator<CodeElement> subIt;
+		private final CGNode node;
+		private final SSAInstruction inst;
+		private final int count;
+		
+		public DefEltIterator(CGNode node, SSAInstruction inst) {
+			this.node = node;
+			this.inst = inst;
+			count = inst.getNumberOfDefs();
+			updateIterator(node, inst);
+		}
+
+		private void updateIterator(final CGNode node,
+				final SSAInstruction inst) {
+			int valNo = inst.getDef(idx);
+			idx++;
+			Set<CodeElement> elements = 
+					CodeElement.valueElements(pa, node, valNo);
+			subIt = elements.iterator();
+		}
+		
+		@Override
+		public boolean hasNext() {
+			if (subIt.hasNext()) {
+				return true;
+			} else if (idx < count) {
+				updateIterator(node, inst);
+				return hasNext();
+			} else {
+				return false;
+			}
+		}
+
+		@Override
+		public CodeElement next() {
+			return subIt.next();
+		}
+
+		@Override
+		public void remove() {}
+	}
+	*/
 }

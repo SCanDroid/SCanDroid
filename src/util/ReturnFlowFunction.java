@@ -3,8 +3,6 @@
  */
 package util;
 
-import java.util.Set;
-
 import com.ibm.wala.dataflow.IFDS.IUnaryFlowFunction;
 import com.ibm.wala.ssa.ISSABasicBlock;
 import com.ibm.wala.util.intset.IntSet;
@@ -21,11 +19,11 @@ import domain.IFDSTaintDomain;
 public class ReturnFlowFunction <E extends ISSABasicBlock> implements IUnaryFlowFunction {
 
 	private final IFDSTaintDomain<E> domain;
-	private final Set<CodeElement> returnedVals;
-	private final Set<CodeElement> returnedLocs;
+	private final Iterable<CodeElement> returnedVals;
+	private final Iterable<CodeElement> returnedLocs;
 
 	public ReturnFlowFunction(IFDSTaintDomain<E> domain,
-			Set<CodeElement> returnedVals, Set<CodeElement> returnedLocs) {
+			Iterable<CodeElement> returnedVals, Iterable<CodeElement> returnedLocs) {
 		this.domain = domain;
 		this.returnedVals = returnedVals;
 		this.returnedLocs = returnedLocs;
