@@ -44,6 +44,7 @@ public class TaintTransferFunctions <E extends ISSABasicBlock> implements
     public TaintTransferFunctions(IFDSTaintDomain<E> domain,
             ISupergraph<BasicBlockInContext<E>, CGNode> graph, 
             PointerAnalysis pa) {
+    	
         this.domain = domain;
         this.graph = graph;
         this.pa = pa;
