@@ -19,12 +19,11 @@ public final class CallNoneToReturnFunction <E extends ISSABasicBlock> implement
 
 	@Override
 	public IntSet getTargets(int d) {
-	    MutableSparseIntSet set = MutableSparseIntSet.makeEmpty();
 		if (0 == d) {
-			set.add(0);
-			return set;
+			return TaintTransferFunctions.ZERO_SET;
 		}
 		
+	    MutableSparseIntSet set = MutableSparseIntSet.makeEmpty();
 		// We don't know anything about the function called,
 		// so we have to make some assumptions.  The safest assumption
 		// is that everything goes to everything:

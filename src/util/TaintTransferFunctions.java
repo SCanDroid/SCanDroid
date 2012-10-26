@@ -112,9 +112,10 @@ public class TaintTransferFunctions <E extends ISSABasicBlock> implements
 				pairs.add(new UseDefPair(use, def));
 			}
 		}
-    	
-        return union(new GlobalIdenityFunction<E>(domain),
-        		     new PairBasedFlowFunction<E>(domain, pairs));
+
+    	// globals may be redefined here, so we can't union with the globalas ID
+    	// flow function, as we often do elsewhere.
+        return new PairBasedFlowFunction<E>(domain, pairs);
     }
 
 	@Override
