@@ -48,18 +48,23 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.scandroid.domain.CodeElement;
+import org.scandroid.domain.DomainElement;
+import org.scandroid.domain.IFDSTaintDomain;
+import org.scandroid.flow.FlowAnalysis;
+import org.scandroid.flow.InflowAnalysis;
+import org.scandroid.flow.OutflowAnalysis;
+import org.scandroid.flow.types.FlowType;
+import org.scandroid.spec.AndroidSpecs;
+import org.scandroid.spec.ISpecs;
+import org.scandroid.util.AndroidAnalysisContext;
+import org.scandroid.util.CGAnalysisContext;
 import org.scandroid.util.CLISCanDroidOptions;
+import org.scandroid.util.EntryPoints;
 import org.scandroid.util.IEntryPointSpecifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import policy.GpsSmsSpec;
-import policy.PolicyChecker;
-import spec.AndroidSpecs;
-import spec.ISpecs;
-import util.AndroidAnalysisContext;
-import util.CGAnalysisContext;
-import util.EntryPoints;
 
 import com.google.common.collect.Lists;
 import com.ibm.wala.dataflow.IFDS.TabulationResult;
@@ -70,13 +75,6 @@ import com.ibm.wala.ipa.cfg.BasicBlockInContext;
 import com.ibm.wala.ssa.analysis.IExplodedBasicBlock;
 import com.ibm.wala.util.MonitorUtil.IProgressMonitor;
 
-import domain.CodeElement;
-import domain.DomainElement;
-import domain.IFDSTaintDomain;
-import flow.FlowAnalysis;
-import flow.InflowAnalysis;
-import flow.OutflowAnalysis;
-import flow.types.FlowType;
 
 public class SeparateEntryAnalysis {
 	private static final Logger logger = LoggerFactory
@@ -204,16 +202,6 @@ public class SeparateEntryAnalysis {
 				logger.info(e.getKey().toString());
 				for (FlowType t : e.getValue()) {
 					logger.info("    --> " + t);
-				}
-			}
-
-			if (analysisContext.getOptions().useDefaultPolicy()) {
-				PolicyChecker checker = new PolicyChecker(new GpsSmsSpec());
-				boolean good = checker.flowsSatisfyPolicy(permissionOutflow);
-				if (good) {
-					logger.info("Passed policy check. No flows from GPS to SMS.");
-				} else {
-					logger.error("Failed policy check! Flows exist from GPS to SMS.");
 				}
 			}
 

@@ -2,7 +2,6 @@ package org.scandroid.util;
 
 import java.util.List;
 
-import util.AndroidAnalysisContext;
 
 import com.ibm.wala.ipa.callgraph.Entrypoint;
 

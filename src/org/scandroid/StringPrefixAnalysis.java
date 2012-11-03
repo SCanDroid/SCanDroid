@@ -43,8 +43,12 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 
-import util.IFDSTaintFlowFunctionProvider;
-import util.TaintTransferFunctions;
+import org.scandroid.domain.DomainElement;
+import org.scandroid.domain.IFDSTaintDomain;
+import org.scandroid.domain.LocalElement;
+import org.scandroid.flow.functions.IFDSTaintFlowFunctionProvider;
+import org.scandroid.flow.functions.TaintTransferFunctions;
+
 
 import com.ibm.wala.classLoader.IMethod;
 import com.ibm.wala.dataflow.IFDS.ICFGSupergraph;
@@ -93,9 +97,6 @@ import com.ibm.wala.util.io.FileProvider;
 import com.ibm.wala.util.strings.Atom;
 import com.ibm.wala.util.strings.StringStuff;
 
-import domain.DomainElement;
-import domain.IFDSTaintDomain;
-import domain.LocalElement;
 
 public class StringPrefixAnalysis {	
 

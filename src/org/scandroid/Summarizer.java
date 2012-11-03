@@ -1,8 +1,6 @@
 package org.scandroid;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -17,42 +15,43 @@ import java.util.Set;
 
 import javax.xml.parsers.ParserConfigurationException;
 
+import org.scandroid.domain.CodeElement;
+import org.scandroid.domain.DomainElement;
+import org.scandroid.domain.IFDSTaintDomain;
+import org.scandroid.flow.FlowAnalysis;
+import org.scandroid.flow.InflowAnalysis;
+import org.scandroid.flow.OutflowAnalysis;
+import org.scandroid.flow.types.FieldFlow;
+import org.scandroid.flow.types.FlowType;
+import org.scandroid.flow.types.FlowType.FlowTypeVisitor;
+import org.scandroid.flow.types.IKFlow;
+import org.scandroid.flow.types.ParameterFlow;
+import org.scandroid.flow.types.ReturnFlow;
+import org.scandroid.spec.ISpecs;
+import org.scandroid.synthmethod.DefaultSCanDroidOptions;
+import org.scandroid.synthmethod.XMLSummaryWriter;
+import org.scandroid.util.AndroidAnalysisContext;
+import org.scandroid.util.CGAnalysisContext;
 import org.scandroid.util.IEntryPointSpecifier;
+import org.scandroid.util.ThrowingSSAInstructionVisitor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import spec.ISpecs;
-import synthMethod.DefaultSCanDroidOptions;
-import synthMethod.XMLSummaryWriter;
-import util.AndroidAnalysisContext;
-import util.CGAnalysisContext;
-import util.ThrowingSSAInstructionVisitor;
-
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.ibm.wala.classLoader.IMethod;
 import com.ibm.wala.classLoader.JavaLanguage;
-import com.ibm.wala.dataflow.IFDS.ICFGSupergraph;
 import com.ibm.wala.dataflow.IFDS.ISupergraph;
 import com.ibm.wala.dataflow.IFDS.TabulationResult;
-import com.ibm.wala.dex.util.config.DexAnalysisScopeReader;
-import com.ibm.wala.ipa.callgraph.AnalysisCache;
-import com.ibm.wala.ipa.callgraph.AnalysisOptions;
-import com.ibm.wala.ipa.callgraph.AnalysisScope;
 import com.ibm.wala.ipa.callgraph.CGNode;
-import com.ibm.wala.ipa.callgraph.CallGraph;
-import com.ibm.wala.ipa.callgraph.CallGraphBuilder;
 import com.ibm.wala.ipa.callgraph.CallGraphBuilderCancelException;
 import com.ibm.wala.ipa.callgraph.Entrypoint;
 import com.ibm.wala.ipa.callgraph.impl.DefaultEntrypoint;
-import com.ibm.wala.ipa.callgraph.impl.Everywhere;
 import com.ibm.wala.ipa.callgraph.propagation.InstanceKey;
 import com.ibm.wala.ipa.callgraph.propagation.LocalPointerKey;
 import com.ibm.wala.ipa.callgraph.propagation.PointerAnalysis;
 import com.ibm.wala.ipa.callgraph.propagation.PointerKey;
 import com.ibm.wala.ipa.cfg.BasicBlockInContext;
-import com.ibm.wala.ipa.cha.ClassHierarchy;
 import com.ibm.wala.ipa.cha.ClassHierarchyException;
 import com.ibm.wala.ipa.summaries.MethodSummary;
 import com.ibm.wala.ssa.DefUse;
@@ -78,18 +77,6 @@ import com.ibm.wala.util.graph.traverse.DFSPathFinder;
 import com.ibm.wala.util.intset.OrdinalSet;
 import com.ibm.wala.util.strings.StringStuff;
 
-import domain.CodeElement;
-import domain.DomainElement;
-import domain.IFDSTaintDomain;
-import flow.FlowAnalysis;
-import flow.InflowAnalysis;
-import flow.OutflowAnalysis;
-import flow.types.FieldFlow;
-import flow.types.FlowType;
-import flow.types.FlowType.FlowTypeVisitor;
-import flow.types.IKFlow;
-import flow.types.ParameterFlow;
-import flow.types.ReturnFlow;
 
 public class Summarizer<E extends ISSABasicBlock> {
 	private static final Logger logger = LoggerFactory

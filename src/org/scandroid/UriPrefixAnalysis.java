@@ -44,15 +44,15 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.scandroid.prefixtransfer.InstanceKeySite;
+import org.scandroid.prefixtransfer.PrefixTransferFunctionProvider;
+import org.scandroid.prefixtransfer.PrefixVariable;
+import org.scandroid.prefixtransfer.UriPrefixTransferGraph;
+import org.scandroid.util.CGAnalysisContext;
+import org.scandroid.util.EmptyProgressMonitor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import prefixTransfer.InstanceKeySite;
-import prefixTransfer.PrefixTransferFunctionProvider;
-import prefixTransfer.PrefixVariable;
-import prefixTransfer.UriPrefixTransferGraph;
-import util.CGAnalysisContext;
-import util.EmptyProgressMonitor;
 
 import com.ibm.wala.dataflow.graph.DataflowSolver;
 import com.ibm.wala.dataflow.graph.IKilldallFramework;

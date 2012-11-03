@@ -6,16 +6,16 @@ package org.scandroid;
 import java.io.UTFDataFormatException;
 import java.util.List;
 
+import org.scandroid.spec.EntryArgSinkSpec;
+import org.scandroid.spec.EntryArgSourceSpec;
+import org.scandroid.spec.EntryRetSinkSpec;
+import org.scandroid.spec.ISpecs;
+import org.scandroid.spec.MethodNamePattern;
+import org.scandroid.spec.SinkSpec;
+import org.scandroid.spec.SourceSpec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import spec.EntryArgSinkSpec;
-import spec.EntryArgSourceSpec;
-import spec.EntryRetSinkSpec;
-import spec.ISpecs;
-import spec.MethodNamePattern;
-import spec.SinkSpec;
-import spec.SourceSpec;
 
 import com.google.common.collect.Lists;
 import com.ibm.wala.ipa.summaries.MethodSummary;
