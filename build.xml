@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <project basedir="." default="build" name="SimpleAnalysisPluginLibDexLib">
     <property environment="env"/>
-    <property name="HOME" value="${basedir}"/>
-    <property name="LIBS" value="${HOME}/lib"/>
-    <property name="WALA" value="${HOME}/wala"/>
+    <property name="LIBS" value="${basedir}/lib"/>
+    <property name="WALA" value="${basedir}/wala"/>
     <property name="debuglevel" value="source,lines,vars"/>
     <property name="target" value="1.5"/>
     <property name="source" value="1.5"/>
@@ -124,28 +123,28 @@
     <target name="run-init" depends="init">
         <mkdir dir="bin/conf"/>
         <copy includeemptydirs="false" todir="bin/conf">
-            <fileset dir="${HOME}/conf" includes="*" />
+            <fileset dir="${basedir}/conf" includes="*" />
         </copy>
     </target>
 
     <!-- practice -->
     <target name="practice.dex.CG" depends="run-init,build">
         <java classname="practice.dex.PDFCallGraphTest" failonerror="true" fork="yes">
-            <arg line="-apk ${HOME}/apks/Hello.apk"/>
+            <arg line="-apk ${basedir}/apks/Hello.apk"/>
             <classpath refid="SimpleAnalysisPlugin.classpath"/>
         </java>
     </target>
 
     <target name="practice.dex.TI" depends="run-init,build">
         <java classname="practice.dex.TypeInferenceTest" failonerror="true" fork="yes">
-            <arg line="-apk ${HOME}/apks/Hello.apk" />
+            <arg line="-apk ${basedir}/apks/Hello.apk" />
             <classpath refid="SimpleAnalysisPlugin.classpath"/>
         </java>
     </target>
 
     <target name="practice.dex.IR" depends="run-init,build">
         <java classname="practice.dex.PDFWalaIRTest" failonerror="true" fork="yes">
-            <arg line="-apk ${HOME}/apks/Hello.apk" />
+            <arg line="-apk ${basedir}/apks/Hello.apk" />
             <classpath refid="SimpleAnalysisPlugin.classpath"/>
         </java>
     </target>
@@ -157,7 +156,7 @@
                 <attribute name="Main-Class" value="org.scandroid.SeparateEntryAnalysis"/>
                 <attribute name="Class-Path" value="."/>
             </manifest>
-            <fileset dir="${HOME}/bin"/>
+            <fileset dir="${basedir}/bin"/>
             <zipfileset excludes="META-INF/*.SF" src="${WALA}/wala_cast.jar"/>
             <zipfileset excludes="META-INF/*.SF" src="${WALA}/wala_cast_java.jar"/>
             <zipfileset excludes="META-INF/*.SF" src="${WALA}/wala_cast_java_jdt.jar"/>
@@ -180,7 +179,7 @@
 
     <!-- Zip the project -->
     <target depends="jar" name="zip">
- 	<zip destfile="${HOME}/sap_project.zip">
+ 	<zip destfile="${basedir}/sap_project.zip">
   	  <zipfileset dir="conf/" includes="*" prefix="conf/"/>
 	  <zipfileset dir="tools/" includes="script.pl,apktool.jar" prefix="tools"/>
   	  <fileset dir="." includes="sap.jar"/>
@@ -188,7 +187,7 @@
     </target>
 
     <target name="zip-src" depends="clean">
- 	<zip destfile="${HOME}/sap_project-src.zip">
+ 	<zip destfile="${basedir}/sap_project-src.zip">
   	  <zipfileset dir="conf/" includes="*" prefix="conf/"/>
       <zipfileset dir="tools/" includes="script.pl,apktool.jar" prefix="tools"/>
       <zipfileset dir="${src-dir}/" includes="**/*.java" prefix="${src-dir}"/>
