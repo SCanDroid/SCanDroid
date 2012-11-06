@@ -151,9 +151,12 @@ public class Summarizer<E extends ISSABasicBlock> {
 		Collection<IMethod> entryMethods = analysisContext.getClassHierarchy()
 				.getPossibleTargets(methodRef);
 
-		if (entryMethods.size() != 1) {
+		if (entryMethods.size() > 1) {
 			logger.error("More than one imethod found for: " + methodRef);
+		} else if (entryMethods.size() == 0) {
+			logger.error("No method found for: " + methodRef);
 		}
+		
 		final IMethod imethod = entryMethods.iterator().next();
 
 		MethodSummary summary = new MethodSummary(methodRef);

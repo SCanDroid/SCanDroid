@@ -90,6 +90,11 @@ public class MethodAnalysisTest {
 					public URI getClasspath() {
 						return new File(TEST_JAR).toURI();
 					}
+					@Override
+					public boolean stdoutCG() {
+						// TODO Auto-generated method stub
+						return false;
+					}
 				});
 		final AnalysisScope scope = analysisContext.getScope();
 		final ClassHierarchy cha = analysisContext.getClassHierarchy();
