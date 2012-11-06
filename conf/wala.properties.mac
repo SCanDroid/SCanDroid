@@ -17,9 +17,7 @@
 #
 # Info: Location must be absolute.
 #####
-java_runtime_dir = data/java1.6.0_35/
-#java_runtime_dir = data/java1.7.0_04-b20/
-#java_runtime_dir = /System/Library/Frameworks/JavaVM.framework/Classes
+java_runtime_dir = /System/Library/Frameworks/JavaVM.framework/Classes
 
 ################### Mandatory settings with default value ######################
 
