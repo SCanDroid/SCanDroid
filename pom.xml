@@ -16,9 +16,9 @@
 								<ant antfile="build.xml" target="clean" />
 							</tasks>
 						</configuration>
-					<goals>
-						<goal>run</goal>
-					</goals>
+            <goals>
+              <goal>run</goal>
+            </goals>
 					</execution>
 					<execution>
 						<id>build-jar</id>
@@ -26,12 +26,12 @@
 						<configuration>
 							<tasks>
                 <property name="build.compiler" value="extJavac" />
-								<ant antfile="build.xml" target="jar" />
+								<ant antfile="build.xml" target="jar"/>
 							</tasks>
 						</configuration>
-					<goals>
-						<goal>run</goal>
-					</goals>
+            <goals>
+              <goal>run</goal>
+            </goals>
 					</execution>
 				</executions>
 			</plugin>
