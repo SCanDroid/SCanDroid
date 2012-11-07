@@ -47,6 +47,7 @@ import com.ibm.wala.ipa.cfg.BasicBlockInContext;
 import com.ibm.wala.ipa.cha.ClassHierarchy;
 import com.ibm.wala.ipa.cha.ClassHierarchyException;
 import com.ibm.wala.ssa.analysis.IExplodedBasicBlock;
+import com.ibm.wala.types.TypeName;
 
 
 @RunWith(Parameterized.class)
@@ -76,6 +77,7 @@ public class DataflowTest {
         //        LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
         //root.setLevel(Level.TRACE);
         List<Object[]> entrypoints = Lists.newArrayList();
+        DataflowResults gold = new DataflowResults();
 
         analysisContext = new AndroidAnalysisContext(
                 new DefaultSCanDroidOptions() {
@@ -101,12 +103,20 @@ public class DataflowTest {
             if (clazz.isInterface()) {
                 continue;
             }
+            TypeName clname = clazz.getName(); 
+            if (!clname.getPackage().toString().startsWith("org/scandroid/testing")) {
+                logger.debug("Skipping class {}", clname.toString());
+                continue;
+            }
             logger.debug("Adding entrypoints from {}", clazz);
             logger.debug("abstract={}", clazz.isAbstract());
             for (IMethod method : clazz.getAllMethods()) {
-                IClass declClass = method.getDeclaringClass();
-                if (!declClass.getName().toString().endsWith("LLTestIter"))
+                String desc = method.getSignature();
+                if(!gold.expectedResults.containsKey(desc)) {
+                    logger.debug("Skipping {} due to lack of output information.", desc);
                     continue;
+                }
+                IClass declClass = method.getDeclaringClass();
                 if (method.isAbstract() || method.isSynthetic()
                         || (declClass.isAbstract() && method.isInit())
                         || (declClass.isAbstract() && !method.isStatic())) {
