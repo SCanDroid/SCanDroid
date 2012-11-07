@@ -185,7 +185,7 @@ public class PScoutReader {
 		}
 		logger.debug("analyzed {} permissions with {} mapped API calls",
 				permissions, apiCalls);
-		logger.debug("ClassNotFoundException: {} failed", classNotFound);
+		logger.debug("ClassNotFoundException: {} failed ({} distinct classes)", classNotFound, classesNotFound.size());
 		logger.debug("NoSuchMethodException: {} failed", noSuchMethod);
 		logger.debug("NoClassDefFoundError: {} failed", noClassDef);
 		logger.debug("UnsatisfiedLinkError: {} failed", unsatisfiedLink);		
