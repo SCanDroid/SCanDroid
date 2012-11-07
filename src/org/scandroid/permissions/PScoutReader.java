@@ -11,6 +11,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -21,6 +22,7 @@ import org.apache.commons.lang3.ClassUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
@@ -52,12 +54,21 @@ public class PScoutReader {
 		String[] paramStrings = matcher.group(4).split(",");
 
 		// resolve parameter classes
-		Class<?>[] paramClasses = new Class[paramStrings.length];
-		for (int i = 0; i < paramStrings.length; i++) {
-			String paramString = paramStrings[i];
-			Class<?> paramClass = ClassUtils.getClass(ANDROID_CLASSLOADER,
-					paramString, false);
-			paramClasses[i] = paramClass;
+		Class<?>[] paramClasses;
+		if (paramStrings.length == 1 && paramStrings[0].equals("")) {
+			paramClasses = null;
+		} else {
+			paramClasses = new Class[paramStrings.length];
+			for (int i = 0; i < paramStrings.length; i++) {
+				String paramString = paramStrings[i];
+				if (paramString.equals("")) {
+					throw new IllegalStateException("Empty param string for"
+							+ pscoutString);
+				}
+				Class<?> paramClass = ClassUtils.getClass(ANDROID_CLASSLOADER,
+						paramString, false);
+				paramClasses[i] = paramClass;
+			}
 		}
 
 		// resolve enclosing class and look up method
@@ -101,7 +112,8 @@ public class PScoutReader {
 		int noSuchMethod = 0;
 		int noClassDef = 0;
 		int unsatisfiedLink = 0;
-		
+		Set<String> classesNotFound = Sets.newTreeSet();
+
 		HashMap<String, Set<String>> result = Maps.newHashMap();
 		BufferedReader reader = new BufferedReader(new InputStreamReader(
 				mappings));
@@ -125,7 +137,6 @@ public class PScoutReader {
 			assert reader.ready();
 			String discarded = reader.readLine();
 			logger.trace("discarding {}", discarded);
-			
 
 			// now build the set
 			Set<String> descriptorSet = Sets.newHashSet();
@@ -141,19 +152,26 @@ public class PScoutReader {
 						descriptorSet.add(pscout2descriptor(innerLine));
 						logger.trace("adding call {}", innerLine);
 					} catch (ClassNotFoundException e) {
-						logger.trace("ClassNotFoundException processing {}", innerLine);
+						logger.trace("ClassNotFoundException processing {}",
+								innerLine);
+//						logger.debug("exception", e);
 						classNotFound++;
+						classesNotFound.add(e.getMessage());
 					} catch (NoSuchMethodException e) {
-						logger.trace("NoSuchMethodException processing {}", innerLine);
+						logger.trace("NoSuchMethodException processing {}",
+								innerLine);
 						noSuchMethod++;
 					} catch (NoClassDefFoundError e) {
-						logger.trace("NoClassDefFoundError processing {}", innerLine);
+						logger.trace("NoClassDefFoundError processing {}",
+								innerLine);
 						noClassDef++;
 					} catch (UnsatisfiedLinkError e) {
-						logger.trace("UnsatisfiedLinkError processing {}", innerLine);
+						logger.trace("UnsatisfiedLinkError processing {}",
+								innerLine);
 						unsatisfiedLink++;
 					} catch (IllegalStateException e) {
-						logger.error("IllegalStateException processing {}", innerLine);
+						logger.error("IllegalStateException processing {}",
+								innerLine);
 						throw e;
 					}
 				} else {
@@ -162,10 +180,14 @@ public class PScoutReader {
 			}
 		}
 
-		logger.debug("analyzed {} permissions with {} mapped API calls", permissions, apiCalls);
-		logger.debug("ClassNotFoundException: {} failed", classNotFound);		
-		logger.debug("NoSuchMethodException: {} failed", noSuchMethod);		
-		logger.debug("NoClassDefFoundError: {} failed", noClassDef);		
+		for (String clazz : classesNotFound) {
+			logger.debug(clazz);
+		}
+		logger.debug("analyzed {} permissions with {} mapped API calls",
+				permissions, apiCalls);
+		logger.debug("ClassNotFoundException: {} failed", classNotFound);
+		logger.debug("NoSuchMethodException: {} failed", noSuchMethod);
+		logger.debug("NoClassDefFoundError: {} failed", noClassDef);
 		logger.debug("UnsatisfiedLinkError: {} failed", unsatisfiedLink);		
 		return result;
 	}
