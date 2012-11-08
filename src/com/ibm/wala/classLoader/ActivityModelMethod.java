@@ -50,6 +50,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.ibm.wala.dex.instructions.Invoke;
+import com.ibm.wala.util.io.FileProvider;
 
 public class ActivityModelMethod extends DexIMethod {
 	private static final Logger logger = LoggerFactory
@@ -62,28 +63,31 @@ public class ActivityModelMethod extends DexIMethod {
 
 	public static void loadActivityModel() {
 		if (ActivityModelM == null) {
-			DexFile ActivityModelDF;
-			ClassDefItem ActivityModelCDI = null;
+			DexFile activityModelDF;
+			ClassDefItem activityModelCDI = null;
 			try {
-				ActivityModelDF = new DexFile(new File(
+				FileProvider fp = new FileProvider();
+				File apkFile = fp.getFile("models/ActivityModel.apk", ActivityModelMethod.class.getClassLoader());
+				activityModelDF = new DexFile(apkFile);
+						/* new DexFile(new File(
 						ActivityModelMethod.class.getClassLoader()
 								.getResource("models/ActivityModel.apk")
-								.toURI()));
+								.toURI())); */
 			} catch (Exception e) {
 				throw new IllegalArgumentException(e);
 			}
-			Section<ClassDefItem> cldeff = ActivityModelDF
+			Section<ClassDefItem> cldeff = activityModelDF
 					.getSectionForType(TYPE_CLASS_DEF_ITEM);
 			for (ClassDefItem cdefitems : cldeff.getItems()) {
 				if (cdefitems.getClassType().getTypeDescriptor()
 						.equals("Lactivity/model/ActivityModelActivity;")) {
-					ActivityModelCDI = cdefitems;
+					activityModelCDI = cdefitems;
 				}
 			}
-			assert (ActivityModelCDI != null);
+			assert (activityModelCDI != null);
 			// final EncodedMethod[] virtualMethods =
 			// ActivityModelCDI.getClassData().getVirtualMethods();
-			for (EncodedMethod virtualMethod : ActivityModelCDI.getClassData()
+			for (EncodedMethod virtualMethod : activityModelCDI.getClassData()
 					.getVirtualMethods()) {
 				if (virtualMethod.method.getMethodName().getStringValue()
 						.equals("ActivityModel"))
