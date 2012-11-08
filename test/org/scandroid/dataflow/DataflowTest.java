@@ -10,6 +10,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -32,7 +34,11 @@ import org.scandroid.util.IEntryPointSpecifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Equivalence;
 import com.google.common.collect.Lists;
+import com.google.common.collect.MapDifference;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.ibm.wala.classLoader.IClass;
 import com.ibm.wala.classLoader.IClassLoader;
 import com.ibm.wala.classLoader.IMethod;
@@ -56,6 +62,7 @@ public class DataflowTest {
 			.getLogger(DataflowTest.class);
 
 	private static AndroidAnalysisContext analysisContext;
+	private static DataflowResults gold;
 
 	/**
 	 * Path to the original natives.xml file.
@@ -77,7 +84,7 @@ public class DataflowTest {
         //        LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
         //root.setLevel(Level.TRACE);
         List<Object[]> entrypoints = Lists.newArrayList();
-        DataflowResults gold = new DataflowResults();
+        gold = new DataflowResults();
 
         analysisContext = new AndroidAnalysisContext(
                 new DefaultSCanDroidOptions() {
@@ -105,13 +112,12 @@ public class DataflowTest {
             }
             TypeName clname = clazz.getName(); 
             if (!clname.getPackage().toString().startsWith("org/scandroid/testing")) {
-                logger.debug("Skipping class {}", clname.toString());
                 continue;
             }
             logger.debug("Adding entrypoints from {}", clazz);
             logger.debug("abstract={}", clazz.isAbstract());
             for (IMethod method : clazz.getAllMethods()) {
-                String desc = method.getSignature();
+                String desc = isEclipse() ? URLEncoder.encode(method.getSignature(), "UTF-8") : method.getSignature();
                 if(!gold.expectedResults.containsKey(desc)) {
                     logger.debug("Skipping {} due to lack of output information.", desc);
                     continue;
@@ -127,7 +133,7 @@ public class DataflowTest {
                     logger.debug("Adding entrypoint for {}", method);
                     logger.debug("abstract={}, static={}, init={}, clinit={}, synthetic={}", method.isAbstract(), method.isStatic(), method.isInit(), method.isClinit(), method.isSynthetic());
                     entrypoints.add(new Object[] {
-                            isEclipse() ? URLEncoder.encode(method.getSignature(), "UTF-8") : method.getSignature(),
+                            desc,
                             new DefaultEntrypoint(method, cha) });
                 }
             }
@@ -142,14 +148,16 @@ public class DataflowTest {
     }
 
     public final Entrypoint entrypoint;
+    public final String desc;
 
     /**
      * @param methodDescriptor
-     *            only used to name tests
+     *            used to name tests
      * @param entrypoint
      *            the method to test
      */
     public DataflowTest(String methodDescriptor, Entrypoint entrypoint) {
+        this.desc = methodDescriptor;
         this.entrypoint = entrypoint;
     }
 
@@ -167,9 +175,15 @@ public class DataflowTest {
 
         Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> dfResults =
                 runDFAnalysis(ctx, specs);
-        Assert.assertEquals(dfResults, dfResults); // TODO
+        Set<String> flows = Sets.newHashSet();
+        for(FlowType<IExplodedBasicBlock> src : new TreeSet<FlowType<IExplodedBasicBlock>>(dfResults.keySet())) {
+            for(FlowType<IExplodedBasicBlock> dst : new TreeSet<FlowType<IExplodedBasicBlock>>(dfResults.get(src))) {
+                flows.add(src.descString() + " -> " + dst.descString());
+            }
+        }
+        Assert.assertEquals(gold.expectedResults.get(desc), flows);
     }
-
+    
     private Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> runDFAnalysis(
             CGAnalysisContext<IExplodedBasicBlock> cgContext, ISpecs specs)
             throws IOException, ClassHierarchyException,

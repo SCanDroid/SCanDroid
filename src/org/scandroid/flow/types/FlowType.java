@@ -70,6 +70,13 @@ public abstract class FlowType<E extends ISSABasicBlock> {
     public String toString() {
         return "block=" + block + ", source=" + source;
     }
+    
+    public String descString() {
+        if(source)
+            return "I";
+        else
+            return "O";
+    }
 
     @Override
     public int hashCode() {
