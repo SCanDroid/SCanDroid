@@ -171,9 +171,10 @@ public class DataflowTest {
 
         Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> dfResults =
                 runDFAnalysis(ctx, specs);
+
         Set<String> flows = Sets.newHashSet();
-        for(FlowType<IExplodedBasicBlock> src : new TreeSet<FlowType<IExplodedBasicBlock>>(dfResults.keySet())) {
-            for(FlowType<IExplodedBasicBlock> dst : new TreeSet<FlowType<IExplodedBasicBlock>>(dfResults.get(src))) {
+        for(FlowType<IExplodedBasicBlock> src : dfResults.keySet()) {
+            for(FlowType<IExplodedBasicBlock> dst : dfResults.get(src)) {
                 flows.add(src.descString() + " -> " + dst.descString());
             }
         }
