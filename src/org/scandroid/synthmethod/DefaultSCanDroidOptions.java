@@ -118,4 +118,25 @@ public abstract class DefaultSCanDroidOptions implements ISCanDroidOptions {
 		return false;
 	}
 
+	public static String dumpString(ISCanDroidOptions options) {
+		return "DefaultSCanDroidOptions [pdfCG()=" + options.pdfCG()
+				+ ", pdfPartialCG()=" + options.pdfPartialCG() + ", pdfOneLevelCG()="
+				+ options.pdfOneLevelCG() + ", systemToApkCG()=" + options.systemToApkCG()
+				+ ", stdoutCG()=" + options.stdoutCG() + ", includeLibrary()="
+				+ options.includeLibrary() + ", separateEntries()=" + options.separateEntries()
+				+ ", ifdsExplorer()=" + options.ifdsExplorer()
+				+ ", addMainEntrypoints()=" + options.addMainEntrypoints()
+				+ ", useThreadRunMain()=" + options.useThreadRunMain()
+				+ ", stringPrefixAnalysis()=" + options.stringPrefixAnalysis()
+				+ ", testCGBuilder()=" + options.testCGBuilder()
+				+ ", useDefaultPolicy()=" + options.useDefaultPolicy()
+				+ ", getClasspath()=" + options.getClasspath() + ", getFilename()="
+				+ options.getFilename() + ", getAndroidLibrary()="
+				+ options.getAndroidLibrary() + ", getReflectionOptions()="
+				+ options.getReflectionOptions() + ", getSummariesURI()="
+				+ options.getSummariesURI() + ", classHierarchyWarnings()="
+				+ options.classHierarchyWarnings() + ", cgBuilderWarnings()="
+				+ options.cgBuilderWarnings() + "]";
+	}
+
 }
