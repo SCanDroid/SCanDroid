@@ -40,6 +40,7 @@ package org.scandroid.flow.types;
 
 import com.ibm.wala.ipa.cfg.BasicBlockInContext;
 import com.ibm.wala.ssa.ISSABasicBlock;
+import com.ibm.wala.ssa.SSAInvokeInstruction;
 
 /**
  * 
@@ -57,6 +58,16 @@ public class ReturnFlow <E extends ISSABasicBlock> extends FlowType<E> {
     @Override
     public String toString() {
         return "ReturnFlow( " + super.toString() + ")";
+    }
+
+    @Override
+    public String descString() {
+        if(isSource()) {
+            SSAInvokeInstruction inv = (SSAInvokeInstruction)getBlock().getLastInstruction();
+            return super.toString() + ":" + inv.getDeclaredTarget().getSignature();
+        } else {
+            return super.toString() + ":" + "ret";
+        }
     }
 
 	@Override
