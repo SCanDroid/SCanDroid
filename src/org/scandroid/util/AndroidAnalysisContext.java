@@ -52,6 +52,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.jar.JarFile;
 
+import org.scandroid.synthmethod.DefaultSCanDroidOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -121,6 +122,7 @@ public class AndroidAnalysisContext {
 	public AndroidAnalysisContext(ISCanDroidOptions options, File exclusions)
 			throws IOException, IllegalArgumentException, CancelException,
 			       ClassHierarchyException, URISyntaxException {
+		logger.debug(DefaultSCanDroidOptions.dumpString(options));
 		this.options = options;
 		scope = DexAnalysisScopeReader.makeAndroidBinaryAnalysisScope(
 				options.getClasspath(), exclusions);
