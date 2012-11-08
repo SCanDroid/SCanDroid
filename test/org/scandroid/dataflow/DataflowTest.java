@@ -10,7 +10,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.TreeSet;
 
 import org.junit.Assert;
@@ -25,19 +24,16 @@ import org.scandroid.flow.FlowAnalysis;
 import org.scandroid.flow.InflowAnalysis;
 import org.scandroid.flow.OutflowAnalysis;
 import org.scandroid.flow.types.FlowType;
-import org.scandroid.spec.AndroidSpecs;
 import org.scandroid.spec.ISpecs;
 import org.scandroid.synthmethod.DefaultSCanDroidOptions;
+import org.scandroid.synthmethod.TestSpecs;
 import org.scandroid.util.AndroidAnalysisContext;
 import org.scandroid.util.CGAnalysisContext;
 import org.scandroid.util.IEntryPointSpecifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.base.Equivalence;
 import com.google.common.collect.Lists;
-import com.google.common.collect.MapDifference;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.ibm.wala.classLoader.IClass;
 import com.ibm.wala.classLoader.IClassLoader;
@@ -171,7 +167,7 @@ public class DataflowTest {
                         return Lists.newArrayList(entrypoint);
                     }
                 });
-        ISpecs specs = new AndroidSpecs();
+        ISpecs specs = TestSpecs.specsFromDescriptor(ctx.getClassHierarchy(), desc);
 
         Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> dfResults =
                 runDFAnalysis(ctx, specs);

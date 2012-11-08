@@ -64,9 +64,9 @@ public class ReturnFlow <E extends ISSABasicBlock> extends FlowType<E> {
     public String descString() {
         if(isSource()) {
             SSAInvokeInstruction inv = (SSAInvokeInstruction)getBlock().getLastInstruction();
-            return super.toString() + ":" + inv.getDeclaredTarget().getSignature();
+            return "ret:" + inv.getDeclaredTarget().getSignature();
         } else {
-            return super.toString() + ":" + "ret";
+            return "ret";
         }
     }
 
