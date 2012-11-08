@@ -65,7 +65,6 @@ public class DataflowTest {
 	 * 
 	 * This assumes that the wala source is in wala/wala-src
 	 */
-	public static final String WALA_NATIVES_XML = "data/MethodSummaries.xml";
 	private static final String TEST_DATA_DIR = "data/testdata/";
 	private static final String TEST_JAR = TEST_DATA_DIR
 			+ "testJar-1.0-SNAPSHOT.jar";
@@ -88,6 +87,12 @@ public class DataflowTest {
                     public URI getClasspath() {
                         return new File(TEST_JAR).toURI();
                     }
+
+                    @Override
+                    public URI getSummariesURI() {
+                        return null;
+                    }
+
                     @Override
                     public boolean stdoutCG() {
                         return false;

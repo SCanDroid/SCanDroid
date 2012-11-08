@@ -125,22 +125,17 @@ public class InflowAnalysis <E extends ISSABasicBlock> {
                             PointerAnalysis pa) {
     	int[] newArgNums;
     	for (IMethod im:ss.getNamePattern().getPossibleTargets(cha)) {
-    		CGNode node = cg.getNode(im, Everywhere.EVERYWHERE);
-    		newArgNums = (ss.getArgNums() == null) ? SourceSpec.getNewArgNums((im.isStatic())?im.getNumberOfParameters():im.getNumberOfParameters()-1) : ss.getArgNums();
-
-    		if (node == null) {
-    		    continue; 
-    		}
-
-    		BasicBlockInContext<E>[] entriesForProcedure = graph.getEntriesForProcedure(node);
-            if (entriesForProcedure == null || 0 == entriesForProcedure.length) {
-    			continue;
-    		}
+            newArgNums = (ss.getArgNums() == null) ? SourceSpec.getNewArgNums((im.isStatic())?im.getNumberOfParameters():im.getNumberOfParameters()-1) : ss.getArgNums();
+            for (CGNode node: cg.getNodes(im.getReference())) {
+                BasicBlockInContext<E>[] entriesForProcedure = graph.getEntriesForProcedure(node);
+                if (entriesForProcedure == null || 0 == entriesForProcedure.length) {
+                    continue;
+                }
             
-            for (BasicBlockInContext<E> bb:entriesForProcedure) {
-            	ss.addDomainElements(taintMap, im, bb, null, newArgNums, graph, pa, cg);
+                for (BasicBlockInContext<E> bb:entriesForProcedure) {
+                    ss.addDomainElements(taintMap, im, bb, null, newArgNums, graph, pa, cg);
+                }
             }
-            
     	}
     }
     

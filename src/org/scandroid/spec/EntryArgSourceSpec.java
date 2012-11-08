@@ -78,10 +78,11 @@ public class EntryArgSourceSpec extends SourceSpec {
 			int[] newArgNums, 
 			ISupergraph<BasicBlockInContext<E>, CGNode> graph, PointerAnalysis pa, CallGraph cg) {
 
-		CGNode node = cg.getNode(im, Everywhere.EVERYWHERE);
-		for(int i: newArgNums) {
-		    FlowType<E> flow = new ParameterFlow<E>(block, i, true);
-		    InflowAnalysis.addDomainElements(taintMap, block, flow, CodeElement.valueElements(pa, node, node.getIR().getParameter(i)));
+		for(CGNode node: cg.getNodes(im.getReference())) {
+		    for(int i: newArgNums) {
+		        FlowType<E> flow = new ParameterFlow<E>(block, i, true);
+		        InflowAnalysis.addDomainElements(taintMap, block, flow, CodeElement.valueElements(pa, node, node.getIR().getParameter(i)));
+		    }
 		}
 	}
 }
