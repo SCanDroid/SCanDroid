@@ -667,7 +667,7 @@ public class DexSSABuilder extends AbstractIntRegisterMachine {
 //                  symbol = symbolTable.getConstant(((Constant.ClassConstant)instruction).value);
                     symbol = reuseOrCreateDef();
 
-                    TypeReference typeRef = constInst.value.getReference(); // NPE
+                    TypeReference typeRef = constInst.value;
 					SSALoadMetadataInstruction s = 
                     		insts.LoadMetadataInstruction(symbol, TypeReference.JavaLangClass, typeRef);
 					emitInstruction(s);

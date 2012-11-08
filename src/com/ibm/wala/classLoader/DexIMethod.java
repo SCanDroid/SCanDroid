@@ -1039,9 +1039,12 @@ public class DexIMethod implements IBytecodeMethod {
 				String cname = ((TypeIdItem)((Instruction21c)inst).getReferencedItem()).getTypeDescriptor();
 				if (cname.endsWith(";"))
 					cname = cname.substring(0,cname.length()-1);
+				
+				//IClass ic = this.myClass.loader.lookupClass(TypeName.findOrCreate(cname));
+				TypeReference typeRef = TypeReference.findOrCreate(myClass.loader.getReference(), cname);
+				
 				instructions.add(new Constant.ClassConstant(instLoc,
-						this.myClass.loader.lookupClass(TypeName.findOrCreate(cname)),
-						((Instruction21c)inst).getRegisterA(), inst.opcode, this));
+						typeRef, ((Instruction21c)inst).getRegisterA(), inst.opcode, this));
 				logger.debug(inst.opcode.toString() + " classname: "+cname+ " value: "+this.myClass.loader.lookupClass(TypeName.findOrCreate(cname)));
 				//logger.debug("myClass found name: " + this.myClass.loader.lookupClass(TypeName.findOrCreate(cname)).toString());
 				break;

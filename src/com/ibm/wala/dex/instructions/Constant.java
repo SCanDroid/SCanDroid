@@ -43,6 +43,7 @@ import org.jf.dexlib.Code.Opcode;
 
 import com.ibm.wala.classLoader.DexIMethod;
 import com.ibm.wala.classLoader.IClass;
+import com.ibm.wala.types.TypeReference;
 
 public abstract class Constant extends Instruction {
 
@@ -85,8 +86,9 @@ public abstract class Constant extends Instruction {
 
     public static class ClassConstant extends Constant
     {
-        public final IClass value;
-        public ClassConstant(int pc, IClass value, int destination, Opcode opcode, DexIMethod method)
+        public final TypeReference value;
+
+        public ClassConstant(int pc, TypeReference value, int destination, Opcode opcode, DexIMethod method)
         {
             super(pc, destination, opcode, method);
             this.value = value;
