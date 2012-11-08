@@ -96,7 +96,7 @@ public class ParameterFlow <E extends ISSABasicBlock> extends FlowType<E> {
     @Override
     public String descString() {
         String s = "arg(" + argNum + ")";
-        if(!isSource() && !getBlock().isEntryBlock()) {
+        if(!getBlock().isEntryBlock()) {
             SSAInvokeInstruction inv = (SSAInvokeInstruction)getBlock().getLastInstruction();
             s = s + ":" + inv.getDeclaredTarget().getSignature();
         }
