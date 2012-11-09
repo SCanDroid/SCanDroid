@@ -178,8 +178,13 @@ public class DataflowTest {
 
         Set<String> flows = Sets.newHashSet();
         for(FlowType<IExplodedBasicBlock> src : dfResults.keySet()) {
-            for(FlowType<IExplodedBasicBlock> dst : dfResults.get(src)) {
-                flows.add(src.descString() + " -> " + dst.descString());
+            for(FlowType<IExplodedBasicBlock> dst : dfResults.get(src)) {            
+                final String lhs = src.descString();
+				final String rhs = dst.descString();
+				if (!lhs.equals(rhs)) {
+					// suppress identity edges
+					flows.add(lhs + " -> " + rhs);
+				}
             }
         }
         Assert.assertEquals(gold.expectedResults.get(entrypoint.getMethod().getSignature()), flows);
