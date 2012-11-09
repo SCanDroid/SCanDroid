@@ -47,6 +47,7 @@ import java.util.Set;
 import org.scandroid.domain.CodeElement;
 import org.scandroid.domain.DomainElement;
 import org.scandroid.domain.IFDSTaintDomain;
+import org.scandroid.flow.functions.IDTransferFunctions;
 import org.scandroid.flow.functions.IFDSTaintFlowFunctionProvider;
 import org.scandroid.flow.functions.TaintTransferFunctions;
 import org.scandroid.flow.types.FlowType;
@@ -113,6 +114,10 @@ public class FlowAnalysis {
 				return analyze(graph, cg, pa, initialTaints, d,
 						progressMonitor, new TaintTransferFunctions<E>(d, graph, pa));
 
+//    			return analyze(graph, cg, pa, initialTaints, d,
+//    					progressMonitor, new IDTransferFunctions<E>(d, graph, pa));
+
+    	
 //				return analyze(graph, cg, pa, initialTaints, d,
 //						progressMonitor, new IFDSTaintFlowFunctionProvider<E>(d, graph, pa));
 			}

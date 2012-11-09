@@ -6,13 +6,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.collect.Sets;
 import com.ibm.wala.classLoader.DexIRFactory;
 import com.ibm.wala.classLoader.IMethod;
 import com.ibm.wala.dataflow.IFDS.ICFGSupergraph;
@@ -27,7 +27,6 @@ import com.ibm.wala.ipa.callgraph.impl.DefaultContextSelector;
 import com.ibm.wala.ipa.callgraph.impl.Everywhere;
 import com.ibm.wala.ipa.callgraph.impl.PartialCallGraph;
 import com.ibm.wala.ipa.callgraph.propagation.PointerAnalysis;
-import com.ibm.wala.ipa.callgraph.propagation.ReceiverTypeContextSelector;
 import com.ibm.wala.ipa.callgraph.propagation.SSAPropagationCallGraphBuilder;
 import com.ibm.wala.ipa.cfg.BasicBlockInContext;
 import com.ibm.wala.ipa.cha.ClassHierarchy;
@@ -62,9 +61,10 @@ public class CGAnalysisContext<E extends ISSABasicBlock> {
 	public CallGraph cg;
 	public PointerAnalysis pa;
 	public ISupergraph<BasicBlockInContext<E>, CGNode> graph;
-	public Graph<CGNode> partialGraph;
+
 	public Graph<CGNode> oneLevelGraph;
 	public Graph<CGNode> systemToApkGraph;
+	public Graph<CGNode> partialGraph;
 
 	public CGAnalysisContext(AndroidAnalysisContext analysisContext,
 			IEntryPointSpecifier specifier) throws IOException {
@@ -74,6 +74,7 @@ public class CGAnalysisContext<E extends ISSABasicBlock> {
 	public CGAnalysisContext(AndroidAnalysisContext analysisContext,
 			IEntryPointSpecifier specifier,
 			Collection<InputStream> extraSummaries) throws IOException {
+		
 		this.analysisContext = analysisContext;
 		final AnalysisScope scope = analysisContext.getScope();
 		final ClassHierarchy cha = analysisContext.getClassHierarchy();
@@ -85,8 +86,6 @@ public class CGAnalysisContext<E extends ISSABasicBlock> {
 		for (Entrypoint e : entrypoints) {
 			logger.debug("Entrypoint: " + e);
 		}
-
-		analysisOptions.setEntrypoints(entrypoints);
 		analysisOptions.setReflectionOptions(options.getReflectionOptions());
 
 		AnalysisCache cache = new AnalysisCache(
@@ -141,8 +140,6 @@ public class CGAnalysisContext<E extends ISSABasicBlock> {
 		Warnings.clear();
 
 		pa = cgb.getPointerAnalysis();
-
-		// TODO: prune out a lot more stuff
 		partialGraph = GraphSlicer.prune(cg, new Predicate<CGNode>() {
 			@Override
 			// CallGraph composed of APK nodes
@@ -152,21 +149,19 @@ public class CGAnalysisContext<E extends ISSABasicBlock> {
 						|| node.getMethod().isSynthetic();
 			}
 		});
-
-		Collection<CGNode> nodes = new HashSet<CGNode>();
-
-		for (Iterator<CGNode> nIter = partialGraph.iterator(); nIter.hasNext();) {
-			nodes.add(nIter.next());
-		}
-
-		CallGraph pcg = PartialCallGraph.make(cg, cg.getEntrypointNodes(),
-				nodes);
-
-		if (options.includeLibrary())
+		if (options.includeLibrary()) {
 			graph = (ISupergraph) ICFGSupergraph.make(cg, cache);
-		else
-			graph = (ISupergraph) ICFGSupergraph.make(pcg, cache);
+		} else {
 
+			Collection<CGNode> nodes = Sets.newHashSet();
+			for (Iterator<CGNode> nIter = partialGraph.iterator(); nIter.hasNext();) {
+				nodes.add(nIter.next());
+			}
+			CallGraph pcg = PartialCallGraph.make(cg, cg.getEntrypointNodes(),
+					nodes);
+			graph = (ISupergraph) ICFGSupergraph.make(pcg, cache);
+		}
+		
 		oneLevelGraph = GraphSlicer.prune(cg, new Predicate<CGNode>() {
 			@Override
 			public boolean test(CGNode node) {
@@ -249,8 +244,9 @@ public class CGAnalysisContext<E extends ISSABasicBlock> {
 				CGNode node = nodeI.next();
 
 				logger.debug("CGNode: " + node);
-				for (Iterator<CGNode> succI = cg.getSuccNodes(node); succI
-						.hasNext();) {
+				for (Iterator<CGNode> succI = cg.getSuccNodes(node); 
+				     succI.hasNext();) {
+					
 					logger.debug("\tSuccCGNode: "
 							+ succI.next().getMethod().getSignature());
 				}
