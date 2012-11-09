@@ -23,6 +23,7 @@ import com.ibm.wala.ipa.callgraph.AnalysisScope;
 import com.ibm.wala.ipa.callgraph.CGNode;
 import com.ibm.wala.ipa.callgraph.CallGraph;
 import com.ibm.wala.ipa.callgraph.Entrypoint;
+import com.ibm.wala.ipa.callgraph.impl.DefaultContextSelector;
 import com.ibm.wala.ipa.callgraph.impl.Everywhere;
 import com.ibm.wala.ipa.callgraph.impl.PartialCallGraph;
 import com.ibm.wala.ipa.callgraph.propagation.PointerAnalysis;
@@ -98,7 +99,7 @@ public class CGAnalysisContext<E extends ISSABasicBlock> {
 		}
 		
 		cgb = AndroidAnalysisContext.makeZeroCFABuilder(analysisOptions, cache,
-				cha, scope, new ReceiverTypeContextSelector(), null,
+				cha, scope, new DefaultContextSelector(analysisOptions, cha), null,
 				extraSummaries, null);
 
 		if (analysisContext.getOptions().cgBuilderWarnings()) {
