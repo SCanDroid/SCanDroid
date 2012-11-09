@@ -118,7 +118,7 @@ public class DataflowTest {
             logger.debug("Adding entrypoints from {}", clazz);
             logger.debug("abstract={}", clazz.isAbstract());
             for (IMethod method : clazz.getAllMethods()) {
-                String desc = isEclipse() ? URLEncoder.encode(method.getSignature(), "UTF-8") : method.getSignature();
+                String desc = method.getSignature();
                 if(!gold.expectedResults.containsKey(desc)) {
                     logger.debug("Skipping {} due to lack of output information.", desc);
                     continue;
@@ -133,8 +133,9 @@ public class DataflowTest {
                         .equals(scope.getApplicationLoader())) {
                     logger.debug("Adding entrypoint for {}", method);
                     logger.debug("abstract={}, static={}, init={}, clinit={}, synthetic={}", method.isAbstract(), method.isStatic(), method.isInit(), method.isClinit(), method.isSynthetic());
+                    String junitDesc = isEclipse() ? URLEncoder.encode(method.getSignature(), "UTF-8") : method.getSignature();
                     entrypoints.add(new Object[] {
-                            desc,
+                            junitDesc,
                             new DefaultEntrypoint(method, cha) });
                 }
             }
@@ -149,7 +150,6 @@ public class DataflowTest {
     }
 
     public final Entrypoint entrypoint;
-    public final String desc;
 
     /**
      * @param methodDescriptor
@@ -158,7 +158,6 @@ public class DataflowTest {
      *            the method to test
      */
     public DataflowTest(String methodDescriptor, Entrypoint entrypoint) {
-        this.desc = methodDescriptor;
         this.entrypoint = entrypoint;
     }
 
@@ -172,7 +171,7 @@ public class DataflowTest {
                         return Lists.newArrayList(entrypoint);
                     }
                 });
-        ISpecs specs = TestSpecs.specsFromDescriptor(ctx.getClassHierarchy(), desc);
+        ISpecs specs = TestSpecs.specsFromDescriptor(ctx.getClassHierarchy(), entrypoint.getMethod().getSignature());
 
         Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> dfResults =
                 runDFAnalysis(ctx, specs);
@@ -183,7 +182,7 @@ public class DataflowTest {
                 flows.add(src.descString() + " -> " + dst.descString());
             }
         }
-        Assert.assertEquals(gold.expectedResults.get(desc), flows);
+        Assert.assertEquals(gold.expectedResults.get(entrypoint.getMethod().getSignature()), flows);
     }
     
     private Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> runDFAnalysis(
