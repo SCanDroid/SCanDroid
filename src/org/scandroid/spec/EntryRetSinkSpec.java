@@ -47,19 +47,24 @@ import org.scandroid.flow.types.ReturnFlow;
 import com.ibm.wala.ipa.cfg.BasicBlockInContext;
 import com.ibm.wala.ssa.ISSABasicBlock;
 
-
 public class EntryRetSinkSpec extends SinkSpec {
-    
-    public EntryRetSinkSpec(MethodNamePattern name) {
-        namePattern = name;
-    }
-    
-    @Override
-    public <E extends ISSABasicBlock> Collection<FlowType<E>> getFlowType(
-            BasicBlockInContext<E> block) {
-    	HashSet<FlowType<E>> flowSet = new HashSet<FlowType<E>>();
-    	flowSet.clear();
-        flowSet.add(new ReturnFlow<E>(block, false));
-    	return flowSet;
-    }
+
+	public EntryRetSinkSpec(MethodNamePattern name) {
+		namePattern = name;
+	}
+
+	@Override
+	public <E extends ISSABasicBlock> Collection<FlowType<E>> getFlowType(
+			BasicBlockInContext<E> block) {
+		HashSet<FlowType<E>> flowSet = new HashSet<FlowType<E>>();
+		flowSet.clear();
+		flowSet.add(new ReturnFlow<E>(block, false));
+		return flowSet;
+	}
+
+	@Override
+	public String toString() {
+		return String.format("EntryRetSinkSpec(%s)",
+				namePattern.getDescriptor());
+	}
 }

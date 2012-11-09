@@ -38,34 +38,37 @@
 
 package org.scandroid.spec;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 
 import org.scandroid.flow.types.FlowType;
 import org.scandroid.flow.types.ParameterFlow;
 
-import com.ibm.wala.classLoader.IMethod;
-import com.ibm.wala.ipa.callgraph.CGNode;
-import com.ibm.wala.ipa.callgraph.propagation.PointerAnalysis;
 import com.ibm.wala.ipa.cfg.BasicBlockInContext;
 import com.ibm.wala.ssa.ISSABasicBlock;
 
-
 public class EntryArgSinkSpec extends SinkSpec {
 
-    public EntryArgSinkSpec(MethodNamePattern name, int[] args) {
-        namePattern = name;
-        argNums = args;
-    }
-    
-    public <E extends ISSABasicBlock> Collection<FlowType<E>> getFlowType(
-            BasicBlockInContext<E> block) {
-        
-    	HashSet<FlowType<E>> flowSet = new HashSet<FlowType<E>>();
-    	flowSet.clear();
-    	for(int i: argNums) {
-            flowSet.add(new ParameterFlow<E>(block, i, false));
-    	}
-    	return flowSet;
-    }
+	public EntryArgSinkSpec(MethodNamePattern name, int[] args) {
+		namePattern = name;
+		argNums = args;
+	}
+
+	public <E extends ISSABasicBlock> Collection<FlowType<E>> getFlowType(
+			BasicBlockInContext<E> block) {
+
+		HashSet<FlowType<E>> flowSet = new HashSet<FlowType<E>>();
+		flowSet.clear();
+		for (int i : argNums) {
+			flowSet.add(new ParameterFlow<E>(block, i, false));
+		}
+		return flowSet;
+	}
+
+	@Override
+	public String toString() {
+		return String.format("EntryArgSinkSpec(%s,%s)",
+				namePattern.getDescriptor(), Arrays.toString(argNums));
+	}
 }

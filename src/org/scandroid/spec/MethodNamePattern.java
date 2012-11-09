@@ -42,8 +42,8 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.Set;
 
-import com.ibm.wala.classLoader.IMethod;
 import com.ibm.wala.classLoader.IClass;
+import com.ibm.wala.classLoader.IMethod;
 import com.ibm.wala.ipa.cha.IClassHierarchy;
 import com.ibm.wala.types.ClassLoaderReference;
 import com.ibm.wala.types.Descriptor;
@@ -52,11 +52,11 @@ import com.ibm.wala.util.collections.HashSetFactory;
 import com.ibm.wala.util.strings.Atom;
 
 public class MethodNamePattern {
-	final String className;
+	final private String className;
 
-	final String memberName;
+	final private String memberName;
 
-	final String descriptor;  // null = match any types
+	final private String descriptor;  // null = match any types
 
 	public MethodNamePattern(String c, String m, String d) {
 		className = c;
@@ -119,6 +119,10 @@ public class MethodNamePattern {
 			return returnString+")";
 		return returnString+" - Descriptor: "+descriptor+")";
 
+	}
+	
+	public String getDescriptor() {
+		return String.format("%s.%s%s", className, memberName, descriptor == null ? "" : descriptor);
 	}
 
 	public String getClassName() {
