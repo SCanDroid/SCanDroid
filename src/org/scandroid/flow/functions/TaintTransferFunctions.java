@@ -174,8 +174,19 @@ public class TaintTransferFunctions <E extends ISSABasicBlock> implements
 
 		for (int i = 0; i < useNo; i++) {
 			int valNo = inst.getUse(i);
-
-			elts.addAll(CodeElement.valueElements(pa, node, valNo));
+			
+			// Constants have valuenumber 0, which is otherwise, illegal.
+			// these need to be skipped:
+			if ( 0 == valNo ) {
+				continue;
+			}
+			try {
+				elts.addAll(CodeElement.valueElements(pa, node, valNo));
+			} catch (IllegalArgumentException e) {
+				logger.error("Exception working on node: "+node);
+				logger.error("Node is in method: "+node.getMethod());
+				throw e;
+			}
 		}
 
 		return elts;
