@@ -6,6 +6,7 @@ import java.util.Set;
 
 import org.scandroid.domain.CodeElement;
 import org.scandroid.domain.IFDSTaintDomain;
+import org.scandroid.domain.ReturnElement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,13 +23,13 @@ import com.ibm.wala.ipa.callgraph.propagation.PointerAnalysis;
 import com.ibm.wala.ipa.cfg.BasicBlockInContext;
 import com.ibm.wala.ssa.ISSABasicBlock;
 import com.ibm.wala.ssa.SSAInstruction;
+import com.ibm.wala.ssa.SSAReturnInstruction;
 import com.ibm.wala.util.intset.IntSet;
 import com.ibm.wala.util.intset.SparseIntSet;
 
 
 public class TaintTransferFunctions <E extends ISSABasicBlock> implements
         IFlowFunctionMap<BasicBlockInContext<E>> {
-	@SuppressWarnings("unused")
 	private static final Logger logger = 
 			LoggerFactory.getLogger(TaintTransferFunctions.class);
 	
@@ -70,7 +71,7 @@ public class TaintTransferFunctions <E extends ISSABasicBlock> implements
     	List<Set<CodeElement>> actualParams = getOrdInCodeElts(node, srcInst);
     	List<Set<CodeElement>> formalParams = getOrdInCodeElts(node, destInst);
 
-        return union(new GlobalIdenityFunction<E>(domain),
+        return union(new GlobalIdentityFunction<E>(domain),
         			 new CallFlowFunction<E>(domain, actualParams, formalParams));
     }
     
@@ -79,7 +80,7 @@ public class TaintTransferFunctions <E extends ISSABasicBlock> implements
             BasicBlockInContext<E> src,
             BasicBlockInContext<E> dest) {
     	logger.debug("getNoneToReturnFunction");
-        return union(new GlobalIdenityFunction<E>(domain),
+        return union(new GlobalIdentityFunction<E>(domain),
 			         new CallNoneToReturnFunction<E>(domain));
     }
 
@@ -88,7 +89,7 @@ public class TaintTransferFunctions <E extends ISSABasicBlock> implements
             BasicBlockInContext<E> src,
             BasicBlockInContext<E> dest) {
     	logger.debug("getCallToReturnFunction");
-    	return union(new GlobalIdenityFunction<E>(domain),
+    	return union(new GlobalIdentityFunction<E>(domain),
     			     new CallToReturnFunction<E>(domain));
     }
 
@@ -115,7 +116,7 @@ public class TaintTransferFunctions <E extends ISSABasicBlock> implements
 			for(CodeElement def : outCodeElts) {
 				pairs.add(new UseDefPair(use, def));
 			}
-		}
+		}    	
 
     	// globals may be redefined here, so we can't union with the globalas ID
     	// flow function, as we often do elsewhere.
@@ -142,7 +143,7 @@ public class TaintTransferFunctions <E extends ISSABasicBlock> implements
 			logger.warn("No return defs - using GlobalIdentityFn");
 			// nothing is returned, so no flows exist as a 
 			// result of this instruction. (no flows other than globals, that is)
-			return new GlobalIdenityFunction<E>(domain);
+			return new GlobalIdentityFunction<E>(domain);
 		}
 
 		// Ok - there was a return val (or multiple...) so we need to map
@@ -157,7 +158,7 @@ public class TaintTransferFunctions <E extends ISSABasicBlock> implements
 		Iterable<CodeElement> returnedVals = getInCodeElts(src.getNode(), srcInst);
 		Iterable<CodeElement> returnedLocs = getOutCodeElts(call.getNode(), destInst);
 		
-		return union(new GlobalIdenityFunction<E>(domain),
+		return union(new GlobalIdentityFunction<E>(domain),
 					 new ReturnFlowFunction<E>(domain, returnedVals, returnedLocs));
     }
 	
@@ -166,6 +167,12 @@ public class TaintTransferFunctions <E extends ISSABasicBlock> implements
 		int defNo = inst.getNumberOfDefs();
 		Set<CodeElement> elts = Sets.newHashSet();
 
+		if (inst instanceof SSAReturnInstruction) {
+			// only one possible element for returns
+			elts.add(new ReturnElement());
+			return elts;
+		}
+		
 		for (int i = 0; i < defNo; i++) {
 			int valNo = inst.getDef(i);
 
