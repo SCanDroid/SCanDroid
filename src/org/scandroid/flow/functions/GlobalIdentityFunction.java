@@ -19,12 +19,12 @@ import com.ibm.wala.util.intset.SparseIntSet;
  * @author creswick
  *
  */
-public class GlobalIdenityFunction <E extends ISSABasicBlock>
+public class GlobalIdentityFunction <E extends ISSABasicBlock>
     implements IUnaryFlowFunction {
 	
 	private final IFDSTaintDomain<E> domain;
 
-	public GlobalIdenityFunction(IFDSTaintDomain<E> domain) {
+	public GlobalIdentityFunction(IFDSTaintDomain<E> domain) {
 		this.domain = domain;
 	}
 
