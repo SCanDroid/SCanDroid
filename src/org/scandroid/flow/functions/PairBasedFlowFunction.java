@@ -5,6 +5,8 @@ import java.util.List;
 import org.scandroid.domain.CodeElement;
 import org.scandroid.domain.DomainElement;
 import org.scandroid.domain.IFDSTaintDomain;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.ibm.wala.dataflow.IFDS.IUnaryFlowFunction;
 import com.ibm.wala.ssa.ISSABasicBlock;
@@ -13,6 +15,9 @@ import com.ibm.wala.util.intset.MutableSparseIntSet;
 
 
 final class PairBasedFlowFunction <E extends ISSABasicBlock> implements IUnaryFlowFunction {
+	private static final Logger logger = 
+			LoggerFactory.getLogger(PairBasedFlowFunction.class);
+	
     private final List<UseDefPair> useToDefList;
 	private final IFDSTaintDomain<E> domain;
 
@@ -23,7 +28,9 @@ final class PairBasedFlowFunction <E extends ISSABasicBlock> implements IUnaryFl
     
     @Override
     public IntSet getTargets(int d) {
+    	logger.debug("getTargets("+d+")");
     	if (0 == d) {
+    		logger.debug("getTargets("+d+"): {0}");
     		return TaintTransferFunctions.ZERO_SET;
     	}
     	
@@ -70,6 +77,7 @@ final class PairBasedFlowFunction <E extends ISSABasicBlock> implements IUnaryFl
 				set.add(domain.getMappedIndex(newDE));
 			}
     	}	
+    	logger.debug("getTargets("+d+"): "+set);
         return set;
     }
 }
