@@ -70,7 +70,7 @@ public class TaintTransferFunctions <E extends ISSABasicBlock> implements
     	List<Set<CodeElement>> actualParams = getOrdInCodeElts(node, srcInst);
     	List<Set<CodeElement>> formalParams = getOrdInCodeElts(node, destInst);
 
-        return union(new GlobalIdenityFunction<E>(domain),
+        return union(new GlobalIdentityFunction<E>(domain),
         			 new CallFlowFunction<E>(domain, actualParams, formalParams));
     }
     
@@ -79,7 +79,7 @@ public class TaintTransferFunctions <E extends ISSABasicBlock> implements
             BasicBlockInContext<E> src,
             BasicBlockInContext<E> dest) {
     	logger.debug("getNoneToReturnFunction");
-        return union(new GlobalIdenityFunction<E>(domain),
+        return union(new GlobalIdentityFunction<E>(domain),
 			         new CallNoneToReturnFunction<E>(domain));
     }
 
@@ -88,7 +88,7 @@ public class TaintTransferFunctions <E extends ISSABasicBlock> implements
             BasicBlockInContext<E> src,
             BasicBlockInContext<E> dest) {
     	logger.debug("getCallToReturnFunction");
-    	return union(new GlobalIdenityFunction<E>(domain),
+    	return union(new GlobalIdentityFunction<E>(domain),
     			     new CallToReturnFunction<E>(domain));
     }
 
@@ -142,7 +142,7 @@ public class TaintTransferFunctions <E extends ISSABasicBlock> implements
 			logger.warn("No return defs - using GlobalIdentityFn");
 			// nothing is returned, so no flows exist as a 
 			// result of this instruction. (no flows other than globals, that is)
-			return new GlobalIdenityFunction<E>(domain);
+			return new GlobalIdentityFunction<E>(domain);
 		}
 
 		// Ok - there was a return val (or multiple...) so we need to map
@@ -157,7 +157,7 @@ public class TaintTransferFunctions <E extends ISSABasicBlock> implements
 		Iterable<CodeElement> returnedVals = getInCodeElts(src.getNode(), srcInst);
 		Iterable<CodeElement> returnedLocs = getOutCodeElts(call.getNode(), destInst);
 		
-		return union(new GlobalIdenityFunction<E>(domain),
+		return union(new GlobalIdentityFunction<E>(domain),
 					 new ReturnFlowFunction<E>(domain, returnedVals, returnedLocs));
     }
 	
