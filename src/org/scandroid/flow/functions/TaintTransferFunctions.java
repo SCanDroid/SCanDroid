@@ -5,13 +5,16 @@ import java.util.List;
 import java.util.Set;
 
 import org.scandroid.domain.CodeElement;
+import org.scandroid.domain.FieldElement;
 import org.scandroid.domain.IFDSTaintDomain;
+import org.scandroid.domain.InstanceKeyElement;
 import org.scandroid.domain.ReturnElement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.ibm.wala.classLoader.IField;
 import com.ibm.wala.dataflow.IFDS.IFlowFunction;
 import com.ibm.wala.dataflow.IFDS.IFlowFunctionMap;
 import com.ibm.wala.dataflow.IFDS.IReversibleFlowFunction;
@@ -19,11 +22,15 @@ import com.ibm.wala.dataflow.IFDS.ISupergraph;
 import com.ibm.wala.dataflow.IFDS.IUnaryFlowFunction;
 import com.ibm.wala.dataflow.IFDS.IdentityFlowFunction;
 import com.ibm.wala.ipa.callgraph.CGNode;
+import com.ibm.wala.ipa.callgraph.propagation.InstanceKey;
 import com.ibm.wala.ipa.callgraph.propagation.PointerAnalysis;
+import com.ibm.wala.ipa.callgraph.propagation.PointerKey;
 import com.ibm.wala.ipa.cfg.BasicBlockInContext;
 import com.ibm.wala.ssa.ISSABasicBlock;
 import com.ibm.wala.ssa.SSAInstruction;
+import com.ibm.wala.ssa.SSAPutInstruction;
 import com.ibm.wala.ssa.SSAReturnInstruction;
+import com.ibm.wala.types.FieldReference;
 import com.ibm.wala.util.intset.IntSet;
 import com.ibm.wala.util.intset.SparseIntSet;
 
@@ -54,7 +61,7 @@ public class TaintTransferFunctions <E extends ISSABasicBlock> implements
     public IUnaryFlowFunction getCallFlowFunction(
             BasicBlockInContext<E> src,
             BasicBlockInContext<E> dest,
-            BasicBlockInContext<E> ret) {
+            BasicBlockInContext<E> ret) {    	
     	logger.debug("getCallFlowFunction");
     	SSAInstruction srcInst= src.getLastInstruction();
     	if (null == srcInst) {
@@ -96,8 +103,7 @@ public class TaintTransferFunctions <E extends ISSABasicBlock> implements
     @Override
     public IUnaryFlowFunction getNormalFlowFunction(
             BasicBlockInContext<E> src,
-            BasicBlockInContext<E> dest) {
-    	logger.debug("getNormalFlowFunction");
+            BasicBlockInContext<E> dest) {    	
     	List<UseDefPair> pairs = Lists.newArrayList();
     	
     	SSAInstruction inst = dest.getLastInstruction();
@@ -105,7 +111,8 @@ public class TaintTransferFunctions <E extends ISSABasicBlock> implements
     		logger.debug("Using identity fn. for normal flow (inst==null)");
     		return IDENTITY_FN;
     	}
-    	CGNode node = dest.getNode();
+    	logger.debug("getNormalFlowFunction dest:{}", inst.toString());
+    	CGNode node = dest.getNode();    	
     	
     	Iterable<CodeElement> inCodeElts  = getInCodeElts(node, inst);
     	Iterable<CodeElement> outCodeElts = getOutCodeElts(node, inst);
@@ -171,6 +178,24 @@ public class TaintTransferFunctions <E extends ISSABasicBlock> implements
 			// only one possible element for returns
 			elts.add(new ReturnElement());
 			return elts;
+		}
+		
+		if (inst instanceof SSAPutInstruction) {
+			// more work to do if we might be flowing out to a field
+			final SSAPutInstruction put = (SSAPutInstruction) inst;
+			final FieldReference fieldRef = put.getDeclaredField();
+			final IField field = node.getClassHierarchy().resolveField(fieldRef);
+			PointerKey pk;
+			if (put.isStatic()) {
+				pk = pa.getHeapModel().getPointerKeyForStaticField(field);
+			} else {
+				pk = pa.getHeapModel().getPointerKeyForLocal(node,  put.getUse(0));
+			}
+			for (InstanceKey ik : pa.getPointsToSet(pk)) {
+				logger.debug("adding elements for field {} on {}", field.getName(), ik.getConcreteType().getName());
+				elts.add(new FieldElement(ik, fieldRef, put.isStatic()));
+				elts.add(new InstanceKeyElement(ik));
+			}
 		}
 		
 		for (int i = 0; i < defNo; i++) {

@@ -202,7 +202,12 @@ public class DataflowTest {
 
         IFDSTaintDomain<IExplodedBasicBlock> domain = new IFDSTaintDomain<IExplodedBasicBlock>();
         TabulationResult<BasicBlockInContext<IExplodedBasicBlock>, CGNode, DomainElement> flowResult = FlowAnalysis
-                .analyze(cgContext, initialTaints, domain, null);        
+                .analyze(cgContext, initialTaints, domain, null);   
+        
+        Iterator<DomainElement> it = domain.iterator();
+    	while (it.hasNext()) {
+    		logger.debug("{}", it.next());
+    	}
 
         Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> permissionOutflow = OutflowAnalysis
                 .analyze(cgContext, flowResult, domain, specs);
