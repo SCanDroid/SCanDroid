@@ -52,10 +52,10 @@ public class FieldFlows {
 		return p;
 	}
 	
-	public Object throughField(Object x) {
+	public int throughField(String x) {
 		Pair p = new Pair(null,null);
-		p.fst = x;
-		Object ret = p.fst;
+		p.fst = x.length();
+		int ret = ((Integer)p.fst).intValue();
 		return ret;
 	}
 }
