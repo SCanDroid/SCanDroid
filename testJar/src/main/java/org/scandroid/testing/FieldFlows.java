@@ -52,5 +52,10 @@ public class FieldFlows {
 		return p;
 	}
 	
-	
+	public Object throughField(Object x) {
+		Pair p = new Pair(null,null);
+		p.fst = x;
+		Object ret = p.fst;
+		return ret;
+	}
 }

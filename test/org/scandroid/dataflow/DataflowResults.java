@@ -48,5 +48,8 @@ public class DataflowResults {
         		Sets.newHashSet("arg(1) -> ret", "arg(2) -> ret"));
 		expectedResults.put(ost+"FieldFlows.swap("+fieldFlow_Pair+")"+fieldFlow_Pair,
         		Sets.newHashSet("arg(1) -> ret"));
+		
+		expectedResults.put(ost+"FieldFlows.throughField(Ljava/lang/Object;)Ljava/lang/Object",
+        		Sets.newHashSet("arg(1) -> ret"));
     }
 }
