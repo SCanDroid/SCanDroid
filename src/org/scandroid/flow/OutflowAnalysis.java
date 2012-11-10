@@ -285,21 +285,29 @@ public class OutflowAnalysis <E extends ISSABasicBlock> {
 
     		CGNode node = cg.getNode(im, Everywhere.EVERYWHERE);
     		if (node == null) {
+    			logger.warn("could not find CGNode for SinkSpec {}", ss);
     		    continue; 
     		}
     		
     		BasicBlockInContext<E>[] exitsForProcedure = graph.getExitsForProcedure(node);
             if (exitsForProcedure == null || 0 == exitsForProcedure.length) {
+            	logger.warn("could not find exit blocks for SinkSpec {}", ss);
     			continue;
     		}        
             
-            for(DomainElement de:domain.getPossibleElements(new ReturnElement())) {
+            final Set<DomainElement> possibleElements = domain.getPossibleElements(new ReturnElement());
+            logger.debug("{} possible elements found for ReturnElement", possibleElements.size());            
+			for(DomainElement de:possibleElements) {
+            	logger.debug("processing domain element {}", de);
             	for (BasicBlockInContext<E> block: exitsForProcedure) {
             		Iterator<BasicBlockInContext<E>> it = graph.getPredNodes(block);
         			while (it.hasNext()) {
         				BasicBlockInContext<E> realBlock = it.next();
                 		if(flowResult.getResult(realBlock).contains(domain.getMappedIndex(de))) {
+                			logger.debug("adding edge from {} to ReturnFlow", de.taintSource);
                 			addEdge(flowGraph,de.taintSource, new ReturnFlow<E>(realBlock, false));
+                		} else {
+                			logger.debug("no edge from block {} for {}", realBlock, de);
                 		}
 					}  
             	}
