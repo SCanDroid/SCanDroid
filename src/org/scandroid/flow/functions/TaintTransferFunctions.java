@@ -63,6 +63,8 @@ import com.ibm.wala.ipa.callgraph.propagation.PointerAnalysis;
 import com.ibm.wala.ipa.callgraph.propagation.PointerKey;
 import com.ibm.wala.ipa.cfg.BasicBlockInContext;
 import com.ibm.wala.ssa.ISSABasicBlock;
+import com.ibm.wala.ssa.SSAArrayLoadInstruction;
+import com.ibm.wala.ssa.SSAArrayStoreInstruction;
 import com.ibm.wala.ssa.SSAInstruction;
 import com.ibm.wala.ssa.SSAPutInstruction;
 import com.ibm.wala.ssa.SSAReturnInstruction;
@@ -283,6 +285,16 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 				logger.debug("adding elements for field {} on {}",
 						field.getName(), ik.getConcreteType().getName());
 				elts.add(new FieldElement(ik, fieldRef, put.isStatic()));
+				elts.add(new InstanceKeyElement(ik));
+			}
+		}
+		
+		if (inst instanceof SSAArrayStoreInstruction) {
+			// like above, we do more work when storing to an array
+			final SSAArrayStoreInstruction store = (SSAArrayStoreInstruction) inst;			
+			final PointerKey pk = pa.getHeapModel().getPointerKeyForLocal(node, store.getArrayRef());
+			for (InstanceKey ik : pa.getPointsToSet(pk)) {
+				logger.debug("adding element for array store in {}", ik.getConcreteType().getName());
 				elts.add(new InstanceKeyElement(ik));
 			}
 		}
