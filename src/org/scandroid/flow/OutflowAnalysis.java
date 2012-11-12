@@ -208,11 +208,13 @@ public class OutflowAnalysis <E extends ISSABasicBlock> {
 
     		CGNode node = cg.getNode(im, Everywhere.EVERYWHERE);
     		if (node == null) {
+    			logger.warn("null CGNode for {}", im.getSignature());
     		    continue; 
     		}
 
     		BasicBlockInContext<E>[] entriesForProcedure = graph.getEntriesForProcedure(node);
             if (entriesForProcedure == null || 0 == entriesForProcedure.length) {
+            	logger.warn("procedure without entries {}", im.getSignature());
     			continue;
     		}
             if (1 != entriesForProcedure.length) {

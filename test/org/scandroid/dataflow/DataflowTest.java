@@ -41,6 +41,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URLEncoder;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -118,7 +119,7 @@ public class DataflowTest {
     public static Collection<Object[]> setup() throws Throwable {
         ch.qos.logback.classic.Logger root = (ch.qos.logback.classic.Logger) 
                 LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
-//        root.setLevel(Level.INFO);
+        root.setLevel(Level.INFO);
         List<Object[]> entrypoints = Lists.newArrayList();
 
         checklist = gold.expectedMethods();
@@ -240,6 +241,9 @@ public class DataflowTest {
                         return Lists.newArrayList(entrypoint);
                     }
                 });
+        for (CGNode node : ctx.cg.getNodes(entrypoint.getMethod().getReference())) {
+        	logger.debug(Arrays.toString(node.getIR().getInstructions()));
+        }
         ISpecs specs = TestSpecs.specsFromDescriptor(ctx.getClassHierarchy(), entrypoint.getMethod().getSignature());
 
         Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> dfResults =

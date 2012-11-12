@@ -64,7 +64,10 @@ import com.ibm.wala.ipa.callgraph.propagation.PointerKey;
 import com.ibm.wala.ipa.cfg.BasicBlockInContext;
 import com.ibm.wala.ssa.ISSABasicBlock;
 import com.ibm.wala.ssa.SSAArrayLoadInstruction;
+import com.ibm.wala.ssa.SSAArrayReferenceInstruction;
 import com.ibm.wala.ssa.SSAArrayStoreInstruction;
+import com.ibm.wala.ssa.SSAFieldAccessInstruction;
+import com.ibm.wala.ssa.SSAGetInstruction;
 import com.ibm.wala.ssa.SSAInstruction;
 import com.ibm.wala.ssa.SSAPutInstruction;
 import com.ibm.wala.ssa.SSAReturnInstruction;
@@ -142,19 +145,25 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 
 		logger.debug("getNormalFlowFunction {}", dest.getMethod()
 				.getSignature());
+
+		// we first try to process the destination instruction
 		SSAInstruction inst = dest.getLastInstruction();
-		SSAInstruction srcInst = src.getLastInstruction();
-		if (null == inst && srcInst instanceof SSAReturnInstruction) {
-			return hangingReturn(src);
-		}
-		if (null == inst) {
-			logger.debug(
-					"Using identity fn. for normal flow (inst==null) (src=={})",
-					src.getLastInstruction());
-			return IDENTITY_FN;
-		}
-		logger.debug("\tinstruction: {}", inst.toString());
 		CGNode node = dest.getNode();
+
+		if (null == inst) {
+			final SSAInstruction srcInst = src.getLastInstruction();
+			if (null == srcInst) {
+				logger.warn("Using identity fn. for normal flow (src and dest instructions null)");
+				return IDENTITY_FN;
+			}
+			// if it's null, though, we'll process the src instruction.
+			// this *should* ensure we don't process the same instruction
+			// mulitple times
+			inst = srcInst;
+			node = src.getNode();
+		}
+
+		logger.debug("\tinstruction: {}", inst.toString());
 
 		Iterable<CodeElement> inCodeElts = getInCodeElts(node, inst);
 		Iterable<CodeElement> outCodeElts = getOutCodeElts(node, inst);
@@ -269,34 +278,11 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 		}
 
 		if (inst instanceof SSAPutInstruction) {
-			// more work to do if we might be flowing out to a field
-			final SSAPutInstruction put = (SSAPutInstruction) inst;
-			final FieldReference fieldRef = put.getDeclaredField();
-			final IField field = node.getClassHierarchy()
-					.resolveField(fieldRef);
-			PointerKey pk;
-			if (put.isStatic()) {
-				pk = pa.getHeapModel().getPointerKeyForStaticField(field);
-			} else {
-				pk = pa.getHeapModel().getPointerKeyForLocal(node,
-						put.getUse(0));
-			}
-			for (InstanceKey ik : pa.getPointsToSet(pk)) {
-				logger.debug("adding elements for field {} on {}",
-						field.getName(), ik.getConcreteType().getName());
-				elts.add(new FieldElement(ik, fieldRef, put.isStatic()));
-				elts.add(new InstanceKeyElement(ik));
-			}
+			elts.addAll(getFieldAccessCodeElts(node, (SSAPutInstruction) inst));
 		}
-		
+
 		if (inst instanceof SSAArrayStoreInstruction) {
-			// like above, we do more work when storing to an array
-			final SSAArrayStoreInstruction store = (SSAArrayStoreInstruction) inst;			
-			final PointerKey pk = pa.getHeapModel().getPointerKeyForLocal(node, store.getArrayRef());
-			for (InstanceKey ik : pa.getPointsToSet(pk)) {
-				logger.debug("adding element for array store in {}", ik.getConcreteType().getName());
-				elts.add(new InstanceKeyElement(ik));
-			}
+			elts.addAll(getArrayRefCodeElts(node, (SSAArrayStoreInstruction) inst));
 		}
 
 		for (int i = 0; i < defNo; i++) {
@@ -311,6 +297,15 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 	private Iterable<CodeElement> getInCodeElts(CGNode node, SSAInstruction inst) {
 		int useNo = inst.getNumberOfUses();
 		Set<CodeElement> elts = Sets.newHashSet();
+		
+		if (inst instanceof SSAGetInstruction) {
+			elts.addAll(getFieldAccessCodeElts(node, (SSAGetInstruction) inst));
+		}
+		
+//		I don't think this is actually needed; we're adding an InstanceKey for the ref already in CodeElement.valueElements
+//		if (inst instanceof SSAArrayLoadInstruction) {
+//			elts.addAll(getArrayRefCodeElts(node, (SSAArrayLoadInstruction) inst));
+//		}
 
 		for (int i = 0; i < useNo; i++) {
 			int valNo = inst.getUse(i);
@@ -351,6 +346,38 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 	// }
 	// };
 	// }
+
+	private Set<CodeElement> getFieldAccessCodeElts(CGNode node,
+			SSAFieldAccessInstruction inst) {
+		Set<CodeElement> elts = Sets.newHashSet();
+		final FieldReference fieldRef = inst.getDeclaredField();
+		final IField field = node.getClassHierarchy().resolveField(fieldRef);
+		PointerKey pk;
+		if (inst.isStatic()) {
+			pk = pa.getHeapModel().getPointerKeyForStaticField(field);
+		} else {
+			pk = pa.getHeapModel().getPointerKeyForLocal(node, inst.getRef());
+		}
+		for (InstanceKey ik : pa.getPointsToSet(pk)) {
+			logger.debug("adding elements for field {} on {}", field.getName(),
+					ik.getConcreteType().getName());
+			elts.add(new FieldElement(ik, fieldRef, inst.isStatic()));
+			elts.add(new InstanceKeyElement(ik));
+		}
+		return elts;
+	}
+
+	private Set<CodeElement> getArrayRefCodeElts(CGNode node, SSAArrayReferenceInstruction inst) {
+		Set<CodeElement> elts = Sets.newHashSet();
+		final PointerKey pk = pa.getHeapModel().getPointerKeyForLocal(node,
+				inst.getArrayRef());
+		for (InstanceKey ik : pa.getPointsToSet(pk)) {
+			logger.debug("adding element for array store in {}", ik
+					.getConcreteType().getName());
+			elts.add(new InstanceKeyElement(ik));
+		}
+		return elts;
+	}
 
 	private List<Set<CodeElement>> getOrdInCodeElts(CGNode node,
 			SSAInstruction inst) {
