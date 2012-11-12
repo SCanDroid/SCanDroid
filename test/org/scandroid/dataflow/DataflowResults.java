@@ -74,6 +74,7 @@ public class DataflowResults {
         Set<String> cargFlows = Sets.newHashSet();
         cargFlows.add("arg(0) -> ret");
         oracle.put(ost+"ConstructorArgFlow.flow(Ljava/lang/String;)Lorg/scandroid/testing/ConstructorArgFlow$Id;", cargFlows);
+        oracle.put(ost+"ConstructorArgFlow.flow2(Ljava/lang/String;)Lorg/scandroid/testing/ConstructorArgFlow$Id;", cargFlows);
         oracle.put(ost+"ConstructorArgFlow.manualFlow(Ljava/lang/String;)Lorg/scandroid/testing/ConstructorArgFlow$Id;", cargFlows);
         oracle.put(ost+"ConstructorArgFlow.fieldAccessFlow(Lorg/scandroid/testing/ConstructorArgFlow$Id;)Ljava/lang/Object;", cargFlows);
         oracle.put(ost+"ConstructorArgFlow.getterAccessFlow(Lorg/scandroid/testing/ConstructorArgFlow$Id;)Ljava/lang/Object;", cargFlows);
@@ -192,8 +193,8 @@ public class DataflowResults {
     				// actually returns a static field:
     			   Sets.newHashSet("arg(0) -> ret"));
 
-    	oracle.put(ost+"FieldAccessTest.getClassField()Ljava/lang/String;",
- 			   Sets.newHashSet("arg(0) -> ret"));
+//    	oracle.put(ost+"FieldAccessTest.getClassField()Ljava/lang/String;",
+// 			   Sets.newHashSet("arg(0) -> ret"));
 
     	return oracle;
     }
@@ -205,8 +206,8 @@ public class DataflowResults {
     				// returns a static field:
     			   Sets.newHashSet("????-> ret"));
 
-    	oracle.put(ost+"GlobalStatics.setFoo(Ljava/lang/Integer;)V",
- 			   Sets.newHashSet("arg(0) -> ????"));
+//    	oracle.put(ost+"GlobalStatics.setFoo(Ljava/lang/Integer;)V",
+// 			   Sets.newHashSet("arg(0) -> ????"));
 
     	return oracle;
     }
