@@ -1,3 +1,40 @@
+/*
+ *
+ * Copyright (c) 2009-2012,
+ *
+ *  Galois, Inc. (Aaron Tomb <atomb@galois.com>, Rogan Creswick <creswick@galois.com>)
+ *  Steve Suh    <suhsteve@gmail.com>
+ *
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright notice,
+ * this list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ *
+ * 3. The names of the contributors may not be used to endorse or promote
+ * products derived from this software without specific prior written
+ * permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ *
+ *
+ */
 package org.scandroid.dataflow;
 
 import java.io.File;
@@ -10,8 +47,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeSet;
 
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -58,7 +95,9 @@ public class DataflowTest {
 			.getLogger(DataflowTest.class);
 
 	private static AndroidAnalysisContext analysisContext;
-	private static DataflowResults gold;
+	private static final DataflowResults gold = new DataflowResults();
+
+	private static Set<String> checklist;
 
 	/**
 	 * Path to the original natives.xml file.
@@ -79,8 +118,9 @@ public class DataflowTest {
         //        LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
         //root.setLevel(Level.TRACE);
         List<Object[]> entrypoints = Lists.newArrayList();
-        gold = new DataflowResults();
 
+        checklist = gold.expectedMethods();
+        
         analysisContext = new AndroidAnalysisContext(
                 new DefaultSCanDroidOptions() {
                     @Override
@@ -119,9 +159,12 @@ public class DataflowTest {
             logger.debug("abstract={}", clazz.isAbstract());
             for (IMethod method : clazz.getAllMethods()) {
                 String desc = method.getSignature();
-                if(!gold.expectedResults.containsKey(desc)) {
+                if(!gold.describesFlow(desc)) {
                     logger.debug("Skipping {} due to lack of output information.", desc);
                     continue;
+                } else {
+                	logger.debug("Testing {} for data flow.", desc);
+                	checklist.remove(desc);
                 }
                 IClass declClass = method.getDeclaringClass();
                 if (method.isAbstract() || method.isSynthetic()
@@ -140,16 +183,36 @@ public class DataflowTest {
                 }
             }
         }
-//      System.exit(0);
+        
+        if ( checklist.size() != 0 ) {
+        	logger.error("Expected methods to test that could not be found: ");
+        	for (String desc : checklist) {
+        		logger.error("\t {}", desc);
+        		
+        		// if we can't find the description, create a null test:
+        		String junitDesc = isEclipse() ? URLEncoder.encode(desc, "UTF-8") : desc;
+        		entrypoints.add(new Object[] {
+        			junitDesc,
+        			null});
+        	}
+        }
+
         return entrypoints;
     }
 
+    @AfterClass
+    public static void tearDown() {
+
+    }
+    
     private static boolean isEclipse() {
         final String command = System.getProperty("sun.java.command");
         return command != null && command.startsWith("org.eclipse.jdt.internal.junit.runner.RemoteTestRunner");
     }
 
     public final Entrypoint entrypoint;
+
+	private String descriptor;
 
     /**
      * @param methodDescriptor
@@ -158,11 +221,15 @@ public class DataflowTest {
      *            the method to test
      */
     public DataflowTest(String methodDescriptor, Entrypoint entrypoint) {
+    	this.descriptor = methodDescriptor;
         this.entrypoint = entrypoint;
     }
 
     @Test
     public void testDataflow() throws Throwable {
+    	Assert.assertNotNull("Could not find method to test for: "+descriptor,
+    			entrypoint);
+
         CGAnalysisContext<IExplodedBasicBlock> ctx = new CGAnalysisContext<IExplodedBasicBlock>(
                 analysisContext, new IEntryPointSpecifier() {
                     @Override
@@ -187,7 +254,7 @@ public class DataflowTest {
 				}
             }
         }
-        Assert.assertEquals(gold.expectedResults.get(entrypoint.getMethod().getSignature()), flows);
+        Assert.assertEquals(gold.getFlows(entrypoint.getMethod().getSignature()), flows);
     }
     
     private Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> runDFAnalysis(

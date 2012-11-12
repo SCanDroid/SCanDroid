@@ -1,5 +1,3 @@
-package org.scandroid;
-
 /*
  *
  * Copyright (c) 2009-2012,
@@ -37,6 +35,7 @@ package org.scandroid;
  *
  *
  */
+package org.scandroid;
 
 import java.io.File;
 import java.io.FileInputStream;
