@@ -15,7 +15,7 @@ public class ExceptionFlow {
 		return null;
 	}
 	
-	private static void thrower(String str) throws Exception {
+	public static void thrower(String str) throws Exception {
 		throw new Exception(str);
 	}
 }

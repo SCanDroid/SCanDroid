@@ -15,8 +15,14 @@ public class FieldAccessTest extends SourceSink {
         
         return a.getStr();
     }
+
+	private Integer val = new Integer(2048);
     
-    public Object getStr() {
+    public String getStr() {
         return str;
+    }
+    
+    public String getClassField() {
+    	return val.toString();
     }
 }

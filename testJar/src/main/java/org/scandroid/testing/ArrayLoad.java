@@ -2,15 +2,15 @@ package org.scandroid.testing;
 
 public class ArrayLoad {
     public static void flow(String[] args) {
-        SourceSink.sink(useFlow(args));
+        SourceSink.sink(arrayFlow(args));
     }
 
-    private static String useFlow(String[] args) {
+    public static String arrayFlow(String[] args) {
         return args[0];
     }
     
-    public Object copyElement(Object[] in) {
-    	Object[] ret = new Object[1];
+    public String copyElement(String[] in) {
+    	String[] ret = new String[1];
     	ret[0] = in[0];
     	return ret[0];
     }
