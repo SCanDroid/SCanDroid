@@ -58,12 +58,10 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-
 import com.google.common.collect.Lists;
 import com.ibm.wala.classLoader.IMethod;
 import com.ibm.wala.ipa.callgraph.Entrypoint;
 import com.ibm.wala.ipa.callgraph.impl.DefaultEntrypoint;
-import com.ibm.wala.ipa.callgraph.impl.Util;
 import com.ibm.wala.ipa.cha.ClassHierarchy;
 import com.ibm.wala.types.ClassLoaderReference;
 import com.ibm.wala.types.MethodReference;
@@ -119,9 +117,6 @@ public class EntryPoints {
     }
     
     public void activityModelEntry(ClassHierarchy cha, AndroidAnalysisContext loader) {
-        ArrayList<MethodReference> entryPointMRs =
-                new ArrayList<MethodReference>();
-
         String[] methodReferences = {
             "android.app.Activity.ActivityModel()V",
             // find all onActivityResult functions and add them as entry points
@@ -181,9 +176,6 @@ public class EntryPoints {
     
     
     public void addTestEntry(ClassHierarchy cha, AndroidAnalysisContext loader) {
-    	ArrayList<MethodReference> entryPointMRs =
-    			new ArrayList<MethodReference>();
-
     	String[] methodReferences = {
 //    			"Test.Apps.Outer$PrivateInnerClass.printNum()V",
     			//"Test.Apps.Outer$PublicInnerClass.printNum()V"
