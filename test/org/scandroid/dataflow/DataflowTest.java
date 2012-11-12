@@ -70,6 +70,8 @@ import org.scandroid.util.IEntryPointSpecifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import ch.qos.logback.classic.Level;
+
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.ibm.wala.classLoader.IClass;
@@ -114,9 +116,9 @@ public class DataflowTest {
      */
     @Parameters(name = "{0}")
     public static Collection<Object[]> setup() throws Throwable {
-        //ch.qos.logback.classic.Logger root = (ch.qos.logback.classic.Logger) 
-        //        LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
-        //root.setLevel(Level.TRACE);
+        ch.qos.logback.classic.Logger root = (ch.qos.logback.classic.Logger) 
+                LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
+//        root.setLevel(Level.INFO);
         List<Object[]> entrypoints = Lists.newArrayList();
 
         checklist = gold.expectedMethods();

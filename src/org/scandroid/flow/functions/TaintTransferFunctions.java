@@ -127,7 +127,8 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 	@Override
 	public IUnaryFlowFunction getCallToReturnFlowFunction(
 			BasicBlockInContext<E> src, BasicBlockInContext<E> dest) {
-		logger.debug("getCallToReturnFunction\n\t{}\n\t-> {}", src.getMethod().getSignature(), dest.getMethod().getSignature());
+		logger.debug("getCallToReturnFunction\n\t{}\n\t-> {}", src.getMethod()
+				.getSignature(), dest.getMethod().getSignature());
 		return union(new GlobalIdentityFunction<E>(domain),
 				new CallToReturnFunction<E>(domain));
 	}
@@ -137,14 +138,17 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 			BasicBlockInContext<E> dest) {
 		List<UseDefPair> pairs = Lists.newArrayList();
 
-		logger.debug("getNormalFlowFunction {}", dest.getMethod().getSignature());
+		logger.debug("getNormalFlowFunction {}", dest.getMethod()
+				.getSignature());
 		SSAInstruction inst = dest.getLastInstruction();
 		SSAInstruction srcInst = src.getLastInstruction();
 		if (null == inst && srcInst instanceof SSAReturnInstruction) {
-			return specialCase(src);
+			return hangingReturn(src);
 		}
-		if (null == inst ) {
-			logger.debug("Using identity fn. for normal flow (inst==null) (src=={})", src.getLastInstruction());
+		if (null == inst) {
+			logger.debug(
+					"Using identity fn. for normal flow (inst==null) (src=={})",
+					src.getLastInstruction());
 			return IDENTITY_FN;
 		}
 		logger.debug("\tinstruction: {}", inst.toString());
@@ -166,13 +170,21 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 		return new PairBasedFlowFunction<E>(domain, pairs);
 	}
 
-	private IUnaryFlowFunction specialCase(BasicBlockInContext<E> src) {
-		logger.warn("weird special case!");
-		SSAReturnInstruction inst = (SSAReturnInstruction) src.getLastInstruction();
+	/**
+	 * Sometimes in normal flows, we can have a source block, but a null
+	 * destination block. This can happen, e.g., when we're returning off the
+	 * end of the callgraph
+	 * 
+	 * @param src
+	 *            block, which should be an SSAReturnInstruction
+	 * @return
+	 */
+	private IUnaryFlowFunction hangingReturn(BasicBlockInContext<E> src) {
+		SSAReturnInstruction inst = (SSAReturnInstruction) src
+				.getLastInstruction();
 		CGNode node = src.getNode();
 		Iterable<CodeElement> inCodeElts = getInCodeElts(node, inst);
 		Iterable<CodeElement> outCodeElts = getOutCodeElts(node, inst);
-		
 
 		List<UseDefPair> pairs = Lists.newArrayList();
 		for (CodeElement use : inCodeElts) {
@@ -183,52 +195,64 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 
 		// globals may be redefined here, so we can't union with the globals ID
 		// flow function, as we often do elsewhere.
-		return new PairBasedFlowFunction<E>(domain, pairs);		
+		return new PairBasedFlowFunction<E>(domain, pairs);
 	}
 
 	@Override
-    public IFlowFunction getReturnFlowFunction(
-            BasicBlockInContext<E> call,
-            BasicBlockInContext<E> src,
-            BasicBlockInContext<E> dest) {
-		logger.debug("getReturnFlowFunction\n\t{}\n\t-> {}\n\t-> {}", call.getNode().getMethod().getSignature(), src.getNode().getMethod().getSignature(), dest.getNode().getMethod().getSignature());
+	public IFlowFunction getReturnFlowFunction(BasicBlockInContext<E> call,
+			BasicBlockInContext<E> src, BasicBlockInContext<E> dest) {
+		logger.debug("getReturnFlowFunction\n\t{}\n\t-> {}\n\t-> {}", call
+				.getNode().getMethod().getSignature(), src.getNode()
+				.getMethod().getSignature(), dest.getNode().getMethod()
+				.getSignature());
 
-		// We need to map all uses in the return instruction (src) to these return values.
+		// We need to map all uses in the return instruction (src) to these
+		// return values.
 		SSAInstruction srcInst = src.getLastInstruction();
-		// data flows from uses in src to dests in call, locals map to {}, globals pass through.
-    	if (null == srcInst) {
-    		logger.warn("null srcInst, {} pred nodes", graph.getPredNodeCount(src));
-    		logger.warn("Using identity fn. for return flow (srcInst==null)");
-    		return IDENTITY_FN;
-    	}
-    	
-    	Iterable<CodeElement> returnedVals = getInCodeElts(src.getNode(), srcInst);
+		// data flows from uses in src to dests in call, locals map to {},
+		// globals pass through.
+		if (null == srcInst) {
+			logger.warn("null srcInst, {} pred nodes",
+					graph.getPredNodeCount(src));
+			logger.warn("Using identity fn. for return flow (srcInst==null)");
+			return IDENTITY_FN;
+		}
 
-		// even if we don't know our dest, we want to flow into a return element in case this return is a sink
-    	Iterable<CodeElement> baseReturn = Sets.newHashSet((CodeElement)new ReturnElement());
-    	SSAInstruction destInst = dest.getLastInstruction();
-    	if (null != destInst) {
-    		// see if the return value is assigned to anything:
-    		int callDefs = destInst.getNumberOfDefs();
+		Iterable<CodeElement> returnedVals = getInCodeElts(src.getNode(),
+				srcInst);
 
-    		if (0 == callDefs) {
-    			logger.warn("No return defs");
-    			// this situation should actually be handled normally by getOutCodeElts, 
-    			// but I'm leaving the error msg here just in case
+		// even if we don't know our dest, we want to flow into a return element
+		// in case this return is a sink
+		Iterable<CodeElement> baseReturn = Sets
+				.newHashSet((CodeElement) new ReturnElement());
+		SSAInstruction destInst = dest.getLastInstruction();
+		if (null != destInst) {
+			// see if the return value is assigned to anything:
+			int callDefs = destInst.getNumberOfDefs();
 
-    			// nothing is returned, so no flows exist as a 
-    			// result of this instruction. (no flows other than globals, that is)
-    			// return new GlobalIdentityFunction<E>(domain);
-    		}
+			if (0 == callDefs) {
+				logger.warn("No return defs");
+				// this situation should actually be handled normally by
+				// getOutCodeElts,
+				// but I'm leaving the error msg here just in case
 
-    		Iterable<CodeElement> returnedLocs = getOutCodeElts(dest.getNode(), destInst);
-    		return union(new GlobalIdentityFunction<E>(domain),
-					 union(new ReturnFlowFunction<E>(domain, returnedVals, returnedLocs),
-							 new ReturnFlowFunction<E>(domain, returnedVals, baseReturn)));
-    	}
-    	return union(new GlobalIdentityFunction<E>(domain),
-    			 new ReturnFlowFunction<E>(domain, returnedVals, baseReturn));
-    }
+				// nothing is returned, so no flows exist as a
+				// result of this instruction. (no flows other than globals,
+				// that is)
+				// return new GlobalIdentityFunction<E>(domain);
+			}
+
+			Iterable<CodeElement> returnedLocs = getOutCodeElts(dest.getNode(),
+					destInst);
+			return union(
+					new GlobalIdentityFunction<E>(domain),
+					union(new ReturnFlowFunction<E>(domain, returnedVals,
+							returnedLocs), new ReturnFlowFunction<E>(domain,
+							returnedVals, baseReturn)));
+		}
+		return union(new GlobalIdentityFunction<E>(domain),
+				new ReturnFlowFunction<E>(domain, returnedVals, baseReturn));
+	}
 
 	private Iterable<CodeElement> getOutCodeElts(CGNode node,
 			SSAInstruction inst) {

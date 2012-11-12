@@ -193,8 +193,8 @@ public class DataflowResults {
     				// actually returns a static field:
     			   Sets.newHashSet("arg(0) -> ret"));
 
-//    	oracle.put(ost+"FieldAccessTest.getClassField()Ljava/lang/String;",
-// 			   Sets.newHashSet("arg(0) -> ret"));
+    	oracle.put(ost+"FieldAccessTest.getClassField()Ljava/lang/String;",
+ 			   Sets.newHashSet("arg(0) -> ret"));
 
     	return oracle;
     }
@@ -206,8 +206,8 @@ public class DataflowResults {
     				// returns a static field:
     			   Sets.newHashSet("????-> ret"));
 
-//    	oracle.put(ost+"GlobalStatics.setFoo(Ljava/lang/Integer;)V",
-// 			   Sets.newHashSet("arg(0) -> ????"));
+    	oracle.put(ost+"GlobalStatics.setFoo(Ljava/lang/Integer;)V",
+ 			   Sets.newHashSet("arg(0) -> ????"));
 
     	return oracle;
     }
