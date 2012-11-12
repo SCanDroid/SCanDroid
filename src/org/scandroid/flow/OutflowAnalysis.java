@@ -303,21 +303,22 @@ public class OutflowAnalysis <E extends ISSABasicBlock> {
             		logger.debug("{} instructions in block", block.getLastInstructionIndex());
             		if (flowResult.getResult(block).contains(domain.getMappedIndex(de))) {
             			logger.debug("original block has edge");
+            			addEdge(flowGraph, de.taintSource, new ReturnFlow<E>(block, false));
             		}
-            		Iterator<BasicBlockInContext<E>> it = graph.getPredNodes(block);
-        			while (it.hasNext()) {
-        				BasicBlockInContext<E> realBlock = it.next();
-        				if (realBlock.isExitBlock()) {
-        					logger.warn("found edge to exit");
-//        					addEdge(flowGraph,de.taintSource, new ReturnFlow<E>(realBlock, false));
-        				}
-                		if(flowResult.getResult(realBlock).contains(domain.getMappedIndex(de))) {
-                			logger.debug("adding edge from {} to ReturnFlow", de.taintSource);
-                			addEdge(flowGraph,de.taintSource, new ReturnFlow<E>(realBlock, false));
-                		} else {
-                			logger.debug("no edge from block {} for {}", realBlock, de);
-                		}
-					}  
+//            		Iterator<BasicBlockInContext<E>> it = graph.getPredNodes(block);
+//        			while (it.hasNext()) {
+//        				BasicBlockInContext<E> realBlock = it.next();
+//        				if (realBlock.isExitBlock()) {
+//        					logger.warn("found edge to exit");
+////        					addEdge(flowGraph,de.taintSource, new ReturnFlow<E>(realBlock, false));
+//        				}
+//                		if(flowResult.getResult(realBlock).contains(domain.getMappedIndex(de))) {
+//                			logger.debug("adding edge from {} to ReturnFlow", de.taintSource);
+//                			addEdge(flowGraph,de.taintSource, new ReturnFlow<E>(realBlock, false));
+//                		} else {
+//                			logger.debug("no edge from block {} for {}", realBlock, de);
+//                		}
+//					}  
             	}
             }
     	}
