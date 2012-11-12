@@ -157,8 +157,9 @@ public class MethodAnalysisTest {
 	public void makeSummary() throws Throwable {
 		Summarizer summarizer = new Summarizer(TEST_JAR);
 		summarizer.summarize(entrypoint.getMethod().getSignature());
-		File summaryFile = new File(".", // FileUtils.getTempDirectory(),
+		File summaryFile = new File(FileUtils.getTempDirectory(),
 				summaryFileName());
+		summaryFile.deleteOnExit();
 		FileUtils.writeStringToFile(summaryFile, summarizer.serialize());
 		summaryStream = FileUtils.openInputStream(summaryFile);
 	}
