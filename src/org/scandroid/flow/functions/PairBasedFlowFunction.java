@@ -28,9 +28,9 @@ final class PairBasedFlowFunction <E extends ISSABasicBlock> implements IUnaryFl
     
     @Override
     public IntSet getTargets(int d) {
-    	logger.debug("getTargets("+d+")");
+    	//logger.debug("getTargets("+d+")");
     	if (0 == d) {
-    		logger.debug("getTargets("+d+"): {0}");
+    		//logger.debug("getTargets("+d+"): {0}");
     		return TaintTransferFunctions.ZERO_SET;
     	}
     	
@@ -77,7 +77,7 @@ final class PairBasedFlowFunction <E extends ISSABasicBlock> implements IUnaryFl
 				set.add(domain.getMappedIndex(newDE));
 			}
     	}	
-    	logger.debug("getTargets("+d+"): "+set);
+    	// logger.debug("getTargets("+d+"): "+set);
         return set;
     }
 }

@@ -62,7 +62,7 @@ public class TaintTransferFunctions <E extends ISSABasicBlock> implements
             BasicBlockInContext<E> src,
             BasicBlockInContext<E> dest,
             BasicBlockInContext<E> ret) {    	
-    	logger.debug("getCallFlowFunction");
+//    	logger.info("getCallFlowFunction");
     	SSAInstruction srcInst= src.getLastInstruction();
     	if (null == srcInst) {
     		return IDENTITY_FN;
@@ -86,7 +86,7 @@ public class TaintTransferFunctions <E extends ISSABasicBlock> implements
     public IUnaryFlowFunction getCallNoneToReturnFlowFunction(
             BasicBlockInContext<E> src,
             BasicBlockInContext<E> dest) {
-    	logger.debug("getNoneToReturnFunction");
+    	//logger.info("getNoneToReturnFunction");
         return union(new GlobalIdentityFunction<E>(domain),
 			         new CallNoneToReturnFunction<E>(domain));
     }
@@ -95,7 +95,7 @@ public class TaintTransferFunctions <E extends ISSABasicBlock> implements
     public IUnaryFlowFunction getCallToReturnFlowFunction(
             BasicBlockInContext<E> src,
             BasicBlockInContext<E> dest) {
-    	logger.debug("getCallToReturnFunction");
+    	//logger.info("getCallToReturnFunction");
     	return union(new GlobalIdentityFunction<E>(domain),
     			     new CallToReturnFunction<E>(domain));
     }
@@ -108,10 +108,10 @@ public class TaintTransferFunctions <E extends ISSABasicBlock> implements
     	
     	SSAInstruction inst = dest.getLastInstruction();
     	if (null == inst) {
-    		logger.debug("Using identity fn. for normal flow (inst==null)");
+    		//logger.info("Using identity fn. for normal flow (inst==null)");
     		return IDENTITY_FN;
     	}
-    	logger.debug("getNormalFlowFunction dest:{}", inst.toString());
+    	//logger.info("getNormalFlowFunction dest:{}", inst.toString());
     	CGNode node = dest.getNode();    	
     	
     	Iterable<CodeElement> inCodeElts  = getInCodeElts(node, inst);
@@ -135,11 +135,11 @@ public class TaintTransferFunctions <E extends ISSABasicBlock> implements
             BasicBlockInContext<E> call,
             BasicBlockInContext<E> src,
             BasicBlockInContext<E> dest) {
-		logger.debug("getReturnFlowFunction");
+		//logger.info("getReturnFlowFunction");
 		// data flows from uses in src to dests in call, locals map to {}, globals pass through.
     	SSAInstruction destInst = dest.getLastInstruction();
     	if (null == destInst) {
-    		logger.warn("Using identity fn. for return flow (destInst == null)");
+//    		logger.warn("Using identity fn. for return flow (destInst == null)");
     		return IDENTITY_FN;
     	}
     	
@@ -147,7 +147,7 @@ public class TaintTransferFunctions <E extends ISSABasicBlock> implements
 		int callDefs = destInst.getNumberOfDefs();
 
 		if (0 == callDefs) {
-			logger.warn("No return defs - using GlobalIdentityFn");
+			//logger.warn("No return defs - using GlobalIdentityFn");
 			// nothing is returned, so no flows exist as a 
 			// result of this instruction. (no flows other than globals, that is)
 			return new GlobalIdentityFunction<E>(domain);
@@ -158,7 +158,7 @@ public class TaintTransferFunctions <E extends ISSABasicBlock> implements
 		SSAInstruction srcInst = src.getLastInstruction();
 
     	if (null == srcInst) {
-    		logger.warn("Using identity fn. for return flow (srcInst==null)");
+    		//logger.warn("Using identity fn. for return flow (srcInst==null)");
     		return IDENTITY_FN;
     	}
     	
@@ -192,7 +192,7 @@ public class TaintTransferFunctions <E extends ISSABasicBlock> implements
 				pk = pa.getHeapModel().getPointerKeyForLocal(node,  put.getUse(0));
 			}
 			for (InstanceKey ik : pa.getPointsToSet(pk)) {
-				logger.debug("adding elements for field {} on {}", field.getName(), ik.getConcreteType().getName());
+//				logger.info("adding elements for field {} on {}", field.getName(), ik.getConcreteType().getName());
 				elts.add(new FieldElement(ik, fieldRef, put.isStatic()));
 				elts.add(new InstanceKeyElement(ik));
 			}
