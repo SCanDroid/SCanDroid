@@ -117,12 +117,15 @@ public class DataflowResults {
         oracle.put(ost+"FieldFlows.mkPair(" +
         		"Lorg/scandroid/testing/FieldFlows$X;" +
         		"Lorg/scandroid/testing/FieldFlows$Y;)" + fieldFlow_Pair,
-        		Sets.newHashSet("arg(1) -> ret", "arg(2) -> ret"));
+        		Sets.newHashSet("arg(0) -> ret",   // this (0cfa)  
+        					    "arg(1) -> ret",   // X
+        					    "arg(2) -> ret")); // Y
 		oracle.put(ost+"FieldFlows.swap("+fieldFlow_Pair+")"+fieldFlow_Pair,
         		Sets.newHashSet("arg(1) -> ret"));
 		
 		oracle.put(ost+"FieldFlows.throughField(Ljava/lang/String;)I",
-        		Sets.newHashSet("arg(1) -> ret"));
+        		Sets.newHashSet("arg(0) -> ret",   // this (0cfa)
+        				        "arg(1) -> ret")); // String
     	
     	return oracle;
     }
