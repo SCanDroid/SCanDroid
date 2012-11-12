@@ -25,6 +25,11 @@ public class ConstructorArgFlow {
 		return new Id(s);
 	}
 	
+	public static Id flow2(String s) {
+		Id id = new Id(s);
+		return id;
+	}
+	
 	public static Id manualFlow(String s) {
 		// TODO: refactor compilation of flowtypes such that
 		// if RHS flowtype SSA val chain does *not* include SSA val of LHS,

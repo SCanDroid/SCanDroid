@@ -300,6 +300,10 @@ public class OutflowAnalysis <E extends ISSABasicBlock> {
 			for(DomainElement de:possibleElements) {
             	logger.debug("processing domain element {}", de);
             	for (BasicBlockInContext<E> block: exitsForProcedure) {
+            		logger.debug("{} instructions in block", block.getLastInstructionIndex());
+            		if (flowResult.getResult(block).contains(domain.getMappedIndex(de))) {
+            			logger.debug("original block has edge");
+            		}
             		Iterator<BasicBlockInContext<E>> it = graph.getPredNodes(block);
         			while (it.hasNext()) {
         				BasicBlockInContext<E> realBlock = it.next();
