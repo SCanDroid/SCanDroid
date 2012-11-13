@@ -110,6 +110,8 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 		}
 		SSAInstruction destInst = dest.getLastInstruction();
 		if (null == destInst) {
+			// FIXME: this always happens 
+			logger.warn("getCallFlowFunction: null dest instruction");
 			return IDENTITY_FN;
 		}
 
@@ -153,17 +155,30 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 		SSAInstruction inst = dest.getLastInstruction();
 		CGNode node = dest.getNode();
 
+//		if (null == inst) {
+//			final SSAInstruction srcInst = src.getLastInstruction();
+//			if (null == srcInst) {
+//				logger.debug("Using identity fn. for normal flow (src and dest instructions null)");
+//				return IDENTITY_FN;
+//			}
+//			// if it's null, though, we'll process the src instruction.
+//			// this *should* ensure we don't process the same instruction
+//			// mulitple times
+//			inst = srcInst;
+//			node = src.getNode();
+//		}
+		
 		if (null == inst) {
-			final SSAInstruction srcInst = src.getLastInstruction();
-			if (null == srcInst) {
-				logger.warn("Using identity fn. for normal flow (src and dest instructions null)");
+//			final SSAInstruction srcInst = src.getLastInstruction();
+//			if (null == srcInst) {
+				logger.debug("Using identity fn. for normal flow (src and dest instructions null)");
 				return IDENTITY_FN;
-			}
-			// if it's null, though, we'll process the src instruction.
-			// this *should* ensure we don't process the same instruction
-			// mulitple times
-			inst = srcInst;
-			node = src.getNode();
+//			}
+//			// if it's null, though, we'll process the src instruction.
+//			// this *should* ensure we don't process the same instruction
+//			// mulitple times
+//			inst = srcInst;
+//			node = src.getNode();
 		}
 
 		logger.debug("\tinstruction: {}", inst.toString());
@@ -184,34 +199,6 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 		return new PairBasedFlowFunction<E>(domain, pairs);
 	}
 
-	/**
-	 * Sometimes in normal flows, we can have a source block, but a null
-	 * destination block. This can happen, e.g., when we're returning off the
-	 * end of the callgraph
-	 * 
-	 * @param src
-	 *            block, which should be an SSAReturnInstruction
-	 * @return
-	 */
-	private IUnaryFlowFunction hangingReturn(BasicBlockInContext<E> src) {
-		SSAReturnInstruction inst = (SSAReturnInstruction) src
-				.getLastInstruction();
-		CGNode node = src.getNode();
-		Iterable<CodeElement> inCodeElts = getInCodeElts(node, inst);
-		Iterable<CodeElement> outCodeElts = getOutCodeElts(node, inst);
-
-		List<UseDefPair> pairs = Lists.newArrayList();
-		for (CodeElement use : inCodeElts) {
-			for (CodeElement def : outCodeElts) {
-				pairs.add(new UseDefPair(use, def));
-			}
-		}
-
-		// globals may be redefined here, so we can't union with the globals ID
-		// flow function, as we often do elsewhere.
-		return new PairBasedFlowFunction<E>(domain, pairs);
-	}
-
 	@Override
 	public IFlowFunction getReturnFlowFunction(BasicBlockInContext<E> call,
 			BasicBlockInContext<E> src, BasicBlockInContext<E> dest) {
@@ -219,6 +206,7 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 				.getNode().getMethod().getSignature(), src.getNode()
 				.getMethod().getSignature(), dest.getNode().getMethod()
 				.getSignature());
+		logger.debug("\t{} -> {} -> {}", call.getLastInstruction(), src.getLastInstruction(), dest.getLastInstruction());
 
 		// We need to map all uses in the return instruction (src) to these
 		// return values.
@@ -226,7 +214,7 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 		// data flows from uses in src to dests in call, locals map to {},
 		// globals pass through.
 		if (null == srcInst) {
-			logger.warn("null srcInst, {} pred nodes",
+			logger.debug("null srcInst, {} pred nodes",
 					graph.getPredNodeCount(src));
 			logger.warn("Using identity fn. for return flow (srcInst==null)");
 			return IDENTITY_FN;
