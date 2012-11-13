@@ -37,6 +37,7 @@
  */
 package org.scandroid.flow.functions;
 
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -44,6 +45,7 @@ import org.scandroid.domain.CodeElement;
 import org.scandroid.domain.FieldElement;
 import org.scandroid.domain.IFDSTaintDomain;
 import org.scandroid.domain.InstanceKeyElement;
+import org.scandroid.domain.LocalElement;
 import org.scandroid.domain.ReturnElement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -70,6 +72,7 @@ import com.ibm.wala.ssa.SSAArrayStoreInstruction;
 import com.ibm.wala.ssa.SSAFieldAccessInstruction;
 import com.ibm.wala.ssa.SSAGetInstruction;
 import com.ibm.wala.ssa.SSAInstruction;
+import com.ibm.wala.ssa.SSAInvokeInstruction;
 import com.ibm.wala.ssa.SSAPutInstruction;
 import com.ibm.wala.ssa.SSAReturnInstruction;
 import com.ibm.wala.types.FieldReference;
@@ -108,22 +111,19 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 		if (null == srcInst) {
 			return IDENTITY_FN;
 		}
-		SSAInstruction destInst = dest.getLastInstruction();
-		if (null == destInst) {
-			// FIXME: this always happens 
-			logger.warn("getCallFlowFunction: null dest instruction");
-			return IDENTITY_FN;
+		
+		if (srcInst instanceof SSAInvokeInstruction) {
+			// build list of actual parameter code elements, and return a function
+			final int numParams = ((SSAInvokeInstruction) srcInst).getNumberOfParameters();
+			List<CodeElement> actualParams = Lists.newArrayListWithCapacity(numParams);
+			for (int i = 0; i < numParams; i++) {				
+				actualParams.add(i, new LocalElement(srcInst.getUse(i)));
+			}
+			return union(new GlobalIdentityFunction<E>(domain),
+				new CallFlowFunction<E>(domain, actualParams));
+		} else {
+			throw new RuntimeException("src block not an invoke instruction");
 		}
-
-		CGNode node = src.getNode();
-		// each use in an invoke instruction is a parameter to the invoked
-		// method,
-		// these are the uses:
-		List<Set<CodeElement>> actualParams = getOrdInCodeElts(node, srcInst);
-		List<Set<CodeElement>> formalParams = getOrdInCodeElts(node, destInst);
-
-		return union(new GlobalIdentityFunction<E>(domain),
-				new CallFlowFunction<E>(domain, actualParams, formalParams));
 	}
 
 	@Override
@@ -171,7 +171,7 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 		if (null == inst) {
 //			final SSAInstruction srcInst = src.getLastInstruction();
 //			if (null == srcInst) {
-				logger.debug("Using identity fn. for normal flow (src and dest instructions null)");
+				logger.debug("Using identity fn. for normal flow (dest instruction null)");
 				return IDENTITY_FN;
 //			}
 //			// if it's null, though, we'll process the src instruction.
