@@ -38,6 +38,8 @@
 package org.scandroid.flow.functions;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.scandroid.domain.CodeElement;
 import org.scandroid.domain.DomainElement;
@@ -46,6 +48,8 @@ import org.scandroid.domain.LocalElement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.ibm.wala.dataflow.IFDS.IUnaryFlowFunction;
 import com.ibm.wala.ssa.ISSABasicBlock;
 import com.ibm.wala.util.intset.IntSet;
@@ -61,13 +65,33 @@ public class CallFlowFunction<E extends ISSABasicBlock> implements
 	private static final Logger logger = LoggerFactory
 			.getLogger(CallFlowFunction.class);
 
+	/**
+	 * A map from the code elements of actual parameters, to the set of code
+	 * elements for formal parameters
+	 */
+	private final Map<CodeElement, Set<CodeElement>> paramArgsMap;
+
 	private final IFDSTaintDomain<E> domain;
-	private final List<CodeElement> actualParams;
 
 	public CallFlowFunction(IFDSTaintDomain<E> domain,
 			List<CodeElement> actualParams) {
 		this.domain = domain;
-		this.actualParams = actualParams;
+
+		final int numParams = actualParams.size();
+		this.paramArgsMap = Maps.newHashMapWithExpectedSize(numParams);
+		for (int i = 0; i < numParams; i++) {
+			// add a mapping for each parameter
+			final CodeElement actual = actualParams.get(i);
+			if (!(actual instanceof LocalElement)) {
+				logger.warn("non-local code element in actual params list");
+			}
+			final CodeElement formal = new LocalElement(i + 1); // +1 for SSA
+			Set<CodeElement> existingFormals = paramArgsMap.get(actual);
+			if (null == existingFormals) {
+				existingFormals = Sets.newHashSetWithExpectedSize(numParams);
+			}
+			existingFormals.add(formal);
+		}
 	}
 
 	/*
@@ -102,20 +126,13 @@ public class CallFlowFunction<E extends ISSABasicBlock> implements
 		 * IntSet.
 		 */
 
-		final CodeElement ce = de.codeElement;
-		final int argNum = actualParams.indexOf(de.codeElement) + 1;
-		if (argNum == 0) {
-			// not an actual parameter
-			return set;
-		} else {
-			if (!(ce instanceof LocalElement)) {
-				logger.warn("non-local code element in actual params list");
+		final Set<CodeElement> formals = paramArgsMap.get(de.codeElement);
+		if (null != formals) {
+			for (CodeElement formal : formals) {
+				set.add(domain.getMappedIndex(new DomainElement(formal,
+						de.taintSource)));
 			}
-			// return a singleton set with the incoming taint source associated
-			// with the local element for this formal parameter
-			set.add(domain.getMappedIndex(new DomainElement(new LocalElement(
-					argNum), de.taintSource)));
-			return set;
 		}
+		return set;
 	}
 }
