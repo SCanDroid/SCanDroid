@@ -55,7 +55,7 @@ public class DeepFields {
 		
 	}
 
-	public static void test(Foo foo, Object baz) {
-		foo.bar.baz = baz;
+	public static void test(Foo foo, Object quux) {
+		foo.bar.baz = quux;
 	}
 }

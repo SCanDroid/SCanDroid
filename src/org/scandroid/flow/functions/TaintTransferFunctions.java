@@ -58,6 +58,7 @@ import com.ibm.wala.dataflow.IFDS.ISupergraph;
 import com.ibm.wala.dataflow.IFDS.IUnaryFlowFunction;
 import com.ibm.wala.dataflow.IFDS.IdentityFlowFunction;
 import com.ibm.wala.ipa.callgraph.CGNode;
+import com.ibm.wala.ipa.callgraph.propagation.ConcreteTypeKey;
 import com.ibm.wala.ipa.callgraph.propagation.InstanceKey;
 import com.ibm.wala.ipa.callgraph.propagation.PointerAnalysis;
 import com.ibm.wala.ipa.callgraph.propagation.PointerKey;
@@ -72,7 +73,9 @@ import com.ibm.wala.ssa.SSAInstruction;
 import com.ibm.wala.ssa.SSAPutInstruction;
 import com.ibm.wala.ssa.SSAReturnInstruction;
 import com.ibm.wala.types.FieldReference;
+import com.ibm.wala.types.TypeReference;
 import com.ibm.wala.util.intset.IntSet;
+import com.ibm.wala.util.intset.OrdinalSet;
 import com.ibm.wala.util.intset.SparseIntSet;
 
 public class TaintTransferFunctions<E extends ISSABasicBlock> implements
@@ -282,7 +285,8 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 		}
 
 		if (inst instanceof SSAArrayStoreInstruction) {
-			elts.addAll(getArrayRefCodeElts(node, (SSAArrayStoreInstruction) inst));
+			elts.addAll(getArrayRefCodeElts(node,
+					(SSAArrayStoreInstruction) inst));
 		}
 
 		for (int i = 0; i < defNo; i++) {
@@ -297,15 +301,17 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 	private Iterable<CodeElement> getInCodeElts(CGNode node, SSAInstruction inst) {
 		int useNo = inst.getNumberOfUses();
 		Set<CodeElement> elts = Sets.newHashSet();
-		
+
 		if (inst instanceof SSAGetInstruction) {
 			elts.addAll(getFieldAccessCodeElts(node, (SSAGetInstruction) inst));
 		}
-		
-//		I don't think this is actually needed; we're adding an InstanceKey for the ref already in CodeElement.valueElements
-//		if (inst instanceof SSAArrayLoadInstruction) {
-//			elts.addAll(getArrayRefCodeElts(node, (SSAArrayLoadInstruction) inst));
-//		}
+
+		// I don't think this is actually needed; we're adding an InstanceKey
+		// for the ref already in CodeElement.valueElements
+		// if (inst instanceof SSAArrayLoadInstruction) {
+		// elts.addAll(getArrayRefCodeElts(node, (SSAArrayLoadInstruction)
+		// inst));
+		// }
 
 		for (int i = 0; i < useNo; i++) {
 			int valNo = inst.getUse(i);
@@ -358,23 +364,46 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 		} else {
 			pk = pa.getHeapModel().getPointerKeyForLocal(node, inst.getRef());
 		}
-		for (InstanceKey ik : pa.getPointsToSet(pk)) {
-			logger.debug("adding elements for field {} on {}", field.getName(),
-					ik.getConcreteType().getName());
+		final OrdinalSet<InstanceKey> pointsToSet = pa.getPointsToSet(pk);
+		if (pointsToSet.isEmpty()) {
+			logger.warn(
+					"pointsToSet empty for ref of {}, creating InstanceKey manually",
+					inst);
+			InstanceKey ik = new ConcreteTypeKey(field.getDeclaringClass());
 			elts.add(new FieldElement(ik, fieldRef, inst.isStatic()));
 			elts.add(new InstanceKeyElement(ik));
+		} else {
+			for (InstanceKey ik : pointsToSet) {
+				logger.debug("adding elements for field {} on {}",
+						field.getName(), ik.getConcreteType().getName());
+				elts.add(new FieldElement(ik, fieldRef, inst.isStatic()));
+				elts.add(new InstanceKeyElement(ik));
+			}
 		}
 		return elts;
 	}
 
-	private Set<CodeElement> getArrayRefCodeElts(CGNode node, SSAArrayReferenceInstruction inst) {
+	private Set<CodeElement> getArrayRefCodeElts(CGNode node,
+			SSAArrayReferenceInstruction inst) {
 		Set<CodeElement> elts = Sets.newHashSet();
 		final PointerKey pk = pa.getHeapModel().getPointerKeyForLocal(node,
 				inst.getArrayRef());
-		for (InstanceKey ik : pa.getPointsToSet(pk)) {
-			logger.debug("adding element for array store in {}", ik
-					.getConcreteType().getName());
+		final OrdinalSet<InstanceKey> pointsToSet = pa.getPointsToSet(pk);
+		if (pointsToSet.isEmpty()) {
+			logger.warn(
+					"pointsToSet empty for ref of {}, creating InstanceKey manually",
+					inst);
+			TypeReference arrayType = TypeReference.findOrCreateArrayOf(inst
+					.getElementType());
+			InstanceKey ik = new ConcreteTypeKey(pa.getClassHierarchy()
+					.lookupClass(arrayType));
 			elts.add(new InstanceKeyElement(ik));
+		} else {
+			for (InstanceKey ik : pointsToSet) {
+				logger.debug("adding element for array store in {}", ik
+						.getConcreteType().getName());
+				elts.add(new InstanceKeyElement(ik));
+			}
 		}
 		return elts;
 	}
