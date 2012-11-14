@@ -367,9 +367,9 @@ public class OutflowAnalysis <E extends ISSABasicBlock> {
         if (!ssAL.isEmpty())
         	processArgSinks(flowResult, domain, taintFlow, ssAL, cha, pa, graph, cg);
 
-        logger.debug("************");
-        logger.debug("* Results: *");
-        logger.debug("************");
+        logger.info("************");
+        logger.info("* Results: *");
+        logger.info("************");
         
         logger.debug("{}", taintFlow.toString());
 

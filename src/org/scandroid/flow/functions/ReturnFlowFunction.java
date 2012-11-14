@@ -40,53 +40,52 @@ package org.scandroid.flow.functions;
 import org.scandroid.domain.CodeElement;
 import org.scandroid.domain.DomainElement;
 import org.scandroid.domain.IFDSTaintDomain;
+import org.scandroid.domain.LocalElement;
+import org.scandroid.domain.ReturnElement;
 
 import com.ibm.wala.dataflow.IFDS.IUnaryFlowFunction;
 import com.ibm.wala.ssa.ISSABasicBlock;
 import com.ibm.wala.util.intset.IntSet;
 import com.ibm.wala.util.intset.MutableSparseIntSet;
-
+import com.ibm.wala.util.intset.SparseIntSet;
 
 /**
  * @author creswick
- *
+ * 
  */
-public class ReturnFlowFunction <E extends ISSABasicBlock> implements IUnaryFlowFunction {
+public class ReturnFlowFunction<E extends ISSABasicBlock> implements
+		IUnaryFlowFunction {
 
 	private final IFDSTaintDomain<E> domain;
-	private final Iterable<CodeElement> returnedVals;
-	private final Iterable<CodeElement> returnedLocs;
+	private final CodeElement ce;
 
-	public ReturnFlowFunction(IFDSTaintDomain<E> domain,
-			Iterable<CodeElement> returnedVals, Iterable<CodeElement> returnedLocs) {
+	/**
+	 * @param domain
+	 * @param def
+	 *            of the invoke instruction we're returning to
+	 */
+	public ReturnFlowFunction(IFDSTaintDomain<E> domain, int def) {
 		this.domain = domain;
-		this.returnedVals = returnedVals;
-		this.returnedLocs = returnedLocs;
+		this.ce = new LocalElement(def);
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see com.ibm.wala.dataflow.IFDS.IUnaryFlowFunction#getTargets(int)
 	 */
 	@Override
 	public IntSet getTargets(int d1) {
 		if (0 == d1) {
 			return TaintTransferFunctions.ZERO_SET;
-		} 
-		DomainElement de = domain.getMappedObject(d1);
-        MutableSparseIntSet set = MutableSparseIntSet.makeEmpty();
-		
-        for (CodeElement ce : returnedVals) {
-			if (!de.codeElement.equals(ce)) {
-				continue;
-			}
-			
-			for (CodeElement destCe : returnedLocs) {
-				DomainElement newDe = new DomainElement(destCe, de.taintSource);
-				set.add(domain.getMappedIndex(newDe));
-			}
 		}
-		
-		return set;
-	}
 
+		DomainElement de = domain.getMappedObject(d1);
+		// if the domain element is a return element, propagate its taint
+		if (de.codeElement instanceof ReturnElement) {
+			return SparseIntSet.singleton(domain
+					.getMappedIndex(new DomainElement(ce, de.taintSource)));
+		}
+		return TaintTransferFunctions.EMPTY_SET;
+	}
 }

@@ -111,16 +111,19 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 		if (null == srcInst) {
 			return IDENTITY_FN;
 		}
-		
+
 		if (srcInst instanceof SSAInvokeInstruction) {
-			// build list of actual parameter code elements, and return a function
-			final int numParams = ((SSAInvokeInstruction) srcInst).getNumberOfParameters();
-			List<CodeElement> actualParams = Lists.newArrayListWithCapacity(numParams);
-			for (int i = 0; i < numParams; i++) {				
+			// build list of actual parameter code elements, and return a
+			// function
+			final int numParams = ((SSAInvokeInstruction) srcInst)
+					.getNumberOfParameters();
+			List<CodeElement> actualParams = Lists
+					.newArrayListWithCapacity(numParams);
+			for (int i = 0; i < numParams; i++) {
 				actualParams.add(i, new LocalElement(srcInst.getUse(i)));
 			}
 			return union(new GlobalIdentityFunction<E>(domain),
-				new CallFlowFunction<E>(domain, actualParams));
+					new CallFlowFunction<E>(domain, actualParams));
 		} else {
 			throw new RuntimeException("src block not an invoke instruction");
 		}
@@ -155,30 +158,30 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 		SSAInstruction inst = dest.getLastInstruction();
 		CGNode node = dest.getNode();
 
-//		if (null == inst) {
-//			final SSAInstruction srcInst = src.getLastInstruction();
-//			if (null == srcInst) {
-//				logger.debug("Using identity fn. for normal flow (src and dest instructions null)");
-//				return IDENTITY_FN;
-//			}
-//			// if it's null, though, we'll process the src instruction.
-//			// this *should* ensure we don't process the same instruction
-//			// mulitple times
-//			inst = srcInst;
-//			node = src.getNode();
-//		}
-		
+		// if (null == inst) {
+		// final SSAInstruction srcInst = src.getLastInstruction();
+		// if (null == srcInst) {
+		// logger.debug("Using identity fn. for normal flow (src and dest instructions null)");
+		// return IDENTITY_FN;
+		// }
+		// // if it's null, though, we'll process the src instruction.
+		// // this *should* ensure we don't process the same instruction
+		// // mulitple times
+		// inst = srcInst;
+		// node = src.getNode();
+		// }
+
 		if (null == inst) {
-//			final SSAInstruction srcInst = src.getLastInstruction();
-//			if (null == srcInst) {
-				logger.debug("Using identity fn. for normal flow (dest instruction null)");
-				return IDENTITY_FN;
-//			}
-//			// if it's null, though, we'll process the src instruction.
-//			// this *should* ensure we don't process the same instruction
-//			// mulitple times
-//			inst = srcInst;
-//			node = src.getNode();
+			// final SSAInstruction srcInst = src.getLastInstruction();
+			// if (null == srcInst) {
+			logger.debug("Using identity fn. for normal flow (dest instruction null)");
+			return IDENTITY_FN;
+			// }
+			// // if it's null, though, we'll process the src instruction.
+			// // this *should* ensure we don't process the same instruction
+			// // mulitple times
+			// inst = srcInst;
+			// node = src.getNode();
 		}
 
 		logger.debug("\tinstruction: {}", inst.toString());
@@ -199,61 +202,55 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 		return new PairBasedFlowFunction<E>(domain, pairs);
 	}
 
+	/*
+	 * The usual arguments:
+	 * 
+	 * call: the invoke instruction that took us into this method
+	 * 
+	 * src: a block that's the postdominator of this method, usually with no
+	 * instructions
+	 * 
+	 * dest: whatever instruction followed the invoke instruction in call
+	 * 
+	 * What we want to accomplish:
+	 * 
+	 * 1. Map taints from the value being returned to a LocalElement in the
+	 * caller's context
+	 * 
+	 * 2. Pass through any global information that the callee may have changed
+	 * 
+	 * @see
+	 * com.ibm.wala.dataflow.IFDS.IFlowFunctionMap#getReturnFlowFunction(java
+	 * .lang.Object, java.lang.Object, java.lang.Object)
+	 */
 	@Override
 	public IFlowFunction getReturnFlowFunction(BasicBlockInContext<E> call,
 			BasicBlockInContext<E> src, BasicBlockInContext<E> dest) {
-		logger.debug("getReturnFlowFunction\n\t{}\n\t-> {}\n\t-> {}", call
+		logger.trace("getReturnFlowFunction\n\t{}\n\t-> {}\n\t-> {}", call
 				.getNode().getMethod().getSignature(), src.getNode()
 				.getMethod().getSignature(), dest.getNode().getMethod()
 				.getSignature());
-		logger.debug("\t{} -> {} -> {}", call.getLastInstruction(), src.getLastInstruction(), dest.getLastInstruction());
+		logger.trace("\t{} -> {} -> {}", call.getLastInstruction(),
+				src.getLastInstruction(), dest.getLastInstruction());
 
-		// We need to map all uses in the return instruction (src) to these
-		// return values.
-		SSAInstruction srcInst = src.getLastInstruction();
-		// data flows from uses in src to dests in call, locals map to {},
-		// globals pass through.
-		if (null == srcInst) {
-			logger.debug("null srcInst, {} pred nodes",
-					graph.getPredNodeCount(src));
-			logger.warn("Using identity fn. for return flow (srcInst==null)");
-			return IDENTITY_FN;
+		final SSAInstruction inst = call.getLastInstruction();
+		if (null == inst || !(inst instanceof SSAInvokeInstruction)) {
+			// if we don't have an invoke, just punt and hope the necessary
+			// information is already in global elements
+			logger.warn("call block null or not an invoke instruction");
+			return new GlobalIdentityFunction<E>(domain);
+		}
+		final SSAInvokeInstruction invoke = (SSAInvokeInstruction) inst;
+
+		if (invoke.getNumberOfReturnValues() == 0) {
+			// no return values, just propagate global information
+			return new GlobalIdentityFunction<E>(domain);
 		}
 
-		Iterable<CodeElement> returnedVals = getInCodeElts(src.getNode(),
-				srcInst);
-
-		// even if we don't know our dest, we want to flow into a return element
-		// in case this return is a sink
-		Iterable<CodeElement> baseReturn = Sets
-				.newHashSet((CodeElement) new ReturnElement());
-		SSAInstruction destInst = dest.getLastInstruction();
-		if (null != destInst) {
-			// see if the return value is assigned to anything:
-			int callDefs = destInst.getNumberOfDefs();
-
-			if (0 == callDefs) {
-				logger.warn("No return defs");
-				// this situation should actually be handled normally by
-				// getOutCodeElts,
-				// but I'm leaving the error msg here just in case
-
-				// nothing is returned, so no flows exist as a
-				// result of this instruction. (no flows other than globals,
-				// that is)
-				// return new GlobalIdentityFunction<E>(domain);
-			}
-
-			Iterable<CodeElement> returnedLocs = getOutCodeElts(dest.getNode(),
-					destInst);
-			return union(
-					new GlobalIdentityFunction<E>(domain),
-					union(new ReturnFlowFunction<E>(domain, returnedVals,
-							returnedLocs), new ReturnFlowFunction<E>(domain,
-							returnedVals, baseReturn)));
-		}
+		// we have a return value, so we need to map any return elements onto
+		// the local element corresponding to the invoke's def
 		return union(new GlobalIdentityFunction<E>(domain),
-				new ReturnFlowFunction<E>(domain, returnedVals, baseReturn));
+				new ReturnFlowFunction<E>(domain, invoke.getDef()));
 	}
 
 	private Iterable<CodeElement> getOutCodeElts(CGNode node,
@@ -354,7 +351,7 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 		}
 		final OrdinalSet<InstanceKey> pointsToSet = pa.getPointsToSet(pk);
 		if (pointsToSet.isEmpty()) {
-			logger.warn(
+			logger.debug(
 					"pointsToSet empty for ref of {}, creating InstanceKey manually",
 					inst);
 			InstanceKey ik = new ConcreteTypeKey(field.getDeclaringClass());
@@ -378,7 +375,7 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 				inst.getArrayRef());
 		final OrdinalSet<InstanceKey> pointsToSet = pa.getPointsToSet(pk);
 		if (pointsToSet.isEmpty()) {
-			logger.warn(
+			logger.debug(
 					"pointsToSet empty for ref of {}, creating InstanceKey manually",
 					inst);
 			TypeReference arrayType = TypeReference.findOrCreateArrayOf(inst

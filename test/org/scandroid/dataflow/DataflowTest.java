@@ -119,6 +119,8 @@ public class DataflowTest {
 	private static final String TEST_DATA_DIR = "data/testdata/";
 	private static final String TEST_JAR = TEST_DATA_DIR
 			+ "testJar-1.0-SNAPSHOT.jar";
+
+	private static final boolean DEBUG_CFG = false;
 	
 	/**
      * Hack alert: since @Parameters-annotated methods are run before every
@@ -128,8 +130,8 @@ public class DataflowTest {
     public static Collection<Object[]> setup() throws Throwable {
         ch.qos.logback.classic.Logger root = (ch.qos.logback.classic.Logger) 
                 LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
-//        root.setLevel(Level.INFO);
-        root.setLevel(Level.DEBUG);
+        root.setLevel(Level.INFO);
+//        root.setLevel(Level.DEBUG);
         List<Object[]> entrypoints = Lists.newArrayList();
 
         checklist = gold.expectedMethods();
@@ -251,39 +253,40 @@ public class DataflowTest {
                         return Lists.newArrayList(entrypoint);
                     }
                 });
-        for (CGNode node : ctx.cg.getNodes(entrypoint.getMethod().getReference())) {
-        	logger.debug(Arrays.toString(node.getIR().getInstructions()));
-            ICFGSupergraph graph = (ICFGSupergraph) ctx.graph;
-        	ControlFlowGraph<SSAInstruction, IExplodedBasicBlock> cfg = graph.getCFG(graph.getLocalBlock(node, 0));
-        	final String name = entrypoint.getMethod().getName().toString();
-        	logger.debug("outputting full graph dot to {}", name + ".full.dot");
-			DotUtil.writeDotFile(graph, new NodeDecorator() {
+        if (DEBUG_CFG) {
+			for (CGNode node : ctx.cg.getNodes(entrypoint.getMethod().getReference())) {
+				logger.debug(Arrays.toString(node.getIR().getInstructions()));
+				ICFGSupergraph graph = (ICFGSupergraph) ctx.graph;
+				ControlFlowGraph<SSAInstruction, IExplodedBasicBlock> cfg = graph.getCFG(graph.getLocalBlock(node, 0));
+				final String name = entrypoint.getMethod().getName().toString();
+				logger.debug("outputting full graph dot to {}", name + ".full.dot");
+				DotUtil.writeDotFile(graph, new NodeDecorator() {
+					
+					@Override
+					public String getLabel(Object o) throws WalaException {
+						BasicBlockInContext<IExplodedBasicBlock> block = (BasicBlockInContext<IExplodedBasicBlock>) o;
+						final SSAInstruction inst = block.getLastInstruction();
+						final String instString = inst == null ? "NULL" : inst.toString();
+						String label = String.format("Method %s\nBlock %d: %s", block.getMethod().getSignature(), block.getNumber(), instString);
+						return label;
+					}
+				}, name, name + ".full.dot");
 				
-				@Override
-				public String getLabel(Object o) throws WalaException {
-					BasicBlockInContext<IExplodedBasicBlock> block = (BasicBlockInContext<IExplodedBasicBlock>) o;
-					final SSAInstruction inst = block.getLastInstruction();
-					final String instString = inst == null ? "NULL" : inst.toString();
-					String label = String.format("Method %s\nBlock %d: %s", block.getMethod().getSignature(), block.getNumber(), instString);
-					return label;
-				}
-			}, name, name + ".full.dot");
-			
-			logger.debug("outputting method graph dot to {}", name + ".dot");
-			DotUtil.writeDotFile(cfg, new NodeDecorator() {
-				
-				@Override
-				public String getLabel(Object o) throws WalaException {
-					IExplodedBasicBlock block = (IExplodedBasicBlock) o;
-					final SSAInstruction inst = block.getLastInstruction();
-					final String instString = inst == null ? "NULL" : inst.toString();
-					String label = String.format("Block %d: %s", block.getNumber(), instString);
-					return label;
-				}
-			}, name, name + ".dot");
-        }
-        
-        ISpecs specs = TestSpecs.specsFromDescriptor(ctx.getClassHierarchy(), entrypoint.getMethod().getSignature());
+				logger.debug("outputting method graph dot to {}", name + ".dot");
+				DotUtil.writeDotFile(cfg, new NodeDecorator() {
+					
+					@Override
+					public String getLabel(Object o) throws WalaException {
+						IExplodedBasicBlock block = (IExplodedBasicBlock) o;
+						final SSAInstruction inst = block.getLastInstruction();
+						final String instString = inst == null ? "NULL" : inst.toString();
+						String label = String.format("Block %d: %s", block.getNumber(), instString);
+						return label;
+					}
+				}, name, name + ".dot");
+			}
+		}
+		ISpecs specs = TestSpecs.specsFromDescriptor(ctx.getClassHierarchy(), entrypoint.getMethod().getSignature());
 
         Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> dfResults =
                 runDFAnalysis(ctx, specs);
