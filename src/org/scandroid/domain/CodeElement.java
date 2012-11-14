@@ -57,13 +57,13 @@ public abstract class CodeElement {
     	//System.out.println("ValueNumber: " + valueNumber + ", Node: " + node.getMethod().getSignature());
         Set<CodeElement> elements = new HashSet<CodeElement>();
         elements.add(new LocalElement(valueNumber));
-        PointerKey pk = new LocalPointerKey(node, valueNumber);
-        OrdinalSet<InstanceKey> m = pa.getPointsToSet(pk);
-        if(m != null) {
-            for(Iterator<InstanceKey> keyIter = m.iterator();keyIter.hasNext();) {
-                elements.add(new InstanceKeyElement(keyIter.next()));
-            }
-        }
+//        PointerKey pk = new LocalPointerKey(node, valueNumber);
+//        OrdinalSet<InstanceKey> m = pa.getPointsToSet(pk);
+//        if(m != null) {
+//            for(Iterator<InstanceKey> keyIter = m.iterator();keyIter.hasNext();) {
+//                elements.add(new InstanceKeyElement(keyIter.next()));
+//            }
+//        }
         return elements;
     }
 }

@@ -44,6 +44,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.scandroid.domain.CodeElement;
+import org.scandroid.domain.InstanceKeyElement;
 import org.scandroid.flow.InflowAnalysis;
 import org.scandroid.flow.types.FlowType;
 import org.scandroid.flow.types.ParameterFlow;
@@ -53,7 +54,9 @@ import com.ibm.wala.classLoader.IMethod;
 import com.ibm.wala.dataflow.IFDS.ISupergraph;
 import com.ibm.wala.ipa.callgraph.CGNode;
 import com.ibm.wala.ipa.callgraph.CallGraph;
+import com.ibm.wala.ipa.callgraph.propagation.InstanceKey;
 import com.ibm.wala.ipa.callgraph.propagation.PointerAnalysis;
+import com.ibm.wala.ipa.callgraph.propagation.PointerKey;
 import com.ibm.wala.ipa.cfg.BasicBlockInContext;
 import com.ibm.wala.ssa.ISSABasicBlock;
 import com.ibm.wala.ssa.SSAInvokeInstruction;
@@ -87,8 +90,15 @@ public class CallArgSourceSpec extends SourceSpec {
 				// a collection of a LocalElement for this argument's SSA value,
 				// along with a set of InstanceKeyElements for each instance
 				// that this SSA value might point to
+				final int ssaVal = invInst.getUse(newArgNums[j]);
+				final CGNode node = block.getNode();
 				Set<CodeElement> valueElements = CodeElement.valueElements(pa,
-						block.getNode(), invInst.getUse(newArgNums[j]));
+						node, ssaVal);
+				PointerKey pk = pa.getHeapModel().getPointerKeyForLocal(node, ssaVal);
+				for (InstanceKey ik : pa.getPointsToSet(pk)) {
+					valueElements.add(new InstanceKeyElement(ik));
+				}
+				
 				InflowAnalysis.addDomainElements(taintMap, block, ft,
 						valueElements);
 			}

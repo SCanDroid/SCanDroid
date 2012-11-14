@@ -62,6 +62,7 @@ public final class CallNoneToReturnFunction <E extends ISSABasicBlock> implement
 		}
 		
 	    MutableSparseIntSet set = MutableSparseIntSet.makeEmpty();
+	    // TODO: this is questionable
 		// We don't know anything about the function called,
 		// so we have to make some assumptions.  The safest assumption
 		// is that everything goes to everything:

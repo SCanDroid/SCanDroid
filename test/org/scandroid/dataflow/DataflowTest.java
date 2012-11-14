@@ -313,7 +313,7 @@ public class DataflowTest {
         Map<BasicBlockInContext<IExplodedBasicBlock>, Map<FlowType<IExplodedBasicBlock>, Set<CodeElement>>> initialTaints = InflowAnalysis
                 .analyze(cgContext, new HashMap<InstanceKey, String>(), specs);
 
-        System.out.println("  InitialTaints: " + initialTaints);
+        logger.debug("  InitialTaints: {}", initialTaints);
 
         IFDSTaintDomain<IExplodedBasicBlock> domain = new IFDSTaintDomain<IExplodedBasicBlock>();
         TabulationResult<BasicBlockInContext<IExplodedBasicBlock>, CGNode, DomainElement> flowResult = FlowAnalysis

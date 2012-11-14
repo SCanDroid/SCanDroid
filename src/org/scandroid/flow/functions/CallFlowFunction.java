@@ -91,6 +91,7 @@ public class CallFlowFunction<E extends ISSABasicBlock> implements
 				existingFormals = Sets.newHashSetWithExpectedSize(numParams);
 			}
 			existingFormals.add(formal);
+			paramArgsMap.put(actual, existingFormals);
 		}
 	}
 
@@ -132,7 +133,7 @@ public class CallFlowFunction<E extends ISSABasicBlock> implements
 				set.add(domain.getMappedIndex(new DomainElement(formal,
 						de.taintSource)));
 			}
-		}
+		}		
 		return set;
 	}
 }
