@@ -49,7 +49,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.commons.io.FileUtils;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Test;
@@ -73,7 +72,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import ch.qos.logback.classic.Level;
-import ch.qos.logback.core.pattern.parser.Node;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
@@ -89,6 +87,7 @@ import com.ibm.wala.ipa.callgraph.CallGraphBuilderCancelException;
 import com.ibm.wala.ipa.callgraph.Entrypoint;
 import com.ibm.wala.ipa.callgraph.impl.DefaultEntrypoint;
 import com.ibm.wala.ipa.callgraph.propagation.InstanceKey;
+import com.ibm.wala.ipa.callgraph.propagation.PointerKey;
 import com.ibm.wala.ipa.cfg.BasicBlockInContext;
 import com.ibm.wala.ipa.cha.ClassHierarchy;
 import com.ibm.wala.ipa.cha.ClassHierarchyException;
@@ -96,7 +95,6 @@ import com.ibm.wala.ssa.SSAInstruction;
 import com.ibm.wala.ssa.analysis.IExplodedBasicBlock;
 import com.ibm.wala.types.TypeName;
 import com.ibm.wala.util.WalaException;
-import com.ibm.wala.util.strings.Atom;
 import com.ibm.wala.viz.DotUtil;
 import com.ibm.wala.viz.NodeDecorator;
 
@@ -253,6 +251,13 @@ public class DataflowTest {
                         return Lists.newArrayList(entrypoint);
                     }
                 });
+        logger.warn("Heap dump:");
+        for (PointerKey pk : ctx.pa.getPointerKeys()) {
+        	logger.warn("{}", pk);
+        	for (InstanceKey ik : ctx.pa.getPointsToSet(pk)) {
+        		logger.warn("\t{}", ik);
+        	}
+        }
         if (DEBUG_CFG) {
 			for (CGNode node : ctx.cg.getNodes(entrypoint.getMethod().getReference())) {
 				logger.debug(Arrays.toString(node.getIR().getInstructions()));

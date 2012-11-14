@@ -129,8 +129,9 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 				actualParams.add(i, new LocalElement(srcInst.getUse(i)));
 			}
 			logger.debug("actual param list length: {}", actualParams);
-//			return new TracingFlowFunction<E>(domain, union(new GlobalIdentityFunction<E>(domain),
-//					new CallFlowFunction<E>(domain, actualParams)));
+			// return new TracingFlowFunction<E>(domain, union(new
+			// GlobalIdentityFunction<E>(domain),
+			// new CallFlowFunction<E>(domain, actualParams)));
 			return union(new GlobalIdentityFunction<E>(domain),
 					new CallFlowFunction<E>(domain, actualParams));
 		} else {
@@ -149,9 +150,12 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 	@Override
 	public IUnaryFlowFunction getCallToReturnFlowFunction(
 			BasicBlockInContext<E> src, BasicBlockInContext<E> dest) {
-		logger.debug("getCallToReturnFunction\n\t{}\n\t-> {}", src.getMethod()
-				.getSignature(), dest.getMethod().getSignature());
-//		return new TracingFlowFunction<E>(domain, new CallToReturnFunction<E>(domain));
+		if (logger.isDebugEnabled()) {
+			logger.debug("getCallToReturnFunction\n\t{}\n\t-> {}", src.getMethod()
+					.getSignature(), dest.getMethod().getSignature());
+		}
+		// return new TracingFlowFunction<E>(domain, new
+		// CallToReturnFunction<E>(domain));
 		return new CallToReturnFunction<E>(domain);
 	}
 
@@ -160,8 +164,10 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 			BasicBlockInContext<E> dest) {
 		List<UseDefPair> pairs = Lists.newArrayList();
 
-		logger.debug("getNormalFlowFunction {}", dest.getMethod()
-				.getSignature());
+		if (logger.isDebugEnabled()) {
+			logger.debug("getNormalFlowFunction {}", dest.getMethod()
+					.getSignature());
+		}
 
 		// we first try to process the destination instruction
 		SSAInstruction inst = dest.getLastInstruction();
@@ -193,15 +199,15 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 			// node = src.getNode();
 		}
 
-		logger.debug("\tinstruction: {}", inst.toString());
+		logger.debug("\tinstruction: {}", inst);
 
 		Iterable<CodeElement> inCodeElts = getInCodeElts(node, inst);
 		Iterable<CodeElement> outCodeElts = getOutCodeElts(node, inst);
 		if (!inCodeElts.iterator().hasNext()) {
-			logger.error("no input elements for {}", inst);
+			logger.debug("no input elements for {}", inst);
 		}
 		if (!outCodeElts.iterator().hasNext()) {
-			logger.error("no output elements for {}", inst);
+			logger.debug("no output elements for {}", inst);
 		}
 
 		// for now, take the Cartesian product of the inputs and outputs:
@@ -234,7 +240,8 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 	 * 
 	 * 2. Pass through any global information that the callee may have changed
 	 * 
-	 * 3. Process ins/outs of dest block as well (it will never be the dest of a NormalFlowFunction)
+	 * 3. Process ins/outs of dest block as well (it will never be the dest of a
+	 * NormalFlowFunction)
 	 * 
 	 * @see
 	 * com.ibm.wala.dataflow.IFDS.IFlowFunctionMap#getReturnFlowFunction(java
@@ -243,13 +250,14 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 	@Override
 	public IFlowFunction getReturnFlowFunction(BasicBlockInContext<E> call,
 			BasicBlockInContext<E> src, BasicBlockInContext<E> dest) {
-		logger.debug("getReturnFlowFunction\n\t{}\n\t-> {}\n\t-> {}", call
-				.getNode().getMethod().getSignature(), src.getNode()
-				.getMethod().getSignature(), dest.getNode().getMethod()
-				.getSignature());
-		logger.trace("\t{} -> {} -> {}", call.getLastInstruction(),
-				src.getLastInstruction(), dest.getLastInstruction());
-
+		if (logger.isDebugEnabled()) {
+			logger.debug("getReturnFlowFunction\n\t{}\n\t-> {}\n\t-> {}", call
+					.getNode().getMethod().getSignature(), src.getNode()
+					.getMethod().getSignature(), dest.getNode().getMethod()
+					.getSignature());
+			logger.trace("\t{} -> {} -> {}", call.getLastInstruction(),
+					src.getLastInstruction(), dest.getLastInstruction());
+		}
 		final SSAInstruction inst = call.getLastInstruction();
 		if (null == inst || !(inst instanceof SSAInvokeInstruction)) {
 			// if we don't have an invoke, just punt and hope the necessary
@@ -259,22 +267,26 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 		}
 
 		// we always need to process the destination instruction
-		final IUnaryFlowFunction flowFromDest = getNormalFlowFunction(null, dest);		
-		
+		final IUnaryFlowFunction flowFromDest = getNormalFlowFunction(null,
+				dest);
+
 		final SSAInvokeInstruction invoke = (SSAInvokeInstruction) inst;
 
 		if (invoke.getNumberOfReturnValues() == 0) {
 			// no return values, just propagate global information
-//			return new TracingFlowFunction<E>(domain, compose (flowFromDest, new GlobalIdentityFunction<E>(domain)));
-			return compose (flowFromDest, new GlobalIdentityFunction<E>(domain));
+			// return new TracingFlowFunction<E>(domain, compose (flowFromDest,
+			// new GlobalIdentityFunction<E>(domain)));
+			return compose(flowFromDest, new GlobalIdentityFunction<E>(domain));
 		}
 
 		// we have a return value, so we need to map any return elements onto
 		// the local element corresponding to the invoke's def
-		final IUnaryFlowFunction flowToDest = union(new GlobalIdentityFunction<E>(domain),
+		final IUnaryFlowFunction flowToDest = union(
+				new GlobalIdentityFunction<E>(domain),
 				new ReturnFlowFunction<E>(domain, invoke.getDef()));
-		
-//		return new TracingFlowFunction<E>(domain, compose(flowFromDest, flowToDest));
+
+		// return new TracingFlowFunction<E>(domain, compose(flowFromDest,
+		// flowToDest));
 		return compose(flowFromDest, flowToDest);
 	}
 
@@ -285,21 +297,28 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 
 		if (inst instanceof SSAReturnInstruction) {
 			// only one possible element for returns
-			logger.debug("making a return element for {}", node.getMethod().getSignature());
+			if (logger.isDebugEnabled()) {
+				logger.debug("making a return element for {}", node.getMethod()
+						.getSignature());
+			}
 			elts.add(new ReturnElement());
 			return elts;
 		}
 
 		if (inst instanceof SSAPutInstruction) {
-			final Set<CodeElement> fieldAccessCodeElts = getFieldAccessCodeElts(node, (SSAPutInstruction) inst);
-			logger.debug("put outelts: {}", Arrays.toString(fieldAccessCodeElts.toArray()));
+			final Set<CodeElement> fieldAccessCodeElts = getFieldAccessCodeElts(
+					node, (SSAPutInstruction) inst);
+			if (logger.isDebugEnabled()) {
+				logger.debug("put outelts: {}",
+						Arrays.toString(fieldAccessCodeElts.toArray()));
+			}
 			elts.addAll(fieldAccessCodeElts);
 		}
 
 		if (inst instanceof SSAArrayStoreInstruction) {
 			elts.addAll(getArrayRefCodeElts(node,
 					(SSAArrayStoreInstruction) inst));
-		}			
+		}
 
 		for (int i = 0; i < defNo; i++) {
 			int valNo = inst.getDef(i);
@@ -386,8 +405,10 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 			elts.add(new InstanceKeyElement(ik));
 		} else {
 			for (InstanceKey ik : pointsToSet) {
-				logger.debug("adding elements for field {} on {}",
-						field.getName(), ik.getConcreteType().getName());
+				if (logger.isDebugEnabled()) {
+					logger.debug("adding elements for field {} on {}",
+							field.getName(), ik.getConcreteType().getName());
+				}
 				elts.add(new FieldElement(ik, fieldRef, inst.isStatic()));
 				elts.add(new InstanceKeyElement(ik));
 			}
@@ -412,8 +433,10 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 			elts.add(new InstanceKeyElement(ik));
 		} else {
 			for (InstanceKey ik : pointsToSet) {
-				logger.debug("adding element for array store in {}", ik
-						.getConcreteType().getName());
+				if (logger.isDebugEnabled()) {
+					logger.debug("adding element for array store in {}", ik
+							.getConcreteType().getName());
+				}
 				elts.add(new InstanceKeyElement(ik));
 			}
 		}
@@ -429,31 +452,33 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 			}
 		};
 	}
-	
+
 	/**
 	 * Flow function composition
+	 * 
 	 * @param f
 	 * @param g
-	 * @return { (x, z) | (x, y) \in g, (y, z) \in f } 
+	 * @return { (x, z) | (x, y) \in g, (y, z) \in f }
 	 */
-	private IUnaryFlowFunction compose(final IUnaryFlowFunction f, final IUnaryFlowFunction g) {
+	private IUnaryFlowFunction compose(final IUnaryFlowFunction f,
+			final IUnaryFlowFunction g) {
 		return new IUnaryFlowFunction() {
-			
+
 			@Override
 			public IntSet getTargets(int d1) {
 				final MutableSparseIntSet set = MutableSparseIntSet.makeEmpty();
 				g.getTargets(d1).foreach(new IntSetAction() {
-					
+
 					@Override
 					public void act(int x) {
-						set.addAll(f.getTargets(x));						
+						set.addAll(f.getTargets(x));
 					}
 				});
 				return set;
 			}
 		};
 	}
-	
+
 	/*
 	 * private class UseEltIterator implements Iterator<CodeElement> { private
 	 * int idx = 0; private Iterator<CodeElement> subIt; private final CGNode
