@@ -38,10 +38,11 @@
 package org.scandroid.flow.functions;
 
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.scandroid.domain.CodeElement;
 import org.scandroid.domain.FieldElement;
 import org.scandroid.domain.IFDSTaintDomain;
@@ -52,6 +53,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.ibm.wala.classLoader.IField;
 import com.ibm.wala.dataflow.IFDS.IFlowFunction;
@@ -67,15 +69,12 @@ import com.ibm.wala.ipa.callgraph.propagation.PointerAnalysis;
 import com.ibm.wala.ipa.callgraph.propagation.PointerKey;
 import com.ibm.wala.ipa.cfg.BasicBlockInContext;
 import com.ibm.wala.ssa.ISSABasicBlock;
-import com.ibm.wala.ssa.SSAArrayLoadInstruction;
 import com.ibm.wala.ssa.SSAArrayReferenceInstruction;
 import com.ibm.wala.ssa.SSAArrayStoreInstruction;
 import com.ibm.wala.ssa.SSAFieldAccessInstruction;
 import com.ibm.wala.ssa.SSAGetInstruction;
 import com.ibm.wala.ssa.SSAInstruction;
 import com.ibm.wala.ssa.SSAInvokeInstruction;
-import com.ibm.wala.ssa.SSALoadIndirectInstruction;
-import com.ibm.wala.ssa.SSANewInstruction;
 import com.ibm.wala.ssa.SSAPutInstruction;
 import com.ibm.wala.ssa.SSAReturnInstruction;
 import com.ibm.wala.types.FieldReference;
@@ -94,6 +93,11 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 	private final IFDSTaintDomain<E> domain;
 	private final ISupergraph<BasicBlockInContext<E>, CGNode> graph;
 	private final PointerAnalysis pa;
+	private final IUnaryFlowFunction globalId;
+	private final IUnaryFlowFunction callToReturn;
+	private final IUnaryFlowFunction callNoneToReturn;
+	private final Map<Integer, IUnaryFlowFunction> callFlowFunctions;
+	private final Map<Integer, IUnaryFlowFunction> normalFlowFunctions;
 
 	public static final IntSet EMPTY_SET = new SparseIntSet();
 	public static final IntSet ZERO_SET = SparseIntSet.singleton(0);
@@ -106,10 +110,39 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 		this.domain = domain;
 		this.graph = graph;
 		this.pa = pa;
+		this.globalId = new GlobalIdentityFunction<E>(domain);
+		this.callToReturn = new CallToReturnFunction<E>(domain);
+		this.callNoneToReturn = union(globalId,
+				new CallNoneToReturnFunction<E>(domain));
+		this.callFlowFunctions = Maps.newHashMap();
+		this.normalFlowFunctions = Maps.newHashMap();
+	}
+
+	private static <E extends ISSABasicBlock> Integer fastHash2(
+			BasicBlockInContext<E> block1, BasicBlockInContext<E> block2) {
+		final int x = null == block1 ? 0 : block1.hashCode();
+		final int y = null == block2 ? 0 : block2.hashCode();
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + x;
+		result = prime * result + y;
+		return Integer.valueOf(result);
+
 	}
 
 	@Override
 	public IUnaryFlowFunction getCallFlowFunction(BasicBlockInContext<E> src,
+			BasicBlockInContext<E> dest, BasicBlockInContext<E> ret) {
+		final Integer key = fastHash2(src, dest);
+		IUnaryFlowFunction f = callFlowFunctions.get(key);
+		if (null == f) {
+			f = makeCallFlowFunction(src, dest, ret);
+			callFlowFunctions.put(key, f);
+		}
+		return f;
+	}
+
+	private IUnaryFlowFunction makeCallFlowFunction(BasicBlockInContext<E> src,
 			BasicBlockInContext<E> dest, BasicBlockInContext<E> ret) {
 		logger.debug("getCallFlowFunction");
 		SSAInstruction srcInst = src.getLastInstruction();
@@ -132,7 +165,7 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 			// return new TracingFlowFunction<E>(domain, union(new
 			// GlobalIdentityFunction<E>(domain),
 			// new CallFlowFunction<E>(domain, actualParams)));
-			return union(new GlobalIdentityFunction<E>(domain),
+			return union(globalId,
 					new CallFlowFunction<E>(domain, actualParams));
 		} else {
 			throw new RuntimeException("src block not an invoke instruction");
@@ -143,25 +176,36 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 	public IUnaryFlowFunction getCallNoneToReturnFlowFunction(
 			BasicBlockInContext<E> src, BasicBlockInContext<E> dest) {
 		logger.debug("getNoneToReturnFunction");
-		return union(new GlobalIdentityFunction<E>(domain),
-				new CallNoneToReturnFunction<E>(domain));
+		return callNoneToReturn;
 	}
 
 	@Override
 	public IUnaryFlowFunction getCallToReturnFlowFunction(
 			BasicBlockInContext<E> src, BasicBlockInContext<E> dest) {
 		if (logger.isDebugEnabled()) {
-			logger.debug("getCallToReturnFunction\n\t{}\n\t-> {}", src.getMethod()
-					.getSignature(), dest.getMethod().getSignature());
+			logger.debug("getCallToReturnFunction\n\t{}\n\t-> {}", src
+					.getMethod().getSignature(), dest.getMethod()
+					.getSignature());
 		}
 		// return new TracingFlowFunction<E>(domain, new
 		// CallToReturnFunction<E>(domain));
-		return new CallToReturnFunction<E>(domain);
+		return callToReturn;
 	}
 
 	@Override
 	public IUnaryFlowFunction getNormalFlowFunction(BasicBlockInContext<E> src,
 			BasicBlockInContext<E> dest) {
+		final Integer key = fastHash2(src, dest);
+		IUnaryFlowFunction f = normalFlowFunctions.get(key);
+		if (null == f) {
+			f = makeNormalFlowFunction(src, dest);
+			normalFlowFunctions.put(key, f);
+		}
+		return f;
+	}
+
+	private IUnaryFlowFunction makeNormalFlowFunction(
+			BasicBlockInContext<E> src, BasicBlockInContext<E> dest) {
 		List<UseDefPair> pairs = Lists.newArrayList();
 
 		if (logger.isDebugEnabled()) {
@@ -263,7 +307,7 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 			// if we don't have an invoke, just punt and hope the necessary
 			// information is already in global elements
 			logger.warn("call block null or not an invoke instruction");
-			return new GlobalIdentityFunction<E>(domain);
+			return globalId;
 		}
 
 		// we always need to process the destination instruction
@@ -276,13 +320,12 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 			// no return values, just propagate global information
 			// return new TracingFlowFunction<E>(domain, compose (flowFromDest,
 			// new GlobalIdentityFunction<E>(domain)));
-			return compose(flowFromDest, new GlobalIdentityFunction<E>(domain));
+			return compose(flowFromDest, globalId);
 		}
 
 		// we have a return value, so we need to map any return elements onto
 		// the local element corresponding to the invoke's def
-		final IUnaryFlowFunction flowToDest = union(
-				new GlobalIdentityFunction<E>(domain),
+		final IUnaryFlowFunction flowToDest = union(globalId,
 				new ReturnFlowFunction<E>(domain, invoke.getDef()));
 
 		// return new TracingFlowFunction<E>(domain, compose(flowFromDest,
