@@ -40,19 +40,16 @@ package org.scandroid.domain;
 
 import com.ibm.wala.ipa.callgraph.propagation.InstanceKey;
 import com.ibm.wala.types.FieldReference;
-import com.ibm.wala.types.TypeReference;
 
 public class FieldElement extends CodeElement {
     private FieldReference fieldRef;
     private InstanceKey object;
-    private boolean isStatic;
 //    private TypeReference object;
 
-    public FieldElement(InstanceKey object, FieldReference fieldRef, boolean isStatic)
+    public FieldElement(InstanceKey object, FieldReference fieldRef)
     {
         this.fieldRef = fieldRef;
         this.object = object;
-        this.isStatic = isStatic;
     }
 //    public FieldElement(TypeReference object, String fieldname)
 //    {
@@ -66,10 +63,6 @@ public class FieldElement extends CodeElement {
     
     public FieldReference getRef() {
     	return fieldRef;
-    }
-    
-    public boolean isStatic() {
-    	return isStatic;
     }
 
     @Override

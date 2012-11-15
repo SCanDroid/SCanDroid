@@ -38,73 +38,102 @@
 package org.scandroid.flow.functions;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.scandroid.domain.CodeElement;
 import org.scandroid.domain.DomainElement;
 import org.scandroid.domain.IFDSTaintDomain;
+import org.scandroid.domain.LocalElement;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.ibm.wala.dataflow.IFDS.IUnaryFlowFunction;
 import com.ibm.wala.ssa.ISSABasicBlock;
 import com.ibm.wala.util.intset.IntSet;
 import com.ibm.wala.util.intset.MutableSparseIntSet;
 
-
 /**
  * @author creswick
- *
+ * @author acfoltzer
+ * 
  */
-public class CallFlowFunction <E extends ISSABasicBlock> implements IUnaryFlowFunction {
+public class CallFlowFunction<E extends ISSABasicBlock> implements
+		IUnaryFlowFunction {
+	private static final Logger logger = LoggerFactory
+			.getLogger(CallFlowFunction.class);
+
+	/**
+	 * A map from the code elements of actual parameters, to the set of code
+	 * elements for formal parameters
+	 */
+	private final Map<CodeElement, Set<CodeElement>> paramArgsMap;
 
 	private final IFDSTaintDomain<E> domain;
-	private final List<Set<CodeElement>> actualParams;
-	private final List<Set<CodeElement>> formalParams;
-	
+
 	public CallFlowFunction(IFDSTaintDomain<E> domain,
-		List<Set<CodeElement>> actualParams, List<Set<CodeElement>> formalParams) {
+			List<CodeElement> actualParams) {
 		this.domain = domain;
-		this.actualParams = actualParams;
-		this.formalParams = formalParams;
+
+		final int numParams = actualParams.size();
+		this.paramArgsMap = Maps.newHashMapWithExpectedSize(numParams);
+		for (int i = 0; i < numParams; i++) {
+			// add a mapping for each parameter
+			final CodeElement actual = actualParams.get(i);
+			if (!(actual instanceof LocalElement)) {
+				logger.warn("non-local code element in actual params list");
+			}
+			final CodeElement formal = new LocalElement(i + 1); // +1 for SSA
+			Set<CodeElement> existingFormals = paramArgsMap.get(actual);
+			if (null == existingFormals) {
+				existingFormals = Sets.newHashSetWithExpectedSize(numParams);
+			}
+			existingFormals.add(formal);
+			paramArgsMap.put(actual, existingFormals);
+		}
 	}
-	
-	/* (non-Javadoc)
+
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see com.ibm.wala.dataflow.IFDS.IUnaryFlowFunction#getTargets(int)
 	 */
 	@Override
 	public IntSet getTargets(int d1) {
 		if (0 == d1) {
 			return TaintTransferFunctions.ZERO_SET;
-		} 
-		DomainElement de = domain.getMappedObject(d1);
-        MutableSparseIntSet set = MutableSparseIntSet.makeEmpty();
-    	
-    	// parameter lists for static methods start at 0,
-    	// but for non-static methods they start at 1. (the 0-index param is the
-    	// reference object)
-    	//int i = invokeStatic ? 0 : 1;
-    	
-    	// actually, I think the static distinction is moot, since the reference
-    	// object is probably treated like a normal param in the SSAInstructions
-		int i=0;
-		for (Set<CodeElement> actParams : actualParams) {
-			for (CodeElement actParam : actParams) {
-				if (!actParam.equals(de.codeElement)) {
-					continue;
-				}
-				
-				// the query element is a parameter to the function, so
-				// it passes through.  We need to find the domain element(s)
-				// for the corresponding formal parameter.
-				Set<CodeElement> formParams = formalParams.get(i);
-				
-				for (CodeElement fParam : formParams) {
-					int idx = domain.getMappedIndex(
-							new DomainElement(fParam, de.taintSource));
-					set.add(idx);
-				}
-			}
-			i++;
 		}
+		DomainElement de = domain.getMappedObject(d1);
+		MutableSparseIntSet set = MutableSparseIntSet.makeEmpty();
+
+		/*
+		 * We're in the situation of calling a function:
+		 * 
+		 * f(x, y, z)
+		 * 
+		 * And determining how taints flow from that call site to the entry of
+		 * the function
+		 * 
+		 * ... f(X x, Y y, Z z) { ... }
+		 * 
+		 * Our goals are twofold: 1. Propagate taints from the actual parameter
+		 * x to the formal parameter x 2. Exclude any other non-local
+		 * information from propagating to callee
+		 * 
+		 * Since we're unioning the result of this with the
+		 * GlobalIdentityFunction, we don't have to worry about 2 for this
+		 * IntSet.
+		 */
+
+		final Set<CodeElement> formals = paramArgsMap.get(de.codeElement);
+		if (null != formals) {
+			for (CodeElement formal : formals) {
+				set.add(domain.getMappedIndex(new DomainElement(formal,
+						de.taintSource)));
+			}
+		}		
 		return set;
 	}
 }

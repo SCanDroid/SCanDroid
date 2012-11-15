@@ -313,7 +313,7 @@ implements IFlowFunctionMap<BasicBlockInContext<E>> {
 				OrdinalSet<InstanceKey> m = pa.getPointsToSet(pk);
 				if (m != null) {
 					for (InstanceKey instanceKey : m) {
-						elements.add(new FieldElement(instanceKey, pi.getDeclaredField(), isStatic));
+						elements.add(new FieldElement(instanceKey, pi.getDeclaredField()));
 						elements.add(new InstanceKeyElement(instanceKey));
 					}
 				}
@@ -354,7 +354,7 @@ implements IFlowFunctionMap<BasicBlockInContext<E>> {
 				OrdinalSet<InstanceKey> m = pa.getPointsToSet(pk);
 				if(m != null) {
 					for (InstanceKey instanceKey : m) {
-						elements.add(new FieldElement(instanceKey, declaredField, isStatic));
+						elements.add(new FieldElement(instanceKey, declaredField));
 						elements.add(new InstanceKeyElement(instanceKey));
 					}
 				}

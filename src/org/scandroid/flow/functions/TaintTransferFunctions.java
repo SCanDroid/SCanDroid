@@ -37,18 +37,23 @@
  */
 package org.scandroid.flow.functions;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.scandroid.domain.CodeElement;
 import org.scandroid.domain.FieldElement;
 import org.scandroid.domain.IFDSTaintDomain;
 import org.scandroid.domain.InstanceKeyElement;
+import org.scandroid.domain.LocalElement;
 import org.scandroid.domain.ReturnElement;
+import org.scandroid.domain.StaticFieldElement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.ibm.wala.classLoader.IField;
 import com.ibm.wala.dataflow.IFDS.IFlowFunction;
@@ -64,17 +69,19 @@ import com.ibm.wala.ipa.callgraph.propagation.PointerAnalysis;
 import com.ibm.wala.ipa.callgraph.propagation.PointerKey;
 import com.ibm.wala.ipa.cfg.BasicBlockInContext;
 import com.ibm.wala.ssa.ISSABasicBlock;
-import com.ibm.wala.ssa.SSAArrayLoadInstruction;
 import com.ibm.wala.ssa.SSAArrayReferenceInstruction;
 import com.ibm.wala.ssa.SSAArrayStoreInstruction;
 import com.ibm.wala.ssa.SSAFieldAccessInstruction;
 import com.ibm.wala.ssa.SSAGetInstruction;
 import com.ibm.wala.ssa.SSAInstruction;
+import com.ibm.wala.ssa.SSAInvokeInstruction;
 import com.ibm.wala.ssa.SSAPutInstruction;
 import com.ibm.wala.ssa.SSAReturnInstruction;
 import com.ibm.wala.types.FieldReference;
 import com.ibm.wala.types.TypeReference;
 import com.ibm.wala.util.intset.IntSet;
+import com.ibm.wala.util.intset.IntSetAction;
+import com.ibm.wala.util.intset.MutableSparseIntSet;
 import com.ibm.wala.util.intset.OrdinalSet;
 import com.ibm.wala.util.intset.SparseIntSet;
 
@@ -86,6 +93,11 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 	private final IFDSTaintDomain<E> domain;
 	private final ISupergraph<BasicBlockInContext<E>, CGNode> graph;
 	private final PointerAnalysis pa;
+	private final IUnaryFlowFunction globalId;
+	private final IUnaryFlowFunction callToReturn;
+	private final IUnaryFlowFunction callNoneToReturn;
+	private final Map<Integer, IUnaryFlowFunction> callFlowFunctions;
+	private final Map<Integer, IUnaryFlowFunction> normalFlowFunctions;
 
 	public static final IntSet EMPTY_SET = new SparseIntSet();
 	public static final IntSet ZERO_SET = SparseIntSet.singleton(0);
@@ -98,78 +110,164 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 		this.domain = domain;
 		this.graph = graph;
 		this.pa = pa;
+		this.globalId = new GlobalIdentityFunction<E>(domain);
+		this.callToReturn = new CallToReturnFunction<E>(domain);
+		this.callNoneToReturn = union(globalId,
+				new CallNoneToReturnFunction<E>(domain));
+		this.callFlowFunctions = Maps.newHashMap();
+		this.normalFlowFunctions = Maps.newHashMap();
+	}
+
+	private static <E extends ISSABasicBlock> Integer fastHash2(
+			BasicBlockInContext<E> block1, BasicBlockInContext<E> block2) {
+		final int x = null == block1 ? 0 : block1.hashCode();
+		final int y = null == block2 ? 0 : block2.hashCode();
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + x;
+		result = prime * result + y;
+		return Integer.valueOf(result);
+
 	}
 
 	@Override
 	public IUnaryFlowFunction getCallFlowFunction(BasicBlockInContext<E> src,
 			BasicBlockInContext<E> dest, BasicBlockInContext<E> ret) {
+		final Integer key = fastHash2(src, dest);
+		IUnaryFlowFunction f = callFlowFunctions.get(key);
+		if (null == f) {
+			f = makeCallFlowFunction(src, dest, ret);
+			callFlowFunctions.put(key, f);
+		}
+		return f;
+	}
+
+	private IUnaryFlowFunction makeCallFlowFunction(BasicBlockInContext<E> src,
+			BasicBlockInContext<E> dest, BasicBlockInContext<E> ret) {
 		logger.debug("getCallFlowFunction");
 		SSAInstruction srcInst = src.getLastInstruction();
 		if (null == srcInst) {
-			return IDENTITY_FN;
-		}
-		SSAInstruction destInst = dest.getLastInstruction();
-		if (null == destInst) {
+			logger.warn("null source for a call");
 			return IDENTITY_FN;
 		}
 
-		CGNode node = src.getNode();
-		// each use in an invoke instruction is a parameter to the invoked
-		// method,
-		// these are the uses:
-		List<Set<CodeElement>> actualParams = getOrdInCodeElts(node, srcInst);
-		List<Set<CodeElement>> formalParams = getOrdInCodeElts(node, destInst);
-
-		return union(new GlobalIdentityFunction<E>(domain),
-				new CallFlowFunction<E>(domain, actualParams, formalParams));
+		if (srcInst instanceof SSAInvokeInstruction) {
+			// build list of actual parameter code elements, and return a
+			// function
+			final int numParams = ((SSAInvokeInstruction) srcInst)
+					.getNumberOfParameters();
+			List<CodeElement> actualParams = Lists
+					.newArrayListWithCapacity(numParams);
+			for (int i = 0; i < numParams; i++) {
+				actualParams.add(i, new LocalElement(srcInst.getUse(i)));
+			}
+			logger.debug("actual param list length: {}", actualParams);
+			// return new TracingFlowFunction<E>(domain, union(new
+			// GlobalIdentityFunction<E>(domain),
+			// new CallFlowFunction<E>(domain, actualParams)));
+			return union(globalId,
+					new CallFlowFunction<E>(domain, actualParams));
+		} else {
+			throw new RuntimeException("src block not an invoke instruction");
+		}
 	}
 
 	@Override
 	public IUnaryFlowFunction getCallNoneToReturnFlowFunction(
 			BasicBlockInContext<E> src, BasicBlockInContext<E> dest) {
-		logger.debug("getNoneToReturnFunction");
-		return union(new GlobalIdentityFunction<E>(domain),
-				new CallNoneToReturnFunction<E>(domain));
+		if (logger.isDebugEnabled()) {
+			logger.debug("getNoneToReturnFunction");
+			logger.debug("callee signature: {}", ((SSAInvokeInstruction) src
+					.getLastInstruction()).getDeclaredTarget().getSignature());
+		}
+		// return callNoneToReturn;
+		/*
+		 * TODO: is this right?
+		 * 
+		 * The original callNoneToReturn impl just adds taints to absolutely
+		 * everything in the domain. This seems like the wrong approach, but
+		 * it's unclear what would be correct...
+		 * 
+		 * Switching this to the identity for now improves performance
+		 * drastically.
+		 */
+		return IDENTITY_FN;
 	}
 
 	@Override
 	public IUnaryFlowFunction getCallToReturnFlowFunction(
 			BasicBlockInContext<E> src, BasicBlockInContext<E> dest) {
-		logger.debug("getCallToReturnFunction\n\t{}\n\t-> {}", src.getMethod()
-				.getSignature(), dest.getMethod().getSignature());
-		return union(new GlobalIdentityFunction<E>(domain),
-				new CallToReturnFunction<E>(domain));
+		if (logger.isDebugEnabled()) {
+			logger.debug("getCallToReturnFunction\n\t{}\n\t-> {}", src
+					.getMethod().getSignature(), dest.getMethod()
+					.getSignature());
+		}
+		// return new TracingFlowFunction<E>(domain, new
+		// CallToReturnFunction<E>(domain));
+		return callToReturn;
 	}
 
 	@Override
 	public IUnaryFlowFunction getNormalFlowFunction(BasicBlockInContext<E> src,
 			BasicBlockInContext<E> dest) {
+		final Integer key = fastHash2(src, dest);
+		IUnaryFlowFunction f = normalFlowFunctions.get(key);
+		if (null == f) {
+			f = makeNormalFlowFunction(src, dest);
+			normalFlowFunctions.put(key, f);
+		}
+		return f;
+	}
+
+	private IUnaryFlowFunction makeNormalFlowFunction(
+			BasicBlockInContext<E> src, BasicBlockInContext<E> dest) {
 		List<UseDefPair> pairs = Lists.newArrayList();
 
-		logger.debug("getNormalFlowFunction {}", dest.getMethod()
-				.getSignature());
+		if (logger.isDebugEnabled()) {
+			logger.debug("getNormalFlowFunction {}", dest.getMethod()
+					.getSignature());
+		}
 
 		// we first try to process the destination instruction
 		SSAInstruction inst = dest.getLastInstruction();
 		CGNode node = dest.getNode();
 
+		// if (null == inst) {
+		// final SSAInstruction srcInst = src.getLastInstruction();
+		// if (null == srcInst) {
+		// logger.debug("Using identity fn. for normal flow (src and dest instructions null)");
+		// return IDENTITY_FN;
+		// }
+		// // if it's null, though, we'll process the src instruction.
+		// // this *should* ensure we don't process the same instruction
+		// // mulitple times
+		// inst = srcInst;
+		// node = src.getNode();
+		// }
+
 		if (null == inst) {
-			final SSAInstruction srcInst = src.getLastInstruction();
-			if (null == srcInst) {
-				logger.warn("Using identity fn. for normal flow (src and dest instructions null)");
-				return IDENTITY_FN;
-			}
-			// if it's null, though, we'll process the src instruction.
-			// this *should* ensure we don't process the same instruction
-			// mulitple times
-			inst = srcInst;
-			node = src.getNode();
+			// final SSAInstruction srcInst = src.getLastInstruction();
+			// if (null == srcInst) {
+			logger.debug("Using identity fn. for normal flow (dest instruction null)");
+			return IDENTITY_FN;
+			// }
+			// // if it's null, though, we'll process the src instruction.
+			// // this *should* ensure we don't process the same instruction
+			// // mulitple times
+			// inst = srcInst;
+			// node = src.getNode();
 		}
 
-		logger.debug("\tinstruction: {}", inst.toString());
+		logger.debug("\tinstruction: {}", inst);
 
 		Iterable<CodeElement> inCodeElts = getInCodeElts(node, inst);
 		Iterable<CodeElement> outCodeElts = getOutCodeElts(node, inst);
+		if (!inCodeElts.iterator().hasNext()) {
+			logger.debug("no input elements for {}", inst);
+		}
+		if (!outCodeElts.iterator().hasNext()) {
+			logger.debug("no output elements for {}", inst);
+		}
 
 		// for now, take the Cartesian product of the inputs and outputs:
 		// TODO specialize this on a per-instruction basis to improve precision.
@@ -184,88 +282,70 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 		return new PairBasedFlowFunction<E>(domain, pairs);
 	}
 
-	/**
-	 * Sometimes in normal flows, we can have a source block, but a null
-	 * destination block. This can happen, e.g., when we're returning off the
-	 * end of the callgraph
+	/*
+	 * The usual arguments:
 	 * 
-	 * @param src
-	 *            block, which should be an SSAReturnInstruction
-	 * @return
+	 * call: the invoke instruction that took us into this method
+	 * 
+	 * src: a block that's the postdominator of this method, usually with no
+	 * instructions
+	 * 
+	 * dest: whatever instruction followed the invoke instruction in call
+	 * 
+	 * What we want to accomplish:
+	 * 
+	 * 1. Map taints from the value being returned to a LocalElement in the
+	 * caller's context
+	 * 
+	 * 2. Pass through any global information that the callee may have changed
+	 * 
+	 * 3. Process ins/outs of dest block as well (it will never be the dest of a
+	 * NormalFlowFunction)
+	 * 
+	 * @see
+	 * com.ibm.wala.dataflow.IFDS.IFlowFunctionMap#getReturnFlowFunction(java
+	 * .lang.Object, java.lang.Object, java.lang.Object)
 	 */
-	private IUnaryFlowFunction hangingReturn(BasicBlockInContext<E> src) {
-		SSAReturnInstruction inst = (SSAReturnInstruction) src
-				.getLastInstruction();
-		CGNode node = src.getNode();
-		Iterable<CodeElement> inCodeElts = getInCodeElts(node, inst);
-		Iterable<CodeElement> outCodeElts = getOutCodeElts(node, inst);
-
-		List<UseDefPair> pairs = Lists.newArrayList();
-		for (CodeElement use : inCodeElts) {
-			for (CodeElement def : outCodeElts) {
-				pairs.add(new UseDefPair(use, def));
-			}
-		}
-
-		// globals may be redefined here, so we can't union with the globals ID
-		// flow function, as we often do elsewhere.
-		return new PairBasedFlowFunction<E>(domain, pairs);
-	}
-
 	@Override
 	public IFlowFunction getReturnFlowFunction(BasicBlockInContext<E> call,
 			BasicBlockInContext<E> src, BasicBlockInContext<E> dest) {
-		logger.debug("getReturnFlowFunction\n\t{}\n\t-> {}\n\t-> {}", call
-				.getNode().getMethod().getSignature(), src.getNode()
-				.getMethod().getSignature(), dest.getNode().getMethod()
-				.getSignature());
-
-		// We need to map all uses in the return instruction (src) to these
-		// return values.
-		SSAInstruction srcInst = src.getLastInstruction();
-		// data flows from uses in src to dests in call, locals map to {},
-		// globals pass through.
-		if (null == srcInst) {
-			logger.warn("null srcInst, {} pred nodes",
-					graph.getPredNodeCount(src));
-			logger.warn("Using identity fn. for return flow (srcInst==null)");
-			return IDENTITY_FN;
+		if (logger.isDebugEnabled()) {
+			logger.debug("getReturnFlowFunction\n\t{}\n\t-> {}\n\t-> {}", call
+					.getNode().getMethod().getSignature(), src.getNode()
+					.getMethod().getSignature(), dest.getNode().getMethod()
+					.getSignature());
+			logger.trace("\t{} -> {} -> {}", call.getLastInstruction(),
+					src.getLastInstruction(), dest.getLastInstruction());
+		}
+		final SSAInstruction inst = call.getLastInstruction();
+		if (null == inst || !(inst instanceof SSAInvokeInstruction)) {
+			// if we don't have an invoke, just punt and hope the necessary
+			// information is already in global elements
+			logger.warn("call block null or not an invoke instruction");
+			return globalId;
 		}
 
-		Iterable<CodeElement> returnedVals = getInCodeElts(src.getNode(),
-				srcInst);
+		// we always need to process the destination instruction
+		final IUnaryFlowFunction flowFromDest = getNormalFlowFunction(null,
+				dest);
 
-		// even if we don't know our dest, we want to flow into a return element
-		// in case this return is a sink
-		Iterable<CodeElement> baseReturn = Sets
-				.newHashSet((CodeElement) new ReturnElement());
-		SSAInstruction destInst = dest.getLastInstruction();
-		if (null != destInst) {
-			// see if the return value is assigned to anything:
-			int callDefs = destInst.getNumberOfDefs();
+		final SSAInvokeInstruction invoke = (SSAInvokeInstruction) inst;
 
-			if (0 == callDefs) {
-				logger.warn("No return defs");
-				// this situation should actually be handled normally by
-				// getOutCodeElts,
-				// but I'm leaving the error msg here just in case
-
-				// nothing is returned, so no flows exist as a
-				// result of this instruction. (no flows other than globals,
-				// that is)
-				// return new GlobalIdentityFunction<E>(domain);
-			}
-
-			Iterable<CodeElement> returnedLocs = getOutCodeElts(dest.getNode(),
-					destInst);
-			return union(
-					new GlobalIdentityFunction<E>(domain),
-					union(new ReturnFlowFunction<E>(domain, returnedVals,
-							returnedLocs), new ReturnFlowFunction<E>(domain,
-							returnedVals, baseReturn)));
+		if (invoke.getNumberOfReturnValues() == 0) {
+			// no return values, just propagate global information
+			// return new TracingFlowFunction<E>(domain, compose (flowFromDest,
+			// new GlobalIdentityFunction<E>(domain)));
+			return compose(flowFromDest, globalId);
 		}
-		return union(new GlobalIdentityFunction<E>(domain),
-				new ReturnFlowFunction<E>(domain, returnedVals, baseReturn));
+
+		// we have a return value, so we need to map any return elements onto
+		// the local element corresponding to the invoke's def
+		final IUnaryFlowFunction flowToDest = union(globalId,
+				new ReturnFlowFunction<E>(domain, invoke.getDef()));
+
+		// return new TracingFlowFunction<E>(domain, compose(flowFromDest,
+		// flowToDest));
+		return compose(flowFromDest, flowToDest);
 	}
 
 	private Iterable<CodeElement> getOutCodeElts(CGNode node,
@@ -275,13 +355,22 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 
 		if (inst instanceof SSAReturnInstruction) {
 			// only one possible element for returns
-			logger.debug("making a return element for {}", inst.toString());
+			if (logger.isDebugEnabled()) {
+				logger.debug("making a return element for {}", node.getMethod()
+						.getSignature());
+			}
 			elts.add(new ReturnElement());
 			return elts;
 		}
 
 		if (inst instanceof SSAPutInstruction) {
-			elts.addAll(getFieldAccessCodeElts(node, (SSAPutInstruction) inst));
+			final Set<CodeElement> fieldAccessCodeElts = getFieldAccessCodeElts(
+					node, (SSAPutInstruction) inst);
+			if (logger.isDebugEnabled()) {
+				logger.debug("put outelts: {}",
+						Arrays.toString(fieldAccessCodeElts.toArray()));
+			}
+			elts.addAll(fieldAccessCodeElts);
 		}
 
 		if (inst instanceof SSAArrayStoreInstruction) {
@@ -355,31 +444,43 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 
 	private Set<CodeElement> getFieldAccessCodeElts(CGNode node,
 			SSAFieldAccessInstruction inst) {
+		if (inst.isStatic()) {
+			return getStaticFieldAccessCodeElts(node, inst);
+		}
+		
 		Set<CodeElement> elts = Sets.newHashSet();
 		final FieldReference fieldRef = inst.getDeclaredField();
 		final IField field = node.getClassHierarchy().resolveField(fieldRef);
-		PointerKey pk;
-		if (inst.isStatic()) {
-			pk = pa.getHeapModel().getPointerKeyForStaticField(field);
-		} else {
-			pk = pa.getHeapModel().getPointerKeyForLocal(node, inst.getRef());
-		}
+		PointerKey pk = pa.getHeapModel().getPointerKeyForLocal(node, inst.getRef());
+		
 		final OrdinalSet<InstanceKey> pointsToSet = pa.getPointsToSet(pk);
 		if (pointsToSet.isEmpty()) {
-			logger.warn(
+			logger.debug(
 					"pointsToSet empty for ref of {}, creating InstanceKey manually",
 					inst);
 			InstanceKey ik = new ConcreteTypeKey(field.getDeclaringClass());
-			elts.add(new FieldElement(ik, fieldRef, inst.isStatic()));
+			elts.add(new FieldElement(ik, fieldRef));
 			elts.add(new InstanceKeyElement(ik));
 		} else {
 			for (InstanceKey ik : pointsToSet) {
-				logger.debug("adding elements for field {} on {}",
-						field.getName(), ik.getConcreteType().getName());
-				elts.add(new FieldElement(ik, fieldRef, inst.isStatic()));
+				if (logger.isDebugEnabled()) {
+					logger.debug("adding elements for field {} on {}",
+							field.getName(), ik.getConcreteType().getName());
+				}
+				elts.add(new FieldElement(ik, fieldRef));
 				elts.add(new InstanceKeyElement(ik));
 			}
 		}
+		return elts;
+	}
+	
+	private Set<CodeElement> getStaticFieldAccessCodeElts(CGNode node,
+			SSAFieldAccessInstruction inst) {
+		Set<CodeElement> elts = Sets.newHashSet();
+		final FieldReference fieldRef = inst.getDeclaredField();
+		elts.add(new StaticFieldElement(fieldRef));
+		// TODO: what about tainting the declaring class?
+
 		return elts;
 	}
 
@@ -390,7 +491,7 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 				inst.getArrayRef());
 		final OrdinalSet<InstanceKey> pointsToSet = pa.getPointsToSet(pk);
 		if (pointsToSet.isEmpty()) {
-			logger.warn(
+			logger.debug(
 					"pointsToSet empty for ref of {}, creating InstanceKey manually",
 					inst);
 			TypeReference arrayType = TypeReference.findOrCreateArrayOf(inst
@@ -400,25 +501,13 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 			elts.add(new InstanceKeyElement(ik));
 		} else {
 			for (InstanceKey ik : pointsToSet) {
-				logger.debug("adding element for array store in {}", ik
-						.getConcreteType().getName());
+				if (logger.isDebugEnabled()) {
+					logger.debug("adding element for array store in {}", ik
+							.getConcreteType().getName());
+				}
 				elts.add(new InstanceKeyElement(ik));
 			}
 		}
-		return elts;
-	}
-
-	private List<Set<CodeElement>> getOrdInCodeElts(CGNode node,
-			SSAInstruction inst) {
-		int useNo = inst.getNumberOfUses();
-		List<Set<CodeElement>> elts = Lists.newArrayList();
-
-		for (int i = 0; i < useNo; i++) {
-			int valNo = inst.getUse(i);
-
-			elts.add(CodeElement.valueElements(pa, node, valNo));
-		}
-
 		return elts;
 	}
 
@@ -431,6 +520,33 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 			}
 		};
 	}
+
+	/**
+	 * Flow function composition
+	 * 
+	 * @param f
+	 * @param g
+	 * @return { (x, z) | (x, y) \in g, (y, z) \in f }
+	 */
+	private IUnaryFlowFunction compose(final IUnaryFlowFunction f,
+			final IUnaryFlowFunction g) {
+		return new IUnaryFlowFunction() {
+
+			@Override
+			public IntSet getTargets(int d1) {
+				final MutableSparseIntSet set = MutableSparseIntSet.makeEmpty();
+				g.getTargets(d1).foreach(new IntSetAction() {
+
+					@Override
+					public void act(int x) {
+						set.addAll(f.getTargets(x));
+					}
+				});
+				return set;
+			}
+		};
+	}
+
 	/*
 	 * private class UseEltIterator implements Iterator<CodeElement> { private
 	 * int idx = 0; private Iterator<CodeElement> subIt; private final CGNode

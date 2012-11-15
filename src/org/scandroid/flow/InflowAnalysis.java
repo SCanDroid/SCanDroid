@@ -223,9 +223,9 @@ public class InflowAnalysis <E extends ISSABasicBlock> {
         if (!ssAL.isEmpty())
         	processFunctionCalls(taintMap, ssAL, graph, pa, cha, cg);
 
-        logger.debug("************");
-        logger.debug("* Results: *");
-        logger.debug("************");
+        logger.info("************");
+        logger.info("* Results: *");
+        logger.info("************");
         for(Entry<BasicBlockInContext<E>, Map<FlowType<E>,Set<CodeElement>>> e:taintMap.entrySet())
         {
             for(Entry<FlowType<E>,Set<CodeElement>> e2:e.getValue().entrySet())

@@ -75,9 +75,11 @@ import ch.qos.logback.classic.Level;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.ibm.wala.cfg.ControlFlowGraph;
 import com.ibm.wala.classLoader.IClass;
 import com.ibm.wala.classLoader.IClassLoader;
 import com.ibm.wala.classLoader.IMethod;
+import com.ibm.wala.dataflow.IFDS.ICFGSupergraph;
 import com.ibm.wala.dataflow.IFDS.TabulationResult;
 import com.ibm.wala.ipa.callgraph.AnalysisScope;
 import com.ibm.wala.ipa.callgraph.CGNode;
@@ -85,11 +87,16 @@ import com.ibm.wala.ipa.callgraph.CallGraphBuilderCancelException;
 import com.ibm.wala.ipa.callgraph.Entrypoint;
 import com.ibm.wala.ipa.callgraph.impl.DefaultEntrypoint;
 import com.ibm.wala.ipa.callgraph.propagation.InstanceKey;
+import com.ibm.wala.ipa.callgraph.propagation.PointerKey;
 import com.ibm.wala.ipa.cfg.BasicBlockInContext;
 import com.ibm.wala.ipa.cha.ClassHierarchy;
 import com.ibm.wala.ipa.cha.ClassHierarchyException;
+import com.ibm.wala.ssa.SSAInstruction;
 import com.ibm.wala.ssa.analysis.IExplodedBasicBlock;
 import com.ibm.wala.types.TypeName;
+import com.ibm.wala.util.WalaException;
+import com.ibm.wala.viz.DotUtil;
+import com.ibm.wala.viz.NodeDecorator;
 
 
 @RunWith(Parameterized.class)
@@ -110,6 +117,8 @@ public class DataflowTest {
 	private static final String TEST_DATA_DIR = "data/testdata/";
 	private static final String TEST_JAR = TEST_DATA_DIR
 			+ "testJar-1.0-SNAPSHOT.jar";
+
+	private static final boolean DEBUG_CFG = false;
 	
 	/**
      * Hack alert: since @Parameters-annotated methods are run before every
@@ -124,6 +133,7 @@ public class DataflowTest {
         List<Object[]> entrypoints = Lists.newArrayList();
 
         checklist = gold.expectedMethods();
+        final URI summaries = DataflowTest.class.getResource("/data/MethodSummaries.xml").toURI();
         
         analysisContext = new AndroidAnalysisContext(
                 new DefaultSCanDroidOptions() {
@@ -134,7 +144,7 @@ public class DataflowTest {
 
                     @Override
                     public URI getSummariesURI() {
-                        return null;
+                        return summaries;
                     }
 
                     @Override
@@ -242,10 +252,47 @@ public class DataflowTest {
                         return Lists.newArrayList(entrypoint);
                     }
                 });
-        for (CGNode node : ctx.cg.getNodes(entrypoint.getMethod().getReference())) {
-        	logger.debug(Arrays.toString(node.getIR().getInstructions()));
-        }
-        ISpecs specs = TestSpecs.specsFromDescriptor(ctx.getClassHierarchy(), entrypoint.getMethod().getSignature());
+//        logger.warn("Heap dump:");
+//        for (PointerKey pk : ctx.pa.getPointerKeys()) {
+//        	logger.warn("{}", pk);
+//        	for (InstanceKey ik : ctx.pa.getPointsToSet(pk)) {
+//        		logger.warn("\t{}", ik);
+//        	}
+//        }
+        if (DEBUG_CFG) {
+			for (CGNode node : ctx.cg.getNodes(entrypoint.getMethod().getReference())) {
+				logger.debug(Arrays.toString(node.getIR().getInstructions()));
+				ICFGSupergraph graph = (ICFGSupergraph) ctx.graph;
+				ControlFlowGraph<SSAInstruction, IExplodedBasicBlock> cfg = graph.getCFG(graph.getLocalBlock(node, 0));
+				final String name = entrypoint.getMethod().getName().toString();
+				logger.debug("outputting full graph dot to {}", name + ".full.dot");
+				DotUtil.writeDotFile(graph, new NodeDecorator() {
+					
+					@Override
+					public String getLabel(Object o) throws WalaException {
+						BasicBlockInContext<IExplodedBasicBlock> block = (BasicBlockInContext<IExplodedBasicBlock>) o;
+						final SSAInstruction inst = block.getLastInstruction();
+						final String instString = inst == null ? "NULL" : inst.toString();
+						String label = String.format("Method %s\nBlock %d: %s", block.getMethod().getSignature(), block.getNumber(), instString);
+						return label;
+					}
+				}, name, name + ".full.dot");
+				
+				logger.debug("outputting method graph dot to {}", name + ".dot");
+				DotUtil.writeDotFile(cfg, new NodeDecorator() {
+					
+					@Override
+					public String getLabel(Object o) throws WalaException {
+						IExplodedBasicBlock block = (IExplodedBasicBlock) o;
+						final SSAInstruction inst = block.getLastInstruction();
+						final String instString = inst == null ? "NULL" : inst.toString();
+						String label = String.format("Block %d: %s", block.getNumber(), instString);
+						return label;
+					}
+				}, name, name + ".dot");
+			}
+		}
+		ISpecs specs = TestSpecs.specsFromDescriptor(ctx.getClassHierarchy(), entrypoint.getMethod().getSignature());
 
         Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> dfResults =
                 runDFAnalysis(ctx, specs);
@@ -272,7 +319,7 @@ public class DataflowTest {
         Map<BasicBlockInContext<IExplodedBasicBlock>, Map<FlowType<IExplodedBasicBlock>, Set<CodeElement>>> initialTaints = InflowAnalysis
                 .analyze(cgContext, new HashMap<InstanceKey, String>(), specs);
 
-        System.out.println("  InitialTaints: " + initialTaints);
+        logger.debug("  InitialTaints: {}", initialTaints);
 
         IFDSTaintDomain<IExplodedBasicBlock> domain = new IFDSTaintDomain<IExplodedBasicBlock>();
         TabulationResult<BasicBlockInContext<IExplodedBasicBlock>, CGNode, DomainElement> flowResult = FlowAnalysis

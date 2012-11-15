@@ -65,4 +65,8 @@ public class InstanceKeyElement extends CodeElement {
     {
         return "InstanceKeyElement("+ik+")";
     }
+    
+    public InstanceKey getInstanceKey() {
+		return ik;
+	}
 }

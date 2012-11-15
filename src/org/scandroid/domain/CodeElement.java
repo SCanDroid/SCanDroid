@@ -39,15 +39,10 @@
 package org.scandroid.domain;
 
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 
 import com.ibm.wala.ipa.callgraph.CGNode;
-import com.ibm.wala.ipa.callgraph.propagation.InstanceKey;
-import com.ibm.wala.ipa.callgraph.propagation.LocalPointerKey;
 import com.ibm.wala.ipa.callgraph.propagation.PointerAnalysis;
-import com.ibm.wala.ipa.callgraph.propagation.PointerKey;
-import com.ibm.wala.util.intset.OrdinalSet;
 
 public abstract class CodeElement {
     /* For a given value number, and enclosing call graph node, yield
@@ -57,13 +52,20 @@ public abstract class CodeElement {
     	//System.out.println("ValueNumber: " + valueNumber + ", Node: " + node.getMethod().getSignature());
         Set<CodeElement> elements = new HashSet<CodeElement>();
         elements.add(new LocalElement(valueNumber));
-        PointerKey pk = new LocalPointerKey(node, valueNumber);
-        OrdinalSet<InstanceKey> m = pa.getPointsToSet(pk);
-        if(m != null) {
-            for(Iterator<InstanceKey> keyIter = m.iterator();keyIter.hasNext();) {
-                elements.add(new InstanceKeyElement(keyIter.next()));
-            }
-        }
+//        PointerKey pk = new LocalPointerKey(node, valueNumber);
+//        OrdinalSet<InstanceKey> m = pa.getPointsToSet(pk);
+//        if(m != null) {
+//            for(Iterator<InstanceKey> keyIter = m.iterator();keyIter.hasNext();) {
+//                elements.add(new InstanceKeyElement(keyIter.next()));
+//            }
+//        }
         return elements;
     }
+    
+    @Override
+    public abstract boolean equals(Object obj);
+    
+    @Override
+    public abstract int hashCode();
+    
 }

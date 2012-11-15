@@ -42,19 +42,27 @@ import java.util.Map;
 import java.util.Set;
 
 import org.scandroid.domain.CodeElement;
+import org.scandroid.domain.InstanceKeyElement;
 import org.scandroid.flow.InflowAnalysis;
 import org.scandroid.flow.types.FlowType;
 import org.scandroid.flow.types.ParameterFlow;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import com.ibm.wala.classLoader.IClass;
 import com.ibm.wala.classLoader.IMethod;
 import com.ibm.wala.dataflow.IFDS.ISupergraph;
 import com.ibm.wala.ipa.callgraph.CGNode;
 import com.ibm.wala.ipa.callgraph.CallGraph;
-import com.ibm.wala.ipa.callgraph.impl.Everywhere;
+import com.ibm.wala.ipa.callgraph.propagation.ConcreteTypeKey;
+import com.ibm.wala.ipa.callgraph.propagation.InstanceKey;
 import com.ibm.wala.ipa.callgraph.propagation.PointerAnalysis;
+import com.ibm.wala.ipa.callgraph.propagation.PointerKey;
 import com.ibm.wala.ipa.cfg.BasicBlockInContext;
 import com.ibm.wala.ssa.ISSABasicBlock;
 import com.ibm.wala.ssa.SSAInvokeInstruction;
+import com.ibm.wala.types.TypeReference;
+import com.ibm.wala.util.intset.OrdinalSet;
 
 
 /**
@@ -66,6 +74,7 @@ import com.ibm.wala.ssa.SSAInvokeInstruction;
  * 
  */
 public class EntryArgSourceSpec extends SourceSpec {
+	private static final Logger logger = LoggerFactory.getLogger(EntryArgSourceSpec.class);
 	
 	public EntryArgSourceSpec(MethodNamePattern name, int[] args) {
         namePattern = name;
@@ -81,7 +90,24 @@ public class EntryArgSourceSpec extends SourceSpec {
 		for(CGNode node: cg.getNodes(im.getReference())) {
 		    for(int i: newArgNums) {
 		        FlowType<E> flow = new ParameterFlow<E>(block, i, true);
-		        InflowAnalysis.addDomainElements(taintMap, block, flow, CodeElement.valueElements(pa, node, node.getIR().getParameter(i)));
+		        final int ssaVal = node.getIR().getParameter(i);
+				final Set<CodeElement> valueElements = CodeElement.valueElements(pa, node, ssaVal);
+				PointerKey pk = pa.getHeapModel().getPointerKeyForLocal(node, ssaVal);
+				final OrdinalSet<InstanceKey> pointsToSet = pa.getPointsToSet(pk);
+				if (pointsToSet.isEmpty()) {
+					TypeReference typeRef = node.getMethod().getParameterType(i);
+					IClass clazz = node.getMethod().getClassHierarchy().lookupClass(typeRef);
+					if (null == clazz) {
+						logger.error("couldn't find entry arg class {}", typeRef);
+					} else {
+						InstanceKey ik = new ConcreteTypeKey(clazz);
+						valueElements.add(new InstanceKeyElement(ik));
+					}					
+				}
+				for (InstanceKey ik : pointsToSet) {
+					valueElements.add(new InstanceKeyElement(ik));
+				}
+				InflowAnalysis.addDomainElements(taintMap, block, flow, valueElements);
 		    }
 		}
 	}

@@ -134,9 +134,9 @@ public class FlowAnalysis {
               final IFlowFunctionMap<BasicBlockInContext<E>> flowFunctionMap
             ) {
 
-        logger.debug("*************************");
-        logger.debug("* Running flow analysis *");
-        logger.debug("*************************");
+        logger.info("*************************");
+        logger.info("* Running flow analysis *");
+        logger.info("*************************");
 
         final IFDSTaintDomain<E> domain = d;
 
