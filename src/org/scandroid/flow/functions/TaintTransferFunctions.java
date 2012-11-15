@@ -42,13 +42,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.commons.lang3.tuple.Pair;
 import org.scandroid.domain.CodeElement;
 import org.scandroid.domain.FieldElement;
 import org.scandroid.domain.IFDSTaintDomain;
 import org.scandroid.domain.InstanceKeyElement;
 import org.scandroid.domain.LocalElement;
 import org.scandroid.domain.ReturnElement;
+import org.scandroid.domain.StaticFieldElement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -444,22 +444,22 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 
 	private Set<CodeElement> getFieldAccessCodeElts(CGNode node,
 			SSAFieldAccessInstruction inst) {
+		if (inst.isStatic()) {
+			return getStaticFieldAccessCodeElts(node, inst);
+		}
+		
 		Set<CodeElement> elts = Sets.newHashSet();
 		final FieldReference fieldRef = inst.getDeclaredField();
 		final IField field = node.getClassHierarchy().resolveField(fieldRef);
-		PointerKey pk;
-		if (inst.isStatic()) {
-			pk = pa.getHeapModel().getPointerKeyForStaticField(field);
-		} else {
-			pk = pa.getHeapModel().getPointerKeyForLocal(node, inst.getRef());
-		}
+		PointerKey pk = pa.getHeapModel().getPointerKeyForLocal(node, inst.getRef());
+		
 		final OrdinalSet<InstanceKey> pointsToSet = pa.getPointsToSet(pk);
 		if (pointsToSet.isEmpty()) {
 			logger.debug(
 					"pointsToSet empty for ref of {}, creating InstanceKey manually",
 					inst);
 			InstanceKey ik = new ConcreteTypeKey(field.getDeclaringClass());
-			elts.add(new FieldElement(ik, fieldRef, inst.isStatic()));
+			elts.add(new FieldElement(ik, fieldRef));
 			elts.add(new InstanceKeyElement(ik));
 		} else {
 			for (InstanceKey ik : pointsToSet) {
@@ -467,10 +467,20 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 					logger.debug("adding elements for field {} on {}",
 							field.getName(), ik.getConcreteType().getName());
 				}
-				elts.add(new FieldElement(ik, fieldRef, inst.isStatic()));
+				elts.add(new FieldElement(ik, fieldRef));
 				elts.add(new InstanceKeyElement(ik));
 			}
 		}
+		return elts;
+	}
+	
+	private Set<CodeElement> getStaticFieldAccessCodeElts(CGNode node,
+			SSAFieldAccessInstruction inst) {
+		Set<CodeElement> elts = Sets.newHashSet();
+		final FieldReference fieldRef = inst.getDeclaredField();
+		elts.add(new StaticFieldElement(fieldRef));
+		// TODO: what about tainting the declaring class?
+
 		return elts;
 	}
 

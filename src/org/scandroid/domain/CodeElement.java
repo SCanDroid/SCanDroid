@@ -39,15 +39,10 @@
 package org.scandroid.domain;
 
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 
 import com.ibm.wala.ipa.callgraph.CGNode;
-import com.ibm.wala.ipa.callgraph.propagation.InstanceKey;
-import com.ibm.wala.ipa.callgraph.propagation.LocalPointerKey;
 import com.ibm.wala.ipa.callgraph.propagation.PointerAnalysis;
-import com.ibm.wala.ipa.callgraph.propagation.PointerKey;
-import com.ibm.wala.util.intset.OrdinalSet;
 
 public abstract class CodeElement {
     /* For a given value number, and enclosing call graph node, yield
@@ -66,4 +61,11 @@ public abstract class CodeElement {
 //        }
         return elements;
     }
+    
+    @Override
+    public abstract boolean equals(Object obj);
+    
+    @Override
+    public abstract int hashCode();
+    
 }
