@@ -175,8 +175,23 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 	@Override
 	public IUnaryFlowFunction getCallNoneToReturnFlowFunction(
 			BasicBlockInContext<E> src, BasicBlockInContext<E> dest) {
-		logger.debug("getNoneToReturnFunction");
-		return callNoneToReturn;
+		if (logger.isDebugEnabled()) {
+			logger.debug("getNoneToReturnFunction");
+			logger.debug("callee signature: {}", ((SSAInvokeInstruction) src
+					.getLastInstruction()).getDeclaredTarget().getSignature());
+		}
+		// return callNoneToReturn;
+		/*
+		 * TODO: is this right?
+		 * 
+		 * The original callNoneToReturn impl just adds taints to absolutely
+		 * everything in the domain. This seems like the wrong approach, but
+		 * it's unclear what would be correct...
+		 * 
+		 * Switching this to the identity for now improves performance
+		 * drastically.
+		 */
+		return IDENTITY_FN;
 	}
 
 	@Override

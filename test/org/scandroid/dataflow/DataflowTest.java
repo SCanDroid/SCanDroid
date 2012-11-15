@@ -133,6 +133,7 @@ public class DataflowTest {
         List<Object[]> entrypoints = Lists.newArrayList();
 
         checklist = gold.expectedMethods();
+        final URI summaries = DataflowTest.class.getResource("/data/MethodSummaries.xml").toURI();
         
         analysisContext = new AndroidAnalysisContext(
                 new DefaultSCanDroidOptions() {
@@ -143,7 +144,7 @@ public class DataflowTest {
 
                     @Override
                     public URI getSummariesURI() {
-                        return null;
+                        return summaries;
                     }
 
                     @Override
@@ -251,13 +252,13 @@ public class DataflowTest {
                         return Lists.newArrayList(entrypoint);
                     }
                 });
-        logger.warn("Heap dump:");
-        for (PointerKey pk : ctx.pa.getPointerKeys()) {
-        	logger.warn("{}", pk);
-        	for (InstanceKey ik : ctx.pa.getPointsToSet(pk)) {
-        		logger.warn("\t{}", ik);
-        	}
-        }
+//        logger.warn("Heap dump:");
+//        for (PointerKey pk : ctx.pa.getPointerKeys()) {
+//        	logger.warn("{}", pk);
+//        	for (InstanceKey ik : ctx.pa.getPointsToSet(pk)) {
+//        		logger.warn("\t{}", ik);
+//        	}
+//        }
         if (DEBUG_CFG) {
 			for (CGNode node : ctx.cg.getNodes(entrypoint.getMethod().getReference())) {
 				logger.debug(Arrays.toString(node.getIR().getInstructions()));
