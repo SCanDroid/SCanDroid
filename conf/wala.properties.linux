@@ -17,7 +17,8 @@
 #
 # Info: Location must be absolute.
 #####
-java_runtime_dir = /usr/lib/jvm/java-7-oracle/jre/lib
+#java_runtime_dir = /usr/lib/jvm/java-7-oracle/jre/lib
+java_runtime_dir = /usr/lib/jvm/jdk1.7.0_09/jre/lib
 #java_runtime_dir = /usr/lib/jvm/jdk1.6.0_35/jre/lib
 ################### Mandatory settings with default value ######################
 
