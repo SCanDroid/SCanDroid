@@ -77,7 +77,7 @@ public class GlobalIdentityFunction <E extends ISSABasicBlock>
 		DomainElement de = domain.getMappedObject(d1);
 		if( de.codeElement instanceof LocalElement ) {
 			// if the query domain element is a local, then it is /not/ passed through.
-			logger.debug("taking {} to emptyset", de);
+			logger.trace("taking {} to emptyset", de);
 			return TaintTransferFunctions.EMPTY_SET;
 		} else {
 			return SparseIntSet.singleton(d1);

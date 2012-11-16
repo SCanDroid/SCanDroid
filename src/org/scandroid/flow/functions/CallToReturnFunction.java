@@ -74,7 +74,7 @@ public class CallToReturnFunction <E extends ISSABasicBlock>
         	if (de.codeElement instanceof LocalElement || de.codeElement instanceof ReturnElement) {
         		set.add(d);
         	} else {
-        		logger.debug("throwing away {}", de);
+        		logger.trace("throwing away {}", de);
         	}
         }
 		return set;

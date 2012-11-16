@@ -68,6 +68,7 @@ import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.ibm.wala.classLoader.CallSiteReference;
 import com.ibm.wala.classLoader.IMethod;
 import com.ibm.wala.dataflow.IFDS.ICFGSupergraph;
 import com.ibm.wala.dataflow.IFDS.ISupergraph;
@@ -81,10 +82,13 @@ import com.ibm.wala.ipa.callgraph.propagation.PointerAnalysis;
 import com.ibm.wala.ipa.callgraph.propagation.PointerKey;
 import com.ibm.wala.ipa.cfg.BasicBlockInContext;
 import com.ibm.wala.ipa.cha.ClassHierarchy;
+import com.ibm.wala.ssa.ISSABasicBlock;
 import com.ibm.wala.ssa.SSAInstruction;
+import com.ibm.wala.ssa.SSAInstruction.Visitor;
 import com.ibm.wala.ssa.SSAInvokeInstruction;
 import com.ibm.wala.ssa.SSAReturnInstruction;
 import com.ibm.wala.ssa.analysis.IExplodedBasicBlock;
+import com.ibm.wala.util.debug.UnimplementedError;
 import com.ibm.wala.util.intset.IntSet;
 import com.ibm.wala.util.intset.OrdinalSet;
 
@@ -225,20 +229,7 @@ public class OutflowAnalysis {
 		}
 	}
 	
-	private void processEntryArgs(TabulationResult<BasicBlockInContext<IExplodedBasicBlock>, CGNode, DomainElement> flowResult,
-			IFDSTaintDomain<IExplodedBasicBlock> domain,
-			Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> flowGraph,
-			SinkSpec ss) {
-		Set<SinkPoint> sinkPoints = calculateSinkPoints((EntryArgSinkSpec) ss);
-		
-		for (SinkPoint sinkPoint : sinkPoints) {
-			for (FlowType<IExplodedBasicBlock> source : findSources(flowResult, domain, sinkPoint)) {
-				addEdge(flowGraph, source, sinkPoint.sinkFlow);
-			}
-		}
-	}
-
-	private void processEntryArgs_old(
+	private void processEntryArgs(
 			TabulationResult<BasicBlockInContext<IExplodedBasicBlock>, CGNode, DomainElement> flowResult,
 			IFDSTaintDomain<IExplodedBasicBlock> domain,
 			Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> flowGraph,
@@ -443,20 +434,17 @@ public class OutflowAnalysis {
 		SinkSpec[] ss = s.getSinkSpecs();
 		logger.debug(ss.length + " sink Specs. ");
 
-		List<SinkSpec> ssAL = Lists.newArrayList();
 		for (int i = 0; i < ss.length; i++) {
 			if (ss[i] instanceof EntryArgSinkSpec)
-				processEntryArgs(flowResult, domain, taintFlow, ss[i]);
+				processSinkSpec(flowResult, domain, taintFlow, ss[i]);
 			else if (ss[i] instanceof CallArgSinkSpec)
-				ssAL.add(ss[i]);
+				processSinkSpec(flowResult, domain, taintFlow, ss[i]);
 			else if (ss[i] instanceof EntryRetSinkSpec)
-				processEntryRets(flowResult, domain, taintFlow, ss[i]);
+				processSinkSpec(flowResult, domain, taintFlow, ss[i]);
 			else
 				throw new UnsupportedOperationException(
 						"SinkSpec not yet Implemented");
 		}
-		if (!ssAL.isEmpty())
-			processArgSinks(flowResult, domain, taintFlow, ssAL);
 
 		logger.info("************");
 		logger.info("* Results: *");
@@ -489,6 +477,32 @@ public class OutflowAnalysis {
 
 		return taintFlow;
 	}
+	
+	private void processSinkSpec(TabulationResult<BasicBlockInContext<IExplodedBasicBlock>, CGNode, DomainElement> flowResult,
+			IFDSTaintDomain<IExplodedBasicBlock> domain,
+			Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> flowGraph,
+			SinkSpec ss) {
+		Set<SinkPoint> sinkPoints = calculateSinkPoints(ss);
+		
+		for (SinkPoint sinkPoint : sinkPoints) {
+			for (FlowType<IExplodedBasicBlock> source : findSources(flowResult, domain, sinkPoint)) {
+				addEdge(flowGraph, source, sinkPoint.sinkFlow);
+			}
+		}
+	}
+
+	private Set<SinkPoint> calculateSinkPoints(SinkSpec sinkSpec) {
+		if (sinkSpec instanceof EntryArgSinkSpec) {
+			return calculateSinkPoints((EntryArgSinkSpec) sinkSpec);
+		}
+		if (sinkSpec instanceof CallArgSinkSpec) {
+			return calculateSinkPoints((CallArgSinkSpec) sinkSpec);
+		}
+		if (sinkSpec instanceof EntryRetSinkSpec) {
+			return calculateSinkPoints((EntryRetSinkSpec) sinkSpec);
+		}
+		throw new UnimplementedError();
+	}
 
 	private Set<SinkPoint> calculateSinkPoints(EntryArgSinkSpec sinkSpec) {
 		Set<SinkPoint> points = Sets.newHashSet();
@@ -514,6 +528,88 @@ public class OutflowAnalysis {
 				points.add(sinkPoint);
 			}
 		}
+		return points;
+	}
+	
+	private Set<SinkPoint> calculateSinkPoints(CallArgSinkSpec sinkSpec) {
+		Set<SinkPoint> points = Sets.newHashSet();		
+		
+		Collection<IMethod> methods = sinkSpec.getNamePattern()
+				.getPossibleTargets(cha);
+		if (null == methods) {
+			logger.warn("no methods found for sink spec {}", sinkSpec);
+		}
+
+		Set<CGNode> callees = Sets.newHashSet();
+		for (IMethod method : methods) {
+			callees.addAll(cg.getNodes(method.getReference()));
+		}
+		
+		// for each possible callee
+		for (CGNode callee : callees) {
+			Iterator<CGNode> callers = cg.getPredNodes(callee);
+			// for each possible caller of that callee
+			while (callers.hasNext()) {
+				CGNode caller = callers.next();
+				Iterator<CallSiteReference> callSites = caller.iterateCallSites(); //cg.getPossibleSites(caller, callee);
+				// for each call site from that caller to that callee
+				while (callSites.hasNext()) {
+					CallSiteReference callSite = callSites.next();
+					// for each basic block corresponding to that call site
+					for (ISSABasicBlock callBlock : caller.getIR().getBasicBlocksForCall(callSite)) {
+						// look up that block in context from the supergraph
+						BasicBlockInContext<IExplodedBasicBlock> callBlockInContext = graph.getLocalBlock(caller, callBlock.getNumber());
+						SSAInvokeInstruction invokeInst = (SSAInvokeInstruction) callBlockInContext.getDelegate().getInstruction();
+						for (int argNum : sinkSpec.getArgNums()) {
+							// and finally add a sink point for each arg num
+							final int ssaVal = invokeInst.getUse(argNum);
+							final ParameterFlow<IExplodedBasicBlock> sinkFlow = new ParameterFlow<IExplodedBasicBlock>(callBlockInContext, argNum, false);
+							final SinkPoint sinkPoint = new SinkPoint(callBlockInContext, ssaVal, sinkFlow);
+							points.add(sinkPoint);
+						}
+					}
+				}
+			}
+		}
+		
+		return points;
+	}
+	
+	private Set<SinkPoint> calculateSinkPoints(EntryRetSinkSpec sinkSpec) {
+		Set<SinkPoint> points = Sets.newHashSet();
+		
+		Collection<IMethod> methods = sinkSpec.getNamePattern()
+				.getPossibleTargets(cha);
+		if (null == methods) {
+			logger.warn("no methods found for sink spec {}", sinkSpec);
+		}
+		
+		// for all possible returning methods
+		for (IMethod method : methods) {
+			// for all possible CGNodes of that method
+			for (CGNode node : cg.getNodes(method.getReference())) {
+				// get the unique (null) exit block
+				BasicBlockInContext<IExplodedBasicBlock> nullExitBlock = graph.getICFG().getExit(node);
+				// and for each predecessor to the exit block
+				Iterator<BasicBlockInContext<IExplodedBasicBlock>> exitBlocks = graph.getPredNodes(nullExitBlock);
+				while (exitBlocks.hasNext()) {
+					// if that predecessor is a return instruction
+					BasicBlockInContext<IExplodedBasicBlock> exitBlock = exitBlocks.next();
+					final SSAInstruction inst = exitBlock.getDelegate().getInstruction();
+					if (inst instanceof SSAReturnInstruction) {
+						// add a sink point for the instruction
+						SSAReturnInstruction returnInst = (SSAReturnInstruction) inst;
+						if (!returnInst.returnsVoid()) {
+							final int ssaVal = returnInst.getResult();
+							final ReturnFlow<IExplodedBasicBlock> sinkFlow = new ReturnFlow<IExplodedBasicBlock>(exitBlock, false);
+							final SinkPoint sinkPoint = new SinkPoint(exitBlock, ssaVal, sinkFlow);
+							points.add(sinkPoint);
+						}
+					}
+				}
+			}
+		}
+		
 		return points;
 	}
 
