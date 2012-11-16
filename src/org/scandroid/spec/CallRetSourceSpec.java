@@ -95,4 +95,8 @@ public class CallRetSourceSpec extends SourceSpec {
 		return flowSet;
 	}
 
+	@Override
+	public String toString() {
+		return String.format("CallRetSourceSpec(%s)", namePattern);
+	}
 }

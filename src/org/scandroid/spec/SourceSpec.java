@@ -77,11 +77,8 @@ public abstract class SourceSpec implements ISourceSpec {
 	}		
 	
 	@Override
-	public String toString() {
-		return "SourceSpec [namePattern=" + namePattern + ", argNums="
-				+ Arrays.toString(argNums) + "]";
-	}
-			
+	public abstract String toString();
+	
 	abstract public<E extends ISSABasicBlock> void addDomainElements(
 			Map<BasicBlockInContext<E>, Map<FlowType<E>,Set<CodeElement>>> taintMap, 
 			IMethod im, BasicBlockInContext<E> block, SSAInvokeInstruction invInst,

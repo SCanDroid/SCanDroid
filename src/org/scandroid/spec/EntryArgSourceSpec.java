@@ -38,6 +38,8 @@
 
 package org.scandroid.spec;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -49,6 +51,7 @@ import org.scandroid.flow.types.ParameterFlow;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.collect.Lists;
 import com.ibm.wala.classLoader.IClass;
 import com.ibm.wala.classLoader.IMethod;
 import com.ibm.wala.dataflow.IFDS.ISupergraph;
@@ -110,5 +113,10 @@ public class EntryArgSourceSpec extends SourceSpec {
 				InflowAnalysis.addDomainElements(taintMap, block, flow, valueElements);
 		    }
 		}
+	}
+	
+	@Override
+	public String toString() {
+		return String.format("EntryArgSourceSpec(%s, %s)", namePattern, Arrays.toString(argNums));
 	}
 }

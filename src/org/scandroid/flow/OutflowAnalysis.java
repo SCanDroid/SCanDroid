@@ -40,6 +40,7 @@
 package org.scandroid.flow;
 
 import java.util.Collection;
+import java.util.Deque;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -48,6 +49,7 @@ import java.util.Set;
 
 import org.scandroid.domain.CodeElement;
 import org.scandroid.domain.DomainElement;
+import org.scandroid.domain.FieldElement;
 import org.scandroid.domain.IFDSTaintDomain;
 import org.scandroid.domain.InstanceKeyElement;
 import org.scandroid.domain.LocalElement;
@@ -67,7 +69,9 @@ import org.slf4j.LoggerFactory;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Queues;
 import com.google.common.collect.Sets;
+import com.ibm.wala.classLoader.IField;
 import com.ibm.wala.classLoader.IMethod;
 import com.ibm.wala.dataflow.IFDS.ICFGSupergraph;
 import com.ibm.wala.dataflow.IFDS.ISupergraph;
@@ -75,6 +79,7 @@ import com.ibm.wala.dataflow.IFDS.TabulationResult;
 import com.ibm.wala.ipa.callgraph.CGNode;
 import com.ibm.wala.ipa.callgraph.CallGraph;
 import com.ibm.wala.ipa.callgraph.impl.Everywhere;
+import com.ibm.wala.ipa.callgraph.propagation.ConcreteTypeKey;
 import com.ibm.wala.ipa.callgraph.propagation.InstanceKey;
 import com.ibm.wala.ipa.callgraph.propagation.LocalPointerKey;
 import com.ibm.wala.ipa.callgraph.propagation.PointerAnalysis;
@@ -87,10 +92,15 @@ import com.ibm.wala.ssa.SSAInvokeInstruction;
 import com.ibm.wala.ssa.SSAReturnInstruction;
 import com.ibm.wala.ssa.analysis.IExplodedBasicBlock;
 import com.ibm.wala.types.MethodReference;
+import com.ibm.wala.types.TypeReference;
 import com.ibm.wala.util.debug.UnimplementedError;
 import com.ibm.wala.util.intset.IntSet;
 import com.ibm.wala.util.intset.OrdinalSet;
 
+/**
+ * @author acfoltzer
+ * 
+ */
 public class OutflowAnalysis {
 	private static final Logger logger = LoggerFactory
 			.getLogger(OutflowAnalysis.class);
@@ -227,7 +237,7 @@ public class OutflowAnalysis {
 			}
 		}
 	}
-	
+
 	private void processEntryArgs(
 			TabulationResult<BasicBlockInContext<IExplodedBasicBlock>, CGNode, DomainElement> flowResult,
 			IFDSTaintDomain<IExplodedBasicBlock> domain,
@@ -476,15 +486,17 @@ public class OutflowAnalysis {
 
 		return taintFlow;
 	}
-	
-	private void processSinkSpec(TabulationResult<BasicBlockInContext<IExplodedBasicBlock>, CGNode, DomainElement> flowResult,
+
+	private void processSinkSpec(
+			TabulationResult<BasicBlockInContext<IExplodedBasicBlock>, CGNode, DomainElement> flowResult,
 			IFDSTaintDomain<IExplodedBasicBlock> domain,
 			Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> flowGraph,
 			SinkSpec ss) {
 		Set<SinkPoint> sinkPoints = calculateSinkPoints(ss);
-		
+
 		for (SinkPoint sinkPoint : sinkPoints) {
-			for (FlowType<IExplodedBasicBlock> source : findSources(flowResult, domain, sinkPoint)) {
+			for (FlowType<IExplodedBasicBlock> source : findSources(flowResult,
+					domain, sinkPoint)) {
 				addEdge(flowGraph, source, sinkPoint.sinkFlow);
 			}
 		}
@@ -529,10 +541,10 @@ public class OutflowAnalysis {
 		}
 		return points;
 	}
-	
+
 	private Set<SinkPoint> calculateSinkPoints(final CallArgSinkSpec sinkSpec) {
-		final Set<SinkPoint> points = Sets.newHashSet();		
-		
+		final Set<SinkPoint> points = Sets.newHashSet();
+
 		Collection<IMethod> methods = sinkSpec.getNamePattern()
 				.getPossibleTargets(cha);
 		if (null == methods) {
@@ -545,7 +557,7 @@ public class OutflowAnalysis {
 			callees.addAll(cg.getNodes(method.getReference()));
 			calleeRefs.add(method.getReference());
 		}
-		
+
 		// for each possible callee
 		for (CGNode callee : callees) {
 			Iterator<CGNode> callers = cg.getPredNodes(callee);
@@ -559,59 +571,70 @@ public class OutflowAnalysis {
 						// if the invoke instruction targets a possible callee
 						if (calleeRefs.contains(invokeInst.getDeclaredTarget())) {
 							// look up the instruction's block in context
-							final int blockNumber = caller.getIR().getBasicBlockForInstruction(invokeInst).getNumber();
-							BasicBlockInContext<IExplodedBasicBlock> callBlock = graph.getLocalBlock(caller, blockNumber);
+							final int blockNumber = caller.getIR()
+									.getBasicBlockForInstruction(invokeInst)
+									.getNumber();
+							BasicBlockInContext<IExplodedBasicBlock> callBlock = graph
+									.getLocalBlock(caller, blockNumber);
 							for (int argNum : sinkSpec.getArgNums()) {
 								// and add a sink point for each arg num
 								final int ssaVal = invokeInst.getUse(argNum);
-								final ParameterFlow<IExplodedBasicBlock> sinkFlow = new ParameterFlow<IExplodedBasicBlock>(callBlock, argNum, false);
-								final SinkPoint sinkPoint = new SinkPoint(callBlock, ssaVal, sinkFlow);
+								final ParameterFlow<IExplodedBasicBlock> sinkFlow = new ParameterFlow<IExplodedBasicBlock>(
+										callBlock, argNum, false);
+								final SinkPoint sinkPoint = new SinkPoint(
+										callBlock, ssaVal, sinkFlow);
 								points.add(sinkPoint);
-							} 
+							}
 						}
 					}
 				});
 			}
 		}
-		
+
 		return points;
 	}
-	
+
 	private Set<SinkPoint> calculateSinkPoints(EntryRetSinkSpec sinkSpec) {
 		Set<SinkPoint> points = Sets.newHashSet();
-		
+
 		Collection<IMethod> methods = sinkSpec.getNamePattern()
 				.getPossibleTargets(cha);
 		if (null == methods) {
 			logger.warn("no methods found for sink spec {}", sinkSpec);
 		}
-		
+
 		// for all possible returning methods
 		for (IMethod method : methods) {
 			// for all possible CGNodes of that method
 			for (CGNode node : cg.getNodes(method.getReference())) {
 				// get the unique (null) exit block
-				BasicBlockInContext<IExplodedBasicBlock> nullExitBlock = graph.getICFG().getExit(node);
+				BasicBlockInContext<IExplodedBasicBlock> nullExitBlock = graph
+						.getICFG().getExit(node);
 				// and for each predecessor to the exit block
-				Iterator<BasicBlockInContext<IExplodedBasicBlock>> exitBlocks = graph.getPredNodes(nullExitBlock);
+				Iterator<BasicBlockInContext<IExplodedBasicBlock>> exitBlocks = graph
+						.getPredNodes(nullExitBlock);
 				while (exitBlocks.hasNext()) {
 					// if that predecessor is a return instruction
-					BasicBlockInContext<IExplodedBasicBlock> exitBlock = exitBlocks.next();
-					final SSAInstruction inst = exitBlock.getDelegate().getInstruction();
+					BasicBlockInContext<IExplodedBasicBlock> exitBlock = exitBlocks
+							.next();
+					final SSAInstruction inst = exitBlock.getDelegate()
+							.getInstruction();
 					if (inst instanceof SSAReturnInstruction) {
 						// add a sink point for the instruction
 						SSAReturnInstruction returnInst = (SSAReturnInstruction) inst;
 						if (!returnInst.returnsVoid()) {
 							final int ssaVal = returnInst.getResult();
-							final ReturnFlow<IExplodedBasicBlock> sinkFlow = new ReturnFlow<IExplodedBasicBlock>(exitBlock, false);
-							final SinkPoint sinkPoint = new SinkPoint(exitBlock, ssaVal, sinkFlow);
+							final ReturnFlow<IExplodedBasicBlock> sinkFlow = new ReturnFlow<IExplodedBasicBlock>(
+									exitBlock, false);
+							final SinkPoint sinkPoint = new SinkPoint(
+									exitBlock, ssaVal, sinkFlow);
 							points.add(sinkPoint);
 						}
 					}
 				}
 			}
 		}
-		
+
 		return points;
 	}
 
@@ -619,9 +642,8 @@ public class OutflowAnalysis {
 			TabulationResult<BasicBlockInContext<IExplodedBasicBlock>, CGNode, DomainElement> flowResult,
 			IFDSTaintDomain<IExplodedBasicBlock> domain, SinkPoint sinkPoint) {
 		Set<FlowType<IExplodedBasicBlock>> sources = Sets.newHashSet();
-		
-		final CodeElement localElt = new LocalElement(
-				sinkPoint.ssaVal);
+
+		final CodeElement localElt = new LocalElement(sinkPoint.ssaVal);
 		Set<CodeElement> elts = Sets.newHashSet(localElt);
 
 		final CGNode node = sinkPoint.block.getNode();
@@ -633,19 +655,96 @@ public class OutflowAnalysis {
 		}
 
 		for (InstanceKey ik : iks) {
-			InstanceKeyElement elt = new InstanceKeyElement(ik);
-			elts.add(elt);
+			elts.addAll(codeElementsForInstanceKey(ik));
 		}
-		
+		logger.debug("checking for sources from code elements {}", elts);
+
 		for (CodeElement elt : elts) {
 			for (DomainElement de : domain.getPossibleElements(elt)) {
-				if (flowResult.getResult(sinkPoint.block).contains(domain.getMappedIndex(de))) {
+				if (flowResult.getResult(sinkPoint.block).contains(
+						domain.getMappedIndex(de))) {
 					sources.add(de.taintSource);
 				}
-			}			
+			}
 		}
-
 		return sources;
+	}
+
+	/**
+	 * @param rootIK
+	 * @return a set of all code elements that might refer to this object or one
+	 *         of its fields (recursively)
+	 */
+	private Set<CodeElement> codeElementsForInstanceKey(InstanceKey rootIK) {
+		Set<CodeElement> elts = Sets.newHashSet();
+		Deque<InstanceKey> iks = Queues.newArrayDeque();
+		iks.push(rootIK);
+
+		while (!iks.isEmpty()) {
+			InstanceKey ik = iks.pop();
+			logger.debug("getting code elements for {}", ik);
+			elts.add(new InstanceKeyElement(ik));
+			// only ask for fields if this is a class
+			if (ik.getConcreteType().isArrayClass()) {
+				continue;
+			}				
+			for (IField field : ik.getConcreteType().getAllInstanceFields()) {
+				logger.debug("adding elements for field {}", field);
+				final TypeReference fieldTypeRef = field
+						.getFieldTypeReference();
+				elts.add(new FieldElement(ik, field.getReference()));
+				if (fieldTypeRef.isPrimitiveType()) {
+					elts.add(new FieldElement(ik, field.getReference()));
+				} else if (fieldTypeRef.isArrayType()) {
+					PointerKey pk = pa.getHeapModel()
+							.getPointerKeyForInstanceField(ik, field);
+					final OrdinalSet<InstanceKey> pointsToSet = pa
+							.getPointsToSet(pk);
+					if (pointsToSet.isEmpty()) {
+						logger.debug("pointsToSet empty for array field, creating InstanceKey manually");
+						InstanceKey fieldIK = new ConcreteTypeKey(pa
+								.getClassHierarchy().lookupClass(fieldTypeRef));
+						final InstanceKeyElement elt = new InstanceKeyElement(
+								fieldIK);
+						elts.add(elt);
+					} else {
+						for (InstanceKey fieldIK : pointsToSet) {
+							final InstanceKeyElement elt = new InstanceKeyElement(
+									fieldIK);
+							elts.add(elt);
+						}
+					}
+				} else if (fieldTypeRef.isReferenceType()) {
+					PointerKey pk = pa.getHeapModel()
+							.getPointerKeyForInstanceField(ik, field);
+					final OrdinalSet<InstanceKey> pointsToSet = pa
+							.getPointsToSet(pk);
+					if (pointsToSet.isEmpty()) {
+						logger.debug("pointsToSet empty for reference field, creating InstanceKey manually");
+						InstanceKey fieldIK = new ConcreteTypeKey(
+								cha.lookupClass(fieldTypeRef));
+						final InstanceKeyElement elt = new InstanceKeyElement(
+								fieldIK);
+						if (!elts.contains(elt)) {
+							elts.add(elt);
+							iks.push(fieldIK);
+						}
+					} else {
+						for (InstanceKey fieldIK : pointsToSet) {
+							final InstanceKeyElement elt = new InstanceKeyElement(
+									fieldIK);
+							if (!elts.contains(elt)) {
+								elts.add(elt);
+								iks.push(fieldIK);
+							}
+						}
+					}
+				} else {
+					logger.warn("unknown field type {}", field);
+				}
+			}
+		}
+		return elts;
 	}
 
 	private static class SinkPoint {

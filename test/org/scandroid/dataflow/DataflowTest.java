@@ -128,8 +128,8 @@ public class DataflowTest {
 	public static Collection<Object[]> setup() throws Throwable {
 		ch.qos.logback.classic.Logger root = (ch.qos.logback.classic.Logger) LoggerFactory
 				.getLogger(Logger.ROOT_LOGGER_NAME);
-		root.setLevel(Level.INFO);
-		// root.setLevel(Level.DEBUG);
+//		root.setLevel(Level.INFO);
+		 root.setLevel(Level.DEBUG);
 		List<Object[]> entrypoints = Lists.newArrayList();
 
 		checklist = gold.expectedMethods();

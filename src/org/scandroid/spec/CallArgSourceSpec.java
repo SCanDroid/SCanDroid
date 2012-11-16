@@ -38,6 +38,7 @@
 
 package org.scandroid.spec;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
@@ -112,5 +113,10 @@ public class CallArgSourceSpec extends SourceSpec {
 			flowSet.add(new ParameterFlow<E>(block, i, true));
 		}
 		return flowSet;
+	}
+	
+	@Override
+	public String toString() {
+		return String.format("CallArgSourceSpec(%s, %s)", namePattern, Arrays.toString(argNums));
 	}
 }
