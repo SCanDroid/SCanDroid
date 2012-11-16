@@ -39,6 +39,7 @@ package org.scandroid.dataflow;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.util.Arrays;
@@ -197,9 +198,7 @@ public class DataflowTest {
 							method.isAbstract(), method.isStatic(),
 							method.isInit(), method.isClinit(),
 							method.isSynthetic());
-					String junitDesc = isEclipse() ? URLEncoder.encode(
-							method.getSignature(), "UTF-8") : method
-							.getSignature();
+					String junitDesc = refineDescription(method.getSignature());
 					entrypoints.add(new Object[] { junitDesc,
 							new DefaultEntrypoint(method, cha) });
 				}
@@ -212,14 +211,15 @@ public class DataflowTest {
 				logger.error("\t {}", desc);
 
 				// if we can't find the description, create a null test:
-				String junitDesc = isEclipse() ? URLEncoder.encode(desc,
-						"UTF-8") : desc;
+				String junitDesc = refineDescription(desc);
 				entrypoints.add(new Object[] { junitDesc, null });
 			}
 		}
 
 		return entrypoints;
 	}
+
+
 
 	@AfterClass
 	public static void tearDown() {
@@ -233,6 +233,26 @@ public class DataflowTest {
 						.startsWith("org.eclipse.jdt.internal.junit.runner.RemoteTestRunner");
 	}
 
+	/**
+	 * @param method
+	 * @return
+	 * @throws UnsupportedEncodingException
+	 */
+	private static String refineDescription(String method)
+			throws UnsupportedEncodingException {
+		String descr = method;
+		
+		descr = descr.replace("org.scandroid.testing", "o.s.t");
+		descr = descr.replace("org/scandroid/testing", "o/s/t");
+		descr = descr.replace("java/lang/", "");
+		
+		if ( isEclipse() ) {
+			descr = descr.replace("(", "{");
+			descr = descr.replace(")", "}");
+		}
+		return descr;
+	}
+	
 	public final Entrypoint entrypoint;
 
 	private String descriptor;
