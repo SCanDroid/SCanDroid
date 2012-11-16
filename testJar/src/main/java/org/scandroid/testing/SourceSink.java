@@ -37,6 +37,12 @@
  */
 package org.scandroid.testing;
 
+import java.util.Random;
+
 public abstract class SourceSink {
     public static void sink(Object s) {}
+    
+    public static Integer source() {
+    	return new Random(System.currentTimeMillis()).nextInt();
+    };
 }

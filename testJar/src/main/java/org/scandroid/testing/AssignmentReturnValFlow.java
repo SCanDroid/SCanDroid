@@ -43,6 +43,7 @@ public class AssignmentReturnValFlow {
 	}
 
 	public static String assignVal(String[] args) {
+		@SuppressWarnings("unused")
 		String foo;
 		String bar = (foo = args[0]);
 		return bar;

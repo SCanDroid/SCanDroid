@@ -66,9 +66,10 @@ public class DataflowResults {
         expectedResults.putAll(exceptionFlow());
         expectedResults.putAll(fieldAccessTest());
         expectedResults.putAll(globalStatics());
+        expectedResults.putAll(invokeCallArgTest());
     }
-    
-    private Map<String, Set<String>> constructorArgFlow() {
+
+	private Map<String, Set<String>> constructorArgFlow() {
     	Map<String, Set<String>> oracle = Maps.newHashMap();
     	
         Set<String> cargFlows = Sets.newHashSet();
@@ -215,6 +216,16 @@ public class DataflowResults {
     	return oracle;
     }
 
+    private Map<String, Set<String>> invokeCallArgTest() {
+    	Map<String, Set<String>> oracle = Maps.newHashMap();
+    	
+    	oracle.put(ost+"InvokeCallArgTest.invokeCallArgSourceSpec()Ljava/lang/String;",
+				// returns the arg to load(...)
+			   Sets.newHashSet("???? -> ret"));
+    	
+		return oracle;
+	}
+    
 	public Set<String> getFlows(String signature) {
 		Set<String> flows = expectedResults.get(signature);
 		logger.debug("getting flows for: "+signature+" found: "+flows);
