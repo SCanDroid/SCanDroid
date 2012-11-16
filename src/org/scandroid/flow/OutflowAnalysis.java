@@ -64,6 +64,8 @@ import org.scandroid.util.CGAnalysisContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import quicktime.std.music.InstSampleDesc;
+
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -88,6 +90,7 @@ import com.ibm.wala.ssa.SSAInstruction.Visitor;
 import com.ibm.wala.ssa.SSAInvokeInstruction;
 import com.ibm.wala.ssa.SSAReturnInstruction;
 import com.ibm.wala.ssa.analysis.IExplodedBasicBlock;
+import com.ibm.wala.types.MethodReference;
 import com.ibm.wala.util.debug.UnimplementedError;
 import com.ibm.wala.util.intset.IntSet;
 import com.ibm.wala.util.intset.OrdinalSet;
@@ -531,8 +534,8 @@ public class OutflowAnalysis {
 		return points;
 	}
 	
-	private Set<SinkPoint> calculateSinkPoints(CallArgSinkSpec sinkSpec) {
-		Set<SinkPoint> points = Sets.newHashSet();		
+	private Set<SinkPoint> calculateSinkPoints(final CallArgSinkSpec sinkSpec) {
+		final Set<SinkPoint> points = Sets.newHashSet();		
 		
 		Collection<IMethod> methods = sinkSpec.getNamePattern()
 				.getPossibleTargets(cha);
@@ -541,8 +544,10 @@ public class OutflowAnalysis {
 		}
 
 		Set<CGNode> callees = Sets.newHashSet();
+		final Set<MethodReference> calleeRefs = Sets.newHashSet();
 		for (IMethod method : methods) {
 			callees.addAll(cg.getNodes(method.getReference()));
+			calleeRefs.add(method.getReference());
 		}
 		
 		// for each possible callee
@@ -550,25 +555,26 @@ public class OutflowAnalysis {
 			Iterator<CGNode> callers = cg.getPredNodes(callee);
 			// for each possible caller of that callee
 			while (callers.hasNext()) {
-				CGNode caller = callers.next();
-				Iterator<CallSiteReference> callSites = caller.iterateCallSites(); //cg.getPossibleSites(caller, callee);
-				// for each call site from that caller to that callee
-				while (callSites.hasNext()) {
-					CallSiteReference callSite = callSites.next();
-					// for each basic block corresponding to that call site
-					for (ISSABasicBlock callBlock : caller.getIR().getBasicBlocksForCall(callSite)) {
-						// look up that block in context from the supergraph
-						BasicBlockInContext<IExplodedBasicBlock> callBlockInContext = graph.getLocalBlock(caller, callBlock.getNumber());
-						SSAInvokeInstruction invokeInst = (SSAInvokeInstruction) callBlockInContext.getDelegate().getInstruction();
-						for (int argNum : sinkSpec.getArgNums()) {
-							// and finally add a sink point for each arg num
-							final int ssaVal = invokeInst.getUse(argNum);
-							final ParameterFlow<IExplodedBasicBlock> sinkFlow = new ParameterFlow<IExplodedBasicBlock>(callBlockInContext, argNum, false);
-							final SinkPoint sinkPoint = new SinkPoint(callBlockInContext, ssaVal, sinkFlow);
-							points.add(sinkPoint);
+				final CGNode caller = callers.next();
+				// look for invoke instructions
+				caller.getIR().visitAllInstructions(new Visitor() {
+					@Override
+					public void visitInvoke(SSAInvokeInstruction invokeInst) {
+						// if the invoke instruction targets a possible callee
+						if (calleeRefs.contains(invokeInst.getDeclaredTarget())) {
+							// look up the instruction's block in context
+							final int blockNumber = caller.getIR().getBasicBlockForInstruction(invokeInst).getNumber();
+							BasicBlockInContext<IExplodedBasicBlock> callBlock = graph.getLocalBlock(caller, blockNumber);
+							for (int argNum : sinkSpec.getArgNums()) {
+								// and add a sink point for each arg num
+								final int ssaVal = invokeInst.getUse(argNum);
+								final ParameterFlow<IExplodedBasicBlock> sinkFlow = new ParameterFlow<IExplodedBasicBlock>(callBlock, argNum, false);
+								final SinkPoint sinkPoint = new SinkPoint(callBlock, ssaVal, sinkFlow);
+								points.add(sinkPoint);
+							} 
 						}
 					}
-				}
+				});
 			}
 		}
 		
