@@ -69,6 +69,7 @@ import com.ibm.wala.ipa.callgraph.propagation.PointerAnalysis;
 import com.ibm.wala.ipa.callgraph.propagation.PointerKey;
 import com.ibm.wala.ipa.cfg.BasicBlockInContext;
 import com.ibm.wala.ssa.ISSABasicBlock;
+import com.ibm.wala.ssa.SSAArrayLoadInstruction;
 import com.ibm.wala.ssa.SSAArrayReferenceInstruction;
 import com.ibm.wala.ssa.SSAArrayStoreInstruction;
 import com.ibm.wala.ssa.SSAFieldAccessInstruction;
@@ -395,12 +396,10 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 			elts.addAll(getFieldAccessCodeElts(node, (SSAGetInstruction) inst));
 		}
 
-		// I don't think this is actually needed; we're adding an InstanceKey
-		// for the ref already in CodeElement.valueElements
-		// if (inst instanceof SSAArrayLoadInstruction) {
-		// elts.addAll(getArrayRefCodeElts(node, (SSAArrayLoadInstruction)
-		// inst));
-		// }
+		if (inst instanceof SSAArrayLoadInstruction) {
+			elts.addAll(getArrayRefCodeElts(node,
+					(SSAArrayLoadInstruction) inst));
+		}
 
 		for (int i = 0; i < useNo; i++) {
 			int valNo = inst.getUse(i);
@@ -447,12 +446,13 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 		if (inst.isStatic()) {
 			return getStaticFieldAccessCodeElts(node, inst);
 		}
-		
+
 		Set<CodeElement> elts = Sets.newHashSet();
 		final FieldReference fieldRef = inst.getDeclaredField();
 		final IField field = node.getClassHierarchy().resolveField(fieldRef);
-		PointerKey pk = pa.getHeapModel().getPointerKeyForLocal(node, inst.getRef());
-		
+		PointerKey pk = pa.getHeapModel().getPointerKeyForLocal(node,
+				inst.getRef());
+
 		final OrdinalSet<InstanceKey> pointsToSet = pa.getPointsToSet(pk);
 		if (pointsToSet.isEmpty()) {
 			logger.debug(
@@ -473,7 +473,7 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 		}
 		return elts;
 	}
-	
+
 	private Set<CodeElement> getStaticFieldAccessCodeElts(CGNode node,
 			SSAFieldAccessInstruction inst) {
 		Set<CodeElement> elts = Sets.newHashSet();

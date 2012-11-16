@@ -89,9 +89,24 @@ public class OutflowAnalysis<E extends ISSABasicBlock> {
 	private static final Logger logger = LoggerFactory
 			.getLogger(OutflowAnalysis.class);
 
-	private static <E extends ISSABasicBlock> void addEdge(
-			Map<FlowType<E>, Set<FlowType<E>>> graph, FlowType<E> source,
-			FlowType<E> dest) {
+	private final CGAnalysisContext<E> ctx;
+	private final CallGraph cg;
+	private final ClassHierarchy cha;
+	private final PointerAnalysis pa;
+	private final ISupergraph<BasicBlockInContext<E>, CGNode> graph;
+	private final ISpecs specs;
+
+	public OutflowAnalysis(CGAnalysisContext<E> ctx, ISpecs specs) {
+		this.ctx = ctx;
+		this.cg = ctx.cg;
+		this.cha = ctx.getClassHierarchy();
+		this.pa = ctx.pa;
+		this.graph = ctx.graph;
+		this.specs = specs;
+	}
+
+	private void addEdge(Map<FlowType<E>, Set<FlowType<E>>> graph,
+			FlowType<E> source, FlowType<E> dest) {
 		Set<FlowType<E>> dests = graph.get(source);
 		if (dests == null) {
 			dests = new HashSet<FlowType<E>>();
@@ -100,12 +115,11 @@ public class OutflowAnalysis<E extends ISSABasicBlock> {
 		dests.add(dest);
 	}
 
-	private static <E extends ISSABasicBlock> void processArgSinks(
+	private void processArgSinks(
 			TabulationResult<BasicBlockInContext<E>, CGNode, DomainElement> flowResult,
 			IFDSTaintDomain<E> domain,
 			Map<FlowType<E>, Set<FlowType<E>>> flowGraph,
-			List<SinkSpec> sinkSpecs, ClassHierarchy cha, PointerAnalysis pa,
-			ISupergraph<BasicBlockInContext<E>, CGNode> graph, CallGraph cg) {
+			List<SinkSpec> sinkSpecs) {
 		List<Collection<IMethod>> targetList = Lists.newArrayList();
 
 		for (int i = 0; i < sinkSpecs.size(); i++) {
@@ -203,12 +217,10 @@ public class OutflowAnalysis<E extends ISSABasicBlock> {
 		}
 	}
 
-	private static <E extends ISSABasicBlock> void processEntryArgs(
+	private void processEntryArgs(
 			TabulationResult<BasicBlockInContext<E>, CGNode, DomainElement> flowResult,
 			IFDSTaintDomain<E> domain,
-			Map<FlowType<E>, Set<FlowType<E>>> flowGraph, SinkSpec ss,
-			CallGraph cg, ISupergraph<BasicBlockInContext<E>, CGNode> graph,
-			PointerAnalysis pa, ClassHierarchy cha) {
+			Map<FlowType<E>, Set<FlowType<E>>> flowGraph, SinkSpec ss) {
 
 		int[] newArgNums;
 		for (IMethod im : ss.getNamePattern().getPossibleTargets(cha)) {
@@ -294,59 +306,66 @@ public class OutflowAnalysis<E extends ISSABasicBlock> {
 		}
 	}
 
-	private static <E extends ISSABasicBlock> void processEntryRets(
-    		TabulationResult<BasicBlockInContext<E>, CGNode, DomainElement> flowResult,
-    		IFDSTaintDomain<E> domain, 
-    		Map<FlowType<E>, Set<FlowType<E>>> flowGraph, 
-    		SinkSpec ss, 
-    		CallGraph cg, 
-    		ISupergraph<BasicBlockInContext<E>, CGNode> graph, 
-    		PointerAnalysis pa, 
-    		ClassHierarchy cha) {
-		
-    	for (IMethod im:ss.getNamePattern().getPossibleTargets(cha)) {
-    		// look for a tainted reply
+	private void processEntryRets(
+			TabulationResult<BasicBlockInContext<E>, CGNode, DomainElement> flowResult,
+			IFDSTaintDomain<E> domain,
+			Map<FlowType<E>, Set<FlowType<E>>> flowGraph, SinkSpec ss) {
 
-    		CGNode node = cg.getNode(im, Everywhere.EVERYWHERE);
+		for (IMethod im : ss.getNamePattern().getPossibleTargets(cha)) {
+			// look for a tainted reply
 
-    		if (node == null) {
-    			logger.warn("could not find CGNode for SinkSpec {}", ss);
-    		    continue; 
-    		}
-    		
-    		BasicBlockInContext<E>[] exitsForProcedure = graph.getExitsForProcedure(node);
-            if (exitsForProcedure == null || 0 == exitsForProcedure.length) {
-            	logger.warn("could not find exit blocks for SinkSpec {}", ss);
-    			continue;
-    		}        
-            
-            final Set<DomainElement> possibleElements = domain.getPossibleElements(new ReturnElement());
-            logger.debug("{} possible elements found for ReturnElement", possibleElements.size());            
-			for(DomainElement de:possibleElements) {
-            	logger.debug("processing domain element {}", de);
-            	for (BasicBlockInContext<E> block: exitsForProcedure) {
-            		logger.debug("{} instructions in block", block.getLastInstructionIndex());
-            		if (flowResult.getResult(block).contains(domain.getMappedIndex(de))) {
-            			logger.debug("original block has edge");
-            			addEdge(flowGraph, de.taintSource, new ReturnFlow<E>(block, false));
-            		}
-//            		Iterator<BasicBlockInContext<E>> it = graph.getPredNodes(block);
-//        			while (it.hasNext()) {
-//        				BasicBlockInContext<E> realBlock = it.next();        				
-//        				if (realBlock.isExitBlock()) {
-//        					logger.warn("found edge to exit");
-////        					addEdge(flowGraph,de.taintSource, new ReturnFlow<E>(realBlock, false));
-//        				}
-//                		if(flowResult.getResult(realBlock).contains(domain.getMappedIndex(de))) {
-//                			logger.debug("adding edge from {} to ReturnFlow", de.taintSource);
-//                			addEdge(flowGraph,de.taintSource, new ReturnFlow<E>(realBlock, false));
-//                		} else {
-//                			logger.debug("no edge from block {} for {}", realBlock, de);
-//                	}
-				}  
-            }
-    	
-			for (BasicBlockInContext<E> block: exitsForProcedure) {
+			CGNode node = cg.getNode(im, Everywhere.EVERYWHERE);
+
+			if (node == null) {
+				logger.warn("could not find CGNode for SinkSpec {}", ss);
+				continue;
+			}
+
+			BasicBlockInContext<E>[] exitsForProcedure = graph
+					.getExitsForProcedure(node);
+			if (exitsForProcedure == null || 0 == exitsForProcedure.length) {
+				logger.warn("could not find exit blocks for SinkSpec {}", ss);
+				continue;
+			}
+
+			final Set<DomainElement> possibleElements = domain
+					.getPossibleElements(new ReturnElement());
+			logger.debug("{} possible elements found for ReturnElement",
+					possibleElements.size());
+			for (DomainElement de : possibleElements) {
+				logger.debug("processing domain element {}", de);
+				for (BasicBlockInContext<E> block : exitsForProcedure) {
+					logger.debug("{} instructions in block",
+							block.getLastInstructionIndex());
+					if (flowResult.getResult(block).contains(
+							domain.getMappedIndex(de))) {
+						logger.debug("original block has edge");
+						addEdge(flowGraph, de.taintSource, new ReturnFlow<E>(
+								block, false));
+					}
+					// Iterator<BasicBlockInContext<E>> it =
+					// graph.getPredNodes(block);
+					// while (it.hasNext()) {
+					// BasicBlockInContext<E> realBlock = it.next();
+					// if (realBlock.isExitBlock()) {
+					// logger.warn("found edge to exit");
+					// // addEdge(flowGraph,de.taintSource, new
+					// ReturnFlow<E>(realBlock, false));
+					// }
+					// if(flowResult.getResult(realBlock).contains(domain.getMappedIndex(de)))
+					// {
+					// logger.debug("adding edge from {} to ReturnFlow",
+					// de.taintSource);
+					// addEdge(flowGraph,de.taintSource, new
+					// ReturnFlow<E>(realBlock, false));
+					// } else {
+					// logger.debug("no edge from block {} for {}", realBlock,
+					// de);
+					// }
+				}
+			}
+
+			for (BasicBlockInContext<E> block : exitsForProcedure) {
 				Iterator<BasicBlockInContext<E>> it = graph.getPredNodes(block);
 				while (it.hasNext()) {
 					BasicBlockInContext<E> realBlock = it.next();
@@ -368,19 +387,17 @@ public class OutflowAnalysis<E extends ISSABasicBlock> {
 					}
 				}
 			}
-    	}
-    }
-
-	public static <E extends ISSABasicBlock> Map<FlowType<E>, Set<FlowType<E>>> analyze(
-			CGAnalysisContext<E> analysisContext,
-			TabulationResult<BasicBlockInContext<E>, CGNode, DomainElement> flowResult,
-			IFDSTaintDomain<E> domain, ISpecs s) {
-		return analyze(analysisContext.cg, analysisContext.getClassHierarchy(),
-				analysisContext.graph, analysisContext.pa, flowResult, domain,
-				s);
+		}
 	}
 
-	public static <E extends ISSABasicBlock> Map<FlowType<E>, Set<FlowType<E>>> analyze(
+	public Map<FlowType<E>, Set<FlowType<E>>> analyze(
+			TabulationResult<BasicBlockInContext<E>, CGNode, DomainElement> flowResult,
+			IFDSTaintDomain<E> domain) {
+		return analyze(ctx.cg, ctx.getClassHierarchy(), ctx.graph, ctx.pa,
+				flowResult, domain, specs);
+	}
+
+	public Map<FlowType<E>, Set<FlowType<E>>> analyze(
 			CallGraph cg,
 			ClassHierarchy cha,
 			ISupergraph<BasicBlockInContext<E>, CGNode> graph,
@@ -400,20 +417,17 @@ public class OutflowAnalysis<E extends ISSABasicBlock> {
 		List<SinkSpec> ssAL = Lists.newArrayList();
 		for (int i = 0; i < ss.length; i++) {
 			if (ss[i] instanceof EntryArgSinkSpec)
-				processEntryArgs(flowResult, domain, taintFlow, ss[i], cg,
-						graph, pa, cha);
+				processEntryArgs(flowResult, domain, taintFlow, ss[i]);
 			else if (ss[i] instanceof CallArgSinkSpec)
 				ssAL.add(ss[i]);
 			else if (ss[i] instanceof EntryRetSinkSpec)
-				processEntryRets(flowResult, domain, taintFlow, ss[i], cg,
-						graph, pa, cha);
+				processEntryRets(flowResult, domain, taintFlow, ss[i]);
 			else
 				throw new UnsupportedOperationException(
 						"SinkSpec not yet Implemented");
 		}
 		if (!ssAL.isEmpty())
-			processArgSinks(flowResult, domain, taintFlow, ssAL, cha, pa,
-					graph, cg);
+			processArgSinks(flowResult, domain, taintFlow, ssAL);
 
 		logger.info("************");
 		logger.info("* Results: *");

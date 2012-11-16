@@ -64,7 +64,6 @@ import org.scandroid.util.IEntryPointSpecifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
 import com.google.common.collect.Lists;
 import com.ibm.wala.dataflow.IFDS.TabulationResult;
 import com.ibm.wala.ipa.callgraph.CGNode;
@@ -74,7 +73,6 @@ import com.ibm.wala.ipa.cfg.BasicBlockInContext;
 import com.ibm.wala.ssa.analysis.IExplodedBasicBlock;
 import com.ibm.wala.util.MonitorUtil.IProgressMonitor;
 
-
 public class SeparateEntryAnalysis {
 	private static final Logger logger = LoggerFactory
 			.getLogger(SeparateEntryAnalysis.class);
@@ -83,7 +81,8 @@ public class SeparateEntryAnalysis {
 		CLISCanDroidOptions options = new CLISCanDroidOptions(args, true);
 
 		logger.info("Loading app.");
-		AndroidAnalysisContext analysisContext = new AndroidAnalysisContext(options);
+		AndroidAnalysisContext analysisContext = new AndroidAnalysisContext(
+				options);
 
 		URI summariesURI = options.getSummariesURI();
 		InputStream summaryStream = null;
@@ -97,13 +96,13 @@ public class SeparateEntryAnalysis {
 
 			summaryStream = new FileInputStream(summariesFile);
 		}
-		
-		final List<Entrypoint> entrypoints = EntryPoints.defaultEntryPoints(analysisContext.getClassHierarchy());
-		if (entrypoints == null
-				|| entrypoints.size() == 0) {
+
+		final List<Entrypoint> entrypoints = EntryPoints
+				.defaultEntryPoints(analysisContext.getClassHierarchy());
+		if (entrypoints == null || entrypoints.size() == 0) {
 			throw new IOException("No Entrypoints Detected!");
 		}
-		
+
 		for (Entrypoint entry : entrypoints) {
 			logger.info("Entry point: " + entry);
 		}
@@ -143,11 +142,12 @@ public class SeparateEntryAnalysis {
 	 * @param methodAnalysis
 	 * @param monitor
 	 * @return the number of permission outflows detected
-	 * @throws IOException 
+	 * @throws IOException
 	 */
 	public static int analyze(
 			CGAnalysisContext<IExplodedBasicBlock> analysisContext,
-			InputStream summariesStream, IProgressMonitor monitor) throws IOException {
+			InputStream summariesStream, IProgressMonitor monitor)
+			throws IOException {
 		try {
 			logger.info("Supergraph size = "
 					+ analysisContext.graph.getNumberOfNodes());
@@ -176,8 +176,8 @@ public class SeparateEntryAnalysis {
 					.analyze(analysisContext, initialTaints, domain, monitor);
 
 			logger.info("Running outflow analysis.");
-			Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> permissionOutflow = OutflowAnalysis
-					.analyze(analysisContext, flowResult, domain, specs);
+			Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> permissionOutflow = new OutflowAnalysis(
+					analysisContext, specs).analyze(flowResult, domain);
 			logger.info("  Permission outflow size = "
 					+ permissionOutflow.size());
 
@@ -236,7 +236,7 @@ public class SeparateEntryAnalysis {
 			return permissionOutflow.size();
 		} catch (com.ibm.wala.util.debug.UnimplementedError e) {
 			logger.error("exception during analysis", e);
-		} 
+		}
 		return 0;
 	}
 }

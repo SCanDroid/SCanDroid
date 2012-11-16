@@ -92,7 +92,6 @@ import com.ibm.wala.ipa.cha.ClassHierarchyException;
 import com.ibm.wala.ipa.summaries.MethodSummary;
 import com.ibm.wala.ssa.analysis.IExplodedBasicBlock;
 
-
 @RunWith(Parameterized.class)
 public class MethodAnalysisTest {
 	private static final Logger logger = LoggerFactory
@@ -116,9 +115,9 @@ public class MethodAnalysisTest {
 	 */
 	@Parameters(name = "{0}")
 	public static Collection<Object[]> setup() throws Throwable {
-		ch.qos.logback.classic.Logger root = (ch.qos.logback.classic.Logger) 
-				LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
-//		root.setLevel(Level.TRACE);
+		ch.qos.logback.classic.Logger root = (ch.qos.logback.classic.Logger) LoggerFactory
+				.getLogger(Logger.ROOT_LOGGER_NAME);
+		// root.setLevel(Level.TRACE);
 		List<Object[]> entrypoints = Lists.newArrayList();
 
 		analysisContext = new AndroidAnalysisContext(
@@ -127,6 +126,7 @@ public class MethodAnalysisTest {
 					public URI getClasspath() {
 						return new File(TEST_JAR).toURI();
 					}
+
 					@Override
 					public boolean stdoutCG() {
 						// TODO Auto-generated method stub
@@ -160,20 +160,28 @@ public class MethodAnalysisTest {
 				if (method.getDeclaringClass().getClassLoader().getReference()
 						.equals(scope.getApplicationLoader())) {
 					logger.debug("Adding entrypoint for {}", method);
-					logger.debug("abstract={}, static={}, init={}, clinit={}, synthetic={}", method.isAbstract(), method.isStatic(), method.isInit(), method.isClinit(), method.isSynthetic());
+					logger.debug(
+							"abstract={}, static={}, init={}, clinit={}, synthetic={}",
+							method.isAbstract(), method.isStatic(),
+							method.isInit(), method.isClinit(),
+							method.isSynthetic());
 					entrypoints.add(new Object[] {
-							isEclipse() ? URLEncoder.encode(method.getSignature(), "UTF-8") : method.getSignature(),
+							isEclipse() ? URLEncoder.encode(
+									method.getSignature(), "UTF-8") : method
+									.getSignature(),
 							new DefaultEntrypoint(method, cha) });
 				}
 			}
 		}
-//		System.exit(0);
+		// System.exit(0);
 		return entrypoints;
 	}
-	
+
 	private static boolean isEclipse() {
 		final String command = System.getProperty("sun.java.command");
-		return command != null && command.startsWith("org.eclipse.jdt.internal.junit.runner.RemoteTestRunner");
+		return command != null
+				&& command
+						.startsWith("org.eclipse.jdt.internal.junit.runner.RemoteTestRunner");
 	}
 
 	public final Entrypoint entrypoint;
@@ -283,8 +291,8 @@ public class MethodAnalysisTest {
 		TabulationResult<BasicBlockInContext<IExplodedBasicBlock>, CGNode, DomainElement> flowResult = FlowAnalysis
 				.analyze(cgContext, initialTaints, domain, null);
 
-		Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> permissionOutflow = OutflowAnalysis
-				.analyze(cgContext, flowResult, domain, specs);
+		Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> permissionOutflow = new OutflowAnalysis(
+				cgContext, specs).analyze(flowResult, domain);
 
 		return permissionOutflow;
 	}

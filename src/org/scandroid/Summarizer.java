@@ -114,7 +114,6 @@ import com.ibm.wala.util.graph.traverse.DFSPathFinder;
 import com.ibm.wala.util.intset.OrdinalSet;
 import com.ibm.wala.util.strings.StringStuff;
 
-
 public class Summarizer<E extends ISSABasicBlock> {
 	private static final Logger logger = LoggerFactory
 			.getLogger(Summarizer.class);
@@ -193,7 +192,7 @@ public class Summarizer<E extends ISSABasicBlock> {
 		} else if (entryMethods.size() == 0) {
 			logger.error("No method found for: " + methodRef);
 		}
-		
+
 		final IMethod imethod = entryMethods.iterator().next();
 
 		MethodSummary summary = new MethodSummary(methodRef);
@@ -215,7 +214,8 @@ public class Summarizer<E extends ISSABasicBlock> {
 				cgContext, summary, monitor);
 		logger.debug(dfAnalysis.toString());
 
-		List<SSAInstruction> instructions = compileFlowMap(cgContext, imethod, dfAnalysis);
+		List<SSAInstruction> instructions = compileFlowMap(cgContext, imethod,
+				dfAnalysis);
 
 		if (0 == instructions.size()) {
 			logger.warn("No instructions in summary for " + methodDescriptor);
@@ -263,8 +263,8 @@ public class Summarizer<E extends ISSABasicBlock> {
 		TabulationResult<BasicBlockInContext<IExplodedBasicBlock>, CGNode, DomainElement> flowResult = FlowAnalysis
 				.analyze(cgContext, initialTaints, domain, monitor);
 
-		Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> permissionOutflow = OutflowAnalysis
-				.analyze(cgContext, flowResult, domain, specs);
+		Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> permissionOutflow = new OutflowAnalysis(
+				cgContext, specs).analyze(flowResult, domain);
 
 		return permissionOutflow;
 	}
