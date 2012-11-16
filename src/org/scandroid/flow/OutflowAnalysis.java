@@ -719,7 +719,7 @@ public class OutflowAnalysis {
 							.getPointerKeyForInstanceField(ik, field);
 					final OrdinalSet<InstanceKey> pointsToSet = pa
 							.getPointsToSet(pk);
-					if (pointsToSet.isEmpty()) {
+					if (pointsToSet.isEmpty() && !cha.isInterface(fieldTypeRef)) {
 						logger.debug("pointsToSet empty for reference field, creating InstanceKey manually");
 						InstanceKey fieldIK = new ConcreteTypeKey(
 								cha.lookupClass(fieldTypeRef));
