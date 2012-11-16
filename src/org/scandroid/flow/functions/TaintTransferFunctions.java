@@ -41,6 +41,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 import org.scandroid.domain.CodeElement;
 import org.scandroid.domain.FieldElement;
@@ -52,6 +54,9 @@ import org.scandroid.domain.StaticFieldElement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -80,6 +85,7 @@ import com.ibm.wala.ssa.SSAPutInstruction;
 import com.ibm.wala.ssa.SSAReturnInstruction;
 import com.ibm.wala.types.FieldReference;
 import com.ibm.wala.types.TypeReference;
+import com.ibm.wala.util.collections.Pair;
 import com.ibm.wala.util.intset.IntSet;
 import com.ibm.wala.util.intset.IntSetAction;
 import com.ibm.wala.util.intset.MutableSparseIntSet;
@@ -91,13 +97,21 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 	private static final Logger logger = LoggerFactory
 			.getLogger(TaintTransferFunctions.class);
 
+	// Java, you need type aliases.
+	private static class BlockPair <E extends ISSABasicBlock>
+	    extends Pair<BasicBlockInContext<E>, BasicBlockInContext<E>> {
+		protected BlockPair(BasicBlockInContext<E> fst,
+				BasicBlockInContext<E> snd) {
+			super(fst, snd);
+		}}
+	
 	private final IFDSTaintDomain<E> domain;
 	private final ISupergraph<BasicBlockInContext<E>, CGNode> graph;
 	private final PointerAnalysis pa;
 	private final IUnaryFlowFunction globalId;
 	private final IUnaryFlowFunction callToReturn;
 	private final IUnaryFlowFunction callNoneToReturn;
-	private final Map<Integer, IUnaryFlowFunction> callFlowFunctions;
+	private final LoadingCache<BlockPair<E>, IUnaryFlowFunction> callFlowFunctions;
 	private final Map<Integer, IUnaryFlowFunction> normalFlowFunctions;
 
 	public static final IntSet EMPTY_SET = new SparseIntSet();
@@ -115,7 +129,16 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 		this.callToReturn = new CallToReturnFunction<E>(domain);
 		this.callNoneToReturn = union(globalId,
 				new CallNoneToReturnFunction<E>(domain));
-		this.callFlowFunctions = Maps.newHashMap();
+		this.callFlowFunctions = CacheBuilder.newBuilder()
+			       .maximumSize(10000)
+			       .expireAfterWrite(10, TimeUnit.MINUTES)
+			       .build(new CacheLoader<BlockPair<E>, IUnaryFlowFunction>() {
+						@Override
+						public IUnaryFlowFunction load(BlockPair<E> key)
+								throws Exception {
+							return makeCallFlowFunction(key.fst, key.snd, null);
+						}
+			           });
 		this.normalFlowFunctions = Maps.newHashMap();
 	}
 
@@ -134,13 +157,12 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 	@Override
 	public IUnaryFlowFunction getCallFlowFunction(BasicBlockInContext<E> src,
 			BasicBlockInContext<E> dest, BasicBlockInContext<E> ret) {
-		final Integer key = fastHash2(src, dest);
-		IUnaryFlowFunction f = callFlowFunctions.get(key);
-		if (null == f) {
-			f = makeCallFlowFunction(src, dest, ret);
-			callFlowFunctions.put(key, f);
+		try {
+			return callFlowFunctions.get(new BlockPair<E>(src, dest));
+		} catch (ExecutionException e) {
+			logger.error("Exception accessing callFlowFunctions {}", e);
+			throw new RuntimeException(e);
 		}
-		return f;
 	}
 
 	private IUnaryFlowFunction makeCallFlowFunction(BasicBlockInContext<E> src,
