@@ -39,10 +39,28 @@ package org.scandroid.testing;
 
 import java.util.Random;
 
-public abstract class SourceSink {
+public class SourceSink {
+	
+	/**
+	 * CallArgSink
+	 * 
+	 * @param s
+	 */
     public static void sink(Object s) {}
     
+    /**
+     * CallRetSource
+     * 
+     * @return
+     */
     public static Integer source() {
     	return new Random(System.currentTimeMillis()).nextInt();
-    };
+    }
+    
+    /**
+     * CallArgSource
+     * 
+     * @param data
+     */
+    public static void load(char[] data) {}
 }

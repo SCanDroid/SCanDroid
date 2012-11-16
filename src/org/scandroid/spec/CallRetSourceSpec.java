@@ -67,7 +67,7 @@ import com.ibm.wala.ssa.SSAInvokeInstruction;
  */
 public class CallRetSourceSpec extends SourceSpec {
 	final String sig = "CallRetSource";
-	CallRetSourceSpec(MethodNamePattern name, int[] args) {
+	public CallRetSourceSpec(MethodNamePattern name, int[] args) {
 		namePattern = name;
 		argNums = args;
 	}

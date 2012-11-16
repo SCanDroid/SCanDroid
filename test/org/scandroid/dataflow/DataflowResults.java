@@ -67,6 +67,7 @@ public class DataflowResults {
         expectedResults.putAll(fieldAccessTest());
         expectedResults.putAll(globalStatics());
         expectedResults.putAll(invokeCallArgTest());
+        expectedResults.putAll(invokeCallRetTest());
     }
 
 	private Map<String, Set<String>> constructorArgFlow() {
@@ -221,7 +222,17 @@ public class DataflowResults {
     	
     	oracle.put(ost+"InvokeCallArgTest.invokeCallArgSourceSpec()Ljava/lang/String;",
 				// returns the arg to load(...)
-			   Sets.newHashSet("???? -> ret"));
+			   Sets.newHashSet("arg(0):org.scandroid.testing.SourceSink.load([C)V -> ret"));
+    	
+		return oracle;
+	}
+    
+    private Map<String, Set<String>> invokeCallRetTest() {
+    	Map<String, Set<String>> oracle = Maps.newHashMap();
+    	
+    	oracle.put(ost+"InvokeCallReturnTest.invokeCallRetSourceSpec()Ljava/lang/String;",
+				// returns the arg to load(...)
+			   Sets.newHashSet("ret:org.scandroid.testing.SourceSink.source()Ljava/lang/Integer; -> ret"));
     	
 		return oracle;
 	}

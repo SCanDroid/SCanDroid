@@ -74,8 +74,7 @@ public class MethodSummarySpecs implements ISpecs {
 	 */
 	@Override
 	public MethodNamePattern[] getEntrypointSpecs() {
-		// TODO Auto-generated method stub
-		return null;
+		return new MethodNamePattern[0];
 	}
 
 	/* (non-Javadoc)
