@@ -37,7 +37,9 @@
  */
 package org.scandroid.synthmethod;
 
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 
 import org.scandroid.MethodSummarySpecs;
 import org.scandroid.spec.CallArgSinkSpec;
@@ -49,7 +51,7 @@ import org.scandroid.spec.SourceSpec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
+import com.google.common.collect.Lists;
 import com.ibm.wala.classLoader.IMethod;
 import com.ibm.wala.ipa.cha.ClassHierarchy;
 import com.ibm.wala.ipa.summaries.MethodSummary;
@@ -94,5 +96,42 @@ public class TestSpecs implements ISpecs {
 		final MethodSummarySpecs methodSummarySpecs = new MethodSummarySpecs(
 				methodSummary);
 		return methodSummarySpecs;
+	}
+
+	/**
+	 * Combine two specs objects.
+	 * 
+	 * @param s1
+	 * @param s2
+	 * @return
+	 */
+	public static ISpecs combine(final ISpecs s1, final ISpecs s2) {
+		return new ISpecs() {
+			@Override
+			public SourceSpec[] getSourceSpecs() {
+				SourceSpec[] s1Sources = s1.getSourceSpecs();
+				SourceSpec[] s2Sources = s2.getSourceSpecs();
+				
+				return concat(s1Sources, s2Sources);
+			}
+			
+			@Override
+			public SinkSpec[] getSinkSpecs() {
+				return concat(s1.getSinkSpecs(), s2.getSinkSpecs());
+			}
+			
+			@Override
+			public MethodNamePattern[] getEntrypointSpecs() {
+				return concat(s1.getEntrypointSpecs(), s2.getEntrypointSpecs());
+			}
+
+			private <T> T[] concat(final T[] a, final T[] b) {
+				List<T> result = Lists.newArrayList();
+				result.addAll(Arrays.asList(a));
+				result.addAll(Arrays.asList(b));
+
+				return result.toArray(Arrays.copyOf(a, 0));
+			}
+		};
 	}
 }

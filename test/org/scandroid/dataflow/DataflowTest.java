@@ -41,7 +41,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
-import java.net.URLEncoder;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -63,7 +62,13 @@ import org.scandroid.flow.FlowAnalysis;
 import org.scandroid.flow.InflowAnalysis;
 import org.scandroid.flow.OutflowAnalysis;
 import org.scandroid.flow.types.FlowType;
+import org.scandroid.spec.CallArgSinkSpec;
+import org.scandroid.spec.CallArgSourceSpec;
+import org.scandroid.spec.CallRetSourceSpec;
 import org.scandroid.spec.ISpecs;
+import org.scandroid.spec.MethodNamePattern;
+import org.scandroid.spec.SinkSpec;
+import org.scandroid.spec.SourceSpec;
 import org.scandroid.synthmethod.DefaultSCanDroidOptions;
 import org.scandroid.synthmethod.TestSpecs;
 import org.scandroid.util.AndroidAnalysisContext;
@@ -88,7 +93,6 @@ import com.ibm.wala.ipa.callgraph.CallGraphBuilderCancelException;
 import com.ibm.wala.ipa.callgraph.Entrypoint;
 import com.ibm.wala.ipa.callgraph.impl.DefaultEntrypoint;
 import com.ibm.wala.ipa.callgraph.propagation.InstanceKey;
-import com.ibm.wala.ipa.callgraph.propagation.PointerKey;
 import com.ibm.wala.ipa.cfg.BasicBlockInContext;
 import com.ibm.wala.ipa.cha.ClassHierarchy;
 import com.ibm.wala.ipa.cha.ClassHierarchyException;
@@ -329,9 +333,40 @@ public class DataflowTest {
 				}, name, name + ".dot");
 			}
 		}
-		ISpecs specs = TestSpecs.specsFromDescriptor(ctx.getClassHierarchy(),
+		ISpecs methodSpecs = TestSpecs.specsFromDescriptor(ctx.getClassHierarchy(),
 				entrypoint.getMethod().getSignature());
 
+		ISpecs sourceSinkSpecs = new ISpecs() {
+			
+			@Override
+			public SourceSpec[] getSourceSpecs() {
+				return new SourceSpec[] { 
+						new CallArgSourceSpec(new MethodNamePattern(
+						   "Lorg/scandroid/testing/SourceSink", "load"), 
+						   new int[] { 0 }), 
+						new CallRetSourceSpec(new MethodNamePattern(
+						    "Lorg/scandroid/testing/SourceSink", "source"), 
+						    new int[] { 0 }) // I think args are irrelevant for this source spec...
+				};
+			}
+			
+			@Override
+			public SinkSpec[] getSinkSpecs() {
+				return new SinkSpec[] { 
+						new CallArgSinkSpec(new MethodNamePattern(
+						    "Lorg/scandroid/testing/SourceSink", "sink"), 
+						    new int[] { 0 })
+				};
+			}
+			
+			@Override
+			public MethodNamePattern[] getEntrypointSpecs() {
+				return new MethodNamePattern[0];
+			}
+		};
+		
+		ISpecs specs = TestSpecs.combine(methodSpecs, sourceSinkSpecs);
+		
 		Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> dfResults = runDFAnalysis(
 				ctx, specs);
 

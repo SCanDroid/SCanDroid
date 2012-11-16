@@ -37,30 +37,15 @@
  */
 package org.scandroid.testing;
 
-import java.util.Random;
-
-public class SourceSink {
+/**
+ * Hello world!
+ *
+ */
+public class InvokeCallReturnTest extends SourceSink {
 	
-	/**
-	 * CallArgSink
-	 * 
-	 * @param s
-	 */
-    public static void sink(Object s) {}
-    
-    /**
-     * CallRetSource
-     * 
-     * @return
-     */
-    public static Integer source() {
-    	return new Random(System.currentTimeMillis()).nextInt();
+    public static String invokeCallRetSourceSpec() {
+    	Integer data = SourceSink.source();
+    	
+        return data.toString();
     }
-    
-    /**
-     * CallArgSource
-     * 
-     * @param data
-     */
-    public static void load(char[] data) {}
 }
