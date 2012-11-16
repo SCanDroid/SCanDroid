@@ -46,6 +46,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.scandroid.domain.CodeElement;
 import org.scandroid.domain.DomainElement;
 import org.scandroid.domain.IFDSTaintDomain;
 import org.scandroid.domain.InstanceKeyElement;
@@ -68,6 +69,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.ibm.wala.classLoader.IMethod;
+import com.ibm.wala.dataflow.IFDS.ICFGSupergraph;
 import com.ibm.wala.dataflow.IFDS.ISupergraph;
 import com.ibm.wala.dataflow.IFDS.TabulationResult;
 import com.ibm.wala.ipa.callgraph.CGNode;
@@ -79,46 +81,50 @@ import com.ibm.wala.ipa.callgraph.propagation.PointerAnalysis;
 import com.ibm.wala.ipa.callgraph.propagation.PointerKey;
 import com.ibm.wala.ipa.cfg.BasicBlockInContext;
 import com.ibm.wala.ipa.cha.ClassHierarchy;
-import com.ibm.wala.ssa.ISSABasicBlock;
 import com.ibm.wala.ssa.SSAInstruction;
 import com.ibm.wala.ssa.SSAInvokeInstruction;
 import com.ibm.wala.ssa.SSAReturnInstruction;
+import com.ibm.wala.ssa.analysis.IExplodedBasicBlock;
 import com.ibm.wala.util.intset.IntSet;
+import com.ibm.wala.util.intset.OrdinalSet;
 
-public class OutflowAnalysis<E extends ISSABasicBlock> {
+public class OutflowAnalysis {
 	private static final Logger logger = LoggerFactory
 			.getLogger(OutflowAnalysis.class);
 
-	private final CGAnalysisContext<E> ctx;
+	private final CGAnalysisContext<IExplodedBasicBlock> ctx;
 	private final CallGraph cg;
 	private final ClassHierarchy cha;
 	private final PointerAnalysis pa;
-	private final ISupergraph<BasicBlockInContext<E>, CGNode> graph;
+	private final ICFGSupergraph graph;
 	private final ISpecs specs;
 
-	public OutflowAnalysis(CGAnalysisContext<E> ctx, ISpecs specs) {
+	public OutflowAnalysis(CGAnalysisContext<IExplodedBasicBlock> ctx,
+			ISpecs specs) {
 		this.ctx = ctx;
 		this.cg = ctx.cg;
 		this.cha = ctx.getClassHierarchy();
 		this.pa = ctx.pa;
-		this.graph = ctx.graph;
+		this.graph = (ICFGSupergraph) ctx.graph;
 		this.specs = specs;
 	}
 
-	private void addEdge(Map<FlowType<E>, Set<FlowType<E>>> graph,
-			FlowType<E> source, FlowType<E> dest) {
-		Set<FlowType<E>> dests = graph.get(source);
+	private void addEdge(
+			Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> graph,
+			FlowType<IExplodedBasicBlock> source,
+			FlowType<IExplodedBasicBlock> dest) {
+		Set<FlowType<IExplodedBasicBlock>> dests = graph.get(source);
 		if (dests == null) {
-			dests = new HashSet<FlowType<E>>();
+			dests = new HashSet<FlowType<IExplodedBasicBlock>>();
 			graph.put(source, dests);
 		}
 		dests.add(dest);
 	}
 
 	private void processArgSinks(
-			TabulationResult<BasicBlockInContext<E>, CGNode, DomainElement> flowResult,
-			IFDSTaintDomain<E> domain,
-			Map<FlowType<E>, Set<FlowType<E>>> flowGraph,
+			TabulationResult<BasicBlockInContext<IExplodedBasicBlock>, CGNode, DomainElement> flowResult,
+			IFDSTaintDomain<IExplodedBasicBlock> domain,
+			Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> flowGraph,
 			List<SinkSpec> sinkSpecs) {
 		List<Collection<IMethod>> targetList = Lists.newArrayList();
 
@@ -130,9 +136,10 @@ public class OutflowAnalysis<E extends ISSABasicBlock> {
 
 		// look for all uses of query function and taint the results with the
 		// Uri used in those functions
-		Iterator<BasicBlockInContext<E>> graphIt = graph.iterator();
+		Iterator<BasicBlockInContext<IExplodedBasicBlock>> graphIt = graph
+				.iterator();
 		while (graphIt.hasNext()) {
-			BasicBlockInContext<E> block = graphIt.next();
+			BasicBlockInContext<IExplodedBasicBlock> block = graphIt.next();
 
 			Iterator<SSAInvokeInstruction> invokeInstrs = Iterators.filter(
 					block.iterator(), SSAInvokeInstruction.class);
@@ -169,7 +176,8 @@ public class OutflowAnalysis<E extends ISSABasicBlock> {
 									+ argNums.length);
 
 							// The set of flow types we're looking for:
-							Set<FlowType<E>> taintTypeSet = Sets.newHashSet();
+							Set<FlowType<IExplodedBasicBlock>> taintTypeSet = Sets
+									.newHashSet();
 
 							LocalElement le = new LocalElement(
 									invInst.getUse(argNums[j]));
@@ -201,9 +209,9 @@ public class OutflowAnalysis<E extends ISSABasicBlock> {
 								}
 							}
 
-							for (FlowType<E> dest : sinkSpecs.get(i)
-									.getFlowType(block)) {
-								for (FlowType<E> source : taintTypeSet) {
+							for (FlowType<IExplodedBasicBlock> dest : sinkSpecs
+									.get(i).getFlowType(block)) {
+								for (FlowType<IExplodedBasicBlock> source : taintTypeSet) {
 									logger.debug("added edge: " + source
 											+ " \n \tto \n\t" + dest);
 									// flow taint into uriIK
@@ -216,11 +224,25 @@ public class OutflowAnalysis<E extends ISSABasicBlock> {
 			}
 		}
 	}
+	
+	private void processEntryArgs(TabulationResult<BasicBlockInContext<IExplodedBasicBlock>, CGNode, DomainElement> flowResult,
+			IFDSTaintDomain<IExplodedBasicBlock> domain,
+			Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> flowGraph,
+			SinkSpec ss) {
+		Set<SinkPoint> sinkPoints = calculateSinkPoints((EntryArgSinkSpec) ss);
+		
+		for (SinkPoint sinkPoint : sinkPoints) {
+			for (FlowType<IExplodedBasicBlock> source : findSources(flowResult, domain, sinkPoint)) {
+				addEdge(flowGraph, source, sinkPoint.sinkFlow);
+			}
+		}
+	}
 
-	private void processEntryArgs(
-			TabulationResult<BasicBlockInContext<E>, CGNode, DomainElement> flowResult,
-			IFDSTaintDomain<E> domain,
-			Map<FlowType<E>, Set<FlowType<E>>> flowGraph, SinkSpec ss) {
+	private void processEntryArgs_old(
+			TabulationResult<BasicBlockInContext<IExplodedBasicBlock>, CGNode, DomainElement> flowResult,
+			IFDSTaintDomain<IExplodedBasicBlock> domain,
+			Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> flowGraph,
+			SinkSpec ss) {
 
 		int[] newArgNums;
 		for (IMethod im : ss.getNamePattern().getPossibleTargets(cha)) {
@@ -232,7 +254,7 @@ public class OutflowAnalysis<E extends ISSABasicBlock> {
 				continue;
 			}
 
-			BasicBlockInContext<E>[] entriesForProcedure = graph
+			BasicBlockInContext<IExplodedBasicBlock>[] entriesForProcedure = graph
 					.getEntriesForProcedure(node);
 			if (entriesForProcedure == null || 0 == entriesForProcedure.length) {
 				logger.warn("procedure without entries {}", im.getSignature());
@@ -241,7 +263,7 @@ public class OutflowAnalysis<E extends ISSABasicBlock> {
 			if (1 != entriesForProcedure.length) {
 				logger.error("More than one procedure entry.  (Are you sure you're using an ICFGSupergraph?)");
 			}
-			BasicBlockInContext<E> entryBlock = entriesForProcedure[0];
+			BasicBlockInContext<IExplodedBasicBlock> entryBlock = entriesForProcedure[0];
 
 			newArgNums = ss.getArgNums();
 			if (null == newArgNums) {
@@ -270,22 +292,22 @@ public class OutflowAnalysis<E extends ISSABasicBlock> {
 						.getPossibleElements(new LocalElement(node.getIR()
 								.getParameter(newArgNums[i])))) {
 
-					for (BasicBlockInContext<E> block : graph
+					for (BasicBlockInContext<IExplodedBasicBlock> block : graph
 							.getExitsForProcedure(node)) {
 
 						int mappedIndex = domain.getMappedIndex(de);
 						if (flowResult.getResult(block).contains(mappedIndex)) {
 							addEdge(flowGraph, de.taintSource,
-									new ParameterFlow<E>(entryBlock,
-											newArgNums[i], false));
+									new ParameterFlow<IExplodedBasicBlock>(
+											entryBlock, newArgNums[i], false));
 						}
 					}
 
 					int mappedIndex = domain.getMappedIndex(de);
 					if (flowResult.getResult(entryBlock).contains(mappedIndex)) {
 						addEdge(flowGraph, de.taintSource,
-								new ParameterFlow<E>(entryBlock, newArgNums[i],
-										false));
+								new ParameterFlow<IExplodedBasicBlock>(
+										entryBlock, newArgNums[i], false));
 					}
 
 				}
@@ -297,8 +319,8 @@ public class OutflowAnalysis<E extends ISSABasicBlock> {
 								domain.getMappedIndex(de))) {
 							logger.trace("found outflow in second EntryArgSink loop");
 							addEdge(flowGraph, de.taintSource,
-									new ParameterFlow<E>(entryBlock,
-											newArgNums[i], false));
+									new ParameterFlow<IExplodedBasicBlock>(
+											entryBlock, newArgNums[i], false));
 						}
 					}
 				}
@@ -307,9 +329,10 @@ public class OutflowAnalysis<E extends ISSABasicBlock> {
 	}
 
 	private void processEntryRets(
-			TabulationResult<BasicBlockInContext<E>, CGNode, DomainElement> flowResult,
-			IFDSTaintDomain<E> domain,
-			Map<FlowType<E>, Set<FlowType<E>>> flowGraph, SinkSpec ss) {
+			TabulationResult<BasicBlockInContext<IExplodedBasicBlock>, CGNode, DomainElement> flowResult,
+			IFDSTaintDomain<IExplodedBasicBlock> domain,
+			Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> flowGraph,
+			SinkSpec ss) {
 
 		for (IMethod im : ss.getNamePattern().getPossibleTargets(cha)) {
 			// look for a tainted reply
@@ -321,7 +344,7 @@ public class OutflowAnalysis<E extends ISSABasicBlock> {
 				continue;
 			}
 
-			BasicBlockInContext<E>[] exitsForProcedure = graph
+			BasicBlockInContext<IExplodedBasicBlock>[] exitsForProcedure = graph
 					.getExitsForProcedure(node);
 			if (exitsForProcedure == null || 0 == exitsForProcedure.length) {
 				logger.warn("could not find exit blocks for SinkSpec {}", ss);
@@ -334,14 +357,15 @@ public class OutflowAnalysis<E extends ISSABasicBlock> {
 					possibleElements.size());
 			for (DomainElement de : possibleElements) {
 				logger.debug("processing domain element {}", de);
-				for (BasicBlockInContext<E> block : exitsForProcedure) {
+				for (BasicBlockInContext<IExplodedBasicBlock> block : exitsForProcedure) {
 					logger.debug("{} instructions in block",
 							block.getLastInstructionIndex());
 					if (flowResult.getResult(block).contains(
 							domain.getMappedIndex(de))) {
 						logger.debug("original block has edge");
-						addEdge(flowGraph, de.taintSource, new ReturnFlow<E>(
-								block, false));
+						addEdge(flowGraph, de.taintSource,
+								new ReturnFlow<IExplodedBasicBlock>(block,
+										false));
 					}
 					// Iterator<BasicBlockInContext<E>> it =
 					// graph.getPredNodes(block);
@@ -365,10 +389,12 @@ public class OutflowAnalysis<E extends ISSABasicBlock> {
 				}
 			}
 
-			for (BasicBlockInContext<E> block : exitsForProcedure) {
-				Iterator<BasicBlockInContext<E>> it = graph.getPredNodes(block);
+			for (BasicBlockInContext<IExplodedBasicBlock> block : exitsForProcedure) {
+				Iterator<BasicBlockInContext<IExplodedBasicBlock>> it = graph
+						.getPredNodes(block);
 				while (it.hasNext()) {
-					BasicBlockInContext<E> realBlock = it.next();
+					BasicBlockInContext<IExplodedBasicBlock> realBlock = it
+							.next();
 					final SSAInstruction inst = realBlock.getLastInstruction();
 					if (null != inst && inst instanceof SSAReturnInstruction) {
 						PointerKey pk = new LocalPointerKey(node,
@@ -379,8 +405,10 @@ public class OutflowAnalysis<E extends ISSABasicBlock> {
 											ik))) {
 								if (flowResult.getResult(realBlock).contains(
 										domain.getMappedIndex(ikElement))) {
-									addEdge(flowGraph, ikElement.taintSource,
-											new ReturnFlow<E>(realBlock, false));
+									addEdge(flowGraph,
+											ikElement.taintSource,
+											new ReturnFlow<IExplodedBasicBlock>(
+													realBlock, false));
 								}
 							}
 						}
@@ -390,26 +418,27 @@ public class OutflowAnalysis<E extends ISSABasicBlock> {
 		}
 	}
 
-	public Map<FlowType<E>, Set<FlowType<E>>> analyze(
-			TabulationResult<BasicBlockInContext<E>, CGNode, DomainElement> flowResult,
-			IFDSTaintDomain<E> domain) {
+	public Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> analyze(
+			TabulationResult<BasicBlockInContext<IExplodedBasicBlock>, CGNode, DomainElement> flowResult,
+			IFDSTaintDomain<IExplodedBasicBlock> domain) {
 		return analyze(ctx.cg, ctx.getClassHierarchy(), ctx.graph, ctx.pa,
 				flowResult, domain, specs);
 	}
 
-	public Map<FlowType<E>, Set<FlowType<E>>> analyze(
+	public Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> analyze(
 			CallGraph cg,
 			ClassHierarchy cha,
-			ISupergraph<BasicBlockInContext<E>, CGNode> graph,
+			ISupergraph<BasicBlockInContext<IExplodedBasicBlock>, CGNode> graph,
 			PointerAnalysis pa,
-			TabulationResult<BasicBlockInContext<E>, CGNode, DomainElement> flowResult,
-			IFDSTaintDomain<E> domain, ISpecs s) {
+			TabulationResult<BasicBlockInContext<IExplodedBasicBlock>, CGNode, DomainElement> flowResult,
+			IFDSTaintDomain<IExplodedBasicBlock> domain, ISpecs s) {
 
 		logger.debug("****************************");
 		logger.debug("* Running outflow analysis *");
 		logger.debug("****************************");
 
-		Map<FlowType<E>, Set<FlowType<E>>> taintFlow = Maps.newHashMap();
+		Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> taintFlow = Maps
+				.newHashMap();
 
 		SinkSpec[] ss = s.getSinkSpecs();
 		logger.debug(ss.length + " sink Specs. ");
@@ -459,6 +488,121 @@ public class OutflowAnalysis<E extends ISSABasicBlock> {
 		 */
 
 		return taintFlow;
+	}
+
+	private Set<SinkPoint> calculateSinkPoints(EntryArgSinkSpec sinkSpec) {
+		Set<SinkPoint> points = Sets.newHashSet();
+
+		Collection<IMethod> methods = sinkSpec.getNamePattern()
+				.getPossibleTargets(cha);
+		if (null == methods) {
+			logger.warn("no methods found for sink spec {}", sinkSpec);
+		}
+
+		for (IMethod method : methods) {
+			CGNode node = cg.getNode(method, Everywhere.EVERYWHERE);
+			BasicBlockInContext<IExplodedBasicBlock> entryBlock = graph
+					.getICFG().getEntry(node);
+			BasicBlockInContext<IExplodedBasicBlock> exitBlock = graph
+					.getICFG().getExit(node);
+			for (int argNum : sinkSpec.getArgNums()) {
+				final int ssaVal = node.getIR().getParameter(argNum);
+				final ParameterFlow<IExplodedBasicBlock> sinkFlow = new ParameterFlow<IExplodedBasicBlock>(
+						entryBlock, argNum, false);
+				final SinkPoint sinkPoint = new SinkPoint(exitBlock, ssaVal,
+						sinkFlow);
+				points.add(sinkPoint);
+			}
+		}
+		return points;
+	}
+
+	private Set<FlowType<IExplodedBasicBlock>> findSources(
+			TabulationResult<BasicBlockInContext<IExplodedBasicBlock>, CGNode, DomainElement> flowResult,
+			IFDSTaintDomain<IExplodedBasicBlock> domain, SinkPoint sinkPoint) {
+		Set<FlowType<IExplodedBasicBlock>> sources = Sets.newHashSet();
+		
+		final CodeElement localElt = new LocalElement(
+				sinkPoint.ssaVal);
+		Set<CodeElement> elts = Sets.newHashSet(localElt);
+
+		final CGNode node = sinkPoint.block.getNode();
+		PointerKey pk = pa.getHeapModel().getPointerKeyForLocal(node,
+				sinkPoint.ssaVal);
+		OrdinalSet<InstanceKey> iks = pa.getPointsToSet(pk);
+		if (null == iks) {
+			logger.warn("no instance keys found for SinkPoint {}", sinkPoint);
+		}
+
+		for (InstanceKey ik : iks) {
+			InstanceKeyElement elt = new InstanceKeyElement(ik);
+			elts.add(elt);
+		}
+		
+		for (CodeElement elt : elts) {
+			for (DomainElement de : domain.getPossibleElements(elt)) {
+				if (flowResult.getResult(sinkPoint.block).contains(domain.getMappedIndex(de))) {
+					sources.add(de.taintSource);
+				}
+			}			
+		}
+
+		return sources;
+	}
+
+	private static class SinkPoint {
+		private final BasicBlockInContext<IExplodedBasicBlock> block;
+		private final int ssaVal;
+		private final FlowType<IExplodedBasicBlock> sinkFlow;
+
+		public SinkPoint(BasicBlockInContext<IExplodedBasicBlock> block,
+				int ssaVal, FlowType<IExplodedBasicBlock> sinkFlow) {
+			this.block = block;
+			this.ssaVal = ssaVal;
+			this.sinkFlow = sinkFlow;
+		}
+
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result + ((block == null) ? 0 : block.hashCode());
+			result = prime * result
+					+ ((sinkFlow == null) ? 0 : sinkFlow.hashCode());
+			result = prime * result + ssaVal;
+			return result;
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+			if (obj == null)
+				return false;
+			if (getClass() != obj.getClass())
+				return false;
+			SinkPoint other = (SinkPoint) obj;
+			if (block == null) {
+				if (other.block != null)
+					return false;
+			} else if (!block.equals(other.block))
+				return false;
+			if (sinkFlow == null) {
+				if (other.sinkFlow != null)
+					return false;
+			} else if (!sinkFlow.equals(other.sinkFlow))
+				return false;
+			if (ssaVal != other.ssaVal)
+				return false;
+			return true;
+		}
+
+		@Override
+		public String toString() {
+			return "SinkPoint [block=" + block + ", ssaVal=" + ssaVal
+					+ ", sinkFlow=" + sinkFlow + "]";
+		}
+
 	}
 
 }

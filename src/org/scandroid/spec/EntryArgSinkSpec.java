@@ -50,6 +50,13 @@ import com.ibm.wala.ssa.ISSABasicBlock;
 
 public class EntryArgSinkSpec extends SinkSpec {
 
+	/**
+	 * @param name
+	 *            of the method
+	 * @param args
+	 *            to be tainted. These are zero-based; zero refers to `this` for
+	 *            a non-static method, or the first parameter of a static method
+	 */
 	public EntryArgSinkSpec(MethodNamePattern name, int[] args) {
 		namePattern = name;
 		argNums = args;

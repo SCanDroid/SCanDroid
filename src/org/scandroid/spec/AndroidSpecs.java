@@ -250,6 +250,9 @@ public class AndroidSpecs implements ISpecs {
 	
 	public SourceSpec[] getSourceSpecs() { return sourceSpecs; }
 
+	/**
+	 * TODO: document!
+	 */
 	private static SinkSpec[] sinkSpecs = {
 		new CallArgSinkSpec(actSetResult, new int[] { 2 }),
 //		new CallArgSinkSpec(bndTransact, new int[] { 2 }),
