@@ -39,7 +39,6 @@ package org.scandroid.flow.functions;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -58,7 +57,6 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.ibm.wala.classLoader.IField;
 import com.ibm.wala.dataflow.IFDS.IFlowFunction;
@@ -112,7 +110,7 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 	private final IUnaryFlowFunction callToReturn;
 	private final IUnaryFlowFunction callNoneToReturn;
 	private final LoadingCache<BlockPair<E>, IUnaryFlowFunction> callFlowFunctions;
-	private final Map<Integer, IUnaryFlowFunction> normalFlowFunctions;
+	private final LoadingCache<BlockPair<E>, IUnaryFlowFunction> normalFlowFunctions;
 
 	public static final IntSet EMPTY_SET = new SparseIntSet();
 	public static final IntSet ZERO_SET = SparseIntSet.singleton(0);
@@ -139,7 +137,16 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 							return makeCallFlowFunction(key.fst, key.snd, null);
 						}
 			           });
-		this.normalFlowFunctions = Maps.newHashMap();
+		this.normalFlowFunctions = CacheBuilder.newBuilder()
+			       .maximumSize(10000)
+			       .expireAfterWrite(10, TimeUnit.MINUTES)
+			       .build(new CacheLoader<BlockPair<E>, IUnaryFlowFunction>() {
+						@Override
+						public IUnaryFlowFunction load(BlockPair<E> key)
+								throws Exception {
+							return makeNormalFlowFunction(key.fst, key.snd);
+						}
+			           });
 	}
 
 	private static <E extends ISSABasicBlock> Integer fastHash2(
@@ -233,13 +240,12 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 	@Override
 	public IUnaryFlowFunction getNormalFlowFunction(BasicBlockInContext<E> src,
 			BasicBlockInContext<E> dest) {
-		final Integer key = fastHash2(src, dest);
-		IUnaryFlowFunction f = normalFlowFunctions.get(key);
-		if (null == f) {
-			f = makeNormalFlowFunction(src, dest);
-			normalFlowFunctions.put(key, f);
+		try {
+			return normalFlowFunctions.get(new BlockPair<>(src, dest));
+		} catch (ExecutionException e) {
+			logger.error("Exception accessing normalFlowFunctions {}", e);
+			throw new RuntimeException(e);
 		}
-		return f;
 	}
 
 	private IUnaryFlowFunction makeNormalFlowFunction(
