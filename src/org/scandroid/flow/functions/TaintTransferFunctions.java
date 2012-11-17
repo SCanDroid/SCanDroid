@@ -104,11 +104,9 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 		}}
 	
 	private final IFDSTaintDomain<E> domain;
-	private final ISupergraph<BasicBlockInContext<E>, CGNode> graph;
 	private final PointerAnalysis pa;
 	private final IUnaryFlowFunction globalId;
 	private final IUnaryFlowFunction callToReturn;
-	private final IUnaryFlowFunction callNoneToReturn;
 	private final LoadingCache<BlockPair<E>, IUnaryFlowFunction> callFlowFunctions;
 	private final LoadingCache<BlockPair<E>, IUnaryFlowFunction> normalFlowFunctions;
 
@@ -121,12 +119,9 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 			ISupergraph<BasicBlockInContext<E>, CGNode> graph,
 			PointerAnalysis pa) {
 		this.domain = domain;
-		this.graph = graph;
 		this.pa = pa;
 		this.globalId = new GlobalIdentityFunction<E>(domain);
 		this.callToReturn = new CallToReturnFunction<E>(domain);
-		this.callNoneToReturn = union(globalId,
-				new CallNoneToReturnFunction<E>(domain));
 		this.callFlowFunctions = CacheBuilder.newBuilder()
 			       .maximumSize(10000)
 			       .expireAfterWrite(10, TimeUnit.MINUTES)
@@ -147,18 +142,6 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 							return makeNormalFlowFunction(key.fst, key.snd);
 						}
 			           });
-	}
-
-	private static <E extends ISSABasicBlock> Integer fastHash2(
-			BasicBlockInContext<E> block1, BasicBlockInContext<E> block2) {
-		final int x = null == block1 ? 0 : block1.hashCode();
-		final int y = null == block2 ? 0 : block2.hashCode();
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + x;
-		result = prime * result + y;
-		return Integer.valueOf(result);
-
 	}
 
 	@Override
