@@ -114,7 +114,10 @@ public class StaticFieldSourceSpec extends SourceSpec {
 		
 		if (pointsToSet.isEmpty()) {
 			IClassHierarchy cha = im.getClassHierarchy();
-			
+			if (null == cha.lookupClass(typeRef)) {
+				logger.warn("could not resolve class for {}", field);
+				return;
+			}
 			if (cha.isInterface(typeRef)) {
 				// TODO we could find all implementations of the interface, and add a concrete type key for each.
 				// we aren't doing that yet.

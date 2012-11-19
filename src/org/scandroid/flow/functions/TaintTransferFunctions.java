@@ -224,7 +224,7 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 	public IUnaryFlowFunction getNormalFlowFunction(BasicBlockInContext<E> src,
 			BasicBlockInContext<E> dest) {
 		try {
-			return normalFlowFunctions.get(new BlockPair<>(src, dest));
+			return normalFlowFunctions.get(new BlockPair<E>(src, dest));
 		} catch (ExecutionException e) {
 			logger.error("Exception accessing normalFlowFunctions {}", e);
 			throw new RuntimeException(e);
