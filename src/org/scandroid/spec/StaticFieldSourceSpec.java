@@ -2,8 +2,8 @@
  *
  * Copyright (c) 2009-2012,
  *
- *  Galois, Inc. (Aaron Tomb <atomb@galois.com>)
- *  Steve Suh           <suhsteve@gmail.com>
+ *  Galois, Inc. (Aaron Tomb <atomb@galois.com>, Rogan Creswick <creswick@galois.com>)
+ *  Steve Suh    <suhsteve@gmail.com>
  *
  * All rights reserved.
  *
@@ -38,21 +38,21 @@
 
 package org.scandroid.spec;
 
-import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import org.scandroid.domain.CodeElement;
 import org.scandroid.domain.InstanceKeyElement;
+import org.scandroid.domain.StaticFieldElement;
 import org.scandroid.flow.InflowAnalysis;
+import org.scandroid.flow.types.FieldFlow;
 import org.scandroid.flow.types.FlowType;
-import org.scandroid.flow.types.ParameterFlow;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.ibm.wala.classLoader.IClass;
+import com.ibm.wala.classLoader.IField;
 import com.ibm.wala.classLoader.IMethod;
 import com.ibm.wala.dataflow.IFDS.ISupergraph;
 import com.ibm.wala.ipa.callgraph.CGNode;
@@ -62,64 +62,83 @@ import com.ibm.wala.ipa.callgraph.propagation.InstanceKey;
 import com.ibm.wala.ipa.callgraph.propagation.PointerAnalysis;
 import com.ibm.wala.ipa.callgraph.propagation.PointerKey;
 import com.ibm.wala.ipa.cfg.BasicBlockInContext;
+import com.ibm.wala.ipa.cha.IClassHierarchy;
 import com.ibm.wala.ssa.ISSABasicBlock;
 import com.ibm.wala.ssa.SSAInvokeInstruction;
 import com.ibm.wala.types.TypeReference;
 import com.ibm.wala.util.intset.OrdinalSet;
 
-
 /**
- * Entry arg source specs represent sources that are arguments to methods 
- * that are entry points.
- * 
- * For example, the command line arguments to a {@code main(String[] args)}
- * are entry arg sources.
- * 
+ * @author creswick
+ *
  */
-public class EntryArgSourceSpec extends SourceSpec {
+public class StaticFieldSourceSpec extends SourceSpec {
 	private static final Logger logger = LoggerFactory.getLogger(EntryArgSourceSpec.class);
-	
-	public EntryArgSourceSpec(MethodNamePattern name, int[] args) {
-        namePattern = name;
-        argNums = args;
-    }    
-	@Override
-	public<E extends ISSABasicBlock> void addDomainElements(
-			Map<BasicBlockInContext<E>, Map<FlowType<E>, Set<CodeElement>>> taintMap,
-			IMethod im, BasicBlockInContext<E> block, SSAInvokeInstruction invInst,
-			int[] newArgNums, 
-			ISupergraph<BasicBlockInContext<E>, CGNode> graph, PointerAnalysis pa, CallGraph cg) {
 
-		for(CGNode node: cg.getNodes(im.getReference())) {
-		    for(int i: newArgNums) {
-		        FlowType<E> flow = new ParameterFlow<E>(block, i, true);
-		        final int ssaVal = node.getIR().getParameter(i);
-				final Set<CodeElement> valueElements = CodeElement.valueElements(pa, node, ssaVal);
-				
-				PointerKey pk = pa.getHeapModel().getPointerKeyForLocal(node, ssaVal);
-				final OrdinalSet<InstanceKey> pointsToSet = pa.getPointsToSet(pk);
-				
-				if (pointsToSet.isEmpty()) {
-					TypeReference typeRef = node.getMethod().getParameterType(i);
-					IClass clazz = node.getMethod().getClassHierarchy().lookupClass(typeRef);
-					if (null == clazz) {
-						logger.error("couldn't find entry arg class {}", typeRef);
-					} else {
-						InstanceKey ik = new ConcreteTypeKey(clazz);
-						valueElements.add(new InstanceKeyElement(ik));
-					}					
-				}
-				
-				for (InstanceKey ik : pointsToSet) {
-					valueElements.add(new InstanceKeyElement(ik));
-				}
-				InflowAnalysis.addDomainElements(taintMap, block, flow, valueElements);
-		    }
-		}
+	private final IField field;
+
+	public StaticFieldSourceSpec(IField field) {
+		this.field = field;
+		argNums = null;
 	}
-	
+
+	/* (non-Javadoc)
+	 * @see org.scandroid.spec.SourceSpec#addDomainElements(java.util.Map, com.ibm.wala.classLoader.IMethod, com.ibm.wala.ipa.cfg.BasicBlockInContext, com.ibm.wala.ssa.SSAInvokeInstruction, int[], com.ibm.wala.dataflow.IFDS.ISupergraph, com.ibm.wala.ipa.callgraph.propagation.PointerAnalysis, com.ibm.wala.ipa.callgraph.CallGraph)
+	 */
+	@Override
+	public <E extends ISSABasicBlock> void addDomainElements(
+			Map<BasicBlockInContext<E>, Map<FlowType<E>, Set<CodeElement>>> taintMap,
+			IMethod im, 
+			BasicBlockInContext<E> block,
+			SSAInvokeInstruction invInst, 
+			int[] newArgNums,
+			ISupergraph<BasicBlockInContext<E>, CGNode> graph,
+			PointerAnalysis pa, 
+			CallGraph cg) {
+
+		Set<CodeElement> valueElements = Sets.newHashSet();
+		valueElements.add(new StaticFieldElement(field.getReference()));
+		FlowType<E> flow = new FieldFlow<E>(block, field, true);
+		
+		TypeReference typeRef = field.getFieldTypeReference();
+		
+		if (typeRef.isPrimitiveType()) {
+			InflowAnalysis.addDomainElements(taintMap, block, flow, valueElements);
+			return;
+		}
+		
+		// else, handle reference types:
+		
+		PointerKey pk = pa.getHeapModel().getPointerKeyForStaticField(field);
+		OrdinalSet<InstanceKey> pointsToSet = pa.getPointsToSet(pk);
+		
+		if (pointsToSet.isEmpty()) {
+			IClassHierarchy cha = im.getClassHierarchy();
+			
+			if (cha.isInterface(typeRef)) {
+				// TODO we could find all implementations of the interface, and add a concrete type key for each.
+				// we aren't doing that yet.
+				InflowAnalysis.addDomainElements(taintMap, block, flow, valueElements);
+				return;
+			}
+			
+			IClass clazz = cha.lookupClass(typeRef);
+			if (null == clazz) {
+				logger.error("couldn't find entry arg class {}", typeRef);
+			} else {
+				InstanceKey ik = new ConcreteTypeKey(clazz);
+				valueElements.add(new InstanceKeyElement(ik));
+			}					
+		}
+		
+		for (InstanceKey ik : pointsToSet) {
+			valueElements.add(new InstanceKeyElement(ik));
+		}
+		InflowAnalysis.addDomainElements(taintMap, block, flow, valueElements);
+	}
+
 	@Override
 	public String toString() {
-		return String.format("EntryArgSourceSpec(%s, %s)", namePattern, Arrays.toString(argNums));
+		return "StaticFieldSourceSpec [field=" + field + "]";
 	}
 }

@@ -69,6 +69,7 @@ import org.scandroid.spec.ISpecs;
 import org.scandroid.spec.MethodNamePattern;
 import org.scandroid.spec.SinkSpec;
 import org.scandroid.spec.SourceSpec;
+import org.scandroid.spec.StaticSpecs;
 import org.scandroid.synthmethod.DefaultSCanDroidOptions;
 import org.scandroid.synthmethod.TestSpecs;
 import org.scandroid.util.AndroidAnalysisContext;
@@ -365,7 +366,9 @@ public class DataflowTest {
 			}
 		};
 		
-		ISpecs specs = TestSpecs.combine(methodSpecs, sourceSinkSpecs);
+		ISpecs staticsSpecs = new StaticSpecs(ctx.getClassHierarchy());
+		ISpecs specs = TestSpecs.combine(staticsSpecs, 
+				TestSpecs.combine(methodSpecs, sourceSinkSpecs));
 		
 		Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> dfResults = runDFAnalysis(
 				ctx, specs);

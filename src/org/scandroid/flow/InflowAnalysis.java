@@ -59,6 +59,7 @@ import org.scandroid.spec.CallRetSourceSpec;
 import org.scandroid.spec.EntryArgSourceSpec;
 import org.scandroid.spec.ISpecs;
 import org.scandroid.spec.SourceSpec;
+import org.scandroid.spec.StaticFieldSourceSpec;
 import org.scandroid.util.CGAnalysisContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -139,6 +140,26 @@ public class InflowAnalysis <E extends ISSABasicBlock> {
     	}
     }
     
+    private static<E extends ISSABasicBlock> 
+    void processStaticFieldSource(Map<BasicBlockInContext<E>,
+                            Map<FlowType<E>,Set<CodeElement>>> taintMap, 
+                            StaticFieldSourceSpec ss, 
+                            CallGraph cg, 
+                            ISupergraph<BasicBlockInContext<E>, CGNode> graph,
+                            ClassHierarchy cha,
+                            PointerAnalysis pa) {
+    	// get the first block:
+    	BasicBlockInContext<E> bb = null;
+    	for (CGNode n : cg.getEntrypointNodes() ){
+    		 bb = graph.getEntriesForProcedure(n)[0];
+    	}
+    	
+    	if ( null == bb ) {
+    		logger.error("Could not find entry basic block.");
+    	}
+    	
+    	ss.addDomainElements(taintMap, bb.getMethod(), bb, null, null, graph, pa, cg);
+    }
     
     private static<E extends ISSABasicBlock> 
     void processFunctionCalls(Map<BasicBlockInContext<E>,
@@ -217,7 +238,9 @@ public class InflowAnalysis <E extends ISSABasicBlock> {
         		processInputSource(taintMap, ss[i], cg, graph, cha, pa);
         	else if (ss[i] instanceof CallRetSourceSpec || ss[i] instanceof CallArgSourceSpec)
         		ssAL.add(ss[i]);
-        	else 
+        	else if (ss[i] instanceof StaticFieldSourceSpec) {
+        		processStaticFieldSource(taintMap, (StaticFieldSourceSpec)ss[i], cg, graph, cha, pa);
+        	} else 
         		throw new UnsupportedOperationException("Unrecognized SourceSpec");
         } 
         if (!ssAL.isEmpty())
