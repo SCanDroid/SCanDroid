@@ -37,6 +37,7 @@
  */
 package org.scandroid.synthmethod;
 
+import java.lang.reflect.Array;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -128,11 +129,17 @@ public class TestSpecs implements ISpecs {
 
 			@SuppressWarnings("unchecked")
 			private <T> T[] concat(final T[] a, final T[] b) {
-				List<T> result = Lists.newArrayList();
-				result.addAll(null == a ? Collections.EMPTY_LIST : Arrays.asList(a));
-				result.addAll(null == b ? Collections.EMPTY_LIST : Arrays.asList(b));
-
-				return result.toArray(Arrays.copyOf(a, 0));
+				if (null == a) {
+					return b;
+				}
+				if (null == b) {
+					return a;
+				}
+				
+				T[] newArray = (T[]) Array.newInstance(a.getClass().getComponentType(), a.length + b.length);
+				System.arraycopy(a, 0, newArray, 0, a.length);
+				System.arraycopy(b, 0, newArray, a.length, b.length);
+				return newArray;
 			}
 		};
 	}
