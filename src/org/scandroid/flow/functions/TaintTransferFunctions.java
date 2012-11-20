@@ -310,7 +310,7 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 		}
 		IUnaryFlowFunction newTaints = new ConstantFlowFunction<E>(domain,
 				elts);
-		return union(newTaints, flowFunction);
+		return compose(flowFunction, newTaints);
 	}
 
 	/*
