@@ -279,24 +279,38 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 
 		// globals may be redefined here, so we can't union with the globals ID
 		// flow function, as we often do elsewhere.
-		final PairBasedFlowFunction<E> flowFunction = new PairBasedFlowFunction<E>(domain, pairs);
+		final PairBasedFlowFunction<E> flowFunction = new PairBasedFlowFunction<E>(
+				domain, pairs);
 
 		// special case for static field gets so we can introduce new taints for
 		// them
 		if (taintStaticFields && inst instanceof SSAGetInstruction
 				&& ((SSAGetInstruction) inst).isStatic()) {
-			final Set<DomainElement> elts = Sets.newHashSet();
-			for (CodeElement ce : getStaticFieldAccessCodeElts(node, (SSAGetInstruction) inst)) {
-				StaticFieldElement sfe = (StaticFieldElement) ce;
-				IField field = pa.getClassHierarchy().resolveField(sfe.getRef());
-				final FieldFlow<E> taintSource = new FieldFlow<E>(dest, field, true);
-				elts.add(new DomainElement(ce, taintSource));
-			}
-			IUnaryFlowFunction newTaints = new ConstantFlowFunction(domain, elts);
-			return union(newTaints, flowFunction);
+			return makeStaticFieldTaints(dest, inst, node, flowFunction);
 		}
 
 		return flowFunction;
+	}
+
+	public IUnaryFlowFunction makeStaticFieldTaints(
+			BasicBlockInContext<E> dest, SSAInstruction inst, CGNode node,
+			final PairBasedFlowFunction<E> flowFunction) {
+		final Set<DomainElement> elts = Sets.newHashSet();
+		for (CodeElement ce : getStaticFieldAccessCodeElts(node,
+				(SSAGetInstruction) inst)) {
+			StaticFieldElement sfe = (StaticFieldElement) ce;
+			IField field = pa.getClassHierarchy()
+					.resolveField(sfe.getRef());
+			if (field.isFinal()) {
+				continue;
+			}
+			final FieldFlow<E> taintSource = new FieldFlow<E>(dest, field,
+					true);
+			elts.add(new DomainElement(ce, taintSource));
+		}
+		IUnaryFlowFunction newTaints = new ConstantFlowFunction<E>(domain,
+				elts);
+		return union(newTaints, flowFunction);
 	}
 
 	/*
