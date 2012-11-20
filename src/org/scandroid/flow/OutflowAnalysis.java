@@ -62,6 +62,7 @@ import org.scandroid.spec.EntryArgSinkSpec;
 import org.scandroid.spec.EntryRetSinkSpec;
 import org.scandroid.spec.ISpecs;
 import org.scandroid.spec.SinkSpec;
+import org.scandroid.spec.StaticFieldSinkSpec;
 import org.scandroid.util.CGAnalysisContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -450,6 +451,8 @@ public class OutflowAnalysis {
 				processSinkSpec(flowResult, domain, taintFlow, ss[i]);
 			else if (ss[i] instanceof EntryRetSinkSpec)
 				processSinkSpec(flowResult, domain, taintFlow, ss[i]);
+			else if (ss[i] instanceof StaticFieldSinkSpec)
+				processSinkSpec(flowResult, domain, taintFlow, ss[i]);
 			else
 				throw new UnsupportedOperationException(
 						"SinkSpec not yet Implemented");
@@ -492,17 +495,17 @@ public class OutflowAnalysis {
 			IFDSTaintDomain<IExplodedBasicBlock> domain,
 			Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> flowGraph,
 			SinkSpec ss) {
-		Set<SinkPoint> sinkPoints = calculateSinkPoints(ss);
+		Set<ISinkPoint> sinkPoints = calculateSinkPoints(ss);
 
-		for (SinkPoint sinkPoint : sinkPoints) {
-			for (FlowType<IExplodedBasicBlock> source : findSources(flowResult,
-					domain, sinkPoint)) {
-				addEdge(flowGraph, source, sinkPoint.sinkFlow);
+		for (ISinkPoint sinkPoint : sinkPoints) {
+			for (FlowType<IExplodedBasicBlock> source : sinkPoint.findSources(
+					ctx, flowResult, domain)) {
+				addEdge(flowGraph, source, sinkPoint.getFlow());
 			}
 		}
 	}
 
-	private Set<SinkPoint> calculateSinkPoints(SinkSpec sinkSpec) {
+	private Set<ISinkPoint> calculateSinkPoints(SinkSpec sinkSpec) {
 		if (sinkSpec instanceof EntryArgSinkSpec) {
 			return calculateSinkPoints((EntryArgSinkSpec) sinkSpec);
 		}
@@ -512,11 +515,14 @@ public class OutflowAnalysis {
 		if (sinkSpec instanceof EntryRetSinkSpec) {
 			return calculateSinkPoints((EntryRetSinkSpec) sinkSpec);
 		}
+		if (sinkSpec instanceof StaticFieldSinkSpec) {
+			return calculateSinkPoints((StaticFieldSinkSpec) sinkSpec);
+		}
 		throw new UnimplementedError();
 	}
 
-	private Set<SinkPoint> calculateSinkPoints(EntryArgSinkSpec sinkSpec) {
-		Set<SinkPoint> points = Sets.newHashSet();
+	private Set<ISinkPoint> calculateSinkPoints(EntryArgSinkSpec sinkSpec) {
+		Set<ISinkPoint> points = Sets.newHashSet();
 
 		Collection<IMethod> methods = sinkSpec.getNamePattern()
 				.getPossibleTargets(cha);
@@ -534,16 +540,16 @@ public class OutflowAnalysis {
 				final int ssaVal = node.getIR().getParameter(argNum);
 				final ParameterFlow<IExplodedBasicBlock> sinkFlow = new ParameterFlow<IExplodedBasicBlock>(
 						entryBlock, argNum, false);
-				final SinkPoint sinkPoint = new SinkPoint(exitBlock, ssaVal,
-						sinkFlow);
+				final LocalSinkPoint sinkPoint = new LocalSinkPoint(exitBlock,
+						ssaVal, sinkFlow);
 				points.add(sinkPoint);
 			}
 		}
 		return points;
 	}
 
-	private Set<SinkPoint> calculateSinkPoints(final CallArgSinkSpec sinkSpec) {
-		final Set<SinkPoint> points = Sets.newHashSet();
+	private Set<ISinkPoint> calculateSinkPoints(final CallArgSinkSpec sinkSpec) {
+		final Set<ISinkPoint> points = Sets.newHashSet();
 
 		Collection<IMethod> methods = sinkSpec.getNamePattern()
 				.getPossibleTargets(cha);
@@ -581,7 +587,7 @@ public class OutflowAnalysis {
 								final int ssaVal = invokeInst.getUse(argNum);
 								final ParameterFlow<IExplodedBasicBlock> sinkFlow = new ParameterFlow<IExplodedBasicBlock>(
 										callBlock, argNum, false);
-								final SinkPoint sinkPoint = new SinkPoint(
+								final LocalSinkPoint sinkPoint = new LocalSinkPoint(
 										callBlock, ssaVal, sinkFlow);
 								points.add(sinkPoint);
 							}
@@ -594,8 +600,8 @@ public class OutflowAnalysis {
 		return points;
 	}
 
-	private Set<SinkPoint> calculateSinkPoints(EntryRetSinkSpec sinkSpec) {
-		Set<SinkPoint> points = Sets.newHashSet();
+	private Set<ISinkPoint> calculateSinkPoints(EntryRetSinkSpec sinkSpec) {
+		Set<ISinkPoint> points = Sets.newHashSet();
 
 		Collection<IMethod> methods = sinkSpec.getNamePattern()
 				.getPossibleTargets(cha);
@@ -626,7 +632,7 @@ public class OutflowAnalysis {
 							final int ssaVal = returnInst.getResult();
 							final ReturnFlow<IExplodedBasicBlock> sinkFlow = new ReturnFlow<IExplodedBasicBlock>(
 									exitBlock, false);
-							final SinkPoint sinkPoint = new SinkPoint(
+							final LocalSinkPoint sinkPoint = new LocalSinkPoint(
 									exitBlock, ssaVal, sinkFlow);
 							points.add(sinkPoint);
 						}
@@ -638,168 +644,15 @@ public class OutflowAnalysis {
 		return points;
 	}
 
-	private Set<FlowType<IExplodedBasicBlock>> findSources(
-			TabulationResult<BasicBlockInContext<IExplodedBasicBlock>, CGNode, DomainElement> flowResult,
-			IFDSTaintDomain<IExplodedBasicBlock> domain, SinkPoint sinkPoint) {
-		Set<FlowType<IExplodedBasicBlock>> sources = Sets.newHashSet();
-
-		final CodeElement localElt = new LocalElement(sinkPoint.ssaVal);
-		Set<CodeElement> elts = Sets.newHashSet(localElt);
-
-		final CGNode node = sinkPoint.block.getNode();
-		PointerKey pk = pa.getHeapModel().getPointerKeyForLocal(node,
-				sinkPoint.ssaVal);
-		OrdinalSet<InstanceKey> iks = pa.getPointsToSet(pk);
-		if (null == iks) {
-			logger.warn("no instance keys found for SinkPoint {}", sinkPoint);
+	private Set<ISinkPoint> calculateSinkPoints(StaticFieldSinkSpec sinkSpec) {
+		Set<ISinkPoint> points = Sets.newHashSet();
+		
+		ICFGSupergraph graph = (ICFGSupergraph) ctx.graph;
+		for (CGNode node : ctx.cg.getNodes(sinkSpec.getMethod().getReference())) {
+			points.add(new StaticFieldSinkPoint(sinkSpec, graph.getICFG().getExit(node)));
 		}
-
-		for (InstanceKey ik : iks) {
-			elts.addAll(codeElementsForInstanceKey(ik));
-		}
-		logger.debug("checking for sources from code elements {}", elts);
-
-		for (CodeElement elt : elts) {
-			for (DomainElement de : domain.getPossibleElements(elt)) {
-				if (flowResult.getResult(sinkPoint.block).contains(
-						domain.getMappedIndex(de))) {
-					sources.add(de.taintSource);
-				}
-			}
-		}
-		return sources;
-	}
-
-	/**
-	 * @param rootIK
-	 * @return a set of all code elements that might refer to this object or one
-	 *         of its fields (recursively)
-	 */
-	private Set<CodeElement> codeElementsForInstanceKey(InstanceKey rootIK) {
-		Set<CodeElement> elts = Sets.newHashSet();
-		Deque<InstanceKey> iks = Queues.newArrayDeque();
-		iks.push(rootIK);
-
-		while (!iks.isEmpty()) {
-			InstanceKey ik = iks.pop();
-			logger.debug("getting code elements for {}", ik);
-			elts.add(new InstanceKeyElement(ik));
-			// only ask for fields if this is a class
-			if (ik.getConcreteType().isArrayClass()) {
-				continue;
-			}				
-			for (IField field : ik.getConcreteType().getAllInstanceFields()) {
-				logger.debug("adding elements for field {}", field);
-				final TypeReference fieldTypeRef = field
-						.getFieldTypeReference();
-				elts.add(new FieldElement(ik, field.getReference()));
-				if (fieldTypeRef.isPrimitiveType()) {
-					elts.add(new FieldElement(ik, field.getReference()));
-				} else if (fieldTypeRef.isArrayType()) {
-					PointerKey pk = pa.getHeapModel()
-							.getPointerKeyForInstanceField(ik, field);
-					final OrdinalSet<InstanceKey> pointsToSet = pa
-							.getPointsToSet(pk);
-					if (pointsToSet.isEmpty()) {
-						logger.debug("pointsToSet empty for array field, creating InstanceKey manually");
-						InstanceKey fieldIK = new ConcreteTypeKey(pa
-								.getClassHierarchy().lookupClass(fieldTypeRef));
-						final InstanceKeyElement elt = new InstanceKeyElement(
-								fieldIK);
-						elts.add(elt);
-					} else {
-						for (InstanceKey fieldIK : pointsToSet) {
-							final InstanceKeyElement elt = new InstanceKeyElement(
-									fieldIK);
-							elts.add(elt);
-						}
-					}
-				} else if (fieldTypeRef.isReferenceType()) {
-					PointerKey pk = pa.getHeapModel()
-							.getPointerKeyForInstanceField(ik, field);
-					final OrdinalSet<InstanceKey> pointsToSet = pa
-							.getPointsToSet(pk);
-					if (pointsToSet.isEmpty() && !cha.isInterface(fieldTypeRef)) {
-						logger.debug("pointsToSet empty for reference field, creating InstanceKey manually");
-						InstanceKey fieldIK = new ConcreteTypeKey(
-								cha.lookupClass(fieldTypeRef));
-						final InstanceKeyElement elt = new InstanceKeyElement(
-								fieldIK);
-						if (!elts.contains(elt)) {
-							elts.add(elt);
-							iks.push(fieldIK);
-						}
-					} else {
-						for (InstanceKey fieldIK : pointsToSet) {
-							final InstanceKeyElement elt = new InstanceKeyElement(
-									fieldIK);
-							if (!elts.contains(elt)) {
-								elts.add(elt);
-								iks.push(fieldIK);
-							}
-						}
-					}
-				} else {
-					logger.warn("unknown field type {}", field);
-				}
-			}
-		}
-		return elts;
-	}
-
-	private static class SinkPoint {
-		private final BasicBlockInContext<IExplodedBasicBlock> block;
-		private final int ssaVal;
-		private final FlowType<IExplodedBasicBlock> sinkFlow;
-
-		public SinkPoint(BasicBlockInContext<IExplodedBasicBlock> block,
-				int ssaVal, FlowType<IExplodedBasicBlock> sinkFlow) {
-			this.block = block;
-			this.ssaVal = ssaVal;
-			this.sinkFlow = sinkFlow;
-		}
-
-		@Override
-		public int hashCode() {
-			final int prime = 31;
-			int result = 1;
-			result = prime * result + ((block == null) ? 0 : block.hashCode());
-			result = prime * result
-					+ ((sinkFlow == null) ? 0 : sinkFlow.hashCode());
-			result = prime * result + ssaVal;
-			return result;
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			if (this == obj)
-				return true;
-			if (obj == null)
-				return false;
-			if (getClass() != obj.getClass())
-				return false;
-			SinkPoint other = (SinkPoint) obj;
-			if (block == null) {
-				if (other.block != null)
-					return false;
-			} else if (!block.equals(other.block))
-				return false;
-			if (sinkFlow == null) {
-				if (other.sinkFlow != null)
-					return false;
-			} else if (!sinkFlow.equals(other.sinkFlow))
-				return false;
-			if (ssaVal != other.ssaVal)
-				return false;
-			return true;
-		}
-
-		@Override
-		public String toString() {
-			return "SinkPoint [block=" + block + ", ssaVal=" + ssaVal
-					+ ", sinkFlow=" + sinkFlow + "]";
-		}
-
+		
+		return points;
 	}
 
 }

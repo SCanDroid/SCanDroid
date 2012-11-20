@@ -43,14 +43,21 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Deque;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
+import org.scandroid.domain.CodeElement;
+import org.scandroid.domain.FieldElement;
+import org.scandroid.domain.InstanceKeyElement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.collect.Queues;
 import com.google.common.collect.Sets;
 import com.ibm.wala.classLoader.DexIRFactory;
+import com.ibm.wala.classLoader.IField;
 import com.ibm.wala.classLoader.IMethod;
 import com.ibm.wala.dataflow.IFDS.ICFGSupergraph;
 import com.ibm.wala.dataflow.IFDS.ISupergraph;
@@ -63,7 +70,10 @@ import com.ibm.wala.ipa.callgraph.Entrypoint;
 import com.ibm.wala.ipa.callgraph.impl.DefaultContextSelector;
 import com.ibm.wala.ipa.callgraph.impl.Everywhere;
 import com.ibm.wala.ipa.callgraph.impl.PartialCallGraph;
+import com.ibm.wala.ipa.callgraph.propagation.ConcreteTypeKey;
+import com.ibm.wala.ipa.callgraph.propagation.InstanceKey;
 import com.ibm.wala.ipa.callgraph.propagation.PointerAnalysis;
+import com.ibm.wala.ipa.callgraph.propagation.PointerKey;
 import com.ibm.wala.ipa.callgraph.propagation.SSAPropagationCallGraphBuilder;
 import com.ibm.wala.ipa.cfg.BasicBlockInContext;
 import com.ibm.wala.ipa.cha.ClassHierarchy;
@@ -73,9 +83,11 @@ import com.ibm.wala.ssa.SSACFG;
 import com.ibm.wala.ssa.SSACFG.BasicBlock;
 import com.ibm.wala.ssa.SSAInstruction;
 import com.ibm.wala.types.ClassLoaderReference;
+import com.ibm.wala.types.TypeReference;
 import com.ibm.wala.util.Predicate;
 import com.ibm.wala.util.graph.Graph;
 import com.ibm.wala.util.graph.GraphSlicer;
+import com.ibm.wala.util.intset.OrdinalSet;
 import com.ibm.wala.util.warnings.Warning;
 import com.ibm.wala.util.warnings.Warnings;
 
@@ -308,6 +320,83 @@ public class CGAnalysisContext<E extends ISSABasicBlock> {
 				}
 			}
 		}
+	}
+	
+	/**
+	 * @param rootIK
+	 * @return a set of all code elements that might refer to this object or one
+	 *         of its fields (recursively)
+	 */
+	public Set<CodeElement> codeElementsForInstanceKey(InstanceKey rootIK) {
+		Set<CodeElement> elts = Sets.newHashSet();
+		Deque<InstanceKey> iks = Queues.newArrayDeque();
+		iks.push(rootIK);
+
+		while (!iks.isEmpty()) {
+			InstanceKey ik = iks.pop();
+			logger.debug("getting code elements for {}", ik);
+			elts.add(new InstanceKeyElement(ik));
+			// only ask for fields if this is a class
+			if (ik.getConcreteType().isArrayClass()) {
+				continue;
+			}				
+			for (IField field : ik.getConcreteType().getAllInstanceFields()) {
+				logger.debug("adding elements for field {}", field);
+				final TypeReference fieldTypeRef = field
+						.getFieldTypeReference();
+				elts.add(new FieldElement(ik, field.getReference()));
+				if (fieldTypeRef.isPrimitiveType()) {
+					elts.add(new FieldElement(ik, field.getReference()));
+				} else if (fieldTypeRef.isArrayType()) {
+					PointerKey pk = pa.getHeapModel()
+							.getPointerKeyForInstanceField(ik, field);
+					final OrdinalSet<InstanceKey> pointsToSet = pa
+							.getPointsToSet(pk);
+					if (pointsToSet.isEmpty()) {
+						logger.debug("pointsToSet empty for array field, creating InstanceKey manually");
+						InstanceKey fieldIK = new ConcreteTypeKey(pa
+								.getClassHierarchy().lookupClass(fieldTypeRef));
+						final InstanceKeyElement elt = new InstanceKeyElement(
+								fieldIK);
+						elts.add(elt);
+					} else {
+						for (InstanceKey fieldIK : pointsToSet) {
+							final InstanceKeyElement elt = new InstanceKeyElement(
+									fieldIK);
+							elts.add(elt);
+						}
+					}
+				} else if (fieldTypeRef.isReferenceType()) {
+					PointerKey pk = pa.getHeapModel()
+							.getPointerKeyForInstanceField(ik, field);
+					final OrdinalSet<InstanceKey> pointsToSet = pa
+							.getPointsToSet(pk);
+					if (pointsToSet.isEmpty() && !analysisContext.getClassHierarchy().isInterface(fieldTypeRef)) {
+						logger.debug("pointsToSet empty for reference field, creating InstanceKey manually");
+						InstanceKey fieldIK = new ConcreteTypeKey(
+								analysisContext.getClassHierarchy().lookupClass(fieldTypeRef));
+						final InstanceKeyElement elt = new InstanceKeyElement(
+								fieldIK);
+						if (!elts.contains(elt)) {
+							elts.add(elt);
+							iks.push(fieldIK);
+						}
+					} else {
+						for (InstanceKey fieldIK : pointsToSet) {
+							final InstanceKeyElement elt = new InstanceKeyElement(
+									fieldIK);
+							if (!elts.contains(elt)) {
+								elts.add(elt);
+								iks.push(fieldIK);
+							}
+						}
+					}
+				} else {
+					logger.warn("unknown field type {}", field);
+				}
+			}
+		}
+		return elts;
 	}
 
 	public ISCanDroidOptions getOptions() {

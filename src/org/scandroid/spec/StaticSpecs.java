@@ -45,7 +45,9 @@ import java.util.List;
 import com.google.common.collect.Lists;
 import com.ibm.wala.classLoader.IClass;
 import com.ibm.wala.classLoader.IField;
+import com.ibm.wala.classLoader.IMethod;
 import com.ibm.wala.ipa.cha.ClassHierarchy;
+import com.ibm.wala.util.strings.StringStuff;
 
 /**
  * @author creswick
@@ -54,10 +56,12 @@ import com.ibm.wala.ipa.cha.ClassHierarchy;
 public class StaticSpecs implements ISpecs {
 
 	private final ClassHierarchy cha;
-	private final Collection<IField> fields;
+	private final String methodSignature;
+    private final Collection<IField> fields;
 
-	public StaticSpecs(ClassHierarchy cha) {
+	public StaticSpecs(ClassHierarchy cha, String methodSignature) {
 		this.cha = cha;
+		this.methodSignature = methodSignature;
 		this.fields = collectFields();
 	}
 
@@ -74,13 +78,14 @@ public class StaticSpecs implements ISpecs {
 	 */
 	@Override
 	public SourceSpec[] getSourceSpecs() {
-		List<SourceSpec> specs = Lists.newArrayList();
-
-		for (IField field : fields) {
-			specs.add(new StaticFieldSourceSpec(field));
-		}
-
-		return specs.toArray(new SourceSpec[] {});
+//		List<SourceSpec> specs = Lists.newArrayList();
+//
+//		for (IField field : fields) {
+//			specs.add(new StaticFieldSourceSpec(field));
+//		}
+//
+//		return specs.toArray(new SourceSpec[] {});
+		return new SourceSpec[] {};
 	}
 
 	/**
@@ -104,11 +109,14 @@ public class StaticSpecs implements ISpecs {
 	 * @see org.scandroid.spec.ISpecs#getSinkSpecs()
 	 */
 	@Override
-	public SinkSpec[] getSinkSpecs() {
+	public SinkSpec[] getSinkSpecs() {		
 		List<SinkSpec> specs = Lists.newArrayList();
+		Collection<IMethod> methods = cha.getPossibleTargets(StringStuff.makeMethodReference(methodSignature));
 		for (IField field : fields) {
 			if (!field.isFinal()) {
-				specs.add(new StaticFieldSinkSpec(field));
+				for (IMethod method : methods) {
+					specs.add(new StaticFieldSinkSpec(field, method));
+				}
 			}
 		}
 		return specs.toArray(new SinkSpec[] {});

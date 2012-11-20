@@ -365,10 +365,10 @@ public class DataflowTest {
 			}
 		};
 
-		ISpecs staticsSpecs = new StaticSpecs(ctx.getClassHierarchy());
-		ISpecs specs = TestSpecs.combine(methodSpecs, sourceSinkSpecs);
-		// ISpecs specs = TestSpecs.combine(staticsSpecs,
-		// TestSpecs.combine(methodSpecs, sourceSinkSpecs));
+		ISpecs staticsSpecs = new StaticSpecs(ctx.getClassHierarchy(), entrypoint.getMethod().getSignature());
+		// ISpecs specs = TestSpecs.combine(methodSpecs, sourceSinkSpecs);
+		ISpecs specs = TestSpecs.combine(staticsSpecs,
+				TestSpecs.combine(methodSpecs, sourceSinkSpecs));
 
 		Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> dfResults = runDFAnalysis(
 				ctx, specs);
@@ -408,7 +408,6 @@ public class DataflowTest {
 		while (it.hasNext()) {
 			logger.debug("{}", it.next());
 		}
-		
 
 		Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> permissionOutflow = new OutflowAnalysis(
 				cgContext, specs).analyze(flowResult, domain);
