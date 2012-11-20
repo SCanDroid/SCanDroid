@@ -61,6 +61,7 @@ import org.scandroid.domain.IFDSTaintDomain;
 import org.scandroid.flow.FlowAnalysis;
 import org.scandroid.flow.InflowAnalysis;
 import org.scandroid.flow.OutflowAnalysis;
+import org.scandroid.flow.functions.TaintTransferFunctions;
 import org.scandroid.flow.types.FlowType;
 import org.scandroid.spec.CallArgSinkSpec;
 import org.scandroid.spec.CallArgSourceSpec;
@@ -134,7 +135,7 @@ public class DataflowTest {
 		ch.qos.logback.classic.Logger root = (ch.qos.logback.classic.Logger) LoggerFactory
 				.getLogger(Logger.ROOT_LOGGER_NAME);
 		root.setLevel(Level.INFO);
-//		root.setLevel(Level.DEBUG);
+		// root.setLevel(Level.DEBUG);
 		List<Object[]> entrypoints = Lists.newArrayList();
 
 		checklist = gold.expectedMethods();
@@ -224,8 +225,6 @@ public class DataflowTest {
 		return entrypoints;
 	}
 
-
-
 	@AfterClass
 	public static void tearDown() {
 
@@ -246,18 +245,18 @@ public class DataflowTest {
 	private static String refineDescription(String method)
 			throws UnsupportedEncodingException {
 		String descr = method;
-		
+
 		descr = descr.replace("org.scandroid.testing", "o.s.t");
 		descr = descr.replace("org/scandroid/testing", "o/s/t");
 		descr = descr.replace("java/lang/", "");
-		
-		if ( isEclipse() ) {
+
+		if (isEclipse()) {
 			descr = descr.replace("(", "{");
 			descr = descr.replace(")", "}");
 		}
 		return descr;
 	}
-	
+
 	public final Entrypoint entrypoint;
 
 	private String descriptor;
@@ -334,42 +333,43 @@ public class DataflowTest {
 				}, name, name + ".dot");
 			}
 		}
-		ISpecs methodSpecs = TestSpecs.specsFromDescriptor(ctx.getClassHierarchy(),
-				entrypoint.getMethod().getSignature());
+		ISpecs methodSpecs = TestSpecs.specsFromDescriptor(
+				ctx.getClassHierarchy(), entrypoint.getMethod().getSignature());
 
 		ISpecs sourceSinkSpecs = new ISpecs() {
-			
+
 			@Override
 			public SourceSpec[] getSourceSpecs() {
-				return new SourceSpec[] { 
+				return new SourceSpec[] {
 						new CallArgSourceSpec(new MethodNamePattern(
-						   "Lorg/scandroid/testing/SourceSink", "load"), 
-						   new int[] { 0 }), 
+								"Lorg/scandroid/testing/SourceSink", "load"),
+								new int[] { 0 }),
 						new CallRetSourceSpec(new MethodNamePattern(
-						    "Lorg/scandroid/testing/SourceSink", "source"), 
-						    new int[] { 0 }) // I think args are irrelevant for this source spec...
+								"Lorg/scandroid/testing/SourceSink", "source"),
+								new int[] { 0 }) // I think args are irrelevant
+													// for this source spec...
 				};
 			}
-			
+
 			@Override
 			public SinkSpec[] getSinkSpecs() {
-				return new SinkSpec[] { 
-						new CallArgSinkSpec(new MethodNamePattern(
-						    "Lorg/scandroid/testing/SourceSink", "sink"), 
-						    new int[] { 0 })
-				};
+				return new SinkSpec[] { new CallArgSinkSpec(
+						new MethodNamePattern(
+								"Lorg/scandroid/testing/SourceSink", "sink"),
+						new int[] { 0 }) };
 			}
-			
+
 			@Override
 			public MethodNamePattern[] getEntrypointSpecs() {
 				return new MethodNamePattern[0];
 			}
 		};
-		
+
 		ISpecs staticsSpecs = new StaticSpecs(ctx.getClassHierarchy());
-		ISpecs specs = TestSpecs.combine(staticsSpecs, 
-				TestSpecs.combine(methodSpecs, sourceSinkSpecs));
-		
+		ISpecs specs = TestSpecs.combine(methodSpecs, sourceSinkSpecs);
+		// ISpecs specs = TestSpecs.combine(staticsSpecs,
+		// TestSpecs.combine(methodSpecs, sourceSinkSpecs));
+
 		Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> dfResults = runDFAnalysis(
 				ctx, specs);
 
@@ -400,12 +400,15 @@ public class DataflowTest {
 
 		IFDSTaintDomain<IExplodedBasicBlock> domain = new IFDSTaintDomain<IExplodedBasicBlock>();
 		TabulationResult<BasicBlockInContext<IExplodedBasicBlock>, CGNode, DomainElement> flowResult = FlowAnalysis
-				.analyze(cgContext, initialTaints, domain, null);
+				.analyze(cgContext, initialTaints, domain, null,
+						new TaintTransferFunctions<IExplodedBasicBlock>(domain,
+								cgContext.graph, cgContext.pa, true));
 
 		Iterator<DomainElement> it = domain.iterator();
 		while (it.hasNext()) {
 			logger.debug("{}", it.next());
 		}
+		
 
 		Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> permissionOutflow = new OutflowAnalysis(
 				cgContext, specs).analyze(flowResult, domain);

@@ -91,7 +91,11 @@ public class StaticSpecs implements ISpecs {
 		Iterator<IClass> itr = cha.iterator();
 		while (itr.hasNext()) {
 			IClass cls = itr.next();
-			fields .addAll(cls.getAllStaticFields()); 
+			for (IField field : cls.getAllStaticFields()) {
+				if (field.getFieldTypeReference().isReferenceType()) {
+					fields.add(field);
+				}
+			}
 		}
 		return fields;
 	}
@@ -101,8 +105,13 @@ public class StaticSpecs implements ISpecs {
 	 */
 	@Override
 	public SinkSpec[] getSinkSpecs() {
-		// TODO Auto-generated method stub
-		return null;
+		List<SinkSpec> specs = Lists.newArrayList();
+		for (IField field : fields) {
+			if (!field.isFinal()) {
+				specs.add(new StaticFieldSinkSpec(field));
+			}
+		}
+		return specs.toArray(new SinkSpec[] {});
 	}
 
 }

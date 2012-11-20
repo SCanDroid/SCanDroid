@@ -44,12 +44,14 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import org.scandroid.domain.CodeElement;
+import org.scandroid.domain.DomainElement;
 import org.scandroid.domain.FieldElement;
 import org.scandroid.domain.IFDSTaintDomain;
 import org.scandroid.domain.InstanceKeyElement;
 import org.scandroid.domain.LocalElement;
 import org.scandroid.domain.ReturnElement;
 import org.scandroid.domain.StaticFieldElement;
+import org.scandroid.flow.types.FieldFlow;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -96,15 +98,17 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 			.getLogger(TaintTransferFunctions.class);
 
 	// Java, you need type aliases.
-	private static class BlockPair <E extends ISSABasicBlock>
-	    extends Pair<BasicBlockInContext<E>, BasicBlockInContext<E>> {
+	private static class BlockPair<E extends ISSABasicBlock> extends
+			Pair<BasicBlockInContext<E>, BasicBlockInContext<E>> {
 		protected BlockPair(BasicBlockInContext<E> fst,
 				BasicBlockInContext<E> snd) {
 			super(fst, snd);
-		}}
-	
+		}
+	}
+
 	private final IFDSTaintDomain<E> domain;
 	private final PointerAnalysis pa;
+	private final boolean taintStaticFields;
 	private final IUnaryFlowFunction globalId;
 	private final IUnaryFlowFunction callToReturn;
 	private final LoadingCache<BlockPair<E>, IUnaryFlowFunction> callFlowFunctions;
@@ -118,30 +122,35 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 	public TaintTransferFunctions(IFDSTaintDomain<E> domain,
 			ISupergraph<BasicBlockInContext<E>, CGNode> graph,
 			PointerAnalysis pa) {
+		this(domain, graph, pa, false);
+	}
+
+	public TaintTransferFunctions(IFDSTaintDomain<E> domain,
+			ISupergraph<BasicBlockInContext<E>, CGNode> graph,
+			PointerAnalysis pa, boolean taintStaticFields) {
 		this.domain = domain;
 		this.pa = pa;
 		this.globalId = new GlobalIdentityFunction<E>(domain);
 		this.callToReturn = new CallToReturnFunction<E>(domain);
-		this.callFlowFunctions = CacheBuilder.newBuilder()
-			       .maximumSize(10000)
-			       .expireAfterWrite(10, TimeUnit.MINUTES)
-			       .build(new CacheLoader<BlockPair<E>, IUnaryFlowFunction>() {
-						@Override
-						public IUnaryFlowFunction load(BlockPair<E> key)
-								throws Exception {
-							return makeCallFlowFunction(key.fst, key.snd, null);
-						}
-			           });
-		this.normalFlowFunctions = CacheBuilder.newBuilder()
-			       .maximumSize(10000)
-			       .expireAfterWrite(10, TimeUnit.MINUTES)
-			       .build(new CacheLoader<BlockPair<E>, IUnaryFlowFunction>() {
-						@Override
-						public IUnaryFlowFunction load(BlockPair<E> key)
-								throws Exception {
-							return makeNormalFlowFunction(key.fst, key.snd);
-						}
-			           });
+		this.callFlowFunctions = CacheBuilder.newBuilder().maximumSize(10000)
+				.expireAfterWrite(10, TimeUnit.MINUTES)
+				.build(new CacheLoader<BlockPair<E>, IUnaryFlowFunction>() {
+					@Override
+					public IUnaryFlowFunction load(BlockPair<E> key)
+							throws Exception {
+						return makeCallFlowFunction(key.fst, key.snd, null);
+					}
+				});
+		this.normalFlowFunctions = CacheBuilder.newBuilder().maximumSize(10000)
+				.expireAfterWrite(10, TimeUnit.MINUTES)
+				.build(new CacheLoader<BlockPair<E>, IUnaryFlowFunction>() {
+					@Override
+					public IUnaryFlowFunction load(BlockPair<E> key)
+							throws Exception {
+						return makeNormalFlowFunction(key.fst, key.snd);
+					}
+				});
+		this.taintStaticFields = taintStaticFields;
 	}
 
 	@Override
@@ -244,30 +253,9 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 		SSAInstruction inst = dest.getLastInstruction();
 		CGNode node = dest.getNode();
 
-		// if (null == inst) {
-		// final SSAInstruction srcInst = src.getLastInstruction();
-		// if (null == srcInst) {
-		// logger.debug("Using identity fn. for normal flow (src and dest instructions null)");
-		// return IDENTITY_FN;
-		// }
-		// // if it's null, though, we'll process the src instruction.
-		// // this *should* ensure we don't process the same instruction
-		// // mulitple times
-		// inst = srcInst;
-		// node = src.getNode();
-		// }
-
 		if (null == inst) {
-			// final SSAInstruction srcInst = src.getLastInstruction();
-			// if (null == srcInst) {
 			logger.trace("Using identity fn. for normal flow (dest instruction null)");
 			return IDENTITY_FN;
-			// }
-			// // if it's null, though, we'll process the src instruction.
-			// // this *should* ensure we don't process the same instruction
-			// // mulitple times
-			// inst = srcInst;
-			// node = src.getNode();
 		}
 
 		logger.trace("\tinstruction: {}", inst);
@@ -291,7 +279,24 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 
 		// globals may be redefined here, so we can't union with the globals ID
 		// flow function, as we often do elsewhere.
-		return new PairBasedFlowFunction<E>(domain, pairs);
+		final PairBasedFlowFunction<E> flowFunction = new PairBasedFlowFunction<E>(domain, pairs);
+
+		// special case for static field gets so we can introduce new taints for
+		// them
+		if (taintStaticFields && inst instanceof SSAGetInstruction
+				&& ((SSAGetInstruction) inst).isStatic()) {
+			final Set<DomainElement> elts = Sets.newHashSet();
+			for (CodeElement ce : getStaticFieldAccessCodeElts(node, (SSAGetInstruction) inst)) {
+				StaticFieldElement sfe = (StaticFieldElement) ce;
+				IField field = pa.getClassHierarchy().resolveField(sfe.getRef());
+				final FieldFlow<E> taintSource = new FieldFlow<E>(dest, field, true);
+				elts.add(new DomainElement(ce, taintSource));
+			}
+			IUnaryFlowFunction newTaints = new ConstantFlowFunction(domain, elts);
+			return union(newTaints, flowFunction);
+		}
+
+		return flowFunction;
 	}
 
 	/*
