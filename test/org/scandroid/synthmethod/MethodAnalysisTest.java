@@ -51,6 +51,8 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
+import org.hamcrest.BaseMatcher;
+import org.hamcrest.Matcher;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -77,6 +79,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.ibm.wala.classLoader.IClass;
 import com.ibm.wala.classLoader.IClassLoader;
 import com.ibm.wala.classLoader.IMethod;
@@ -151,8 +154,8 @@ public class MethodAnalysisTest {
 			logger.debug("abstract={}", clazz.isAbstract());
 			for (IMethod method : clazz.getAllMethods()) {
 				IClass declClass = method.getDeclaringClass();
-				if (!declClass.getName().toString().endsWith("LLTestIter"))
-					continue;
+//				if (!declClass.getName().toString().endsWith("LLTestIter"))
+//					continue;
 				if (method.isAbstract() || method.isSynthetic()
 						|| (declClass.isAbstract() && method.isInit())
 						|| (declClass.isAbstract() && !method.isStatic())) {
@@ -167,8 +170,9 @@ public class MethodAnalysisTest {
 							method.isInit(), method.isClinit(),
 							method.isSynthetic());
 					entrypoints.add(new Object[] {
-							DataflowTest.refineDescription(method.getSignature()),
-								new DefaultEntrypoint(method, cha) });
+							DataflowTest.refineDescription(method
+									.getSignature()),
+							new DefaultEntrypoint(method, cha) });
 				}
 			}
 		}
@@ -265,8 +269,8 @@ public class MethodAnalysisTest {
 		System.out.println("Direct Flows: \n" + flowMapToString(directResults));
 		System.out.println("Summary Flows: \n"
 				+ flowMapToString(summarizedResults));
-		Assert.assertEquals("Results differed with summaries", directResults,
-				summarizedResults);
+
+		Assert.assertTrue("Results differed", equalsModSynthetic(directResults, summarizedResults));
 	}
 
 	private Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> runDFAnalysis(
@@ -306,5 +310,85 @@ public class MethodAnalysisTest {
 		}
 
 		return builder.toString();
+	}
+
+	private static boolean equalsModSynthetic(
+			Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> map1,
+			Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> map2) {
+		if (map1.size() != map2.size()) {
+			return false;
+		}
+		return equalsModSynthetic(map1.entrySet(), map2.entrySet());
+	}
+
+	private static boolean equalsModSynthetic(
+			Set<Entry<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>>> entrySet1,
+			Set<Entry<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>>> entrySet2) {
+		if (entrySet1.size() != entrySet2.size()) {
+			return false;
+		}
+		for (Entry<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> entry : entrySet1) {
+			if (!containsModSynthetic(entry, entrySet2)) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	private static boolean containsModSynthetic(
+			Entry<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> entry1,
+			Set<Entry<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>>> entrySet2) {
+		for (Entry<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> entry2 : entrySet2) {
+			if (equalsModSynthetic(entry1.getKey(), entry2.getKey())
+					&& equalsFlowSetsModSynthetic(entry1.getValue(), entry2.getValue())) {
+				return true;
+			}
+		}
+		return false;		
+	}	
+
+	private static boolean equalsModSynthetic(
+			FlowType<IExplodedBasicBlock> flow1,
+			FlowType<IExplodedBasicBlock> flow2) {
+		if (flow1 == flow2)
+			return true;
+		if (flow1 == null)
+			return false;
+		if (flow1.getClass() != flow2.getClass())
+			return false;		
+		if (flow1.getBlock() == null) {
+			if (flow2.getBlock() != null)
+				return false;
+		} else if (!flow1.getBlock().getMethod().getSignature().equals(flow2.getBlock().getMethod().getSignature())) {
+			return false;
+		}
+		if (flow1.isSource() != flow2.isSource())
+			return false;
+		return true;
+	}
+	
+	private static boolean equalsFlowSetsModSynthetic(
+			Set<FlowType<IExplodedBasicBlock>> set1,
+			Set<FlowType<IExplodedBasicBlock>> set2) {
+		if (set1.size() != set2.size()) {
+			return false;
+		}
+		for (FlowType<IExplodedBasicBlock> flow : set1) {
+			if (containsModSynthetic(flow, set2)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private static boolean containsModSynthetic(
+			FlowType<IExplodedBasicBlock> flow,
+			Set<FlowType<IExplodedBasicBlock>> set2) {
+		for (FlowType<IExplodedBasicBlock> flow2 : set2) {
+			if (equalsModSynthetic(flow, flow2)) {
+				return true;
+			}			
+		}
+		return false;
 	}
 }
