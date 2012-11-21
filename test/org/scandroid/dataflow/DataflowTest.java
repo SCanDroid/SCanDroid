@@ -242,7 +242,7 @@ public class DataflowTest {
 	 * @return
 	 * @throws UnsupportedEncodingException
 	 */
-	private static String refineDescription(String method)
+	public static String refineDescription(String method)
 			throws UnsupportedEncodingException {
 		String descr = method;
 

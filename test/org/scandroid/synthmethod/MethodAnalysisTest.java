@@ -60,6 +60,7 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 import org.scandroid.MethodSummarySpecs;
 import org.scandroid.Summarizer;
+import org.scandroid.dataflow.DataflowTest;
 import org.scandroid.domain.CodeElement;
 import org.scandroid.domain.DomainElement;
 import org.scandroid.domain.IFDSTaintDomain;
@@ -166,22 +167,13 @@ public class MethodAnalysisTest {
 							method.isInit(), method.isClinit(),
 							method.isSynthetic());
 					entrypoints.add(new Object[] {
-							isEclipse() ? URLEncoder.encode(
-									method.getSignature(), "UTF-8") : method
-									.getSignature(),
-							new DefaultEntrypoint(method, cha) });
+							DataflowTest.refineDescription(method.getSignature()),
+								new DefaultEntrypoint(method, cha) });
 				}
 			}
 		}
 		// System.exit(0);
 		return entrypoints;
-	}
-
-	private static boolean isEclipse() {
-		final String command = System.getProperty("sun.java.command");
-		return command != null
-				&& command
-						.startsWith("org.eclipse.jdt.internal.junit.runner.RemoteTestRunner");
 	}
 
 	public final Entrypoint entrypoint;
