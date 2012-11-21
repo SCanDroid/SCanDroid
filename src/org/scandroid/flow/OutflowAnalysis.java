@@ -529,20 +529,21 @@ public class OutflowAnalysis {
 		if (null == methods) {
 			logger.warn("no methods found for sink spec {}", sinkSpec);
 		}
-
+		
 		for (IMethod method : methods) {
-			CGNode node = cg.getNode(method, Everywhere.EVERYWHERE);
-			BasicBlockInContext<IExplodedBasicBlock> entryBlock = graph
-					.getICFG().getEntry(node);
-			BasicBlockInContext<IExplodedBasicBlock> exitBlock = graph
-					.getICFG().getExit(node);
-			for (int argNum : sinkSpec.getArgNums()) {
-				final int ssaVal = node.getIR().getParameter(argNum);
-				final ParameterFlow<IExplodedBasicBlock> sinkFlow = new ParameterFlow<IExplodedBasicBlock>(
-						entryBlock, argNum, false);
-				final LocalSinkPoint sinkPoint = new LocalSinkPoint(exitBlock,
-						ssaVal, sinkFlow);
-				points.add(sinkPoint);
+			for (CGNode node : cg.getNodes(method.getReference())) {
+				BasicBlockInContext<IExplodedBasicBlock> entryBlock = graph
+						.getICFG().getEntry(node);
+				BasicBlockInContext<IExplodedBasicBlock> exitBlock = graph
+						.getICFG().getExit(node);
+				for (int argNum : sinkSpec.getArgNums()) {
+					final int ssaVal = node.getIR().getParameter(argNum);
+					final ParameterFlow<IExplodedBasicBlock> sinkFlow = new ParameterFlow<IExplodedBasicBlock>(
+							entryBlock, argNum, false);
+					final LocalSinkPoint sinkPoint = new LocalSinkPoint(
+							exitBlock, ssaVal, sinkFlow);
+					points.add(sinkPoint);
+				}
 			}
 		}
 		return points;
@@ -646,12 +647,13 @@ public class OutflowAnalysis {
 
 	private Set<ISinkPoint> calculateSinkPoints(StaticFieldSinkSpec sinkSpec) {
 		Set<ISinkPoint> points = Sets.newHashSet();
-		
+
 		ICFGSupergraph graph = (ICFGSupergraph) ctx.graph;
 		for (CGNode node : ctx.cg.getNodes(sinkSpec.getMethod().getReference())) {
-			points.add(new StaticFieldSinkPoint(sinkSpec, graph.getICFG().getExit(node)));
+			points.add(new StaticFieldSinkPoint(sinkSpec, graph.getICFG()
+					.getExit(node)));
 		}
-		
+
 		return points;
 	}
 
