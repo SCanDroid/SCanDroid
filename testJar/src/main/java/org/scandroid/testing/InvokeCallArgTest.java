@@ -48,4 +48,10 @@ public class InvokeCallArgTest extends SourceSink {
     	SourceSink.load(buff);
         return (new String(buff));
     }
+    
+    public static int invokeCallArgSourceSpecInt() {
+    	char[] buff = new char[1];
+    	SourceSink.load(buff);
+        return buff.length;
+    }
 }
