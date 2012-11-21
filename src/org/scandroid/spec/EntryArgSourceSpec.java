@@ -104,6 +104,12 @@ public class EntryArgSourceSpec extends SourceSpec {
 					IClass clazz = node.getMethod().getClassHierarchy().lookupClass(typeRef);
 					if (null == clazz) {
 						logger.error("couldn't find entry arg class {}", typeRef);
+					} else if (clazz.isInterface()) {						
+						for (IClass impl : pa.getClassHierarchy().getImplementors(typeRef)) {
+							logger.debug("creating instance key {} for interface {}", impl, clazz);
+							InstanceKey ik = new ConcreteTypeKey(impl);
+							valueElements.add(new InstanceKeyElement(ik));
+						}
 					} else {
 						InstanceKey ik = new ConcreteTypeKey(clazz);
 						valueElements.add(new InstanceKeyElement(ik));
