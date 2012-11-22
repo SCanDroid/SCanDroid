@@ -45,8 +45,8 @@ import org.scandroid.domain.CodeElement;
 import org.scandroid.domain.InstanceKeyElement;
 import org.scandroid.domain.StaticFieldElement;
 import org.scandroid.flow.InflowAnalysis;
-import org.scandroid.flow.types.FieldFlow;
 import org.scandroid.flow.types.FlowType;
+import org.scandroid.flow.types.StaticFieldFlow;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -98,7 +98,7 @@ public class StaticFieldSourceSpec extends SourceSpec {
 
 		Set<CodeElement> valueElements = Sets.newHashSet();
 		valueElements.add(new StaticFieldElement(field.getReference()));
-		FlowType<E> flow = new FieldFlow<E>(block, field, true);
+		FlowType<E> flow = new StaticFieldFlow<E>(block, field, true);
 		
 		TypeReference typeRef = field.getFieldTypeReference();
 		

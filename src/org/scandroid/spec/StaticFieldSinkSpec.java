@@ -5,8 +5,8 @@ package org.scandroid.spec;
 
 import java.util.Collection;
 
-import org.scandroid.flow.types.FieldFlow;
 import org.scandroid.flow.types.FlowType;
+import org.scandroid.flow.types.StaticFieldFlow;
 
 import com.google.common.collect.Sets;
 import com.ibm.wala.classLoader.IField;
@@ -39,7 +39,7 @@ public class StaticFieldSinkSpec extends SinkSpec {
 	public <E extends ISSABasicBlock> Collection<FlowType<E>> getFlowType(
 			BasicBlockInContext<E> block) {
 		@SuppressWarnings("unchecked")
-		Collection<FlowType<E>> flow = Sets.newHashSet((FlowType<E>) new FieldFlow<E>(block, field, false));
+		Collection<FlowType<E>> flow = Sets.newHashSet((FlowType<E>) new StaticFieldFlow<E>(block, field, false));
 		return flow;
 	}
 

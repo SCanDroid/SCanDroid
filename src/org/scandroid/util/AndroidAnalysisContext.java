@@ -56,6 +56,8 @@ import org.scandroid.synthmethod.DefaultSCanDroidOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import ch.qos.logback.classic.Level;
+
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -91,6 +93,9 @@ import com.ibm.wala.util.warnings.Warnings;
 public class AndroidAnalysisContext {
 	private static final Logger logger = LoggerFactory
 			.getLogger(AndroidAnalysisContext.class);
+	static {
+//		((ch.qos.logback.classic.Logger) logger).setLevel(Level.TRACE);
+	}
 	private static final String methodSpec = "MethodSummaries.xml";
 	private static final String pathToSpec = "data";
 

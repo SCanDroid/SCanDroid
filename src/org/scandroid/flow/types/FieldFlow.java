@@ -103,7 +103,7 @@ public class FieldFlow<E extends ISSABasicBlock> extends FlowType<E> {
     }
 
 	@Override
-	public <R> R visit(org.scandroid.flow.types.FlowType.FlowTypeVisitor<E, R> v) {
+	public <R> R visit(FlowTypeVisitor<E, R> v) {
 		return v.visitFieldFlow(this);
 	}
 
