@@ -43,6 +43,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.Collection;
@@ -59,6 +60,9 @@ import org.slf4j.LoggerFactory;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.ibm.wala.classLoader.DexFileModule;
+import com.ibm.wala.classLoader.Module;
+import com.ibm.wala.classLoader.ModuleEntry;
 import com.ibm.wala.dex.util.config.DexAnalysisScopeReader;
 import com.ibm.wala.ipa.callgraph.AnalysisCache;
 import com.ibm.wala.ipa.callgraph.AnalysisOptions;
@@ -129,8 +133,28 @@ public class AndroidAnalysisContext {
 
 		scope.setLoaderImpl(ClassLoaderReference.Application,
 				"com.ibm.wala.classLoader.WDexClassLoaderImpl");
-		scope.addToScope(ClassLoaderReference.Primordial, new JarFile(new File(
-				options.getAndroidLibrary())));
+
+		scope.setLoaderImpl(ClassLoaderReference.Primordial,
+				"com.ibm.wala.classLoader.WDexClassLoaderImpl");
+		
+		// TODO: this check is case-sensitive :(
+		URI androidLib = options.getAndroidLibrary();
+		if (androidLib.getPath().endsWith(".dex")) { 
+			Module dexMod = new DexFileModule(new File(androidLib));
+			
+//			Iterator<ModuleEntry> mitr = dexMod.getEntries();
+//			while (mitr.hasNext()) {
+//				ModuleEntry moduleEntry = (ModuleEntry) mitr.next();
+//				logger.error("dex module: {}", moduleEntry.getName());
+//			}
+			
+			scope.addToScope(ClassLoaderReference.Primordial, dexMod);
+		} else {
+			scope.addToScope(ClassLoaderReference.Primordial, new JarFile(new File(
+				androidLib)));
+		}
+		
+		
 		cha = ClassHierarchy.make(scope);
 
 		
