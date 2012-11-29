@@ -51,7 +51,7 @@ import org.scandroid.domain.InstanceKeyElement;
 import org.scandroid.domain.LocalElement;
 import org.scandroid.domain.ReturnElement;
 import org.scandroid.domain.StaticFieldElement;
-import org.scandroid.flow.types.FieldFlow;
+import org.scandroid.flow.types.StaticFieldFlow;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -304,7 +304,7 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 			if (field.isFinal()) {
 				continue;
 			}
-			final FieldFlow<E> taintSource = new FieldFlow<E>(dest, field,
+			final StaticFieldFlow<E> taintSource = new StaticFieldFlow<E>(dest, field,
 					true);
 			elts.add(new DomainElement(ce, taintSource));
 		}

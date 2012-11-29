@@ -236,10 +236,10 @@ public class SSAtoXMLVisitor implements SSAInstruction.IVisitor {
             String fieldName = instruction.getDeclaredField().getName()
                     .toUnicodeString();
 
-            elt.setAttribute(XMLSummaryWriter.A_CLASS, typeRefToStr(classType));
+            elt.setAttribute(XMLSummaryWriter.A_CLASS, classType.getName().toUnicodeString());
             elt.setAttribute(XMLSummaryWriter.A_FIELD, fieldName);
             elt.setAttribute(XMLSummaryWriter.A_FIELD_TYPE,
-                    typeRefToStr(fieldType));
+                    fieldType.getName().toUnicodeString());
             elt.setAttribute(XMLSummaryWriter.A_DEF, def);
 
             summary.add(elt);
@@ -281,10 +281,10 @@ public class SSAtoXMLVisitor implements SSAInstruction.IVisitor {
             String fieldName = instruction.getDeclaredField().getName()
                     .toUnicodeString();
 
-            elt.setAttribute(XMLSummaryWriter.A_CLASS, typeRefToStr(classType));
+            elt.setAttribute(XMLSummaryWriter.A_CLASS, classType.getName().toUnicodeString());
             elt.setAttribute(XMLSummaryWriter.A_FIELD, fieldName);
             elt.setAttribute(XMLSummaryWriter.A_FIELD_TYPE,
-                    typeRefToStr(fieldType));
+                    fieldType.getName().toUnicodeString());
             elt.setAttribute(XMLSummaryWriter.A_VALUE, value);
 
             summary.add(elt);

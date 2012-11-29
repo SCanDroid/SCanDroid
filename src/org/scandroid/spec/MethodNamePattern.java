@@ -38,6 +38,7 @@
 
 package org.scandroid.spec;
 
+import java.io.UTFDataFormatException;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.Set;
@@ -47,6 +48,7 @@ import com.ibm.wala.classLoader.IMethod;
 import com.ibm.wala.ipa.cha.IClassHierarchy;
 import com.ibm.wala.types.ClassLoaderReference;
 import com.ibm.wala.types.Descriptor;
+import com.ibm.wala.types.MethodReference;
 import com.ibm.wala.types.TypeReference;
 import com.ibm.wala.util.collections.HashSetFactory;
 import com.ibm.wala.util.strings.Atom;
@@ -131,5 +133,14 @@ public class MethodNamePattern {
 
 	public String getMemberName() {
 		return memberName;
+	}
+
+	public static MethodNamePattern patternForReference(MethodReference methodRef)
+			throws UTFDataFormatException {
+		String className = methodRef.getDeclaringClass().getName().toUnicodeString();
+		String methodName = methodRef.getName().toUnicodeString();
+		String descriptor = methodRef.getDescriptor().toUnicodeString();
+		MethodNamePattern pattern = new MethodNamePattern(className, methodName, descriptor);
+		return pattern;
 	}
 }

@@ -58,14 +58,18 @@ import org.scandroid.domain.IFDSTaintDomain;
 import org.scandroid.flow.FlowAnalysis;
 import org.scandroid.flow.InflowAnalysis;
 import org.scandroid.flow.OutflowAnalysis;
+import org.scandroid.flow.functions.TaintTransferFunctions;
 import org.scandroid.flow.types.FieldFlow;
 import org.scandroid.flow.types.FlowType;
 import org.scandroid.flow.types.FlowType.FlowTypeVisitor;
 import org.scandroid.flow.types.IKFlow;
 import org.scandroid.flow.types.ParameterFlow;
 import org.scandroid.flow.types.ReturnFlow;
+import org.scandroid.flow.types.StaticFieldFlow;
 import org.scandroid.spec.ISpecs;
+import org.scandroid.spec.StaticSpecs;
 import org.scandroid.synthmethod.DefaultSCanDroidOptions;
+import org.scandroid.synthmethod.TestSpecs;
 import org.scandroid.synthmethod.XMLSummaryWriter;
 import org.scandroid.util.AndroidAnalysisContext;
 import org.scandroid.util.CGAnalysisContext;
@@ -167,6 +171,11 @@ public class Summarizer<E extends ISSABasicBlock> {
 					public URI getClasspath() {
 						return new File(appJar).toURI();
 					}
+					
+					@Override
+					public boolean stdoutCG() {
+						return false;
+					}
 				});
 		writer = new XMLSummaryWriter();
 	}
@@ -252,7 +261,9 @@ public class Summarizer<E extends ISSABasicBlock> {
 			throws IOException, ClassHierarchyException,
 			CallGraphBuilderCancelException {
 
-		ISpecs specs = new MethodSummarySpecs(mSummary);
+		ISpecs specs = TestSpecs.combine(new MethodSummarySpecs(mSummary),
+				new StaticSpecs(cgContext.getClassHierarchy(), mSummary
+						.getMethod().getSignature()));
 
 		Map<BasicBlockInContext<IExplodedBasicBlock>, Map<FlowType<IExplodedBasicBlock>, Set<CodeElement>>> initialTaints = InflowAnalysis
 				.analyze(cgContext, new HashMap<InstanceKey, String>(), specs);
@@ -261,7 +272,7 @@ public class Summarizer<E extends ISSABasicBlock> {
 
 		IFDSTaintDomain<IExplodedBasicBlock> domain = new IFDSTaintDomain<IExplodedBasicBlock>();
 		TabulationResult<BasicBlockInContext<IExplodedBasicBlock>, CGNode, DomainElement> flowResult = FlowAnalysis
-				.analyze(cgContext, initialTaints, domain, monitor);
+				.analyze(cgContext, initialTaints, domain, monitor, new TaintTransferFunctions<IExplodedBasicBlock>(domain, cgContext.graph, cgContext.pa, true));
 
 		Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> permissionOutflow = new OutflowAnalysis(
 				cgContext, specs).analyze(flowResult, domain);
@@ -311,7 +322,7 @@ public class Summarizer<E extends ISSABasicBlock> {
 	}
 
 	public List<SSAInstruction> compileFlowMap(
-			CGAnalysisContext<IExplodedBasicBlock> cgContext,
+			CGAnalysisContext<IExplodedBasicBlock> ctx,
 			IMethod method,
 			Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> flowMap) {
 		final List<SSAInstruction> insts = Lists.newArrayList();
@@ -321,11 +332,11 @@ public class Summarizer<E extends ISSABasicBlock> {
 		for (Entry<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> entry : flowMap
 				.entrySet()) {
 			final Pair<List<SSAInstruction>, Integer> lhs = compileFlowType(
-					cgContext, method, entry.getKey(), refInScope);
+					ctx, method, entry.getKey(), refInScope);
 			insts.addAll(lhs.fst);
 			for (FlowType<IExplodedBasicBlock> flow : entry.getValue()) {
-				insts.addAll(compileFlowType(cgContext, method, flow,
-						refInScope, lhs.snd).fst);
+				insts.addAll(compileFlowType(ctx, method, flow, refInScope,
+						lhs.snd).fst);
 			}
 		}
 		logger.debug("compiled flowMap: " + insts.toString());
@@ -334,10 +345,9 @@ public class Summarizer<E extends ISSABasicBlock> {
 	}
 
 	private Pair<List<SSAInstruction>, Integer> compileFlowType(
-			CGAnalysisContext<IExplodedBasicBlock> cgContext,
-			final IMethod method, final FlowType<IExplodedBasicBlock> ft,
-			final BitSet refInScope) {
-		return compileFlowType(cgContext, method, ft, refInScope, -1);
+			CGAnalysisContext<IExplodedBasicBlock> ctx, final IMethod method,
+			final FlowType<IExplodedBasicBlock> ft, final BitSet refInScope) {
+		return compileFlowType(ctx, method, ft, refInScope, -1);
 	}
 
 	/**
@@ -353,31 +363,31 @@ public class Summarizer<E extends ISSABasicBlock> {
 	 * get, and use the val from the LHS instead.
 	 * 
 	 * @param method
-	 * @param ft
+	 * @param flow
 	 * @param refInScope
 	 * @param lhsVal
 	 * @return
 	 */
 	private Pair<List<SSAInstruction>, Integer> compileFlowType(
-			CGAnalysisContext<IExplodedBasicBlock> cgContext,
-			final IMethod method, final FlowType<IExplodedBasicBlock> ft,
-			final BitSet refInScope, final int lhsVal) {
+			CGAnalysisContext<IExplodedBasicBlock> ctx, final IMethod method,
+			final FlowType<IExplodedBasicBlock> flow, final BitSet refInScope,
+			final int lhsVal) {
 		// what's the largest SSA value that refers to a parameter?
 		final int maxParam = method.getNumberOfParameters();
 		// set the implicit values for parameters
 		refInScope.set(1, maxParam + 1);
 
-		final CGNode node = cgContext.nodeForMethod(method);
+		final CGNode node = ctx.nodeForMethod(method);
 		final DefUse du = node.getDU();
 		final SSAInstructionFactory instFactory = new JavaLanguage()
 				.instructionFactory();
-		final ISupergraph<BasicBlockInContext<IExplodedBasicBlock>, CGNode> graph = cgContext.graph;
+		final ISupergraph<BasicBlockInContext<IExplodedBasicBlock>, CGNode> graph = ctx.graph;
 
 		final List<SSAInstruction> insts = Lists.newArrayList();
 		// in case order matters, add any return statements to this list, to be
 		// combined at the end
 		final List<SSAInstruction> returns = Lists.newArrayList();
-		Integer val = ft
+		Integer val = flow
 				.visit(new FlowType.FlowTypeVisitor<IExplodedBasicBlock, Integer>() {
 					final class PathWalker extends
 							ThrowingSSAInstructionVisitor {
@@ -674,6 +684,24 @@ public class Summarizer<E extends ISSABasicBlock> {
 						// pkFromFlowType));
 						return Integer.valueOf(inst.getDef());
 					}
+
+					@Override
+					public Integer visitStaticFieldFlow(
+							StaticFieldFlow<IExplodedBasicBlock> flow) {
+						SSAInstruction inst = flow.getBlock()
+								.getLastInstruction();
+						if (inst == null) {
+							Iterator<BasicBlockInContext<IExplodedBasicBlock>> it = graph
+									.getPredNodes(flow.getBlock());
+							while (it.hasNext() && inst == null) {
+								BasicBlockInContext<IExplodedBasicBlock> realBlock = it
+										.next();
+								inst = realBlock.getLastInstruction();
+							}
+						}
+						inst.visit(new PathWalker());
+						return Integer.valueOf(inst.getDef());
+					}
 				});
 		insts.addAll(returns);
 		return Pair.make(insts, val);
@@ -688,12 +716,6 @@ public class Summarizer<E extends ISSABasicBlock> {
 			@Override
 			public PointerKey visitFieldFlow(FieldFlow<IExplodedBasicBlock> flow) {
 				int val = flow.getBlock().getLastInstruction().getUse(0);
-
-				if (val == -1) {
-					// static field access; easy
-					return cgContext.pa.getHeapModel()
-							.getPointerKeyForStaticField(flow.getField());
-				}
 
 				// first look up the PK of the reference
 				PointerKey instancePK = cgContext.pa.getHeapModel()
@@ -775,6 +797,14 @@ public class Summarizer<E extends ISSABasicBlock> {
 				}
 				return cgContext.pa.getHeapModel().getPointerKeyForLocal(node,
 						val);
+			}
+
+			@Override
+			public PointerKey visitStaticFieldFlow(
+					StaticFieldFlow<IExplodedBasicBlock> flow) {
+				// static field access; easy
+				return cgContext.pa.getHeapModel().getPointerKeyForStaticField(
+						flow.getField());
 			}
 		});
 	}

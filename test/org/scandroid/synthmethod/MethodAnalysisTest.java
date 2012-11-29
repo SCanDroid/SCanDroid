@@ -51,8 +51,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
-import org.hamcrest.BaseMatcher;
-import org.hamcrest.Matcher;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -69,9 +67,14 @@ import org.scandroid.domain.IFDSTaintDomain;
 import org.scandroid.flow.FlowAnalysis;
 import org.scandroid.flow.InflowAnalysis;
 import org.scandroid.flow.OutflowAnalysis;
+import org.scandroid.flow.functions.TaintTransferFunctions;
+import org.scandroid.flow.types.FieldFlow;
 import org.scandroid.flow.types.FlowType;
+import org.scandroid.flow.types.ParameterFlow;
+import org.scandroid.flow.types.ReturnFlow;
+import org.scandroid.flow.types.StaticFieldFlow;
 import org.scandroid.spec.ISpecs;
-import org.scandroid.synthmethod.DefaultSCanDroidOptions;
+import org.scandroid.spec.StaticSpecs;
 import org.scandroid.util.AndroidAnalysisContext;
 import org.scandroid.util.CGAnalysisContext;
 import org.scandroid.util.IEntryPointSpecifier;
@@ -79,9 +82,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.ibm.wala.classLoader.IClass;
 import com.ibm.wala.classLoader.IClassLoader;
+import com.ibm.wala.classLoader.IField;
 import com.ibm.wala.classLoader.IMethod;
 import com.ibm.wala.dataflow.IFDS.TabulationResult;
 import com.ibm.wala.ipa.callgraph.AnalysisScope;
@@ -94,6 +97,7 @@ import com.ibm.wala.ipa.cfg.BasicBlockInContext;
 import com.ibm.wala.ipa.cha.ClassHierarchy;
 import com.ibm.wala.ipa.cha.ClassHierarchyException;
 import com.ibm.wala.ipa.summaries.MethodSummary;
+import com.ibm.wala.ssa.SSAInvokeInstruction;
 import com.ibm.wala.ssa.analysis.IExplodedBasicBlock;
 
 @RunWith(Parameterized.class)
@@ -154,8 +158,8 @@ public class MethodAnalysisTest {
 			logger.debug("abstract={}", clazz.isAbstract());
 			for (IMethod method : clazz.getAllMethods()) {
 				IClass declClass = method.getDeclaringClass();
-//				if (!declClass.getName().toString().endsWith("LLTestIter"))
-//					continue;
+				// if (!declClass.getName().toString().endsWith("LLTestIter"))
+				// continue;
 				if (method.isAbstract() || method.isSynthetic()
 						|| (declClass.isAbstract() && method.isInit())
 						|| (declClass.isAbstract() && !method.isStatic())) {
@@ -240,7 +244,9 @@ public class MethodAnalysisTest {
 		final MethodSummary methodSummary = new MethodSummary(entrypoint
 				.getMethod().getReference());
 		methodSummary.setStatic(entrypoint.getMethod().isStatic());
-		ISpecs specs = new MethodSummarySpecs(methodSummary);
+		ISpecs specs = TestSpecs.combine(new MethodSummarySpecs(methodSummary),
+				new StaticSpecs(noSummaryContext.getClassHierarchy(),
+						entrypoint.getMethod().getSignature()));
 
 		long startTime = System.currentTimeMillis();
 
@@ -252,6 +258,10 @@ public class MethodAnalysisTest {
 		System.out.println(" ----------------------------------------  ");
 		System.out.println(" ---  DIRECT RESULTS DONE             ---  ");
 		System.out.println(" ----------------------------------------  ");
+
+		specs = TestSpecs.combine(new MethodSummarySpecs(methodSummary),
+				new StaticSpecs(summaryContext.getClassHierarchy(), entrypoint
+						.getMethod().getSignature()));
 
 		startTime = System.currentTimeMillis();
 		Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> summarizedResults = runDFAnalysis(
@@ -270,25 +280,28 @@ public class MethodAnalysisTest {
 		System.out.println("Summary Flows: \n"
 				+ flowMapToString(summarizedResults));
 
-		Assert.assertTrue("Results differed", equalsModSynthetic(directResults, summarizedResults));
+		Assert.assertTrue("Results differed",
+				equalsModSynthetic(directResults, summarizedResults));
 	}
 
 	private Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> runDFAnalysis(
-			CGAnalysisContext<IExplodedBasicBlock> cgContext, ISpecs specs)
+			CGAnalysisContext<IExplodedBasicBlock> ctx, ISpecs specs)
 			throws IOException, ClassHierarchyException,
 			CallGraphBuilderCancelException {
 
 		Map<BasicBlockInContext<IExplodedBasicBlock>, Map<FlowType<IExplodedBasicBlock>, Set<CodeElement>>> initialTaints = InflowAnalysis
-				.analyze(cgContext, new HashMap<InstanceKey, String>(), specs);
+				.analyze(ctx, new HashMap<InstanceKey, String>(), specs);
 
 		System.out.println("  InitialTaints count: " + initialTaints.size());
 
 		IFDSTaintDomain<IExplodedBasicBlock> domain = new IFDSTaintDomain<IExplodedBasicBlock>();
 		TabulationResult<BasicBlockInContext<IExplodedBasicBlock>, CGNode, DomainElement> flowResult = FlowAnalysis
-				.analyze(cgContext, initialTaints, domain, null);
+				.analyze(ctx, initialTaints, domain, null,
+						new TaintTransferFunctions<IExplodedBasicBlock>(domain,
+								ctx.graph, ctx.pa, true));
 
 		Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> permissionOutflow = new OutflowAnalysis(
-				cgContext, specs).analyze(flowResult, domain);
+				ctx, specs).analyze(flowResult, domain);
 
 		return permissionOutflow;
 	}
@@ -340,12 +353,13 @@ public class MethodAnalysisTest {
 			Set<Entry<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>>> entrySet2) {
 		for (Entry<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> entry2 : entrySet2) {
 			if (equalsModSynthetic(entry1.getKey(), entry2.getKey())
-					&& equalsFlowSetsModSynthetic(entry1.getValue(), entry2.getValue())) {
+					&& equalsFlowSetsModSynthetic(entry1.getValue(),
+							entry2.getValue())) {
 				return true;
 			}
 		}
-		return false;		
-	}	
+		return false;
+	}
 
 	private static boolean equalsModSynthetic(
 			FlowType<IExplodedBasicBlock> flow1,
@@ -355,18 +369,58 @@ public class MethodAnalysisTest {
 		if (flow1 == null)
 			return false;
 		if (flow1.getClass() != flow2.getClass())
-			return false;		
+			return false;
 		if (flow1.getBlock() == null) {
 			if (flow2.getBlock() != null)
 				return false;
-		} else if (!flow1.getBlock().getMethod().getSignature().equals(flow2.getBlock().getMethod().getSignature())) {
-			return false;
+		}  
+		// compare fields for static field flows
+		if (flow1 instanceof StaticFieldFlow) {
+			IField field1 = ((StaticFieldFlow<IExplodedBasicBlock>) flow1).getField();
+			IField field2 = ((StaticFieldFlow<IExplodedBasicBlock>) flow2).getField();
+			if (!field1.equals(field2)) 
+				return false;
+		}
+		// ... and non-static field flows
+		if (flow1 instanceof FieldFlow) {
+			IField field1 = ((FieldFlow<IExplodedBasicBlock>) flow1).getField();
+			IField field2 = ((FieldFlow<IExplodedBasicBlock>) flow2).getField();
+			if (!field1.equals(field2)) 
+				return false;
+		}
+		// if it's a return flow source, compare the target of the invoke instruction
+		if (flow1 instanceof ReturnFlow && flow1.isSource() && flow2.isSource()) {
+			SSAInvokeInstruction inst1 = (SSAInvokeInstruction) flow1.getBlock().getDelegate().getLastInstruction();
+			SSAInvokeInstruction inst2 = (SSAInvokeInstruction) flow2.getBlock().getDelegate().getLastInstruction();
+			if (!inst1.getDeclaredTarget().equals(inst2.getDeclaredTarget()))
+				return false;
+		}
+		// otherwise they're both sinks, so they'll fail below
+		
+		// if it's a parameter flow source, they should both be in the same method
+		if (flow1 instanceof ParameterFlow && flow1.isSource() && flow2.isSource()) {
+			if (!flow1.getBlock().getMethod().getSignature().equals(flow2.getBlock().getMethod().getSignature())) 				
+				return false;
+		}
+		
+		// if it's a parameter flow sink, compare the target of the invoke instruction and the argnum
+		if (flow1 instanceof ParameterFlow && !flow1.isSource() && !flow2.isSource()) {
+			if (((ParameterFlow) flow1).getArgNum() != ((ParameterFlow) flow2).getArgNum())
+				return false;
+			SSAInvokeInstruction inst1 = (SSAInvokeInstruction) flow1.getBlock().getDelegate().getLastInstruction();
+			SSAInvokeInstruction inst2 = (SSAInvokeInstruction) flow2.getBlock().getDelegate().getLastInstruction();
+			if (inst1 != null && inst2 != null && !inst1.getDeclaredTarget().equals(inst2.getDeclaredTarget())) 
+				return false;
+			if (inst1 != null && inst2 == null)
+				return false;
+			if (inst1 == null && inst2 != null)
+				return false;
 		}
 		if (flow1.isSource() != flow2.isSource())
 			return false;
 		return true;
 	}
-	
+
 	private static boolean equalsFlowSetsModSynthetic(
 			Set<FlowType<IExplodedBasicBlock>> set1,
 			Set<FlowType<IExplodedBasicBlock>> set2) {
@@ -387,7 +441,7 @@ public class MethodAnalysisTest {
 		for (FlowType<IExplodedBasicBlock> flow2 : set2) {
 			if (equalsModSynthetic(flow, flow2)) {
 				return true;
-			}			
+			}
 		}
 		return false;
 	}
