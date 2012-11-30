@@ -98,6 +98,11 @@ public class SeparateEntryAnalysis {
 			summaryStream = new FileInputStream(summariesFile);
 		}
 
+//		for (IClass c : analysisContext.getClassHierarchy()) {
+//			logger.error(" class loaded: {}", c);
+//		}
+//		
+		
 		final List<Entrypoint> entrypoints = EntryPoints
 				.defaultEntryPoints(analysisContext.getClassHierarchy());
 		if (entrypoints == null || entrypoints.size() == 0) {
