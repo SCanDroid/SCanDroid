@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<summary-spec>
+  <classloader name="Primordial">
+    <package name="java/lang">
+      <class name="AbstractStringBuilder">
+        <method descriptor="(Ljava/lang/String;)Ljava/lang/AbstractStringBuilder;" name="append">
+          <!-- Get the value field from the incomming parameter, store it in a local def: -->
+          <!-- def is the place the 'gotten' value is stored.
+               ref is the place the value is gotten from     -->
+          <getfield class="Ljava/lang/String" field="value"
+                    fieldType="Ljava/lang/Object" ref="arg1"
+                    def="value_localDef" />
+
+          <!-- Put the value stored in the local def into the 'value' field of the reference object:
+               Note that the field name (value, in this case) is specified by the field attribute.
+               The value *attribute* specifies where the actual content of the string is
+               retrieved from.                                                                   -->
+          <putfield class="Ljava/lang/AbstractStringBuilder" field="value"
+                    fieldType="Ljava/lang/Object" ref="arg0" value="value_localDef"/>
+          <return value="arg0" />
+        </method>
+      </class>
+    </package>
+  </classloader>
+</summary-spec>

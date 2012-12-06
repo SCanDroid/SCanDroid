@@ -1,0 +1,1326 @@
+Buildfile: /home/creswick/development/fuse/dev/fuse-java/SCanDroid/build.xml
+
+clean:
+   [delete] Deleting directory /home/creswick/development/fuse/dev/fuse-java/SCanDroid/bin
+
+build-subprojects:
+
+cond-os:
+
+init-mac:
+
+init-linux:
+     [copy] Copying 1 file to /home/creswick/development/fuse/dev/fuse-java/SCanDroid
+
+init-windows:
+
+init:
+    [mkdir] Created dir: /home/creswick/development/fuse/dev/fuse-java/SCanDroid/bin
+
+build-project:
+     [echo] SimpleAnalysisPluginLibDexLib: /home/creswick/development/fuse/dev/fuse-java/SCanDroid/build.xml
+    [javac] Compiling 127 source files to /home/creswick/development/fuse/dev/fuse-java/SCanDroid/bin
+    [javac] warning: [options] bootstrap class path not set in conjunction with -source 1.5
+    [javac] Note: Some input files use or override a deprecated API.
+    [javac] Note: Recompile with -Xlint:deprecation for details.
+    [javac] Note: Some input files use unchecked or unsafe operations.
+    [javac] Note: Recompile with -Xlint:unchecked for details.
+    [javac] 1 warning
+
+build:
+
+build-tests:
+     [echo] SimpleAnalysisPluginLibDexLib: /home/creswick/development/fuse/dev/fuse-java/SCanDroid/build.xml
+    [javac] Compiling 6 source files to /home/creswick/development/fuse/dev/fuse-java/SCanDroid/bin
+    [javac] warning: [options] bootstrap class path not set in conjunction with -source 1.5
+    [javac] 1 warning
+
+test:
+    [junit] Running org.scandroid.dataflow.DataflowTest
+    [junit] Testsuite: org.scandroid.dataflow.DataflowTest
+    [junit] Tests run: 1, Failures: 1, Errors: 0, Time elapsed: 0.285 sec
+    [junit] Output:
+    [junit] 11:42:20.346 [main] DEBUG o.s.util.AndroidAnalysisContext - DefaultSCanDroidOptions [pdfCG()=false, pdfPartialCG()=false, pdfOneLevelCG()=false, systemToApkCG()=false, stdoutCG()=false, includeLibrary()=true, separateEntries()=false, ifdsExplorer()=false, addMainEntrypoints()=false, useThreadRunMain()=false, stringPrefixAnalysis()=false, testCGBuilder()=false, useDefaultPolicy()=false, getClasspath()=file:/home/creswick/development/fuse/dev/fuse-java/SCanDroid/data/testdata/testJar-1.0-SNAPSHOT.jar, getFilename()=testJar-1.0-SNAPSHOT.jar, getAndroidLibrary()=file:/home/creswick/development/fuse/dev/fuse-java/SCanDroid/data/android-2.3.7_r1.jar, getReflectionOptions()=NONE, getSummariesURI()=null, classHierarchyWarnings()=false, cgBuilderWarnings()=false]
+    [junit] 11:42:22.214 [main] DEBUG c.i.w.c.WDexClassLoaderImpl - add archive: : JarFileModule:/home/creswick/development/fuse/dev/fuse-java/SCanDroid/data/testdata/testJar-1.0-SNAPSHOT.jar
+    [junit] 11:42:22.426 [main] DEBUG org.scandroid.dataflow.DataflowTest - Found 26 classes in Applicaton scope
+    [junit] 11:42:22.426 [main] DEBUG org.scandroid.dataflow.DataflowTest - Adding entrypoints from <Application,Lorg/scandroid/testing/ArrayLoad>
+    [junit] 11:42:22.426 [main] DEBUG org.scandroid.dataflow.DataflowTest - abstract=false
+    [junit] 11:42:22.436 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.ArrayLoad.<init>()V due to lack of output information.
+    [junit] 11:42:22.437 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.ArrayLoad.flow([Ljava/lang/String;)V due to lack of output information.
+    [junit] 11:42:22.437 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.ArrayLoad.useFlow([Ljava/lang/String;)Ljava/lang/String; due to lack of output information.
+    [junit] 11:42:22.437 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.ArrayLoad.copyElement([Ljava/lang/Object;)Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.437 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<init>()V due to lack of output information.
+    [junit] 11:42:22.437 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.registerNatives()V due to lack of output information.
+    [junit] 11:42:22.437 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.getClass()Ljava/lang/Class; due to lack of output information.
+    [junit] 11:42:22.437 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.hashCode()I due to lack of output information.
+    [junit] 11:42:22.437 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.equals(Ljava/lang/Object;)Z due to lack of output information.
+    [junit] 11:42:22.437 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.clone()Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.437 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.toString()Ljava/lang/String; due to lack of output information.
+    [junit] 11:42:22.437 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notify()V due to lack of output information.
+    [junit] 11:42:22.437 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notifyAll()V due to lack of output information.
+    [junit] 11:42:22.437 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(J)V due to lack of output information.
+    [junit] 11:42:22.437 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(JI)V due to lack of output information.
+    [junit] 11:42:22.438 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait()V due to lack of output information.
+    [junit] 11:42:22.438 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.finalize()V due to lack of output information.
+    [junit] 11:42:22.438 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<clinit>()V due to lack of output information.
+    [junit] 11:42:22.438 [main] DEBUG org.scandroid.dataflow.DataflowTest - Adding entrypoints from <Application,Lorg/scandroid/testing/ExceptionFlow>
+    [junit] 11:42:22.438 [main] DEBUG org.scandroid.dataflow.DataflowTest - abstract=false
+    [junit] 11:42:22.438 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.ExceptionFlow.<init>()V due to lack of output information.
+    [junit] 11:42:22.438 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.ExceptionFlow.exceptionFlow([Ljava/lang/String;)V due to lack of output information.
+    [junit] 11:42:22.438 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.ExceptionFlow.useFlow([Ljava/lang/String;)Ljava/lang/String; due to lack of output information.
+    [junit] 11:42:22.438 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.ExceptionFlow.thrower(Ljava/lang/String;)V due to lack of output information.
+    [junit] 11:42:22.438 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<init>()V due to lack of output information.
+    [junit] 11:42:22.438 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.registerNatives()V due to lack of output information.
+    [junit] 11:42:22.438 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.getClass()Ljava/lang/Class; due to lack of output information.
+    [junit] 11:42:22.439 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.hashCode()I due to lack of output information.
+    [junit] 11:42:22.439 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.equals(Ljava/lang/Object;)Z due to lack of output information.
+    [junit] 11:42:22.439 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.clone()Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.439 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.toString()Ljava/lang/String; due to lack of output information.
+    [junit] 11:42:22.439 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notify()V due to lack of output information.
+    [junit] 11:42:22.439 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notifyAll()V due to lack of output information.
+    [junit] 11:42:22.439 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(J)V due to lack of output information.
+    [junit] 11:42:22.439 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(JI)V due to lack of output information.
+    [junit] 11:42:22.439 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait()V due to lack of output information.
+    [junit] 11:42:22.439 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.finalize()V due to lack of output information.
+    [junit] 11:42:22.439 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<clinit>()V due to lack of output information.
+    [junit] 11:42:22.439 [main] DEBUG org.scandroid.dataflow.DataflowTest - Adding entrypoints from <Application,Lorg/scandroid/testing/LocalVarFlow>
+    [junit] 11:42:22.439 [main] DEBUG org.scandroid.dataflow.DataflowTest - abstract=false
+    [junit] 11:42:22.440 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.LocalVarFlow.<init>()V due to lack of output information.
+    [junit] 11:42:22.440 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.LocalVarFlow.flow([Ljava/lang/String;)V due to lack of output information.
+    [junit] 11:42:22.440 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.LocalVarFlow.localParam(Ljava/lang/String;)Ljava/lang/String; due to lack of output information.
+    [junit] 11:42:22.440 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.SourceSink.<init>()V due to lack of output information.
+    [junit] 11:42:22.440 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.SourceSink.sink(Ljava/lang/Object;)V due to lack of output information.
+    [junit] 11:42:22.440 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<init>()V due to lack of output information.
+    [junit] 11:42:22.440 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.registerNatives()V due to lack of output information.
+    [junit] 11:42:22.440 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.getClass()Ljava/lang/Class; due to lack of output information.
+    [junit] 11:42:22.440 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.hashCode()I due to lack of output information.
+    [junit] 11:42:22.440 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.equals(Ljava/lang/Object;)Z due to lack of output information.
+    [junit] 11:42:22.440 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.clone()Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.440 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.toString()Ljava/lang/String; due to lack of output information.
+    [junit] 11:42:22.441 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notify()V due to lack of output information.
+    [junit] 11:42:22.441 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notifyAll()V due to lack of output information.
+    [junit] 11:42:22.441 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(J)V due to lack of output information.
+    [junit] 11:42:22.441 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(JI)V due to lack of output information.
+    [junit] 11:42:22.441 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait()V due to lack of output information.
+    [junit] 11:42:22.441 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.finalize()V due to lack of output information.
+    [junit] 11:42:22.441 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<clinit>()V due to lack of output information.
+    [junit] 11:42:22.441 [main] DEBUG org.scandroid.dataflow.DataflowTest - Adding entrypoints from <Application,Lorg/scandroid/testing/DeepFields$Bar>
+    [junit] 11:42:22.441 [main] DEBUG org.scandroid.dataflow.DataflowTest - abstract=false
+    [junit] 11:42:22.442 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.DeepFields$Bar.<init>(Ljava/lang/Object;)V due to lack of output information.
+    [junit] 11:42:22.442 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<init>()V due to lack of output information.
+    [junit] 11:42:22.442 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.registerNatives()V due to lack of output information.
+    [junit] 11:42:22.442 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.getClass()Ljava/lang/Class; due to lack of output information.
+    [junit] 11:42:22.442 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.hashCode()I due to lack of output information.
+    [junit] 11:42:22.442 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.equals(Ljava/lang/Object;)Z due to lack of output information.
+    [junit] 11:42:22.442 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.clone()Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.443 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.toString()Ljava/lang/String; due to lack of output information.
+    [junit] 11:42:22.443 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notify()V due to lack of output information.
+    [junit] 11:42:22.443 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notifyAll()V due to lack of output information.
+    [junit] 11:42:22.443 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(J)V due to lack of output information.
+    [junit] 11:42:22.443 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(JI)V due to lack of output information.
+    [junit] 11:42:22.443 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait()V due to lack of output information.
+    [junit] 11:42:22.443 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.finalize()V due to lack of output information.
+    [junit] 11:42:22.443 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<clinit>()V due to lack of output information.
+    [junit] 11:42:22.443 [main] DEBUG org.scandroid.dataflow.DataflowTest - Adding entrypoints from <Application,Lorg/scandroid/testing/LLTestRec>
+    [junit] 11:42:22.444 [main] DEBUG org.scandroid.dataflow.DataflowTest - abstract=false
+    [junit] 11:42:22.444 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.LLTestRec.<init>()V due to lack of output information.
+    [junit] 11:42:22.444 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.LLTestRec.main([Ljava/lang/String;)Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.444 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.LLTestRec.echo2(I)I due to lack of output information.
+    [junit] 11:42:22.444 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.LLTestRec.echo(I)I due to lack of output information.
+    [junit] 11:42:22.444 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.LLTestRec.argToArg(Ljava/util/List;Ljava/util/List;)V due to lack of output information.
+    [junit] 11:42:22.445 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.LLTestRec.last(Lorg/scandroid/testing/LList;)Ljava/lang/String; due to lack of output information.
+    [junit] 11:42:22.445 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.SourceSink.<init>()V due to lack of output information.
+    [junit] 11:42:22.445 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.SourceSink.sink(Ljava/lang/Object;)V due to lack of output information.
+    [junit] 11:42:22.445 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<init>()V due to lack of output information.
+    [junit] 11:42:22.445 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.registerNatives()V due to lack of output information.
+    [junit] 11:42:22.445 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.getClass()Ljava/lang/Class; due to lack of output information.
+    [junit] 11:42:22.445 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.hashCode()I due to lack of output information.
+    [junit] 11:42:22.445 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.equals(Ljava/lang/Object;)Z due to lack of output information.
+    [junit] 11:42:22.446 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.clone()Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.446 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.toString()Ljava/lang/String; due to lack of output information.
+    [junit] 11:42:22.446 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notify()V due to lack of output information.
+    [junit] 11:42:22.446 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notifyAll()V due to lack of output information.
+    [junit] 11:42:22.446 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(J)V due to lack of output information.
+    [junit] 11:42:22.446 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(JI)V due to lack of output information.
+    [junit] 11:42:22.446 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait()V due to lack of output information.
+    [junit] 11:42:22.447 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.finalize()V due to lack of output information.
+    [junit] 11:42:22.447 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<clinit>()V due to lack of output information.
+    [junit] 11:42:22.447 [main] DEBUG org.scandroid.dataflow.DataflowTest - Adding entrypoints from <Application,Lorg/scandroid/testing/MutualRecursion>
+    [junit] 11:42:22.447 [main] DEBUG org.scandroid.dataflow.DataflowTest - abstract=false
+    [junit] 11:42:22.447 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.MutualRecursion.<init>()V due to lack of output information.
+    [junit] 11:42:22.447 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.MutualRecursion.evenp(I)I due to lack of output information.
+    [junit] 11:42:22.448 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.MutualRecursion.oddp(I)I due to lack of output information.
+    [junit] 11:42:22.448 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.MutualRecursion.fooize(Lorg/scandroid/testing/MutualRecursion$Bar;)Lorg/scandroid/testing/MutualRecursion$Foo; due to lack of output information.
+    [junit] 11:42:22.448 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.MutualRecursion.barize(Lorg/scandroid/testing/MutualRecursion$Foo;)Lorg/scandroid/testing/MutualRecursion$Bar; due to lack of output information.
+    [junit] 11:42:22.448 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<init>()V due to lack of output information.
+    [junit] 11:42:22.448 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.registerNatives()V due to lack of output information.
+    [junit] 11:42:22.448 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.getClass()Ljava/lang/Class; due to lack of output information.
+    [junit] 11:42:22.448 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.hashCode()I due to lack of output information.
+    [junit] 11:42:22.448 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.equals(Ljava/lang/Object;)Z due to lack of output information.
+    [junit] 11:42:22.448 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.clone()Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.449 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.toString()Ljava/lang/String; due to lack of output information.
+    [junit] 11:42:22.449 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notify()V due to lack of output information.
+    [junit] 11:42:22.449 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notifyAll()V due to lack of output information.
+    [junit] 11:42:22.449 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(J)V due to lack of output information.
+    [junit] 11:42:22.449 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(JI)V due to lack of output information.
+    [junit] 11:42:22.449 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait()V due to lack of output information.
+    [junit] 11:42:22.449 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.finalize()V due to lack of output information.
+    [junit] 11:42:22.449 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<clinit>()V due to lack of output information.
+    [junit] 11:42:22.449 [main] DEBUG org.scandroid.dataflow.DataflowTest - Adding entrypoints from <Application,Lorg/scandroid/testing/AssignmentReturnValFlow>
+    [junit] 11:42:22.449 [main] DEBUG org.scandroid.dataflow.DataflowTest - abstract=false
+    [junit] 11:42:22.450 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.AssignmentReturnValFlow.<init>()V due to lack of output information.
+    [junit] 11:42:22.450 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.AssignmentReturnValFlow.flow([Ljava/lang/String;)V due to lack of output information.
+    [junit] 11:42:22.450 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.AssignmentReturnValFlow.useFlow([Ljava/lang/String;)Ljava/lang/String; due to lack of output information.
+    [junit] 11:42:22.450 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<init>()V due to lack of output information.
+    [junit] 11:42:22.450 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.registerNatives()V due to lack of output information.
+    [junit] 11:42:22.450 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.getClass()Ljava/lang/Class; due to lack of output information.
+    [junit] 11:42:22.450 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.hashCode()I due to lack of output information.
+    [junit] 11:42:22.451 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.equals(Ljava/lang/Object;)Z due to lack of output information.
+    [junit] 11:42:22.451 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.clone()Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.451 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.toString()Ljava/lang/String; due to lack of output information.
+    [junit] 11:42:22.451 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notify()V due to lack of output information.
+    [junit] 11:42:22.451 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notifyAll()V due to lack of output information.
+    [junit] 11:42:22.451 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(J)V due to lack of output information.
+    [junit] 11:42:22.451 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(JI)V due to lack of output information.
+    [junit] 11:42:22.451 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait()V due to lack of output information.
+    [junit] 11:42:22.451 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.finalize()V due to lack of output information.
+    [junit] 11:42:22.451 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<clinit>()V due to lack of output information.
+    [junit] 11:42:22.452 [main] DEBUG org.scandroid.dataflow.DataflowTest - Adding entrypoints from <Application,Lorg/scandroid/testing/FieldFlows$Y>
+    [junit] 11:42:22.452 [main] DEBUG org.scandroid.dataflow.DataflowTest - abstract=false
+    [junit] 11:42:22.452 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.FieldFlows$Y.<init>()V due to lack of output information.
+    [junit] 11:42:22.452 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<init>()V due to lack of output information.
+    [junit] 11:42:22.452 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.registerNatives()V due to lack of output information.
+    [junit] 11:42:22.452 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.getClass()Ljava/lang/Class; due to lack of output information.
+    [junit] 11:42:22.452 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.hashCode()I due to lack of output information.
+    [junit] 11:42:22.452 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.equals(Ljava/lang/Object;)Z due to lack of output information.
+    [junit] 11:42:22.452 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.clone()Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.452 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.toString()Ljava/lang/String; due to lack of output information.
+    [junit] 11:42:22.453 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notify()V due to lack of output information.
+    [junit] 11:42:22.453 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notifyAll()V due to lack of output information.
+    [junit] 11:42:22.453 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(J)V due to lack of output information.
+    [junit] 11:42:22.453 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(JI)V due to lack of output information.
+    [junit] 11:42:22.453 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait()V due to lack of output information.
+    [junit] 11:42:22.453 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.finalize()V due to lack of output information.
+    [junit] 11:42:22.453 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<clinit>()V due to lack of output information.
+    [junit] 11:42:22.453 [main] DEBUG org.scandroid.dataflow.DataflowTest - Adding entrypoints from <Application,Lorg/scandroid/testing/InvokeCallArgTest>
+    [junit] 11:42:22.453 [main] DEBUG org.scandroid.dataflow.DataflowTest - abstract=false
+    [junit] 11:42:22.454 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.InvokeCallArgTest.<init>()V due to lack of output information.
+    [junit] 11:42:22.454 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.InvokeCallArgTest.main([Ljava/lang/String;)Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.454 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.InvokeCallArgTest.invokeCallArgSourceSpec(Ljava/lang/String;)Ljava/lang/String; due to lack of output information.
+    [junit] 11:42:22.454 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.InvokeCallArgTest.load([C)V due to lack of output information.
+    [junit] 11:42:22.454 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.SourceSink.<init>()V due to lack of output information.
+    [junit] 11:42:22.454 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.SourceSink.sink(Ljava/lang/Object;)V due to lack of output information.
+    [junit] 11:42:22.454 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<init>()V due to lack of output information.
+    [junit] 11:42:22.454 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.registerNatives()V due to lack of output information.
+    [junit] 11:42:22.454 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.getClass()Ljava/lang/Class; due to lack of output information.
+    [junit] 11:42:22.455 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.hashCode()I due to lack of output information.
+    [junit] 11:42:22.455 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.equals(Ljava/lang/Object;)Z due to lack of output information.
+    [junit] 11:42:22.455 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.clone()Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.455 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.toString()Ljava/lang/String; due to lack of output information.
+    [junit] 11:42:22.455 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notify()V due to lack of output information.
+    [junit] 11:42:22.455 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notifyAll()V due to lack of output information.
+    [junit] 11:42:22.455 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(J)V due to lack of output information.
+    [junit] 11:42:22.455 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(JI)V due to lack of output information.
+    [junit] 11:42:22.455 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait()V due to lack of output information.
+    [junit] 11:42:22.455 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.finalize()V due to lack of output information.
+    [junit] 11:42:22.455 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<clinit>()V due to lack of output information.
+    [junit] 11:42:22.455 [main] DEBUG org.scandroid.dataflow.DataflowTest - Adding entrypoints from <Application,Lorg/scandroid/testing/MutualRecursion$Bar>
+    [junit] 11:42:22.455 [main] DEBUG org.scandroid.dataflow.DataflowTest - abstract=false
+    [junit] 11:42:22.455 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.MutualRecursion$Bar.<init>(Lorg/scandroid/testing/MutualRecursion$Foo;)V due to lack of output information.
+    [junit] 11:42:22.455 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<init>()V due to lack of output information.
+    [junit] 11:42:22.455 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.registerNatives()V due to lack of output information.
+    [junit] 11:42:22.455 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.getClass()Ljava/lang/Class; due to lack of output information.
+    [junit] 11:42:22.456 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.hashCode()I due to lack of output information.
+    [junit] 11:42:22.456 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.equals(Ljava/lang/Object;)Z due to lack of output information.
+    [junit] 11:42:22.456 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.clone()Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.456 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.toString()Ljava/lang/String; due to lack of output information.
+    [junit] 11:42:22.456 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notify()V due to lack of output information.
+    [junit] 11:42:22.456 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notifyAll()V due to lack of output information.
+    [junit] 11:42:22.456 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(J)V due to lack of output information.
+    [junit] 11:42:22.456 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(JI)V due to lack of output information.
+    [junit] 11:42:22.456 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait()V due to lack of output information.
+    [junit] 11:42:22.456 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.finalize()V due to lack of output information.
+    [junit] 11:42:22.456 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<clinit>()V due to lack of output information.
+    [junit] 11:42:22.456 [main] DEBUG org.scandroid.dataflow.DataflowTest - Adding entrypoints from <Application,Lorg/scandroid/testing/ConstructorArgFlow>
+    [junit] 11:42:22.456 [main] DEBUG org.scandroid.dataflow.DataflowTest - abstract=false
+    [junit] 11:42:22.456 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.ConstructorArgFlow.<init>()V due to lack of output information.
+    [junit] 11:42:22.456 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.ConstructorArgFlow.echo(Ljava/lang/String;)Ljava/lang/String; due to lack of output information.
+    [junit] 11:42:22.457 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.ConstructorArgFlow.flow(Ljava/lang/String;)Lorg/scandroid/testing/ConstructorArgFlow$Id; due to lack of output information.
+    [junit] 11:42:22.457 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.ConstructorArgFlow.manualFlow(Ljava/lang/String;)Lorg/scandroid/testing/ConstructorArgFlow$Id; due to lack of output information.
+    [junit] 11:42:22.457 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.ConstructorArgFlow.fieldAccessFlow(Lorg/scandroid/testing/ConstructorArgFlow$Id;)Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.457 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.ConstructorArgFlow.getterAccessFlow(Lorg/scandroid/testing/ConstructorArgFlow$Id;)Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.457 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<init>()V due to lack of output information.
+    [junit] 11:42:22.457 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.registerNatives()V due to lack of output information.
+    [junit] 11:42:22.457 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.getClass()Ljava/lang/Class; due to lack of output information.
+    [junit] 11:42:22.457 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.hashCode()I due to lack of output information.
+    [junit] 11:42:22.457 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.equals(Ljava/lang/Object;)Z due to lack of output information.
+    [junit] 11:42:22.457 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.clone()Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.457 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.toString()Ljava/lang/String; due to lack of output information.
+    [junit] 11:42:22.457 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notify()V due to lack of output information.
+    [junit] 11:42:22.457 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notifyAll()V due to lack of output information.
+    [junit] 11:42:22.457 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(J)V due to lack of output information.
+    [junit] 11:42:22.457 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(JI)V due to lack of output information.
+    [junit] 11:42:22.457 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait()V due to lack of output information.
+    [junit] 11:42:22.457 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.finalize()V due to lack of output information.
+    [junit] 11:42:22.458 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<clinit>()V due to lack of output information.
+    [junit] 11:42:22.458 [main] DEBUG org.scandroid.dataflow.DataflowTest - Adding entrypoints from <Application,Lorg/scandroid/testing/LLTestIter>
+    [junit] 11:42:22.458 [main] DEBUG org.scandroid.dataflow.DataflowTest - abstract=false
+    [junit] 11:42:22.458 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.LLTestIter.<init>()V due to lack of output information.
+    [junit] 11:42:22.458 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.LLTestIter.main([Ljava/lang/String;)Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.458 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.LLTestIter.echo2(I)I due to lack of output information.
+    [junit] 11:42:22.458 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.LLTestIter.echo(I)I due to lack of output information.
+    [junit] 11:42:22.458 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.LLTestIter.argToArg(Ljava/util/List;Ljava/util/List;)V due to lack of output information.
+    [junit] 11:42:22.458 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.LLTestIter.shrink(Ljava/util/List;)V due to lack of output information.
+    [junit] 11:42:22.459 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.LLTestIter.shrinkNull()V due to lack of output information.
+    [junit] 11:42:22.459 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.LLTestIter.shrink2()V due to lack of output information.
+    [junit] 11:42:22.459 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.LLTestIter.shrink3(Ljava/util/ArrayList;)V due to lack of output information.
+    [junit] 11:42:22.459 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.LLTestIter.last(Lorg/scandroid/testing/LList;)Ljava/lang/String; due to lack of output information.
+    [junit] 11:42:22.459 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.SourceSink.<init>()V due to lack of output information.
+    [junit] 11:42:22.459 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.SourceSink.sink(Ljava/lang/Object;)V due to lack of output information.
+    [junit] 11:42:22.460 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<init>()V due to lack of output information.
+    [junit] 11:42:22.460 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.registerNatives()V due to lack of output information.
+    [junit] 11:42:22.460 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.getClass()Ljava/lang/Class; due to lack of output information.
+    [junit] 11:42:22.460 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.hashCode()I due to lack of output information.
+    [junit] 11:42:22.460 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.equals(Ljava/lang/Object;)Z due to lack of output information.
+    [junit] 11:42:22.460 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.clone()Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.460 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.toString()Ljava/lang/String; due to lack of output information.
+    [junit] 11:42:22.461 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notify()V due to lack of output information.
+    [junit] 11:42:22.461 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notifyAll()V due to lack of output information.
+    [junit] 11:42:22.461 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(J)V due to lack of output information.
+    [junit] 11:42:22.461 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(JI)V due to lack of output information.
+    [junit] 11:42:22.461 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait()V due to lack of output information.
+    [junit] 11:42:22.461 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.finalize()V due to lack of output information.
+    [junit] 11:42:22.462 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<clinit>()V due to lack of output information.
+    [junit] 11:42:22.462 [main] DEBUG org.scandroid.dataflow.DataflowTest - Adding entrypoints from <Application,Lorg/scandroid/testing/DeepFields>
+    [junit] 11:42:22.462 [main] DEBUG org.scandroid.dataflow.DataflowTest - abstract=false
+    [junit] 11:42:22.462 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.DeepFields.<init>()V due to lack of output information.
+    [junit] 11:42:22.462 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.DeepFields.test(Lorg/scandroid/testing/DeepFields$Foo;Ljava/lang/Object;)V due to lack of output information.
+    [junit] 11:42:22.462 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<init>()V due to lack of output information.
+    [junit] 11:42:22.462 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.registerNatives()V due to lack of output information.
+    [junit] 11:42:22.462 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.getClass()Ljava/lang/Class; due to lack of output information.
+    [junit] 11:42:22.463 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.hashCode()I due to lack of output information.
+    [junit] 11:42:22.463 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.equals(Ljava/lang/Object;)Z due to lack of output information.
+    [junit] 11:42:22.463 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.clone()Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.463 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.toString()Ljava/lang/String; due to lack of output information.
+    [junit] 11:42:22.463 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notify()V due to lack of output information.
+    [junit] 11:42:22.463 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notifyAll()V due to lack of output information.
+    [junit] 11:42:22.463 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(J)V due to lack of output information.
+    [junit] 11:42:22.463 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(JI)V due to lack of output information.
+    [junit] 11:42:22.463 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait()V due to lack of output information.
+    [junit] 11:42:22.463 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.finalize()V due to lack of output information.
+    [junit] 11:42:22.463 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<clinit>()V due to lack of output information.
+    [junit] 11:42:22.463 [main] DEBUG org.scandroid.dataflow.DataflowTest - Adding entrypoints from <Application,Lorg/scandroid/testing/ArrayLengthTest>
+    [junit] 11:42:22.463 [main] DEBUG org.scandroid.dataflow.DataflowTest - abstract=false
+    [junit] 11:42:22.463 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.ArrayLengthTest.<init>()V due to lack of output information.
+    [junit] 11:42:22.463 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.ArrayLengthTest.main([Ljava/lang/String;)Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.464 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.ArrayLengthTest.echo(Ljava/lang/Object;)Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.464 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.SourceSink.<init>()V due to lack of output information.
+    [junit] 11:42:22.464 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.SourceSink.sink(Ljava/lang/Object;)V due to lack of output information.
+    [junit] 11:42:22.464 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<init>()V due to lack of output information.
+    [junit] 11:42:22.464 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.registerNatives()V due to lack of output information.
+    [junit] 11:42:22.464 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.getClass()Ljava/lang/Class; due to lack of output information.
+    [junit] 11:42:22.464 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.hashCode()I due to lack of output information.
+    [junit] 11:42:22.464 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.equals(Ljava/lang/Object;)Z due to lack of output information.
+    [junit] 11:42:22.464 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.clone()Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.464 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.toString()Ljava/lang/String; due to lack of output information.
+    [junit] 11:42:22.464 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notify()V due to lack of output information.
+    [junit] 11:42:22.464 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notifyAll()V due to lack of output information.
+    [junit] 11:42:22.464 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(J)V due to lack of output information.
+    [junit] 11:42:22.464 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(JI)V due to lack of output information.
+    [junit] 11:42:22.464 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait()V due to lack of output information.
+    [junit] 11:42:22.465 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.finalize()V due to lack of output information.
+    [junit] 11:42:22.465 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<clinit>()V due to lack of output information.
+    [junit] 11:42:22.465 [main] DEBUG org.scandroid.dataflow.DataflowTest - Adding entrypoints from <Application,Lorg/scandroid/testing/GlobalStatics>
+    [junit] 11:42:22.465 [main] DEBUG org.scandroid.dataflow.DataflowTest - abstract=false
+    [junit] 11:42:22.465 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.GlobalStatics.<init>()V due to lack of output information.
+    [junit] 11:42:22.465 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.GlobalStatics.getFoo()Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.465 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.GlobalStatics.setFoo(Ljava/lang/Object;)V due to lack of output information.
+    [junit] 11:42:22.465 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<init>()V due to lack of output information.
+    [junit] 11:42:22.465 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.registerNatives()V due to lack of output information.
+    [junit] 11:42:22.465 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.getClass()Ljava/lang/Class; due to lack of output information.
+    [junit] 11:42:22.465 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.hashCode()I due to lack of output information.
+    [junit] 11:42:22.465 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.equals(Ljava/lang/Object;)Z due to lack of output information.
+    [junit] 11:42:22.465 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.clone()Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.465 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.toString()Ljava/lang/String; due to lack of output information.
+    [junit] 11:42:22.465 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notify()V due to lack of output information.
+    [junit] 11:42:22.465 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notifyAll()V due to lack of output information.
+    [junit] 11:42:22.466 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(J)V due to lack of output information.
+    [junit] 11:42:22.466 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(JI)V due to lack of output information.
+    [junit] 11:42:22.466 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait()V due to lack of output information.
+    [junit] 11:42:22.466 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.finalize()V due to lack of output information.
+    [junit] 11:42:22.466 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<clinit>()V due to lack of output information.
+    [junit] 11:42:22.466 [main] DEBUG org.scandroid.dataflow.DataflowTest - Adding entrypoints from <Application,Lorg/scandroid/testing/FieldFlows>
+    [junit] 11:42:22.466 [main] DEBUG org.scandroid.dataflow.DataflowTest - abstract=false
+    [junit] 11:42:22.466 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.FieldFlows.<init>()V due to lack of output information.
+    [junit] 11:42:22.466 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.FieldFlows.dropFstStatic(Lorg/scandroid/testing/FieldFlows$Pair;)Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.466 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.FieldFlows.dropSndStatic(Lorg/scandroid/testing/FieldFlows$Pair;)Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.466 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.FieldFlows.mkPairStatic(Lorg/scandroid/testing/FieldFlows$X;Lorg/scandroid/testing/FieldFlows$Y;)Lorg/scandroid/testing/FieldFlows$Pair; due to lack of output information.
+    [junit] 11:42:22.466 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.FieldFlows.swapStatic(Lorg/scandroid/testing/FieldFlows$Pair;)Lorg/scandroid/testing/FieldFlows$Pair; due to lack of output information.
+    [junit] 11:42:22.467 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.FieldFlows.dropFst(Lorg/scandroid/testing/FieldFlows$Pair;)Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.467 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.FieldFlows.dropSnd(Lorg/scandroid/testing/FieldFlows$Pair;)Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.467 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.FieldFlows.mkPair(Lorg/scandroid/testing/FieldFlows$X;Lorg/scandroid/testing/FieldFlows$Y;)Lorg/scandroid/testing/FieldFlows$Pair; due to lack of output information.
+    [junit] 11:42:22.467 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.FieldFlows.swap(Lorg/scandroid/testing/FieldFlows$Pair;)Lorg/scandroid/testing/FieldFlows$Pair; due to lack of output information.
+    [junit] 11:42:22.467 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<init>()V due to lack of output information.
+    [junit] 11:42:22.467 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.registerNatives()V due to lack of output information.
+    [junit] 11:42:22.467 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.getClass()Ljava/lang/Class; due to lack of output information.
+    [junit] 11:42:22.467 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.hashCode()I due to lack of output information.
+    [junit] 11:42:22.467 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.equals(Ljava/lang/Object;)Z due to lack of output information.
+    [junit] 11:42:22.467 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.clone()Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.467 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.toString()Ljava/lang/String; due to lack of output information.
+    [junit] 11:42:22.467 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notify()V due to lack of output information.
+    [junit] 11:42:22.467 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notifyAll()V due to lack of output information.
+    [junit] 11:42:22.467 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(J)V due to lack of output information.
+    [junit] 11:42:22.467 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(JI)V due to lack of output information.
+    [junit] 11:42:22.468 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait()V due to lack of output information.
+    [junit] 11:42:22.468 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.finalize()V due to lack of output information.
+    [junit] 11:42:22.468 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<clinit>()V due to lack of output information.
+    [junit] 11:42:22.468 [main] DEBUG org.scandroid.dataflow.DataflowTest - Adding entrypoints from <Application,Lorg/scandroid/testing/FieldAccessTest>
+    [junit] 11:42:22.468 [main] DEBUG org.scandroid.dataflow.DataflowTest - abstract=false
+    [junit] 11:42:22.468 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.FieldAccessTest.<init>()V due to lack of output information.
+    [junit] 11:42:22.468 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.FieldAccessTest.main([Ljava/lang/String;)Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.468 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.FieldAccessTest.getStr()Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.468 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.SourceSink.<init>()V due to lack of output information.
+    [junit] 11:42:22.468 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.SourceSink.sink(Ljava/lang/Object;)V due to lack of output information.
+    [junit] 11:42:22.468 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<init>()V due to lack of output information.
+    [junit] 11:42:22.468 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.registerNatives()V due to lack of output information.
+    [junit] 11:42:22.468 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.getClass()Ljava/lang/Class; due to lack of output information.
+    [junit] 11:42:22.468 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.hashCode()I due to lack of output information.
+    [junit] 11:42:22.469 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.equals(Ljava/lang/Object;)Z due to lack of output information.
+    [junit] 11:42:22.469 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.clone()Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.469 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.toString()Ljava/lang/String; due to lack of output information.
+    [junit] 11:42:22.469 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notify()V due to lack of output information.
+    [junit] 11:42:22.469 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notifyAll()V due to lack of output information.
+    [junit] 11:42:22.469 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(J)V due to lack of output information.
+    [junit] 11:42:22.469 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(JI)V due to lack of output information.
+    [junit] 11:42:22.469 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait()V due to lack of output information.
+    [junit] 11:42:22.469 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.finalize()V due to lack of output information.
+    [junit] 11:42:22.469 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<clinit>()V due to lack of output information.
+    [junit] 11:42:22.469 [main] DEBUG org.scandroid.dataflow.DataflowTest - Adding entrypoints from <Application,Lorg/scandroid/testing/FieldFlows$Pair>
+    [junit] 11:42:22.469 [main] DEBUG org.scandroid.dataflow.DataflowTest - abstract=false
+    [junit] 11:42:22.469 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.FieldFlows$Pair.<init>(Ljava/lang/Object;Ljava/lang/Object;)V due to lack of output information.
+    [junit] 11:42:22.469 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<init>()V due to lack of output information.
+    [junit] 11:42:22.469 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.registerNatives()V due to lack of output information.
+    [junit] 11:42:22.469 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.getClass()Ljava/lang/Class; due to lack of output information.
+    [junit] 11:42:22.470 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.hashCode()I due to lack of output information.
+    [junit] 11:42:22.470 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.equals(Ljava/lang/Object;)Z due to lack of output information.
+    [junit] 11:42:22.470 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.clone()Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.470 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.toString()Ljava/lang/String; due to lack of output information.
+    [junit] 11:42:22.470 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notify()V due to lack of output information.
+    [junit] 11:42:22.470 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notifyAll()V due to lack of output information.
+    [junit] 11:42:22.470 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(J)V due to lack of output information.
+    [junit] 11:42:22.470 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(JI)V due to lack of output information.
+    [junit] 11:42:22.470 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait()V due to lack of output information.
+    [junit] 11:42:22.470 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.finalize()V due to lack of output information.
+    [junit] 11:42:22.470 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<clinit>()V due to lack of output information.
+    [junit] 11:42:22.470 [main] DEBUG org.scandroid.dataflow.DataflowTest - Adding entrypoints from <Application,Lorg/scandroid/testing/EchoTest>
+    [junit] 11:42:22.470 [main] DEBUG org.scandroid.dataflow.DataflowTest - abstract=false
+    [junit] 11:42:22.471 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.EchoTest.<init>()V due to lack of output information.
+    [junit] 11:42:22.471 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.EchoTest.echoTest([Ljava/lang/String;)Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.471 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.EchoTest.echoTest(Ljava/lang/String;)Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.471 [main] DEBUG org.scandroid.dataflow.DataflowTest - Adding entrypoint for < Application, Lorg/scandroid/testing/EchoTest, echo(Ljava/lang/Object;)Ljava/lang/Object; >
+    [junit] 11:42:22.471 [main] DEBUG org.scandroid.dataflow.DataflowTest - abstract=false, static=false, init=false, clinit=false, synthetic=false
+    [junit] 11:42:22.473 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.EchoTest.static_echo(Ljava/lang/Object;)Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.473 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.EchoTest.echo2(Ljava/lang/String;)Ljava/lang/String; due to lack of output information.
+    [junit] 11:42:22.473 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.EchoTest.static_echo2(Ljava/lang/String;)Ljava/lang/String; due to lack of output information.
+    [junit] 11:42:22.473 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.SourceSink.<init>()V due to lack of output information.
+    [junit] 11:42:22.473 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.SourceSink.sink(Ljava/lang/Object;)V due to lack of output information.
+    [junit] 11:42:22.473 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<init>()V due to lack of output information.
+    [junit] 11:42:22.474 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.registerNatives()V due to lack of output information.
+    [junit] 11:42:22.474 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.getClass()Ljava/lang/Class; due to lack of output information.
+    [junit] 11:42:22.474 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.hashCode()I due to lack of output information.
+    [junit] 11:42:22.474 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.equals(Ljava/lang/Object;)Z due to lack of output information.
+    [junit] 11:42:22.474 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.clone()Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.474 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.toString()Ljava/lang/String; due to lack of output information.
+    [junit] 11:42:22.474 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notify()V due to lack of output information.
+    [junit] 11:42:22.474 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notifyAll()V due to lack of output information.
+    [junit] 11:42:22.474 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(J)V due to lack of output information.
+    [junit] 11:42:22.474 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(JI)V due to lack of output information.
+    [junit] 11:42:22.474 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait()V due to lack of output information.
+    [junit] 11:42:22.474 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.finalize()V due to lack of output information.
+    [junit] 11:42:22.474 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<clinit>()V due to lack of output information.
+    [junit] 11:42:22.474 [main] DEBUG org.scandroid.dataflow.DataflowTest - Adding entrypoints from <Application,Lorg/scandroid/testing/DeepFields$Foo>
+    [junit] 11:42:22.474 [main] DEBUG org.scandroid.dataflow.DataflowTest - abstract=false
+    [junit] 11:42:22.475 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.DeepFields$Foo.<init>(Lorg/scandroid/testing/DeepFields$Bar;)V due to lack of output information.
+    [junit] 11:42:22.475 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<init>()V due to lack of output information.
+    [junit] 11:42:22.475 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.registerNatives()V due to lack of output information.
+    [junit] 11:42:22.475 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.getClass()Ljava/lang/Class; due to lack of output information.
+    [junit] 11:42:22.475 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.hashCode()I due to lack of output information.
+    [junit] 11:42:22.475 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.equals(Ljava/lang/Object;)Z due to lack of output information.
+    [junit] 11:42:22.475 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.clone()Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.475 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.toString()Ljava/lang/String; due to lack of output information.
+    [junit] 11:42:22.475 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notify()V due to lack of output information.
+    [junit] 11:42:22.475 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notifyAll()V due to lack of output information.
+    [junit] 11:42:22.475 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(J)V due to lack of output information.
+    [junit] 11:42:22.475 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(JI)V due to lack of output information.
+    [junit] 11:42:22.475 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait()V due to lack of output information.
+    [junit] 11:42:22.475 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.finalize()V due to lack of output information.
+    [junit] 11:42:22.475 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<clinit>()V due to lack of output information.
+    [junit] 11:42:22.475 [main] DEBUG org.scandroid.dataflow.DataflowTest - Adding entrypoints from <Application,Lorg/scandroid/testing/ConstructorArgFlow$Id>
+    [junit] 11:42:22.476 [main] DEBUG org.scandroid.dataflow.DataflowTest - abstract=false
+    [junit] 11:42:22.476 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.ConstructorArgFlow$Id.<init>()V due to lack of output information.
+    [junit] 11:42:22.476 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.ConstructorArgFlow$Id.<init>(Ljava/lang/Object;)V due to lack of output information.
+    [junit] 11:42:22.476 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.ConstructorArgFlow$Id.setO(Ljava/lang/Object;)V due to lack of output information.
+    [junit] 11:42:22.476 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.ConstructorArgFlow$Id.getO()Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.476 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<init>()V due to lack of output information.
+    [junit] 11:42:22.476 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.registerNatives()V due to lack of output information.
+    [junit] 11:42:22.476 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.getClass()Ljava/lang/Class; due to lack of output information.
+    [junit] 11:42:22.476 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.hashCode()I due to lack of output information.
+    [junit] 11:42:22.476 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.equals(Ljava/lang/Object;)Z due to lack of output information.
+    [junit] 11:42:22.476 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.clone()Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.476 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.toString()Ljava/lang/String; due to lack of output information.
+    [junit] 11:42:22.476 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notify()V due to lack of output information.
+    [junit] 11:42:22.476 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notifyAll()V due to lack of output information.
+    [junit] 11:42:22.477 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(J)V due to lack of output information.
+    [junit] 11:42:22.477 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(JI)V due to lack of output information.
+    [junit] 11:42:22.477 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait()V due to lack of output information.
+    [junit] 11:42:22.477 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.finalize()V due to lack of output information.
+    [junit] 11:42:22.477 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<clinit>()V due to lack of output information.
+    [junit] 11:42:22.477 [main] DEBUG org.scandroid.dataflow.DataflowTest - Adding entrypoints from <Application,Lorg/scandroid/testing/FieldFlows$X>
+    [junit] 11:42:22.477 [main] DEBUG org.scandroid.dataflow.DataflowTest - abstract=false
+    [junit] 11:42:22.477 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.FieldFlows$X.<init>()V due to lack of output information.
+    [junit] 11:42:22.477 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<init>()V due to lack of output information.
+    [junit] 11:42:22.477 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.registerNatives()V due to lack of output information.
+    [junit] 11:42:22.477 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.getClass()Ljava/lang/Class; due to lack of output information.
+    [junit] 11:42:22.477 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.hashCode()I due to lack of output information.
+    [junit] 11:42:22.477 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.equals(Ljava/lang/Object;)Z due to lack of output information.
+    [junit] 11:42:22.477 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.clone()Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.478 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.toString()Ljava/lang/String; due to lack of output information.
+    [junit] 11:42:22.478 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notify()V due to lack of output information.
+    [junit] 11:42:22.478 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notifyAll()V due to lack of output information.
+    [junit] 11:42:22.478 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(J)V due to lack of output information.
+    [junit] 11:42:22.478 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(JI)V due to lack of output information.
+    [junit] 11:42:22.478 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait()V due to lack of output information.
+    [junit] 11:42:22.478 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.finalize()V due to lack of output information.
+    [junit] 11:42:22.478 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<clinit>()V due to lack of output information.
+    [junit] 11:42:22.478 [main] DEBUG org.scandroid.dataflow.DataflowTest - Adding entrypoints from <Application,Lorg/scandroid/testing/LList>
+    [junit] 11:42:22.478 [main] DEBUG org.scandroid.dataflow.DataflowTest - abstract=false
+    [junit] 11:42:22.478 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.LList.<init>()V due to lack of output information.
+    [junit] 11:42:22.478 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<init>()V due to lack of output information.
+    [junit] 11:42:22.478 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.registerNatives()V due to lack of output information.
+    [junit] 11:42:22.478 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.getClass()Ljava/lang/Class; due to lack of output information.
+    [junit] 11:42:22.478 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.hashCode()I due to lack of output information.
+    [junit] 11:42:22.479 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.equals(Ljava/lang/Object;)Z due to lack of output information.
+    [junit] 11:42:22.479 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.clone()Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.479 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.toString()Ljava/lang/String; due to lack of output information.
+    [junit] 11:42:22.479 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notify()V due to lack of output information.
+    [junit] 11:42:22.479 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notifyAll()V due to lack of output information.
+    [junit] 11:42:22.479 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(J)V due to lack of output information.
+    [junit] 11:42:22.479 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(JI)V due to lack of output information.
+    [junit] 11:42:22.479 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait()V due to lack of output information.
+    [junit] 11:42:22.479 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.finalize()V due to lack of output information.
+    [junit] 11:42:22.479 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<clinit>()V due to lack of output information.
+    [junit] 11:42:22.479 [main] DEBUG org.scandroid.dataflow.DataflowTest - Adding entrypoints from <Application,Lorg/scandroid/testing/ArrayLengthIntegerTest>
+    [junit] 11:42:22.479 [main] DEBUG org.scandroid.dataflow.DataflowTest - abstract=false
+    [junit] 11:42:22.479 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.ArrayLengthIntegerTest.<init>()V due to lack of output information.
+    [junit] 11:42:22.479 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.ArrayLengthIntegerTest.main([Ljava/lang/String;)Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.479 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.SourceSink.<init>()V due to lack of output information.
+    [junit] 11:42:22.480 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.SourceSink.sink(Ljava/lang/Object;)V due to lack of output information.
+    [junit] 11:42:22.480 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<init>()V due to lack of output information.
+    [junit] 11:42:22.480 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.registerNatives()V due to lack of output information.
+    [junit] 11:42:22.480 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.getClass()Ljava/lang/Class; due to lack of output information.
+    [junit] 11:42:22.480 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.hashCode()I due to lack of output information.
+    [junit] 11:42:22.480 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.equals(Ljava/lang/Object;)Z due to lack of output information.
+    [junit] 11:42:22.480 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.clone()Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.480 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.toString()Ljava/lang/String; due to lack of output information.
+    [junit] 11:42:22.480 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notify()V due to lack of output information.
+    [junit] 11:42:22.480 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notifyAll()V due to lack of output information.
+    [junit] 11:42:22.480 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(J)V due to lack of output information.
+    [junit] 11:42:22.480 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(JI)V due to lack of output information.
+    [junit] 11:42:22.480 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait()V due to lack of output information.
+    [junit] 11:42:22.480 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.finalize()V due to lack of output information.
+    [junit] 11:42:22.480 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<clinit>()V due to lack of output information.
+    [junit] 11:42:22.480 [main] DEBUG org.scandroid.dataflow.DataflowTest - Adding entrypoints from <Application,Lorg/scandroid/testing/MutualRecursion$Foo>
+    [junit] 11:42:22.481 [main] DEBUG org.scandroid.dataflow.DataflowTest - abstract=false
+    [junit] 11:42:22.481 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.MutualRecursion$Foo.<init>(Lorg/scandroid/testing/MutualRecursion$Bar;)V due to lack of output information.
+    [junit] 11:42:22.481 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<init>()V due to lack of output information.
+    [junit] 11:42:22.481 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.registerNatives()V due to lack of output information.
+    [junit] 11:42:22.481 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.getClass()Ljava/lang/Class; due to lack of output information.
+    [junit] 11:42:22.481 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.hashCode()I due to lack of output information.
+    [junit] 11:42:22.481 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.equals(Ljava/lang/Object;)Z due to lack of output information.
+    [junit] 11:42:22.481 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.clone()Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.481 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.toString()Ljava/lang/String; due to lack of output information.
+    [junit] 11:42:22.481 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notify()V due to lack of output information.
+    [junit] 11:42:22.481 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notifyAll()V due to lack of output information.
+    [junit] 11:42:22.481 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(J)V due to lack of output information.
+    [junit] 11:42:22.481 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(JI)V due to lack of output information.
+    [junit] 11:42:22.481 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait()V due to lack of output information.
+    [junit] 11:42:22.481 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.finalize()V due to lack of output information.
+    [junit] 11:42:22.481 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<clinit>()V due to lack of output information.
+    [junit] 11:42:22.482 [main] DEBUG org.scandroid.dataflow.DataflowTest - Adding entrypoints from <Application,Lorg/scandroid/testing/SourceSink>
+    [junit] 11:42:22.482 [main] DEBUG org.scandroid.dataflow.DataflowTest - abstract=true
+    [junit] 11:42:22.482 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.SourceSink.<init>()V due to lack of output information.
+    [junit] 11:42:22.482 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.SourceSink.sink(Ljava/lang/Object;)V due to lack of output information.
+    [junit] 11:42:22.482 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<init>()V due to lack of output information.
+    [junit] 11:42:22.482 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.registerNatives()V due to lack of output information.
+    [junit] 11:42:22.482 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.getClass()Ljava/lang/Class; due to lack of output information.
+    [junit] 11:42:22.482 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.hashCode()I due to lack of output information.
+    [junit] 11:42:22.482 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.equals(Ljava/lang/Object;)Z due to lack of output information.
+    [junit] 11:42:22.482 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.clone()Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.482 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.toString()Ljava/lang/String; due to lack of output information.
+    [junit] 11:42:22.482 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notify()V due to lack of output information.
+    [junit] 11:42:22.482 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notifyAll()V due to lack of output information.
+    [junit] 11:42:22.482 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(J)V due to lack of output information.
+    [junit] 11:42:22.482 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(JI)V due to lack of output information.
+    [junit] 11:42:22.483 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait()V due to lack of output information.
+    [junit] 11:42:22.483 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.finalize()V due to lack of output information.
+    [junit] 11:42:22.483 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<clinit>()V due to lack of output information.
+    [junit] 11:42:22.504 [main] DEBUG org.scandroid.util.CGAnalysisContext - Entrypoint: < Application, Lorg/scandroid/testing/EchoTest, echo(Ljava/lang/Object;)Ljava/lang/Object; >([<Application,Lorg/scandroid/testing/EchoTest>],[<Application,Ljava/lang/Object>])
+    [junit] 11:42:22.568 [main] INFO  org.scandroid.util.CGAnalysisContext - *************************
+    [junit] 11:42:22.569 [main] INFO  org.scandroid.util.CGAnalysisContext - * Building Call Graph   *
+    [junit] 11:42:22.569 [main] INFO  org.scandroid.util.CGAnalysisContext - *************************
+    [junit] 11:42:22.730 [main] DEBUG org.scandroid.flow.InflowAnalysis - ***************************
+    [junit] 11:42:22.730 [main] DEBUG org.scandroid.flow.InflowAnalysis - * Running inflow analysis *
+    [junit] 11:42:22.730 [main] DEBUG org.scandroid.flow.InflowAnalysis - ***************************
+    [junit] 11:42:22.733 [main] DEBUG org.scandroid.MethodSummarySpecs - found sources: [SourceSpec [namePattern=MethodNamePattern (Class: Lorg/scandroid/testing/EchoTest - Method: echo - Descriptor: (Ljava/lang/Object;)Ljava/lang/Object;), argNums=[0, 1]]]
+    [junit] 11:42:22.733 [main] DEBUG org.scandroid.flow.InflowAnalysis - 1 Source Specs. 
+    [junit] 11:42:22.740 [main] DEBUG org.scandroid.flow.InflowAnalysis - ************
+    [junit] 11:42:22.740 [main] DEBUG org.scandroid.flow.InflowAnalysis - * Results: *
+    [junit] 11:42:22.740 [main] DEBUG org.scandroid.flow.InflowAnalysis - ************
+    [junit] 11:42:22.740 [main] DEBUG org.scandroid.flow.InflowAnalysis - 	BasicBlockInContext: ExplodedBlock[0](entry:< Application, Lorg/scandroid/testing/EchoTest, echo(Ljava/lang/Object;)Ljava/lang/Object; >)
+    [junit] 	FlowType: ParameterFlow( argNum=0 block=ExplodedBlock[0](entry:< Application, Lorg/scandroid/testing/EchoTest, echo(Ljava/lang/Object;)Ljava/lang/Object; >), source=true)
+    [junit] 	CodeElement: LocalElement(1)
+    [junit] 
+    [junit] 11:42:22.741 [main] DEBUG org.scandroid.flow.InflowAnalysis - 	BasicBlockInContext: ExplodedBlock[0](entry:< Application, Lorg/scandroid/testing/EchoTest, echo(Ljava/lang/Object;)Ljava/lang/Object; >)
+    [junit] 	FlowType: ParameterFlow( argNum=0 block=ExplodedBlock[0](entry:< Application, Lorg/scandroid/testing/EchoTest, echo(Ljava/lang/Object;)Ljava/lang/Object; >), source=true)
+    [junit] 	CodeElement: InstanceKeyElement([<Application,Lorg/scandroid/testing/EchoTest>])
+    [junit] 
+    [junit] 11:42:22.741 [main] DEBUG org.scandroid.flow.InflowAnalysis - 	BasicBlockInContext: ExplodedBlock[0](entry:< Application, Lorg/scandroid/testing/EchoTest, echo(Ljava/lang/Object;)Ljava/lang/Object; >)
+    [junit] 	FlowType: ParameterFlow( argNum=1 block=ExplodedBlock[0](entry:< Application, Lorg/scandroid/testing/EchoTest, echo(Ljava/lang/Object;)Ljava/lang/Object; >), source=true)
+    [junit] 	CodeElement: LocalElement(2)
+    [junit] 
+    [junit] 11:42:22.741 [main] DEBUG org.scandroid.flow.InflowAnalysis - 	BasicBlockInContext: ExplodedBlock[0](entry:< Application, Lorg/scandroid/testing/EchoTest, echo(Ljava/lang/Object;)Ljava/lang/Object; >)
+    [junit] 	FlowType: ParameterFlow( argNum=1 block=ExplodedBlock[0](entry:< Application, Lorg/scandroid/testing/EchoTest, echo(Ljava/lang/Object;)Ljava/lang/Object; >), source=true)
+    [junit] 	CodeElement: InstanceKeyElement([<Primordial,Ljava/lang/Object>])
+    [junit] 
+    [junit]   InitialTaints: {ExplodedBlock[0](entry:< Application, Lorg/scandroid/testing/EchoTest, echo(Ljava/lang/Object;)Ljava/lang/Object; >)={ParameterFlow( argNum=0 block=ExplodedBlock[0](entry:< Application, Lorg/scandroid/testing/EchoTest, echo(Ljava/lang/Object;)Ljava/lang/Object; >), source=true)=[LocalElement(1), InstanceKeyElement([<Application,Lorg/scandroid/testing/EchoTest>])], ParameterFlow( argNum=1 block=ExplodedBlock[0](entry:< Application, Lorg/scandroid/testing/EchoTest, echo(Ljava/lang/Object;)Ljava/lang/Object; >), source=true)=[LocalElement(2), InstanceKeyElement([<Primordial,Ljava/lang/Object>])]}}
+    [junit] 11:42:22.746 [main] DEBUG org.scandroid.flow.FlowAnalysis - *************************
+    [junit] 11:42:22.746 [main] DEBUG org.scandroid.flow.FlowAnalysis - * Running flow analysis *
+    [junit] 11:42:22.746 [main] DEBUG org.scandroid.flow.FlowAnalysis - *************************
+    [junit] 11:42:22.752 [main] DEBUG o.s.f.f.TaintTransferFunctions - getNormalFlowFunction
+    [junit] 11:42:22.752 [main] DEBUG o.s.f.f.TaintTransferFunctions - srcInst: null
+    [junit] 11:42:22.752 [main] DEBUG o.s.f.f.TaintTransferFunctions - destInst: null
+    [junit] 11:42:22.752 [main] DEBUG o.s.f.f.TaintTransferFunctions - Using identity fn. for normal flow (inst==null)
+    [junit] 11:42:22.753 [main] DEBUG o.s.f.f.TaintTransferFunctions - getNormalFlowFunction
+    [junit] 11:42:22.753 [main] DEBUG o.s.f.f.TaintTransferFunctions - srcInst: null
+    [junit] 11:42:22.753 [main] DEBUG o.s.f.f.TaintTransferFunctions - destInst: return 2
+    [junit] 11:42:22.753 [main] DEBUG o.s.f.f.TaintTransferFunctions - outCodeElts: []
+    [junit] 11:42:22.753 [main] DEBUG o.s.f.f.PairBasedFlowFunction - getTargets(0)
+    [junit] 11:42:22.754 [main] DEBUG o.s.f.f.PairBasedFlowFunction - getTargets(0): {0}
+    [junit] 11:42:22.754 [main] DEBUG o.s.f.f.TaintTransferFunctions - getNormalFlowFunction
+    [junit] 11:42:22.754 [main] DEBUG o.s.f.f.TaintTransferFunctions - srcInst: return 2
+    [junit] 11:42:22.754 [main] DEBUG o.s.f.f.TaintTransferFunctions - destInst: null
+    [junit] 11:42:22.754 [main] DEBUG o.s.f.f.TaintTransferFunctions - Using identity fn. for normal flow (inst==null)
+    [junit] 11:42:22.759 [main] DEBUG o.s.f.f.TaintTransferFunctions - getNormalFlowFunction
+    [junit] 11:42:22.759 [main] DEBUG o.s.f.f.TaintTransferFunctions - srcInst: null
+    [junit] 11:42:22.759 [main] DEBUG o.s.f.f.TaintTransferFunctions - destInst: null
+    [junit] 11:42:22.759 [main] DEBUG o.s.f.f.TaintTransferFunctions - Using identity fn. for normal flow (inst==null)
+    [junit] 11:42:22.759 [main] DEBUG o.s.f.f.TaintTransferFunctions - getNormalFlowFunction
+    [junit] 11:42:22.759 [main] DEBUG o.s.f.f.TaintTransferFunctions - srcInst: null
+    [junit] 11:42:22.759 [main] DEBUG o.s.f.f.TaintTransferFunctions - destInst: return 2
+    [junit] 11:42:22.759 [main] DEBUG o.s.f.f.TaintTransferFunctions - outCodeElts: []
+    [junit] 11:42:22.760 [main] DEBUG o.s.f.f.PairBasedFlowFunction - getTargets(4)
+    [junit] 11:42:22.760 [main] DEBUG o.s.f.f.PairBasedFlowFunction - getTargets(4): { 4 }
+    [junit] 11:42:22.760 [main] DEBUG o.s.f.f.TaintTransferFunctions - getNormalFlowFunction
+    [junit] 11:42:22.760 [main] DEBUG o.s.f.f.TaintTransferFunctions - srcInst: return 2
+    [junit] 11:42:22.760 [main] DEBUG o.s.f.f.TaintTransferFunctions - destInst: null
+    [junit] 11:42:22.760 [main] DEBUG o.s.f.f.TaintTransferFunctions - Using identity fn. for normal flow (inst==null)
+    [junit] 11:42:22.760 [main] DEBUG o.s.f.f.TaintTransferFunctions - getNormalFlowFunction
+    [junit] 11:42:22.760 [main] DEBUG o.s.f.f.TaintTransferFunctions - srcInst: null
+    [junit] 11:42:22.760 [main] DEBUG o.s.f.f.TaintTransferFunctions - destInst: null
+    [junit] 11:42:22.760 [main] DEBUG o.s.f.f.TaintTransferFunctions - Using identity fn. for normal flow (inst==null)
+    [junit] 11:42:22.760 [main] DEBUG o.s.f.f.TaintTransferFunctions - getNormalFlowFunction
+    [junit] 11:42:22.760 [main] DEBUG o.s.f.f.TaintTransferFunctions - srcInst: null
+    [junit] 11:42:22.760 [main] DEBUG o.s.f.f.TaintTransferFunctions - destInst: return 2
+    [junit] 11:42:22.760 [main] DEBUG o.s.f.f.TaintTransferFunctions - outCodeElts: []
+    [junit] 11:42:22.760 [main] DEBUG o.s.f.f.PairBasedFlowFunction - getTargets(3)
+    [junit] 11:42:22.760 [main] DEBUG o.s.f.f.PairBasedFlowFunction - getTargets(3): { 3 }
+    [junit] 11:42:22.760 [main] DEBUG o.s.f.f.TaintTransferFunctions - getNormalFlowFunction
+    [junit] 11:42:22.761 [main] DEBUG o.s.f.f.TaintTransferFunctions - srcInst: return 2
+    [junit] 11:42:22.761 [main] DEBUG o.s.f.f.TaintTransferFunctions - destInst: null
+    [junit] 11:42:22.761 [main] DEBUG o.s.f.f.TaintTransferFunctions - Using identity fn. for normal flow (inst==null)
+    [junit] 11:42:22.761 [main] DEBUG o.s.f.f.TaintTransferFunctions - getNormalFlowFunction
+    [junit] 11:42:22.761 [main] DEBUG o.s.f.f.TaintTransferFunctions - srcInst: null
+    [junit] 11:42:22.761 [main] DEBUG o.s.f.f.TaintTransferFunctions - destInst: null
+    [junit] 11:42:22.761 [main] DEBUG o.s.f.f.TaintTransferFunctions - Using identity fn. for normal flow (inst==null)
+    [junit] 11:42:22.761 [main] DEBUG o.s.f.f.TaintTransferFunctions - getNormalFlowFunction
+    [junit] 11:42:22.761 [main] DEBUG o.s.f.f.TaintTransferFunctions - srcInst: null
+    [junit] 11:42:22.761 [main] DEBUG o.s.f.f.TaintTransferFunctions - destInst: return 2
+    [junit] 11:42:22.761 [main] DEBUG o.s.f.f.TaintTransferFunctions - outCodeElts: []
+    [junit] 11:42:22.761 [main] DEBUG o.s.f.f.PairBasedFlowFunction - getTargets(2)
+    [junit] 11:42:22.761 [main] DEBUG o.s.f.f.PairBasedFlowFunction - getTargets(2): { 2 }
+    [junit] 11:42:22.761 [main] DEBUG o.s.f.f.TaintTransferFunctions - getNormalFlowFunction
+    [junit] 11:42:22.761 [main] DEBUG o.s.f.f.TaintTransferFunctions - srcInst: return 2
+    [junit] 11:42:22.761 [main] DEBUG o.s.f.f.TaintTransferFunctions - destInst: null
+    [junit] 11:42:22.761 [main] DEBUG o.s.f.f.TaintTransferFunctions - Using identity fn. for normal flow (inst==null)
+    [junit] 11:42:22.761 [main] DEBUG o.s.f.f.TaintTransferFunctions - getNormalFlowFunction
+    [junit] 11:42:22.761 [main] DEBUG o.s.f.f.TaintTransferFunctions - srcInst: null
+    [junit] 11:42:22.762 [main] DEBUG o.s.f.f.TaintTransferFunctions - destInst: null
+    [junit] 11:42:22.762 [main] DEBUG o.s.f.f.TaintTransferFunctions - Using identity fn. for normal flow (inst==null)
+    [junit] 11:42:22.762 [main] DEBUG o.s.f.f.TaintTransferFunctions - getNormalFlowFunction
+    [junit] 11:42:22.762 [main] DEBUG o.s.f.f.TaintTransferFunctions - srcInst: null
+    [junit] 11:42:22.762 [main] DEBUG o.s.f.f.TaintTransferFunctions - destInst: return 2
+    [junit] 11:42:22.762 [main] DEBUG o.s.f.f.TaintTransferFunctions - outCodeElts: []
+    [junit] 11:42:22.762 [main] DEBUG o.s.f.f.PairBasedFlowFunction - getTargets(1)
+    [junit] 11:42:22.762 [main] DEBUG o.s.f.f.PairBasedFlowFunction - getTargets(1): { 1 }
+    [junit] 11:42:22.762 [main] DEBUG o.s.f.f.TaintTransferFunctions - getNormalFlowFunction
+    [junit] 11:42:22.762 [main] DEBUG o.s.f.f.TaintTransferFunctions - srcInst: return 2
+    [junit] 11:42:22.762 [main] DEBUG o.s.f.f.TaintTransferFunctions - destInst: null
+    [junit] 11:42:22.762 [main] DEBUG o.s.f.f.TaintTransferFunctions - Using identity fn. for normal flow (inst==null)
+    [junit] 11:42:22.764 [main] DEBUG org.scandroid.flow.OutflowAnalysis - ****************************
+    [junit] 11:42:22.764 [main] DEBUG org.scandroid.flow.OutflowAnalysis - * Running outflow analysis *
+    [junit] 11:42:22.764 [main] DEBUG org.scandroid.flow.OutflowAnalysis - ****************************
+    [junit] 11:42:22.766 [main] DEBUG org.scandroid.MethodSummarySpecs - found sinks: [SinkSpec [namePattern=MethodNamePattern (Class: Lorg/scandroid/testing/EchoTest - Method: echo - Descriptor: (Ljava/lang/Object;)Ljava/lang/Object;), argNums=[0, 1]], SinkSpec [namePattern=MethodNamePattern (Class: Lorg/scandroid/testing/EchoTest - Method: echo - Descriptor: (Ljava/lang/Object;)Ljava/lang/Object;), argNums=null]]
+    [junit] 11:42:22.766 [main] DEBUG org.scandroid.flow.OutflowAnalysis - 2 sink Specs. 
+    [junit] 11:42:22.768 [main] DEBUG org.scandroid.flow.OutflowAnalysis - ************
+    [junit] 11:42:22.768 [main] DEBUG org.scandroid.flow.OutflowAnalysis - * Results: *
+    [junit] 11:42:22.768 [main] DEBUG org.scandroid.flow.OutflowAnalysis - ************
+    [junit] 11:42:22.768 [main] DEBUG org.scandroid.flow.OutflowAnalysis - {ParameterFlow( argNum=0 block=ExplodedBlock[0](entry:< Application, Lorg/scandroid/testing/EchoTest, echo(Ljava/lang/Object;)Ljava/lang/Object; >), source=true)=[ParameterFlow( argNum=0 block=ExplodedBlock[0](entry:< Application, Lorg/scandroid/testing/EchoTest, echo(Ljava/lang/Object;)Ljava/lang/Object; >), source=false)], ParameterFlow( argNum=1 block=ExplodedBlock[0](entry:< Application, Lorg/scandroid/testing/EchoTest, echo(Ljava/lang/Object;)Ljava/lang/Object; >), source=true)=[ParameterFlow( argNum=1 block=ExplodedBlock[0](entry:< Application, Lorg/scandroid/testing/EchoTest, echo(Ljava/lang/Object;)Ljava/lang/Object; >), source=false)]}
+    [junit] 
+    [junit] Tests run: 1, Failures: 1, Errors: 0, Time elapsed: 0.285 sec
+    [junit] ------------- Standard Output ---------------
+    [junit] 11:42:20.346 [main] DEBUG o.s.util.AndroidAnalysisContext - DefaultSCanDroidOptions [pdfCG()=false, pdfPartialCG()=false, pdfOneLevelCG()=false, systemToApkCG()=false, stdoutCG()=false, includeLibrary()=true, separateEntries()=false, ifdsExplorer()=false, addMainEntrypoints()=false, useThreadRunMain()=false, stringPrefixAnalysis()=false, testCGBuilder()=false, useDefaultPolicy()=false, getClasspath()=file:/home/creswick/development/fuse/dev/fuse-java/SCanDroid/data/testdata/testJar-1.0-SNAPSHOT.jar, getFilename()=testJar-1.0-SNAPSHOT.jar, getAndroidLibrary()=file:/home/creswick/development/fuse/dev/fuse-java/SCanDroid/data/android-2.3.7_r1.jar, getReflectionOptions()=NONE, getSummariesURI()=null, classHierarchyWarnings()=false, cgBuilderWarnings()=false]
+    [junit] 11:42:22.214 [main] DEBUG c.i.w.c.WDexClassLoaderImpl - add archive: : JarFileModule:/home/creswick/development/fuse/dev/fuse-java/SCanDroid/data/testdata/testJar-1.0-SNAPSHOT.jar
+    [junit] 11:42:22.426 [main] DEBUG org.scandroid.dataflow.DataflowTest - Found 26 classes in Applicaton scope
+    [junit] 11:42:22.426 [main] DEBUG org.scandroid.dataflow.DataflowTest - Adding entrypoints from <Application,Lorg/scandroid/testing/ArrayLoad>
+    [junit] 11:42:22.426 [main] DEBUG org.scandroid.dataflow.DataflowTest - abstract=false
+    [junit] 11:42:22.436 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.ArrayLoad.<init>()V due to lack of output information.
+    [junit] 11:42:22.437 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.ArrayLoad.flow([Ljava/lang/String;)V due to lack of output information.
+    [junit] 11:42:22.437 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.ArrayLoad.useFlow([Ljava/lang/String;)Ljava/lang/String; due to lack of output information.
+    [junit] 11:42:22.437 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.ArrayLoad.copyElement([Ljava/lang/Object;)Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.437 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<init>()V due to lack of output information.
+    [junit] 11:42:22.437 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.registerNatives()V due to lack of output information.
+    [junit] 11:42:22.437 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.getClass()Ljava/lang/Class; due to lack of output information.
+    [junit] 11:42:22.437 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.hashCode()I due to lack of output information.
+    [junit] 11:42:22.437 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.equals(Ljava/lang/Object;)Z due to lack of output information.
+    [junit] 11:42:22.437 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.clone()Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.437 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.toString()Ljava/lang/String; due to lack of output information.
+    [junit] 11:42:22.437 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notify()V due to lack of output information.
+    [junit] 11:42:22.437 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notifyAll()V due to lack of output information.
+    [junit] 11:42:22.437 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(J)V due to lack of output information.
+    [junit] 11:42:22.437 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(JI)V due to lack of output information.
+    [junit] 11:42:22.438 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait()V due to lack of output information.
+    [junit] 11:42:22.438 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.finalize()V due to lack of output information.
+    [junit] 11:42:22.438 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<clinit>()V due to lack of output information.
+    [junit] 11:42:22.438 [main] DEBUG org.scandroid.dataflow.DataflowTest - Adding entrypoints from <Application,Lorg/scandroid/testing/ExceptionFlow>
+    [junit] 11:42:22.438 [main] DEBUG org.scandroid.dataflow.DataflowTest - abstract=false
+    [junit] 11:42:22.438 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.ExceptionFlow.<init>()V due to lack of output information.
+    [junit] 11:42:22.438 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.ExceptionFlow.exceptionFlow([Ljava/lang/String;)V due to lack of output information.
+    [junit] 11:42:22.438 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.ExceptionFlow.useFlow([Ljava/lang/String;)Ljava/lang/String; due to lack of output information.
+    [junit] 11:42:22.438 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.ExceptionFlow.thrower(Ljava/lang/String;)V due to lack of output information.
+    [junit] 11:42:22.438 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<init>()V due to lack of output information.
+    [junit] 11:42:22.438 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.registerNatives()V due to lack of output information.
+    [junit] 11:42:22.438 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.getClass()Ljava/lang/Class; due to lack of output information.
+    [junit] 11:42:22.439 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.hashCode()I due to lack of output information.
+    [junit] 11:42:22.439 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.equals(Ljava/lang/Object;)Z due to lack of output information.
+    [junit] 11:42:22.439 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.clone()Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.439 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.toString()Ljava/lang/String; due to lack of output information.
+    [junit] 11:42:22.439 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notify()V due to lack of output information.
+    [junit] 11:42:22.439 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notifyAll()V due to lack of output information.
+    [junit] 11:42:22.439 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(J)V due to lack of output information.
+    [junit] 11:42:22.439 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(JI)V due to lack of output information.
+    [junit] 11:42:22.439 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait()V due to lack of output information.
+    [junit] 11:42:22.439 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.finalize()V due to lack of output information.
+    [junit] 11:42:22.439 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<clinit>()V due to lack of output information.
+    [junit] 11:42:22.439 [main] DEBUG org.scandroid.dataflow.DataflowTest - Adding entrypoints from <Application,Lorg/scandroid/testing/LocalVarFlow>
+    [junit] 11:42:22.439 [main] DEBUG org.scandroid.dataflow.DataflowTest - abstract=false
+    [junit] 11:42:22.440 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.LocalVarFlow.<init>()V due to lack of output information.
+    [junit] 11:42:22.440 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.LocalVarFlow.flow([Ljava/lang/String;)V due to lack of output information.
+    [junit] 11:42:22.440 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.LocalVarFlow.localParam(Ljava/lang/String;)Ljava/lang/String; due to lack of output information.
+    [junit] 11:42:22.440 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.SourceSink.<init>()V due to lack of output information.
+    [junit] 11:42:22.440 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.SourceSink.sink(Ljava/lang/Object;)V due to lack of output information.
+    [junit] 11:42:22.440 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<init>()V due to lack of output information.
+    [junit] 11:42:22.440 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.registerNatives()V due to lack of output information.
+    [junit] 11:42:22.440 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.getClass()Ljava/lang/Class; due to lack of output information.
+    [junit] 11:42:22.440 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.hashCode()I due to lack of output information.
+    [junit] 11:42:22.440 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.equals(Ljava/lang/Object;)Z due to lack of output information.
+    [junit] 11:42:22.440 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.clone()Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.440 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.toString()Ljava/lang/String; due to lack of output information.
+    [junit] 11:42:22.441 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notify()V due to lack of output information.
+    [junit] 11:42:22.441 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notifyAll()V due to lack of output information.
+    [junit] 11:42:22.441 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(J)V due to lack of output information.
+    [junit] 11:42:22.441 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(JI)V due to lack of output information.
+    [junit] 11:42:22.441 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait()V due to lack of output information.
+    [junit] 11:42:22.441 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.finalize()V due to lack of output information.
+    [junit] 11:42:22.441 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<clinit>()V due to lack of output information.
+    [junit] 11:42:22.441 [main] DEBUG org.scandroid.dataflow.DataflowTest - Adding entrypoints from <Application,Lorg/scandroid/testing/DeepFields$Bar>
+    [junit] 11:42:22.441 [main] DEBUG org.scandroid.dataflow.DataflowTest - abstract=false
+    [junit] 11:42:22.442 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.DeepFields$Bar.<init>(Ljava/lang/Object;)V due to lack of output information.
+    [junit] 11:42:22.442 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<init>()V due to lack of output information.
+    [junit] 11:42:22.442 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.registerNatives()V due to lack of output information.
+    [junit] 11:42:22.442 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.getClass()Ljava/lang/Class; due to lack of output information.
+    [junit] 11:42:22.442 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.hashCode()I due to lack of output information.
+    [junit] 11:42:22.442 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.equals(Ljava/lang/Object;)Z due to lack of output information.
+    [junit] 11:42:22.442 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.clone()Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.443 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.toString()Ljava/lang/String; due to lack of output information.
+    [junit] 11:42:22.443 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notify()V due to lack of output information.
+    [junit] 11:42:22.443 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notifyAll()V due to lack of output information.
+    [junit] 11:42:22.443 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(J)V due to lack of output information.
+    [junit] 11:42:22.443 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(JI)V due to lack of output information.
+    [junit] 11:42:22.443 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait()V due to lack of output information.
+    [junit] 11:42:22.443 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.finalize()V due to lack of output information.
+    [junit] 11:42:22.443 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<clinit>()V due to lack of output information.
+    [junit] 11:42:22.443 [main] DEBUG org.scandroid.dataflow.DataflowTest - Adding entrypoints from <Application,Lorg/scandroid/testing/LLTestRec>
+    [junit] 11:42:22.444 [main] DEBUG org.scandroid.dataflow.DataflowTest - abstract=false
+    [junit] 11:42:22.444 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.LLTestRec.<init>()V due to lack of output information.
+    [junit] 11:42:22.444 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.LLTestRec.main([Ljava/lang/String;)Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.444 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.LLTestRec.echo2(I)I due to lack of output information.
+    [junit] 11:42:22.444 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.LLTestRec.echo(I)I due to lack of output information.
+    [junit] 11:42:22.444 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.LLTestRec.argToArg(Ljava/util/List;Ljava/util/List;)V due to lack of output information.
+    [junit] 11:42:22.445 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.LLTestRec.last(Lorg/scandroid/testing/LList;)Ljava/lang/String; due to lack of output information.
+    [junit] 11:42:22.445 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.SourceSink.<init>()V due to lack of output information.
+    [junit] 11:42:22.445 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.SourceSink.sink(Ljava/lang/Object;)V due to lack of output information.
+    [junit] 11:42:22.445 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<init>()V due to lack of output information.
+    [junit] 11:42:22.445 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.registerNatives()V due to lack of output information.
+    [junit] 11:42:22.445 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.getClass()Ljava/lang/Class; due to lack of output information.
+    [junit] 11:42:22.445 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.hashCode()I due to lack of output information.
+    [junit] 11:42:22.445 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.equals(Ljava/lang/Object;)Z due to lack of output information.
+    [junit] 11:42:22.446 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.clone()Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.446 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.toString()Ljava/lang/String; due to lack of output information.
+    [junit] 11:42:22.446 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notify()V due to lack of output information.
+    [junit] 11:42:22.446 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notifyAll()V due to lack of output information.
+    [junit] 11:42:22.446 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(J)V due to lack of output information.
+    [junit] 11:42:22.446 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(JI)V due to lack of output information.
+    [junit] 11:42:22.446 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait()V due to lack of output information.
+    [junit] 11:42:22.447 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.finalize()V due to lack of output information.
+    [junit] 11:42:22.447 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<clinit>()V due to lack of output information.
+    [junit] 11:42:22.447 [main] DEBUG org.scandroid.dataflow.DataflowTest - Adding entrypoints from <Application,Lorg/scandroid/testing/MutualRecursion>
+    [junit] 11:42:22.447 [main] DEBUG org.scandroid.dataflow.DataflowTest - abstract=false
+    [junit] 11:42:22.447 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.MutualRecursion.<init>()V due to lack of output information.
+    [junit] 11:42:22.447 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.MutualRecursion.evenp(I)I due to lack of output information.
+    [junit] 11:42:22.448 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.MutualRecursion.oddp(I)I due to lack of output information.
+    [junit] 11:42:22.448 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.MutualRecursion.fooize(Lorg/scandroid/testing/MutualRecursion$Bar;)Lorg/scandroid/testing/MutualRecursion$Foo; due to lack of output information.
+    [junit] 11:42:22.448 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.MutualRecursion.barize(Lorg/scandroid/testing/MutualRecursion$Foo;)Lorg/scandroid/testing/MutualRecursion$Bar; due to lack of output information.
+    [junit] 11:42:22.448 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<init>()V due to lack of output information.
+    [junit] 11:42:22.448 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.registerNatives()V due to lack of output information.
+    [junit] 11:42:22.448 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.getClass()Ljava/lang/Class; due to lack of output information.
+    [junit] 11:42:22.448 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.hashCode()I due to lack of output information.
+    [junit] 11:42:22.448 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.equals(Ljava/lang/Object;)Z due to lack of output information.
+    [junit] 11:42:22.448 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.clone()Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.449 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.toString()Ljava/lang/String; due to lack of output information.
+    [junit] 11:42:22.449 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notify()V due to lack of output information.
+    [junit] 11:42:22.449 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notifyAll()V due to lack of output information.
+    [junit] 11:42:22.449 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(J)V due to lack of output information.
+    [junit] 11:42:22.449 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(JI)V due to lack of output information.
+    [junit] 11:42:22.449 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait()V due to lack of output information.
+    [junit] 11:42:22.449 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.finalize()V due to lack of output information.
+    [junit] 11:42:22.449 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<clinit>()V due to lack of output information.
+    [junit] 11:42:22.449 [main] DEBUG org.scandroid.dataflow.DataflowTest - Adding entrypoints from <Application,Lorg/scandroid/testing/AssignmentReturnValFlow>
+    [junit] 11:42:22.449 [main] DEBUG org.scandroid.dataflow.DataflowTest - abstract=false
+    [junit] 11:42:22.450 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.AssignmentReturnValFlow.<init>()V due to lack of output information.
+    [junit] 11:42:22.450 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.AssignmentReturnValFlow.flow([Ljava/lang/String;)V due to lack of output information.
+    [junit] 11:42:22.450 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.AssignmentReturnValFlow.useFlow([Ljava/lang/String;)Ljava/lang/String; due to lack of output information.
+    [junit] 11:42:22.450 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<init>()V due to lack of output information.
+    [junit] 11:42:22.450 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.registerNatives()V due to lack of output information.
+    [junit] 11:42:22.450 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.getClass()Ljava/lang/Class; due to lack of output information.
+    [junit] 11:42:22.450 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.hashCode()I due to lack of output information.
+    [junit] 11:42:22.451 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.equals(Ljava/lang/Object;)Z due to lack of output information.
+    [junit] 11:42:22.451 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.clone()Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.451 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.toString()Ljava/lang/String; due to lack of output information.
+    [junit] 11:42:22.451 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notify()V due to lack of output information.
+    [junit] 11:42:22.451 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notifyAll()V due to lack of output information.
+    [junit] 11:42:22.451 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(J)V due to lack of output information.
+    [junit] 11:42:22.451 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(JI)V due to lack of output information.
+    [junit] 11:42:22.451 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait()V due to lack of output information.
+    [junit] 11:42:22.451 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.finalize()V due to lack of output information.
+    [junit] 11:42:22.451 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<clinit>()V due to lack of output information.
+    [junit] 11:42:22.452 [main] DEBUG org.scandroid.dataflow.DataflowTest - Adding entrypoints from <Application,Lorg/scandroid/testing/FieldFlows$Y>
+    [junit] 11:42:22.452 [main] DEBUG org.scandroid.dataflow.DataflowTest - abstract=false
+    [junit] 11:42:22.452 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.FieldFlows$Y.<init>()V due to lack of output information.
+    [junit] 11:42:22.452 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<init>()V due to lack of output information.
+    [junit] 11:42:22.452 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.registerNatives()V due to lack of output information.
+    [junit] 11:42:22.452 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.getClass()Ljava/lang/Class; due to lack of output information.
+    [junit] 11:42:22.452 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.hashCode()I due to lack of output information.
+    [junit] 11:42:22.452 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.equals(Ljava/lang/Object;)Z due to lack of output information.
+    [junit] 11:42:22.452 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.clone()Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.452 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.toString()Ljava/lang/String; due to lack of output information.
+    [junit] 11:42:22.453 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notify()V due to lack of output information.
+    [junit] 11:42:22.453 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notifyAll()V due to lack of output information.
+    [junit] 11:42:22.453 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(J)V due to lack of output information.
+    [junit] 11:42:22.453 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(JI)V due to lack of output information.
+    [junit] 11:42:22.453 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait()V due to lack of output information.
+    [junit] 11:42:22.453 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.finalize()V due to lack of output information.
+    [junit] 11:42:22.453 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<clinit>()V due to lack of output information.
+    [junit] 11:42:22.453 [main] DEBUG org.scandroid.dataflow.DataflowTest - Adding entrypoints from <Application,Lorg/scandroid/testing/InvokeCallArgTest>
+    [junit] 11:42:22.453 [main] DEBUG org.scandroid.dataflow.DataflowTest - abstract=false
+    [junit] 11:42:22.454 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.InvokeCallArgTest.<init>()V due to lack of output information.
+    [junit] 11:42:22.454 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.InvokeCallArgTest.main([Ljava/lang/String;)Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.454 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.InvokeCallArgTest.invokeCallArgSourceSpec(Ljava/lang/String;)Ljava/lang/String; due to lack of output information.
+    [junit] 11:42:22.454 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.InvokeCallArgTest.load([C)V due to lack of output information.
+    [junit] 11:42:22.454 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.SourceSink.<init>()V due to lack of output information.
+    [junit] 11:42:22.454 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.SourceSink.sink(Ljava/lang/Object;)V due to lack of output information.
+    [junit] 11:42:22.454 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<init>()V due to lack of output information.
+    [junit] 11:42:22.454 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.registerNatives()V due to lack of output information.
+    [junit] 11:42:22.454 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.getClass()Ljava/lang/Class; due to lack of output information.
+    [junit] 11:42:22.455 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.hashCode()I due to lack of output information.
+    [junit] 11:42:22.455 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.equals(Ljava/lang/Object;)Z due to lack of output information.
+    [junit] 11:42:22.455 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.clone()Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.455 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.toString()Ljava/lang/String; due to lack of output information.
+    [junit] 11:42:22.455 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notify()V due to lack of output information.
+    [junit] 11:42:22.455 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notifyAll()V due to lack of output information.
+    [junit] 11:42:22.455 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(J)V due to lack of output information.
+    [junit] 11:42:22.455 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(JI)V due to lack of output information.
+    [junit] 11:42:22.455 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait()V due to lack of output information.
+    [junit] 11:42:22.455 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.finalize()V due to lack of output information.
+    [junit] 11:42:22.455 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<clinit>()V due to lack of output information.
+    [junit] 11:42:22.455 [main] DEBUG org.scandroid.dataflow.DataflowTest - Adding entrypoints from <Application,Lorg/scandroid/testing/MutualRecursion$Bar>
+    [junit] 11:42:22.455 [main] DEBUG org.scandroid.dataflow.DataflowTest - abstract=false
+    [junit] 11:42:22.455 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.MutualRecursion$Bar.<init>(Lorg/scandroid/testing/MutualRecursion$Foo;)V due to lack of output information.
+    [junit] 11:42:22.455 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<init>()V due to lack of output information.
+    [junit] 11:42:22.455 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.registerNatives()V due to lack of output information.
+    [junit] 11:42:22.455 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.getClass()Ljava/lang/Class; due to lack of output information.
+    [junit] 11:42:22.456 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.hashCode()I due to lack of output information.
+    [junit] 11:42:22.456 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.equals(Ljava/lang/Object;)Z due to lack of output information.
+    [junit] 11:42:22.456 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.clone()Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.456 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.toString()Ljava/lang/String; due to lack of output information.
+    [junit] 11:42:22.456 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notify()V due to lack of output information.
+    [junit] 11:42:22.456 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notifyAll()V due to lack of output information.
+    [junit] 11:42:22.456 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(J)V due to lack of output information.
+    [junit] 11:42:22.456 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(JI)V due to lack of output information.
+    [junit] 11:42:22.456 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait()V due to lack of output information.
+    [junit] 11:42:22.456 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.finalize()V due to lack of output information.
+    [junit] 11:42:22.456 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<clinit>()V due to lack of output information.
+    [junit] 11:42:22.456 [main] DEBUG org.scandroid.dataflow.DataflowTest - Adding entrypoints from <Application,Lorg/scandroid/testing/ConstructorArgFlow>
+    [junit] 11:42:22.456 [main] DEBUG org.scandroid.dataflow.DataflowTest - abstract=false
+    [junit] 11:42:22.456 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.ConstructorArgFlow.<init>()V due to lack of output information.
+    [junit] 11:42:22.456 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.ConstructorArgFlow.echo(Ljava/lang/String;)Ljava/lang/String; due to lack of output information.
+    [junit] 11:42:22.457 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.ConstructorArgFlow.flow(Ljava/lang/String;)Lorg/scandroid/testing/ConstructorArgFlow$Id; due to lack of output information.
+    [junit] 11:42:22.457 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.ConstructorArgFlow.manualFlow(Ljava/lang/String;)Lorg/scandroid/testing/ConstructorArgFlow$Id; due to lack of output information.
+    [junit] 11:42:22.457 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.ConstructorArgFlow.fieldAccessFlow(Lorg/scandroid/testing/ConstructorArgFlow$Id;)Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.457 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.ConstructorArgFlow.getterAccessFlow(Lorg/scandroid/testing/ConstructorArgFlow$Id;)Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.457 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<init>()V due to lack of output information.
+    [junit] 11:42:22.457 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.registerNatives()V due to lack of output information.
+    [junit] 11:42:22.457 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.getClass()Ljava/lang/Class; due to lack of output information.
+    [junit] 11:42:22.457 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.hashCode()I due to lack of output information.
+    [junit] 11:42:22.457 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.equals(Ljava/lang/Object;)Z due to lack of output information.
+    [junit] 11:42:22.457 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.clone()Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.457 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.toString()Ljava/lang/String; due to lack of output information.
+    [junit] 11:42:22.457 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notify()V due to lack of output information.
+    [junit] 11:42:22.457 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notifyAll()V due to lack of output information.
+    [junit] 11:42:22.457 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(J)V due to lack of output information.
+    [junit] 11:42:22.457 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(JI)V due to lack of output information.
+    [junit] 11:42:22.457 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait()V due to lack of output information.
+    [junit] 11:42:22.457 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.finalize()V due to lack of output information.
+    [junit] 11:42:22.458 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<clinit>()V due to lack of output information.
+    [junit] 11:42:22.458 [main] DEBUG org.scandroid.dataflow.DataflowTest - Adding entrypoints from <Application,Lorg/scandroid/testing/LLTestIter>
+    [junit] 11:42:22.458 [main] DEBUG org.scandroid.dataflow.DataflowTest - abstract=false
+    [junit] 11:42:22.458 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.LLTestIter.<init>()V due to lack of output information.
+    [junit] 11:42:22.458 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.LLTestIter.main([Ljava/lang/String;)Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.458 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.LLTestIter.echo2(I)I due to lack of output information.
+    [junit] 11:42:22.458 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.LLTestIter.echo(I)I due to lack of output information.
+    [junit] 11:42:22.458 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.LLTestIter.argToArg(Ljava/util/List;Ljava/util/List;)V due to lack of output information.
+    [junit] 11:42:22.458 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.LLTestIter.shrink(Ljava/util/List;)V due to lack of output information.
+    [junit] 11:42:22.459 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.LLTestIter.shrinkNull()V due to lack of output information.
+    [junit] 11:42:22.459 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.LLTestIter.shrink2()V due to lack of output information.
+    [junit] 11:42:22.459 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.LLTestIter.shrink3(Ljava/util/ArrayList;)V due to lack of output information.
+    [junit] 11:42:22.459 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.LLTestIter.last(Lorg/scandroid/testing/LList;)Ljava/lang/String; due to lack of output information.
+    [junit] 11:42:22.459 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.SourceSink.<init>()V due to lack of output information.
+    [junit] 11:42:22.459 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.SourceSink.sink(Ljava/lang/Object;)V due to lack of output information.
+    [junit] 11:42:22.460 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<init>()V due to lack of output information.
+    [junit] 11:42:22.460 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.registerNatives()V due to lack of output information.
+    [junit] 11:42:22.460 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.getClass()Ljava/lang/Class; due to lack of output information.
+    [junit] 11:42:22.460 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.hashCode()I due to lack of output information.
+    [junit] 11:42:22.460 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.equals(Ljava/lang/Object;)Z due to lack of output information.
+    [junit] 11:42:22.460 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.clone()Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.460 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.toString()Ljava/lang/String; due to lack of output information.
+    [junit] 11:42:22.461 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notify()V due to lack of output information.
+    [junit] 11:42:22.461 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notifyAll()V due to lack of output information.
+    [junit] 11:42:22.461 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(J)V due to lack of output information.
+    [junit] 11:42:22.461 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(JI)V due to lack of output information.
+    [junit] 11:42:22.461 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait()V due to lack of output information.
+    [junit] 11:42:22.461 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.finalize()V due to lack of output information.
+    [junit] 11:42:22.462 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<clinit>()V due to lack of output information.
+    [junit] 11:42:22.462 [main] DEBUG org.scandroid.dataflow.DataflowTest - Adding entrypoints from <Application,Lorg/scandroid/testing/DeepFields>
+    [junit] 11:42:22.462 [main] DEBUG org.scandroid.dataflow.DataflowTest - abstract=false
+    [junit] 11:42:22.462 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.DeepFields.<init>()V due to lack of output information.
+    [junit] 11:42:22.462 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.DeepFields.test(Lorg/scandroid/testing/DeepFields$Foo;Ljava/lang/Object;)V due to lack of output information.
+    [junit] 11:42:22.462 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<init>()V due to lack of output information.
+    [junit] 11:42:22.462 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.registerNatives()V due to lack of output information.
+    [junit] 11:42:22.462 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.getClass()Ljava/lang/Class; due to lack of output information.
+    [junit] 11:42:22.463 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.hashCode()I due to lack of output information.
+    [junit] 11:42:22.463 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.equals(Ljava/lang/Object;)Z due to lack of output information.
+    [junit] 11:42:22.463 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.clone()Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.463 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.toString()Ljava/lang/String; due to lack of output information.
+    [junit] 11:42:22.463 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notify()V due to lack of output information.
+    [junit] 11:42:22.463 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notifyAll()V due to lack of output information.
+    [junit] 11:42:22.463 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(J)V due to lack of output information.
+    [junit] 11:42:22.463 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(JI)V due to lack of output information.
+    [junit] 11:42:22.463 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait()V due to lack of output information.
+    [junit] 11:42:22.463 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.finalize()V due to lack of output information.
+    [junit] 11:42:22.463 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<clinit>()V due to lack of output information.
+    [junit] 11:42:22.463 [main] DEBUG org.scandroid.dataflow.DataflowTest - Adding entrypoints from <Application,Lorg/scandroid/testing/ArrayLengthTest>
+    [junit] 11:42:22.463 [main] DEBUG org.scandroid.dataflow.DataflowTest - abstract=false
+    [junit] 11:42:22.463 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.ArrayLengthTest.<init>()V due to lack of output information.
+    [junit] 11:42:22.463 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.ArrayLengthTest.main([Ljava/lang/String;)Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.464 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.ArrayLengthTest.echo(Ljava/lang/Object;)Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.464 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.SourceSink.<init>()V due to lack of output information.
+    [junit] 11:42:22.464 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.SourceSink.sink(Ljava/lang/Object;)V due to lack of output information.
+    [junit] 11:42:22.464 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<init>()V due to lack of output information.
+    [junit] 11:42:22.464 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.registerNatives()V due to lack of output information.
+    [junit] 11:42:22.464 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.getClass()Ljava/lang/Class; due to lack of output information.
+    [junit] 11:42:22.464 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.hashCode()I due to lack of output information.
+    [junit] 11:42:22.464 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.equals(Ljava/lang/Object;)Z due to lack of output information.
+    [junit] 11:42:22.464 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.clone()Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.464 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.toString()Ljava/lang/String; due to lack of output information.
+    [junit] 11:42:22.464 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notify()V due to lack of output information.
+    [junit] 11:42:22.464 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notifyAll()V due to lack of output information.
+    [junit] 11:42:22.464 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(J)V due to lack of output information.
+    [junit] 11:42:22.464 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(JI)V due to lack of output information.
+    [junit] 11:42:22.464 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait()V due to lack of output information.
+    [junit] 11:42:22.465 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.finalize()V due to lack of output information.
+    [junit] 11:42:22.465 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<clinit>()V due to lack of output information.
+    [junit] 11:42:22.465 [main] DEBUG org.scandroid.dataflow.DataflowTest - Adding entrypoints from <Application,Lorg/scandroid/testing/GlobalStatics>
+    [junit] 11:42:22.465 [main] DEBUG org.scandroid.dataflow.DataflowTest - abstract=false
+    [junit] 11:42:22.465 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.GlobalStatics.<init>()V due to lack of output information.
+    [junit] 11:42:22.465 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.GlobalStatics.getFoo()Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.465 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.GlobalStatics.setFoo(Ljava/lang/Object;)V due to lack of output information.
+    [junit] 11:42:22.465 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<init>()V due to lack of output information.
+    [junit] 11:42:22.465 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.registerNatives()V due to lack of output information.
+    [junit] 11:42:22.465 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.getClass()Ljava/lang/Class; due to lack of output information.
+    [junit] 11:42:22.465 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.hashCode()I due to lack of output information.
+    [junit] 11:42:22.465 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.equals(Ljava/lang/Object;)Z due to lack of output information.
+    [junit] 11:42:22.465 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.clone()Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.465 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.toString()Ljava/lang/String; due to lack of output information.
+    [junit] 11:42:22.465 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notify()V due to lack of output information.
+    [junit] 11:42:22.465 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notifyAll()V due to lack of output information.
+    [junit] 11:42:22.466 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(J)V due to lack of output information.
+    [junit] 11:42:22.466 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(JI)V due to lack of output information.
+    [junit] 11:42:22.466 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait()V due to lack of output information.
+    [junit] 11:42:22.466 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.finalize()V due to lack of output information.
+    [junit] 11:42:22.466 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<clinit>()V due to lack of output information.
+    [junit] 11:42:22.466 [main] DEBUG org.scandroid.dataflow.DataflowTest - Adding entrypoints from <Application,Lorg/scandroid/testing/FieldFlows>
+    [junit] 11:42:22.466 [main] DEBUG org.scandroid.dataflow.DataflowTest - abstract=false
+    [junit] 11:42:22.466 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.FieldFlows.<init>()V due to lack of output information.
+    [junit] 11:42:22.466 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.FieldFlows.dropFstStatic(Lorg/scandroid/testing/FieldFlows$Pair;)Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.466 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.FieldFlows.dropSndStatic(Lorg/scandroid/testing/FieldFlows$Pair;)Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.466 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.FieldFlows.mkPairStatic(Lorg/scandroid/testing/FieldFlows$X;Lorg/scandroid/testing/FieldFlows$Y;)Lorg/scandroid/testing/FieldFlows$Pair; due to lack of output information.
+    [junit] 11:42:22.466 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.FieldFlows.swapStatic(Lorg/scandroid/testing/FieldFlows$Pair;)Lorg/scandroid/testing/FieldFlows$Pair; due to lack of output information.
+    [junit] 11:42:22.467 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.FieldFlows.dropFst(Lorg/scandroid/testing/FieldFlows$Pair;)Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.467 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.FieldFlows.dropSnd(Lorg/scandroid/testing/FieldFlows$Pair;)Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.467 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.FieldFlows.mkPair(Lorg/scandroid/testing/FieldFlows$X;Lorg/scandroid/testing/FieldFlows$Y;)Lorg/scandroid/testing/FieldFlows$Pair; due to lack of output information.
+    [junit] 11:42:22.467 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.FieldFlows.swap(Lorg/scandroid/testing/FieldFlows$Pair;)Lorg/scandroid/testing/FieldFlows$Pair; due to lack of output information.
+    [junit] 11:42:22.467 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<init>()V due to lack of output information.
+    [junit] 11:42:22.467 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.registerNatives()V due to lack of output information.
+    [junit] 11:42:22.467 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.getClass()Ljava/lang/Class; due to lack of output information.
+    [junit] 11:42:22.467 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.hashCode()I due to lack of output information.
+    [junit] 11:42:22.467 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.equals(Ljava/lang/Object;)Z due to lack of output information.
+    [junit] 11:42:22.467 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.clone()Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.467 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.toString()Ljava/lang/String; due to lack of output information.
+    [junit] 11:42:22.467 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notify()V due to lack of output information.
+    [junit] 11:42:22.467 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notifyAll()V due to lack of output information.
+    [junit] 11:42:22.467 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(J)V due to lack of output information.
+    [junit] 11:42:22.467 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(JI)V due to lack of output information.
+    [junit] 11:42:22.468 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait()V due to lack of output information.
+    [junit] 11:42:22.468 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.finalize()V due to lack of output information.
+    [junit] 11:42:22.468 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<clinit>()V due to lack of output information.
+    [junit] 11:42:22.468 [main] DEBUG org.scandroid.dataflow.DataflowTest - Adding entrypoints from <Application,Lorg/scandroid/testing/FieldAccessTest>
+    [junit] 11:42:22.468 [main] DEBUG org.scandroid.dataflow.DataflowTest - abstract=false
+    [junit] 11:42:22.468 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.FieldAccessTest.<init>()V due to lack of output information.
+    [junit] 11:42:22.468 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.FieldAccessTest.main([Ljava/lang/String;)Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.468 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.FieldAccessTest.getStr()Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.468 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.SourceSink.<init>()V due to lack of output information.
+    [junit] 11:42:22.468 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.SourceSink.sink(Ljava/lang/Object;)V due to lack of output information.
+    [junit] 11:42:22.468 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<init>()V due to lack of output information.
+    [junit] 11:42:22.468 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.registerNatives()V due to lack of output information.
+    [junit] 11:42:22.468 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.getClass()Ljava/lang/Class; due to lack of output information.
+    [junit] 11:42:22.468 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.hashCode()I due to lack of output information.
+    [junit] 11:42:22.469 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.equals(Ljava/lang/Object;)Z due to lack of output information.
+    [junit] 11:42:22.469 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.clone()Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.469 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.toString()Ljava/lang/String; due to lack of output information.
+    [junit] 11:42:22.469 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notify()V due to lack of output information.
+    [junit] 11:42:22.469 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notifyAll()V due to lack of output information.
+    [junit] 11:42:22.469 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(J)V due to lack of output information.
+    [junit] 11:42:22.469 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(JI)V due to lack of output information.
+    [junit] 11:42:22.469 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait()V due to lack of output information.
+    [junit] 11:42:22.469 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.finalize()V due to lack of output information.
+    [junit] 11:42:22.469 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<clinit>()V due to lack of output information.
+    [junit] 11:42:22.469 [main] DEBUG org.scandroid.dataflow.DataflowTest - Adding entrypoints from <Application,Lorg/scandroid/testing/FieldFlows$Pair>
+    [junit] 11:42:22.469 [main] DEBUG org.scandroid.dataflow.DataflowTest - abstract=false
+    [junit] 11:42:22.469 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.FieldFlows$Pair.<init>(Ljava/lang/Object;Ljava/lang/Object;)V due to lack of output information.
+    [junit] 11:42:22.469 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<init>()V due to lack of output information.
+    [junit] 11:42:22.469 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.registerNatives()V due to lack of output information.
+    [junit] 11:42:22.469 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.getClass()Ljava/lang/Class; due to lack of output information.
+    [junit] 11:42:22.470 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.hashCode()I due to lack of output information.
+    [junit] 11:42:22.470 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.equals(Ljava/lang/Object;)Z due to lack of output information.
+    [junit] 11:42:22.470 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.clone()Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.470 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.toString()Ljava/lang/String; due to lack of output information.
+    [junit] 11:42:22.470 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notify()V due to lack of output information.
+    [junit] 11:42:22.470 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notifyAll()V due to lack of output information.
+    [junit] 11:42:22.470 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(J)V due to lack of output information.
+    [junit] 11:42:22.470 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(JI)V due to lack of output information.
+    [junit] 11:42:22.470 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait()V due to lack of output information.
+    [junit] 11:42:22.470 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.finalize()V due to lack of output information.
+    [junit] 11:42:22.470 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<clinit>()V due to lack of output information.
+    [junit] 11:42:22.470 [main] DEBUG org.scandroid.dataflow.DataflowTest - Adding entrypoints from <Application,Lorg/scandroid/testing/EchoTest>
+    [junit] 11:42:22.470 [main] DEBUG org.scandroid.dataflow.DataflowTest - abstract=false
+    [junit] 11:42:22.471 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.EchoTest.<init>()V due to lack of output information.
+    [junit] 11:42:22.471 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.EchoTest.echoTest([Ljava/lang/String;)Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.471 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.EchoTest.echoTest(Ljava/lang/String;)Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.471 [main] DEBUG org.scandroid.dataflow.DataflowTest - Adding entrypoint for < Application, Lorg/scandroid/testing/EchoTest, echo(Ljava/lang/Object;)Ljava/lang/Object; >
+    [junit] 11:42:22.471 [main] DEBUG org.scandroid.dataflow.DataflowTest - abstract=false, static=false, init=false, clinit=false, synthetic=false
+    [junit] 11:42:22.473 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.EchoTest.static_echo(Ljava/lang/Object;)Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.473 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.EchoTest.echo2(Ljava/lang/String;)Ljava/lang/String; due to lack of output information.
+    [junit] 11:42:22.473 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.EchoTest.static_echo2(Ljava/lang/String;)Ljava/lang/String; due to lack of output information.
+    [junit] 11:42:22.473 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.SourceSink.<init>()V due to lack of output information.
+    [junit] 11:42:22.473 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.SourceSink.sink(Ljava/lang/Object;)V due to lack of output information.
+    [junit] 11:42:22.473 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<init>()V due to lack of output information.
+    [junit] 11:42:22.474 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.registerNatives()V due to lack of output information.
+    [junit] 11:42:22.474 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.getClass()Ljava/lang/Class; due to lack of output information.
+    [junit] 11:42:22.474 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.hashCode()I due to lack of output information.
+    [junit] 11:42:22.474 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.equals(Ljava/lang/Object;)Z due to lack of output information.
+    [junit] 11:42:22.474 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.clone()Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.474 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.toString()Ljava/lang/String; due to lack of output information.
+    [junit] 11:42:22.474 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notify()V due to lack of output information.
+    [junit] 11:42:22.474 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notifyAll()V due to lack of output information.
+    [junit] 11:42:22.474 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(J)V due to lack of output information.
+    [junit] 11:42:22.474 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(JI)V due to lack of output information.
+    [junit] 11:42:22.474 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait()V due to lack of output information.
+    [junit] 11:42:22.474 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.finalize()V due to lack of output information.
+    [junit] 11:42:22.474 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<clinit>()V due to lack of output information.
+    [junit] 11:42:22.474 [main] DEBUG org.scandroid.dataflow.DataflowTest - Adding entrypoints from <Application,Lorg/scandroid/testing/DeepFields$Foo>
+    [junit] 11:42:22.474 [main] DEBUG org.scandroid.dataflow.DataflowTest - abstract=false
+    [junit] 11:42:22.475 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.DeepFields$Foo.<init>(Lorg/scandroid/testing/DeepFields$Bar;)V due to lack of output information.
+    [junit] 11:42:22.475 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<init>()V due to lack of output information.
+    [junit] 11:42:22.475 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.registerNatives()V due to lack of output information.
+    [junit] 11:42:22.475 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.getClass()Ljava/lang/Class; due to lack of output information.
+    [junit] 11:42:22.475 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.hashCode()I due to lack of output information.
+    [junit] 11:42:22.475 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.equals(Ljava/lang/Object;)Z due to lack of output information.
+    [junit] 11:42:22.475 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.clone()Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.475 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.toString()Ljava/lang/String; due to lack of output information.
+    [junit] 11:42:22.475 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notify()V due to lack of output information.
+    [junit] 11:42:22.475 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notifyAll()V due to lack of output information.
+    [junit] 11:42:22.475 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(J)V due to lack of output information.
+    [junit] 11:42:22.475 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(JI)V due to lack of output information.
+    [junit] 11:42:22.475 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait()V due to lack of output information.
+    [junit] 11:42:22.475 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.finalize()V due to lack of output information.
+    [junit] 11:42:22.475 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<clinit>()V due to lack of output information.
+    [junit] 11:42:22.475 [main] DEBUG org.scandroid.dataflow.DataflowTest - Adding entrypoints from <Application,Lorg/scandroid/testing/ConstructorArgFlow$Id>
+    [junit] 11:42:22.476 [main] DEBUG org.scandroid.dataflow.DataflowTest - abstract=false
+    [junit] 11:42:22.476 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.ConstructorArgFlow$Id.<init>()V due to lack of output information.
+    [junit] 11:42:22.476 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.ConstructorArgFlow$Id.<init>(Ljava/lang/Object;)V due to lack of output information.
+    [junit] 11:42:22.476 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.ConstructorArgFlow$Id.setO(Ljava/lang/Object;)V due to lack of output information.
+    [junit] 11:42:22.476 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.ConstructorArgFlow$Id.getO()Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.476 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<init>()V due to lack of output information.
+    [junit] 11:42:22.476 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.registerNatives()V due to lack of output information.
+    [junit] 11:42:22.476 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.getClass()Ljava/lang/Class; due to lack of output information.
+    [junit] 11:42:22.476 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.hashCode()I due to lack of output information.
+    [junit] 11:42:22.476 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.equals(Ljava/lang/Object;)Z due to lack of output information.
+    [junit] 11:42:22.476 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.clone()Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.476 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.toString()Ljava/lang/String; due to lack of output information.
+    [junit] 11:42:22.476 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notify()V due to lack of output information.
+    [junit] 11:42:22.476 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notifyAll()V due to lack of output information.
+    [junit] 11:42:22.477 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(J)V due to lack of output information.
+    [junit] 11:42:22.477 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(JI)V due to lack of output information.
+    [junit] 11:42:22.477 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait()V due to lack of output information.
+    [junit] 11:42:22.477 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.finalize()V due to lack of output information.
+    [junit] 11:42:22.477 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<clinit>()V due to lack of output information.
+    [junit] 11:42:22.477 [main] DEBUG org.scandroid.dataflow.DataflowTest - Adding entrypoints from <Application,Lorg/scandroid/testing/FieldFlows$X>
+    [junit] 11:42:22.477 [main] DEBUG org.scandroid.dataflow.DataflowTest - abstract=false
+    [junit] 11:42:22.477 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.FieldFlows$X.<init>()V due to lack of output information.
+    [junit] 11:42:22.477 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<init>()V due to lack of output information.
+    [junit] 11:42:22.477 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.registerNatives()V due to lack of output information.
+    [junit] 11:42:22.477 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.getClass()Ljava/lang/Class; due to lack of output information.
+    [junit] 11:42:22.477 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.hashCode()I due to lack of output information.
+    [junit] 11:42:22.477 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.equals(Ljava/lang/Object;)Z due to lack of output information.
+    [junit] 11:42:22.477 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.clone()Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.478 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.toString()Ljava/lang/String; due to lack of output information.
+    [junit] 11:42:22.478 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notify()V due to lack of output information.
+    [junit] 11:42:22.478 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notifyAll()V due to lack of output information.
+    [junit] 11:42:22.478 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(J)V due to lack of output information.
+    [junit] 11:42:22.478 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(JI)V due to lack of output information.
+    [junit] 11:42:22.478 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait()V due to lack of output information.
+    [junit] 11:42:22.478 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.finalize()V due to lack of output information.
+    [junit] 11:42:22.478 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<clinit>()V due to lack of output information.
+    [junit] 11:42:22.478 [main] DEBUG org.scandroid.dataflow.DataflowTest - Adding entrypoints from <Application,Lorg/scandroid/testing/LList>
+    [junit] 11:42:22.478 [main] DEBUG org.scandroid.dataflow.DataflowTest - abstract=false
+    [junit] 11:42:22.478 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.LList.<init>()V due to lack of output information.
+    [junit] 11:42:22.478 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<init>()V due to lack of output information.
+    [junit] 11:42:22.478 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.registerNatives()V due to lack of output information.
+    [junit] 11:42:22.478 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.getClass()Ljava/lang/Class; due to lack of output information.
+    [junit] 11:42:22.478 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.hashCode()I due to lack of output information.
+    [junit] 11:42:22.479 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.equals(Ljava/lang/Object;)Z due to lack of output information.
+    [junit] 11:42:22.479 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.clone()Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.479 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.toString()Ljava/lang/String; due to lack of output information.
+    [junit] 11:42:22.479 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notify()V due to lack of output information.
+    [junit] 11:42:22.479 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notifyAll()V due to lack of output information.
+    [junit] 11:42:22.479 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(J)V due to lack of output information.
+    [junit] 11:42:22.479 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(JI)V due to lack of output information.
+    [junit] 11:42:22.479 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait()V due to lack of output information.
+    [junit] 11:42:22.479 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.finalize()V due to lack of output information.
+    [junit] 11:42:22.479 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<clinit>()V due to lack of output information.
+    [junit] 11:42:22.479 [main] DEBUG org.scandroid.dataflow.DataflowTest - Adding entrypoints from <Application,Lorg/scandroid/testing/ArrayLengthIntegerTest>
+    [junit] 11:42:22.479 [main] DEBUG org.scandroid.dataflow.DataflowTest - abstract=false
+    [junit] 11:42:22.479 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.ArrayLengthIntegerTest.<init>()V due to lack of output information.
+    [junit] 11:42:22.479 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.ArrayLengthIntegerTest.main([Ljava/lang/String;)Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.479 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.SourceSink.<init>()V due to lack of output information.
+    [junit] 11:42:22.480 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.SourceSink.sink(Ljava/lang/Object;)V due to lack of output information.
+    [junit] 11:42:22.480 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<init>()V due to lack of output information.
+    [junit] 11:42:22.480 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.registerNatives()V due to lack of output information.
+    [junit] 11:42:22.480 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.getClass()Ljava/lang/Class; due to lack of output information.
+    [junit] 11:42:22.480 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.hashCode()I due to lack of output information.
+    [junit] 11:42:22.480 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.equals(Ljava/lang/Object;)Z due to lack of output information.
+    [junit] 11:42:22.480 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.clone()Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.480 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.toString()Ljava/lang/String; due to lack of output information.
+    [junit] 11:42:22.480 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notify()V due to lack of output information.
+    [junit] 11:42:22.480 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notifyAll()V due to lack of output information.
+    [junit] 11:42:22.480 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(J)V due to lack of output information.
+    [junit] 11:42:22.480 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(JI)V due to lack of output information.
+    [junit] 11:42:22.480 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait()V due to lack of output information.
+    [junit] 11:42:22.480 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.finalize()V due to lack of output information.
+    [junit] 11:42:22.480 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<clinit>()V due to lack of output information.
+    [junit] 11:42:22.480 [main] DEBUG org.scandroid.dataflow.DataflowTest - Adding entrypoints from <Application,Lorg/scandroid/testing/MutualRecursion$Foo>
+    [junit] 11:42:22.481 [main] DEBUG org.scandroid.dataflow.DataflowTest - abstract=false
+    [junit] 11:42:22.481 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.MutualRecursion$Foo.<init>(Lorg/scandroid/testing/MutualRecursion$Bar;)V due to lack of output information.
+    [junit] 11:42:22.481 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<init>()V due to lack of output information.
+    [junit] 11:42:22.481 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.registerNatives()V due to lack of output information.
+    [junit] 11:42:22.481 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.getClass()Ljava/lang/Class; due to lack of output information.
+    [junit] 11:42:22.481 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.hashCode()I due to lack of output information.
+    [junit] 11:42:22.481 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.equals(Ljava/lang/Object;)Z due to lack of output information.
+    [junit] 11:42:22.481 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.clone()Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.481 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.toString()Ljava/lang/String; due to lack of output information.
+    [junit] 11:42:22.481 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notify()V due to lack of output information.
+    [junit] 11:42:22.481 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notifyAll()V due to lack of output information.
+    [junit] 11:42:22.481 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(J)V due to lack of output information.
+    [junit] 11:42:22.481 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(JI)V due to lack of output information.
+    [junit] 11:42:22.481 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait()V due to lack of output information.
+    [junit] 11:42:22.481 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.finalize()V due to lack of output information.
+    [junit] 11:42:22.481 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<clinit>()V due to lack of output information.
+    [junit] 11:42:22.482 [main] DEBUG org.scandroid.dataflow.DataflowTest - Adding entrypoints from <Application,Lorg/scandroid/testing/SourceSink>
+    [junit] 11:42:22.482 [main] DEBUG org.scandroid.dataflow.DataflowTest - abstract=true
+    [junit] 11:42:22.482 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.SourceSink.<init>()V due to lack of output information.
+    [junit] 11:42:22.482 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping org.scandroid.testing.SourceSink.sink(Ljava/lang/Object;)V due to lack of output information.
+    [junit] 11:42:22.482 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<init>()V due to lack of output information.
+    [junit] 11:42:22.482 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.registerNatives()V due to lack of output information.
+    [junit] 11:42:22.482 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.getClass()Ljava/lang/Class; due to lack of output information.
+    [junit] 11:42:22.482 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.hashCode()I due to lack of output information.
+    [junit] 11:42:22.482 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.equals(Ljava/lang/Object;)Z due to lack of output information.
+    [junit] 11:42:22.482 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.clone()Ljava/lang/Object; due to lack of output information.
+    [junit] 11:42:22.482 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.toString()Ljava/lang/String; due to lack of output information.
+    [junit] 11:42:22.482 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notify()V due to lack of output information.
+    [junit] 11:42:22.482 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.notifyAll()V due to lack of output information.
+    [junit] 11:42:22.482 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(J)V due to lack of output information.
+    [junit] 11:42:22.482 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait(JI)V due to lack of output information.
+    [junit] 11:42:22.483 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.wait()V due to lack of output information.
+    [junit] 11:42:22.483 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.finalize()V due to lack of output information.
+    [junit] 11:42:22.483 [main] DEBUG org.scandroid.dataflow.DataflowTest - Skipping java.lang.Object.<clinit>()V due to lack of output information.
+    [junit] 11:42:22.504 [main] DEBUG org.scandroid.util.CGAnalysisContext - Entrypoint: < Application, Lorg/scandroid/testing/EchoTest, echo(Ljava/lang/Object;)Ljava/lang/Object; >([<Application,Lorg/scandroid/testing/EchoTest>],[<Application,Ljava/lang/Object>])
+    [junit] 11:42:22.568 [main] INFO  org.scandroid.util.CGAnalysisContext - *************************
+    [junit] 11:42:22.569 [main] INFO  org.scandroid.util.CGAnalysisContext - * Building Call Graph   *
+    [junit] 11:42:22.569 [main] INFO  org.scandroid.util.CGAnalysisContext - *************************
+    [junit] 11:42:22.730 [main] DEBUG org.scandroid.flow.InflowAnalysis - ***************************
+    [junit] 11:42:22.730 [main] DEBUG org.scandroid.flow.InflowAnalysis - * Running inflow analysis *
+    [junit] 11:42:22.730 [main] DEBUG org.scandroid.flow.InflowAnalysis - ***************************
+    [junit] 11:42:22.733 [main] DEBUG org.scandroid.MethodSummarySpecs - found sources: [SourceSpec [namePattern=MethodNamePattern (Class: Lorg/scandroid/testing/EchoTest - Method: echo - Descriptor: (Ljava/lang/Object;)Ljava/lang/Object;), argNums=[0, 1]]]
+    [junit] 11:42:22.733 [main] DEBUG org.scandroid.flow.InflowAnalysis - 1 Source Specs. 
+    [junit] 11:42:22.740 [main] DEBUG org.scandroid.flow.InflowAnalysis - ************
+    [junit] 11:42:22.740 [main] DEBUG org.scandroid.flow.InflowAnalysis - * Results: *
+    [junit] 11:42:22.740 [main] DEBUG org.scandroid.flow.InflowAnalysis - ************
+    [junit] 11:42:22.740 [main] DEBUG org.scandroid.flow.InflowAnalysis - 	BasicBlockInContext: ExplodedBlock[0](entry:< Application, Lorg/scandroid/testing/EchoTest, echo(Ljava/lang/Object;)Ljava/lang/Object; >)
+    [junit] 	FlowType: ParameterFlow( argNum=0 block=ExplodedBlock[0](entry:< Application, Lorg/scandroid/testing/EchoTest, echo(Ljava/lang/Object;)Ljava/lang/Object; >), source=true)
+    [junit] 	CodeElement: LocalElement(1)
+    [junit] 
+    [junit] 11:42:22.741 [main] DEBUG org.scandroid.flow.InflowAnalysis - 	BasicBlockInContext: ExplodedBlock[0](entry:< Application, Lorg/scandroid/testing/EchoTest, echo(Ljava/lang/Object;)Ljava/lang/Object; >)
+    [junit] 	FlowType: ParameterFlow( argNum=0 block=ExplodedBlock[0](entry:< Application, Lorg/scandroid/testing/EchoTest, echo(Ljava/lang/Object;)Ljava/lang/Object; >), source=true)
+    [junit] 	CodeElement: InstanceKeyElement([<Application,Lorg/scandroid/testing/EchoTest>])
+    [junit] 
+    [junit] 11:42:22.741 [main] DEBUG org.scandroid.flow.InflowAnalysis - 	BasicBlockInContext: ExplodedBlock[0](entry:< Application, Lorg/scandroid/testing/EchoTest, echo(Ljava/lang/Object;)Ljava/lang/Object; >)
+    [junit] 	FlowType: ParameterFlow( argNum=1 block=ExplodedBlock[0](entry:< Application, Lorg/scandroid/testing/EchoTest, echo(Ljava/lang/Object;)Ljava/lang/Object; >), source=true)
+    [junit] 	CodeElement: LocalElement(2)
+    [junit] 
+    [junit] 11:42:22.741 [main] DEBUG org.scandroid.flow.InflowAnalysis - 	BasicBlockInContext: ExplodedBlock[0](entry:< Application, Lorg/scandroid/testing/EchoTest, echo(Ljava/lang/Object;)Ljava/lang/Object; >)
+    [junit] 	FlowType: ParameterFlow( argNum=1 block=ExplodedBlock[0](entry:< Application, Lorg/scandroid/testing/EchoTest, echo(Ljava/lang/Object;)Ljava/lang/Object; >), source=true)
+    [junit] 	CodeElement: InstanceKeyElement([<Primordial,Ljava/lang/Object>])
+    [junit] 
+    [junit]   InitialTaints: {ExplodedBlock[0](entry:< Application, Lorg/scandroid/testing/EchoTest, echo(Ljava/lang/Object;)Ljava/lang/Object; >)={ParameterFlow( argNum=0 block=ExplodedBlock[0](entry:< Application, Lorg/scandroid/testing/EchoTest, echo(Ljava/lang/Object;)Ljava/lang/Object; >), source=true)=[LocalElement(1), InstanceKeyElement([<Application,Lorg/scandroid/testing/EchoTest>])], ParameterFlow( argNum=1 block=ExplodedBlock[0](entry:< Application, Lorg/scandroid/testing/EchoTest, echo(Ljava/lang/Object;)Ljava/lang/Object; >), source=true)=[LocalElement(2), InstanceKeyElement([<Primordial,Ljava/lang/Object>])]}}
+    [junit] 11:42:22.746 [main] DEBUG org.scandroid.flow.FlowAnalysis - *************************
+    [junit] 11:42:22.746 [main] DEBUG org.scandroid.flow.FlowAnalysis - * Running flow analysis *
+    [junit] 11:42:22.746 [main] DEBUG org.scandroid.flow.FlowAnalysis - *************************
+    [junit] 11:42:22.752 [main] DEBUG o.s.f.f.TaintTransferFunctions - getNormalFlowFunction
+    [junit] 11:42:22.752 [main] DEBUG o.s.f.f.TaintTransferFunctions - srcInst: null
+    [junit] 11:42:22.752 [main] DEBUG o.s.f.f.TaintTransferFunctions - destInst: null
+    [junit] 11:42:22.752 [main] DEBUG o.s.f.f.TaintTransferFunctions - Using identity fn. for normal flow (inst==null)
+    [junit] 11:42:22.753 [main] DEBUG o.s.f.f.TaintTransferFunctions - getNormalFlowFunction
+    [junit] 11:42:22.753 [main] DEBUG o.s.f.f.TaintTransferFunctions - srcInst: null
+    [junit] 11:42:22.753 [main] DEBUG o.s.f.f.TaintTransferFunctions - destInst: return 2
+    [junit] 11:42:22.753 [main] DEBUG o.s.f.f.TaintTransferFunctions - outCodeElts: []
+    [junit] 11:42:22.753 [main] DEBUG o.s.f.f.PairBasedFlowFunction - getTargets(0)
+    [junit] 11:42:22.754 [main] DEBUG o.s.f.f.PairBasedFlowFunction - getTargets(0): {0}
+    [junit] 11:42:22.754 [main] DEBUG o.s.f.f.TaintTransferFunctions - getNormalFlowFunction
+    [junit] 11:42:22.754 [main] DEBUG o.s.f.f.TaintTransferFunctions - srcInst: return 2
+    [junit] 11:42:22.754 [main] DEBUG o.s.f.f.TaintTransferFunctions - destInst: null
+    [junit] 11:42:22.754 [main] DEBUG o.s.f.f.TaintTransferFunctions - Using identity fn. for normal flow (inst==null)
+    [junit] 11:42:22.759 [main] DEBUG o.s.f.f.TaintTransferFunctions - getNormalFlowFunction
+    [junit] 11:42:22.759 [main] DEBUG o.s.f.f.TaintTransferFunctions - srcInst: null
+    [junit] 11:42:22.759 [main] DEBUG o.s.f.f.TaintTransferFunctions - destInst: null
+    [junit] 11:42:22.759 [main] DEBUG o.s.f.f.TaintTransferFunctions - Using identity fn. for normal flow (inst==null)
+    [junit] 11:42:22.759 [main] DEBUG o.s.f.f.TaintTransferFunctions - getNormalFlowFunction
+    [junit] 11:42:22.759 [main] DEBUG o.s.f.f.TaintTransferFunctions - srcInst: null
+    [junit] 11:42:22.759 [main] DEBUG o.s.f.f.TaintTransferFunctions - destInst: return 2
+    [junit] 11:42:22.759 [main] DEBUG o.s.f.f.TaintTransferFunctions - outCodeElts: []
+    [junit] 11:42:22.760 [main] DEBUG o.s.f.f.PairBasedFlowFunction - getTargets(4)
+    [junit] 11:42:22.760 [main] DEBUG o.s.f.f.PairBasedFlowFunction - getTargets(4): { 4 }
+    [junit] 11:42:22.760 [main] DEBUG o.s.f.f.TaintTransferFunctions - getNormalFlowFunction
+    [junit] 11:42:22.760 [main] DEBUG o.s.f.f.TaintTransferFunctions - srcInst: return 2
+    [junit] 11:42:22.760 [main] DEBUG o.s.f.f.TaintTransferFunctions - destInst: null
+    [junit] 11:42:22.760 [main] DEBUG o.s.f.f.TaintTransferFunctions - Using identity fn. for normal flow (inst==null)
+    [junit] 11:42:22.760 [main] DEBUG o.s.f.f.TaintTransferFunctions - getNormalFlowFunction
+    [junit] 11:42:22.760 [main] DEBUG o.s.f.f.TaintTransferFunctions - srcInst: null
+    [junit] 11:42:22.760 [main] DEBUG o.s.f.f.TaintTransferFunctions - destInst: null
+    [junit] 11:42:22.760 [main] DEBUG o.s.f.f.TaintTransferFunctions - Using identity fn. for normal flow (inst==null)
+    [junit] 11:42:22.760 [main] DEBUG o.s.f.f.TaintTransferFunctions - getNormalFlowFunction
+    [junit] 11:42:22.760 [main] DEBUG o.s.f.f.TaintTransferFunctions - srcInst: null
+    [junit] 11:42:22.760 [main] DEBUG o.s.f.f.TaintTransferFunctions - destInst: return 2
+    [junit] 11:42:22.760 [main] DEBUG o.s.f.f.TaintTransferFunctions - outCodeElts: []
+    [junit] 11:42:22.760 [main] DEBUG o.s.f.f.PairBasedFlowFunction - getTargets(3)
+    [junit] 11:42:22.760 [main] DEBUG o.s.f.f.PairBasedFlowFunction - getTargets(3): { 3 }
+    [junit] 11:42:22.760 [main] DEBUG o.s.f.f.TaintTransferFunctions - getNormalFlowFunction
+    [junit] 11:42:22.761 [main] DEBUG o.s.f.f.TaintTransferFunctions - srcInst: return 2
+    [junit] 11:42:22.761 [main] DEBUG o.s.f.f.TaintTransferFunctions - destInst: null
+    [junit] 11:42:22.761 [main] DEBUG o.s.f.f.TaintTransferFunctions - Using identity fn. for normal flow (inst==null)
+    [junit] 11:42:22.761 [main] DEBUG o.s.f.f.TaintTransferFunctions - getNormalFlowFunction
+    [junit] 11:42:22.761 [main] DEBUG o.s.f.f.TaintTransferFunctions - srcInst: null
+    [junit] 11:42:22.761 [main] DEBUG o.s.f.f.TaintTransferFunctions - destInst: null
+    [junit] 11:42:22.761 [main] DEBUG o.s.f.f.TaintTransferFunctions - Using identity fn. for normal flow (inst==null)
+    [junit] 11:42:22.761 [main] DEBUG o.s.f.f.TaintTransferFunctions - getNormalFlowFunction
+    [junit] 11:42:22.761 [main] DEBUG o.s.f.f.TaintTransferFunctions - srcInst: null
+    [junit] 11:42:22.761 [main] DEBUG o.s.f.f.TaintTransferFunctions - destInst: return 2
+    [junit] 11:42:22.761 [main] DEBUG o.s.f.f.TaintTransferFunctions - outCodeElts: []
+    [junit] 11:42:22.761 [main] DEBUG o.s.f.f.PairBasedFlowFunction - getTargets(2)
+    [junit] 11:42:22.761 [main] DEBUG o.s.f.f.PairBasedFlowFunction - getTargets(2): { 2 }
+    [junit] 11:42:22.761 [main] DEBUG o.s.f.f.TaintTransferFunctions - getNormalFlowFunction
+    [junit] 11:42:22.761 [main] DEBUG o.s.f.f.TaintTransferFunctions - srcInst: return 2
+    [junit] 11:42:22.761 [main] DEBUG o.s.f.f.TaintTransferFunctions - destInst: null
+    [junit] 11:42:22.761 [main] DEBUG o.s.f.f.TaintTransferFunctions - Using identity fn. for normal flow (inst==null)
+    [junit] 11:42:22.761 [main] DEBUG o.s.f.f.TaintTransferFunctions - getNormalFlowFunction
+    [junit] 11:42:22.761 [main] DEBUG o.s.f.f.TaintTransferFunctions - srcInst: null
+    [junit] 11:42:22.762 [main] DEBUG o.s.f.f.TaintTransferFunctions - destInst: null
+    [junit] 11:42:22.762 [main] DEBUG o.s.f.f.TaintTransferFunctions - Using identity fn. for normal flow (inst==null)
+    [junit] 11:42:22.762 [main] DEBUG o.s.f.f.TaintTransferFunctions - getNormalFlowFunction
+    [junit] 11:42:22.762 [main] DEBUG o.s.f.f.TaintTransferFunctions - srcInst: null
+    [junit] 11:42:22.762 [main] DEBUG o.s.f.f.TaintTransferFunctions - destInst: return 2
+    [junit] 11:42:22.762 [main] DEBUG o.s.f.f.TaintTransferFunctions - outCodeElts: []
+    [junit] 11:42:22.762 [main] DEBUG o.s.f.f.PairBasedFlowFunction - getTargets(1)
+    [junit] 11:42:22.762 [main] DEBUG o.s.f.f.PairBasedFlowFunction - getTargets(1): { 1 }
+    [junit] 11:42:22.762 [main] DEBUG o.s.f.f.TaintTransferFunctions - getNormalFlowFunction
+    [junit] 11:42:22.762 [main] DEBUG o.s.f.f.TaintTransferFunctions - srcInst: return 2
+    [junit] 11:42:22.762 [main] DEBUG o.s.f.f.TaintTransferFunctions - destInst: null
+    [junit] 11:42:22.762 [main] DEBUG o.s.f.f.TaintTransferFunctions - Using identity fn. for normal flow (inst==null)
+    [junit] 11:42:22.764 [main] DEBUG org.scandroid.flow.OutflowAnalysis - ****************************
+    [junit] 11:42:22.764 [main] DEBUG org.scandroid.flow.OutflowAnalysis - * Running outflow analysis *
+    [junit] 11:42:22.764 [main] DEBUG org.scandroid.flow.OutflowAnalysis - ****************************
+    [junit] 11:42:22.766 [main] DEBUG org.scandroid.MethodSummarySpecs - found sinks: [SinkSpec [namePattern=MethodNamePattern (Class: Lorg/scandroid/testing/EchoTest - Method: echo - Descriptor: (Ljava/lang/Object;)Ljava/lang/Object;), argNums=[0, 1]], SinkSpec [namePattern=MethodNamePattern (Class: Lorg/scandroid/testing/EchoTest - Method: echo - Descriptor: (Ljava/lang/Object;)Ljava/lang/Object;), argNums=null]]
+    [junit] 11:42:22.766 [main] DEBUG org.scandroid.flow.OutflowAnalysis - 2 sink Specs. 
+    [junit] 11:42:22.768 [main] DEBUG org.scandroid.flow.OutflowAnalysis - ************
+    [junit] 11:42:22.768 [main] DEBUG org.scandroid.flow.OutflowAnalysis - * Results: *
+    [junit] 11:42:22.768 [main] DEBUG org.scandroid.flow.OutflowAnalysis - ************
+    [junit] 11:42:22.768 [main] DEBUG org.scandroid.flow.OutflowAnalysis - {ParameterFlow( argNum=0 block=ExplodedBlock[0](entry:< Application, Lorg/scandroid/testing/EchoTest, echo(Ljava/lang/Object;)Ljava/lang/Object; >), source=true)=[ParameterFlow( argNum=0 block=ExplodedBlock[0](entry:< Application, Lorg/scandroid/testing/EchoTest, echo(Ljava/lang/Object;)Ljava/lang/Object; >), source=false)], ParameterFlow( argNum=1 block=ExplodedBlock[0](entry:< Application, Lorg/scandroid/testing/EchoTest, echo(Ljava/lang/Object;)Ljava/lang/Object; >), source=true)=[ParameterFlow( argNum=1 block=ExplodedBlock[0](entry:< Application, Lorg/scandroid/testing/EchoTest, echo(Ljava/lang/Object;)Ljava/lang/Object; >), source=false)]}
+    [junit] ------------- ---------------- ---------------
+    [junit] 
+    [junit] Testcase: testDataflow[org.scandroid.testing.EchoTest.echo(Ljava/lang/Object;)Ljava/lang/Object;] took 0.275 sec
+    [junit] 	FAILED
+    [junit] expected:<[arg(1) -> ret]> but was:<[arg(1) -> arg(1), arg(0) -> arg(0)]>
+    [junit] junit.framework.AssertionFailedError: expected:<[arg(1) -> ret]> but was:<[arg(1) -> arg(1), arg(0) -> arg(0)]>
+    [junit] 	at org.scandroid.dataflow.DataflowTest.testDataflow(DataflowTest.java:185)
+    [junit] 
+    [junit] Test org.scandroid.dataflow.DataflowTest FAILED
+    [junit] Running org.scandroid.synthmethod.MethodAnalysisTest
+    [junit] Testsuite: org.scandroid.synthmethod.MethodAnalysisTest
