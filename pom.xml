@@ -1,0 +1,63 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>org.scandroid</groupId>
+	<artifactId>SCanDroid</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<build>
+		<plugins>
+			<plugin>
+				<artifactId>maven-antrun-plugin</artifactId>
+				<executions>
+					<execution>
+						<phase>clean</phase>
+						<configuration>
+							<tasks>
+								<ant antfile="build.xml" target="clean" />
+							</tasks>
+						</configuration>
+            <goals>
+              <goal>run</goal>
+            </goals>
+					</execution>
+					<execution>
+						<id>build-jar</id>
+						<phase>package</phase>
+						<configuration>
+							<tasks>
+                <property name="build.compiler" value="extJavac" />
+								<ant antfile="build.xml" target="jar"/>
+							</tasks>
+						</configuration>
+            <goals>
+              <goal>run</goal>
+            </goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>build-helper-maven-plugin</artifactId>
+				<version>1.3</version>
+				<executions>
+					<execution>
+						<id>add-jar</id>
+						<phase>package</phase>
+						<goals>
+							<goal>attach-artifact</goal>
+						</goals>
+						<configuration>
+							<artifacts>
+								<artifact>
+									<file>${basedir}/sap.jar</file>
+									<type>jar</type>
+								</artifact>
+							</artifacts>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+	<packaging>pom</packaging>
+</project>

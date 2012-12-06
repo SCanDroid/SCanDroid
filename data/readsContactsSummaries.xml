@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<summary-spec>
+  <classloader name="Primordial">
+    <package name="android/app">
+      <!-- android.app.Activity.setContentView(I)V -->
+      <class name="Activity">
+        <method descriptor="(I)V" name="setContentView"/>
+
+        <!-- android.app.Activity.   onCreate(Landroid/os/Bundle;)V -->
+        <method descriptor="(Landroid/os/Bundle;)V" name="onCreate" />
+
+        <!-- android.app.Activity.findViewById(I)Landroid/view/View; -->
+        <method descriptor="(I)Landroid/view/View;" name="findViewById">
+          <new def="v"
+               class="Landroid/view/View" />
+
+          <return value="v"/>
+        </method>
+      </class>
+
+
+    </package>
+
+    <package name="android/content">
+
+      <class name="Intent">
+        <method descriptor="(Ljava/lang/String;)Landroid/content/Intent;" name="setAction">
+          <putfield class="Landroid/content/Intent" field="mAction"
+                    fieldType="Ljava/lang/String" ref="arg0" value="arg1"/>
+          <return value="arg0" />
+        </method>
+
+        <method descriptor="(Ljava/lang/String;)Landroid/content/Intent;" name="addCategory">
+          <!-- not type correct: -->
+          <putfield class="Landroid/content/Intent" field="mCategories"
+                    fieldType="Ljava/util/HashSet" ref="arg0" value="arg1"/>
+          <return value="arg0" />
+        </method>
+
+        <method descriptor="(Ljava/lang/String;Ljava/lang/String;)Landroid/content/Intent;" name="setClassName">
+          <!-- not type correct: -->
+          <putfield class="Landroid/content/Intent" field="mComponent"
+                    fieldType="Ljava/lang/String" ref="arg0" value="arg1"/>
+          <return value="arg0" />
+          <putfield class="Landroid/content/Intent" field="mComponent"
+                    fieldType="Ljava/lang/String" ref="arg0" value="arg2"/>
+          <return value="arg0" />
+        </method>
+
+        <method descriptor="(Ljava/lang/String;Ljava/lang/String;)Landroid/content/Intent;" name="putExtra">
+          <!-- not type correct: -->
+          <putfield class="Landroid/content/Intent" field="mExtras"
+                    fieldType="Ljava/lang/String" ref="arg0" value="arg1"/>
+          <return value="arg0" />
+          <putfield class="Landroid/content/Intent" field="mExtras"
+                    fieldType="Ljava/lang/String" ref="arg0" value="arg2"/>
+          <return value="arg0" />
+        </method>
+      </class>
+    </package>
+    <package name="java/lang">
+
+      <class name="Character">
+        <!--  java.lang.Character.charCount(I)I -->
+        <method descriptor="(I)I" name="charCount" static="true" >
+          <constant name="one" type="int" value="1" />
+          <constant name="two" type="int" value="2" />
+
+          <return value="one" />
+          <return value="two" />
+        </method>
+
+      </class>
+      <class name="String">
+        <!-- java.lang.String.codePointAt(I)I -->
+        <method descriptor="(I)I" name="codePointAt">
+          <!-- Get the value field of the reference object: -->
+           <getfield class="Ljava/lang/String" field="value"
+                    fieldType="Ljava/lang/Object" ref="arg0"
+                    def="value_localDef" />
+
+           <!-- return the value field we got; not type correct, but includes the data flow. -->
+           <return value="value_localDef" />
+        </method>
+
+        <!-- java.lang.String.charAt(I)C -->
+        <method descriptor="(I)C" name="charAt">
+          <!-- Get the value field of the reference object: -->
+           <getfield class="Ljava/lang/String" field="value"
+                    fieldType="Ljava/lang/Object" ref="arg0"
+                    def="value_localDef" />
+
+           <!-- return the value field we got; not type correct, but includes the data flow. -->
+           <return value="value_localDef" />
+        </method>
+
+        <!-- java.lang.String.length()I -->
+        <method descriptor="()I" name="length">
+           <getfield class="Ljava/lang/String" field="count"
+                    fieldType="I" ref="arg0"
+                    def="value_localDef" />
+           <!-- Just return the value of this.count: -->
+           <return value="value_localDef" />
+        </method>
+
+        <!-- java.lang.String.substring(II)Ljava/lang/String; -->
+        <method descriptor="(II)Ljava/lang/String;" name="substring">
+           <return value="arg0" />
+        </method>
+        <!-- java.lang.String.valueOf(Ljava/lang/Object;)Ljava/lang/String; -->
+        <method descriptor="(Ljava/lang/Object;)Ljava/lang/String;" name="valueOf" static="true">
+           <return value="arg0" />
+        </method>
+
+      </class>
+      <class name="AbstractStringBuilder">
+        <method descriptor="(Ljava/lang/String;)Ljava/lang/AbstractStringBuilder;" name="append">
+          <!-- Get the value field from the incomming parameter, store it in a local def: -->
+          <!-- def is the place the 'gotten' value is stored.
+               ref is the place the value is gotten from     -->
+          <getfield class="Ljava/lang/String" field="value"
+                    fieldType="Ljava/lang/Object" ref="arg1"
+                    def="value_localDef" />
+
+          <!-- Put the value stored in the local def into the 'value' field of the reference object:
+               Note that the field name (value, in this case) is specified by the field attribute.
+               The value *attribute* specifies where the actual content of the string is
+               retrieved from.                                                                   -->
+          <putfield class="Ljava/lang/AbstractStringBuilder" field="value"
+                    fieldType="Ljava/lang/Object" ref="arg0" value="value_localDef"/>
+          <return value="arg0" />
+        </method>
+      </class>
+      <class name="StringBuilder">
+        <!-- java.lang.StringBuilder.append(Ljava/lang/String;)Ljava/lang/StringBuilder; -->
+        <method descriptor="(Ljava/lang/String;)Ljava/lang/StringBuilder;" name="append">
+          <getfield class="Ljava/lang/String" field="value"
+                    fieldType="Ljava/lang/Object" ref="arg1"
+                    def="value_localDef" />
+          <putfield class="Ljava/lang/StringBuilder" field="value"
+                    fieldType="Ljava/lang/Object" ref="arg0" value="value_localDef"/>
+          <return value="arg0" />
+        </method>
+
+        <!-- java.lang.StringBuilder.append(Ljava/lang/Object;)Ljava/lang/StringBuilder; -->
+        <method descriptor="(Ljava/lang/Object;)Ljava/lang/StringBuilder;" name="append">
+          <!-- Invoke toString on the first parameter, store locally: -->
+          <call type="virtual" name="toString" class="Ljava/lang/Object"
+                descriptor="()Ljava/lang/String;" arg0="arg1" def="objToStr_localDef" />
+
+          <!-- Get the value field off the string, store locally: -->
+          <getfield class="Ljava/lang/String" field="value"
+                    fieldType="Ljava/lang/Object" ref="objToStr_localDef"
+                    def="value_localDef" />
+
+          <putfield class="Ljava/lang/StringBuilder" field="value"
+                    fieldType="Ljava/lang/Object" ref="arg0" value="value_localDef"/>
+
+          <!-- The resulting data flow is a combination of the reference StringBuilder
+               and the incoming parameter. (via that object's toString() )
+          -->
+          <return value="arg0" />
+        </method>
+
+        <!-- java.lang.StringBuilder.append(I)Ljava/lang/StringBuilder; -->
+        <method descriptor="(I)Ljava/lang/StringBuilder;" name="append">
+
+          <!-- cram the incomming int into the value field: -->
+          <putfield class="Ljava/lang/StringBuilder" field="value"
+                    fieldType="Ljava/lang/Object" ref="arg0" value="arg1"/>
+
+          <!-- The resulting data flow is a combination of the reference StringBuilder
+               and the incoming parameter.
+          -->
+          <return value="arg0" />
+        </method>
+
+        <!-- java.lang.StringBuilder.toString()Ljava/lang/String; -->
+        <method descriptor="()Ljava/lang/String;" name="toString">
+          <getfield class="Ljava/lang/StringBuilder" field="value"
+                    fieldType="Ljava/lang/Object" ref="arg0"
+                    def="value_localDef" />
+          <return value="value_localDef" />
+        </method>
+      </class>
+      <class name="Throwable">
+      	<method descriptor="()Ljava/lang/Throwable;" name="getCause">
+      		<getfield class="Ljava/lang/Throwable" field="cause"
+            	        fieldType="Ljava/lang/Throwable" ref="arg0"
+                	    def="cause_localDef" />
+            <return value="cause_localDef" />
+      	</method>
+      </class>
+    </package>
+    <package name="java/net">
+      <class name="URLEncoder">
+        <!-- java.net.URLEncoder.    encode(Ljava/lang/String;)Ljava/lang/String; -->
+        <method descriptor="(Ljava/lang/String;)Ljava/lang/String;" name="encode" static="true">
+          <return value="arg0"/>
+        </method>
+      </class>
+    </package>
+  </classloader>
+</summary-spec>

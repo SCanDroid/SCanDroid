@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<summary-spec>
+  <classloader name="Primordial">
+    <package name="java/lang">
+      <class name="AbstractStringBuilder">
+        <method descriptor="(Ljava/lang/String;)Ljava/lang/AbstractStringBuilder;" name="append">
+          <getfield class="Ljava/lang/AbstractStringBuilder" def="value_localDef" 
+                    field="value" fieldType="Ljava/lang/Object" ref="arg0"/>
+          <return value="value_localDef"/>
+
+          <putfield class="Ljava/lang/String" field="value" 
+                    fieldType="Ljava/lang/Object" ref="arg1" value="value_localDef"/>
+          <putfield class="Ljava/lang/AbstractStringBuilder" field="count" 
+                    fieldType="I" ref="arg0" value="value_localDef"/>
+          <return value="arg0"/>
+
+          <getfield class="Ljava/lang/AbstractStringBuilder" def="count_localDef" 
+                    field="count" fieldType="I" ref="arg0"/>
+          <return value="count_localDef"/>
+
+          <putfield class="Ljava/lang/String" field="value"
+                    fieldType="Ljava/lang/Object" ref="arg1" value="count_localDef"/>
+          <putfield class="Ljava/lang/AbstractStringBuilder" field="value" 
+                    fieldType="Ljava/lang/Object" ref="arg0" value="count_localDef"/>
+          <getfield class="Ljava/lang/String" def="value_localDef"
+                    field="value" fieldType="Ljava/lang/Object" ref="arg0"/>
+          <return value="value_localDef"/>
+
+          <putfield class="Ljava/lang/AbstractStringBuilder" field="value" 
+                    fieldType="Ljava/lang/Object" ref="arg0" value="value_localDef"/>
+          <putfield class="Ljava/lang/AbstractStringBuilder" field="count" 
+                    fieldType="I" ref="arg0" value="value_localDef"/>
+          <getfield class="Ljava/lang/String" def="count_localDef" 
+                    field="count" fieldType="I" ref="arg0"/>
+          <return value="count_localDef"/>
+
+          <putfield class="Ljava/lang/String" field="value" 
+                    fieldType="Ljava/lang/Object" ref="arg1" value="count_localDef"/>
+          <putfield class="Ljava/lang/AbstractStringBuilder" field="value" 
+                    fieldType="Ljava/lang/Object" ref="arg0" value="count_localDef"/>
+          <putfield class="Ljava/lang/AbstractStringBuilder" field="count" 
+                    fieldType="I" ref="arg0" value="count_localDef"/>
+        </method>
+      </class>
+    </package>
+  </classloader>
+</summary-spec>

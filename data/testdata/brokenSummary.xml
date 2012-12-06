@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<summary-spec>
+  <classloader name="Application">
+    <package name="org/scandroid/testing">
+      <class name="App">
+        <method descriptor="(Ljava/lang/Object;)Ljava/lang/Object;" name="echo">
+          <return value="arg0"/>
+        </method>
+      </class>
+    </package>
+  </classloader>
+</summary-spec>
