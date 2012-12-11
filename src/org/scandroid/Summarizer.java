@@ -79,9 +79,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.ibm.wala.classLoader.IMethod;
 import com.ibm.wala.classLoader.JavaLanguage;
+import com.ibm.wala.classLoader.Language;
+import com.ibm.wala.classLoader.NewSiteReference;
+import com.ibm.wala.classLoader.ProgramCounter;
 import com.ibm.wala.dataflow.IFDS.ISupergraph;
 import com.ibm.wala.dataflow.IFDS.TabulationResult;
 import com.ibm.wala.ipa.callgraph.CGNode;
@@ -107,9 +111,11 @@ import com.ibm.wala.ssa.SSANewInstruction;
 import com.ibm.wala.ssa.SSAPhiInstruction;
 import com.ibm.wala.ssa.SSAPutInstruction;
 import com.ibm.wala.ssa.SSAReturnInstruction;
+import com.ibm.wala.ssa.SymbolTable;
 import com.ibm.wala.ssa.analysis.IExplodedBasicBlock;
 import com.ibm.wala.types.FieldReference;
 import com.ibm.wala.types.MethodReference;
+import com.ibm.wala.types.TypeReference;
 import com.ibm.wala.util.CancelException;
 import com.ibm.wala.util.MonitorUtil.IProgressMonitor;
 import com.ibm.wala.util.collections.Filter;
@@ -171,7 +177,7 @@ public class Summarizer<E extends ISSABasicBlock> {
 					public URI getClasspath() {
 						return new File(appJar).toURI();
 					}
-					
+
 					@Override
 					public boolean stdoutCG() {
 						return false;
@@ -272,7 +278,9 @@ public class Summarizer<E extends ISSABasicBlock> {
 
 		IFDSTaintDomain<IExplodedBasicBlock> domain = new IFDSTaintDomain<IExplodedBasicBlock>();
 		TabulationResult<BasicBlockInContext<IExplodedBasicBlock>, CGNode, DomainElement> flowResult = FlowAnalysis
-				.analyze(cgContext, initialTaints, domain, monitor, new TaintTransferFunctions<IExplodedBasicBlock>(domain, cgContext.graph, cgContext.pa, true));
+				.analyze(cgContext, initialTaints, domain, monitor,
+						new TaintTransferFunctions<IExplodedBasicBlock>(domain,
+								cgContext.graph, cgContext.pa, true));
 
 		Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> permissionOutflow = new OutflowAnalysis(
 				cgContext, specs).analyze(flowResult, domain);
@@ -342,6 +350,164 @@ public class Summarizer<E extends ISSABasicBlock> {
 		logger.debug("compiled flowMap: " + insts.toString());
 		return insts;
 
+	}
+
+	private Pair<Map<FlowType<IExplodedBasicBlock>, Integer>, List<SSAInstruction>> compileSources(
+			CGAnalysisContext<IExplodedBasicBlock> ctx, IMethod method,
+			Set<FlowType<IExplodedBasicBlock>> sources) {
+		final Map<FlowType<IExplodedBasicBlock>, Integer> sourceMap = Maps
+				.newHashMap();
+		final List<SSAInstruction> insts = Lists.newArrayList();
+		final SymbolTable tbl = new SymbolTable(method.getNumberOfParameters());
+		final SSAInstructionFactory instFactory = Language.JAVA
+				.instructionFactory();
+		final Map<SSAInvokeInstruction, SSAInvokeInstruction> invs = Maps
+				.newHashMap();
+		for (FlowType<IExplodedBasicBlock> source : sources) {
+			source.visit(new FlowTypeVisitor<IExplodedBasicBlock, Void>() {
+
+				@Override
+				public Void visitFieldFlow(FieldFlow<IExplodedBasicBlock> flow) {
+					// first create an object of the right type
+					int ref = tbl.newSymbol();
+					insts.add(instFactory.NewInstruction(ref, NewSiteReference
+							.make(ProgramCounter.NO_SOURCE_LINE_NUMBER, flow
+									.getField().getDeclaringClass()
+									.getReference())));
+					// then deref the field
+					int field = tbl.newSymbol();
+					insts.add(instFactory.GetInstruction(field, ref, flow
+							.getField().getReference()));
+					// associate the dereffed value with this flow
+					sourceMap.put(flow, Integer.valueOf(ref));
+					return null;
+				}
+
+				@Override
+				public Void visitIKFlow(IKFlow<IExplodedBasicBlock> flow) {
+					// just create a new object of this type
+					int ref = tbl.newSymbol();
+					insts.add(instFactory.NewInstruction(ref, NewSiteReference
+							.make(ProgramCounter.NO_SOURCE_LINE_NUMBER, flow
+									.getIK().getConcreteType().getReference())));
+					// associate the new object with this flow
+					sourceMap.put(flow, Integer.valueOf(ref));
+					return null;
+				}
+
+				@Override
+				public Void visitParameterFlow(
+						ParameterFlow<IExplodedBasicBlock> flow) {
+					// two cases: either this is a formal to the method we're
+					// analyzing, or an actual to a method that writes to some
+					// fields on its corresponding formal.
+
+					if (flow.getBlock().isEntryBlock()) {
+						// In the first case, we just associate the val number
+						// with this flow
+						sourceMap.put(flow, Integer.valueOf(tbl
+								.getParameter(flow.getArgNum())));
+						return null;
+					} else {
+						// In the second case, we have to synthesize a call to
+						// the function
+						SSAInvokeInstruction inv = (SSAInvokeInstruction) flow
+								.getBlock().getDelegate().getInstruction();
+						SSAInvokeInstruction synthInv = findOrCreateInvoke(tbl,
+								insts, invs, inv);
+						sourceMap.put(flow, Integer.valueOf(synthInv
+								.getUse(flow.getArgNum())));
+					}
+					return null;
+				}
+
+				@Override
+				public Void visitReturnFlow(ReturnFlow<IExplodedBasicBlock> flow) {
+					// this will only be the case where we have a flow from the
+					// result of an invoked method
+					SSAInvokeInstruction inv = (SSAInvokeInstruction) flow.getBlock().getDelegate().getInstruction();
+					SSAInvokeInstruction synthInv = findOrCreateInvoke(tbl, insts, invs, inv);
+					sourceMap.put(flow, Integer.valueOf(synthInv.getDef()));
+					return null;
+				}
+
+				@Override
+				public Void visitStaticFieldFlow(
+						StaticFieldFlow<IExplodedBasicBlock> staticFieldFlow) {
+					// just create a static get instruction for this field
+					int val = tbl.newSymbol();
+					// TODO: this will create multiple get instructions if more than one flow goes through a static field, but the overhead isn't too bad
+					insts.add(instFactory.GetInstruction(val, staticFieldFlow.getField().getReference()));
+					return null;
+				}
+
+				private SSAInvokeInstruction findOrCreateInvoke(
+						SymbolTable tbl, List<SSAInstruction> insts,
+						Map<SSAInvokeInstruction, SSAInvokeInstruction> invs,
+						SSAInvokeInstruction inv) {
+					SSAInvokeInstruction synthInv = invs.get(inv);
+					if (synthInv != null) {
+						return synthInv;
+					} else {
+						final MethodReference declaredTarget = inv
+								.getDeclaredTarget();
+						final int numParams = declaredTarget
+								.getNumberOfParameters();
+						int[] paramVals = new int[numParams];
+						for (int i = 0; i < numParams; i++) {
+							TypeReference paramType = declaredTarget
+									.getParameterType(i);
+							if (paramType.isPrimitiveType()) {
+								paramVals[i] = findOrCreateConstant(tbl,
+										paramType);
+							} else {
+								int ref = tbl.newSymbol();
+								insts.add(instFactory.NewInstruction(
+										ref,
+										NewSiteReference
+												.make(ProgramCounter.NO_SOURCE_LINE_NUMBER,
+														paramType)));
+								paramVals[i] = ref;
+							}
+						}
+						if (inv.hasDef()) {
+							synthInv = instFactory.InvokeInstruction(
+									inv.getDef(), paramVals,
+									inv.getException(), inv.getCallSite());
+						} else {
+							synthInv = instFactory.InvokeInstruction(paramVals,
+									inv.getException(), inv.getCallSite());
+						}
+						insts.add(synthInv);
+						invs.put(inv, synthInv);
+						return synthInv;
+					}
+				}
+
+				private int findOrCreateConstant(SymbolTable tbl,
+						TypeReference paramType) {
+					if (paramType.equals(TypeReference.Boolean)) {
+						return tbl.getConstant(false);
+					} else if (paramType.equals(TypeReference.Double)) {
+						return tbl.getConstant(0d);
+					} else if (paramType.equals(TypeReference.Float)) {
+						return tbl.getConstant(0f);
+					} else if (paramType.equals(TypeReference.Int)) {
+						return tbl.getConstant(0);
+					} else if (paramType.equals(TypeReference.Long)) {
+						return tbl.getConstant(0l);
+					} else if (paramType.equals(TypeReference.JavaLangString)) {
+						return tbl.getConstant("");
+					} else {
+						logger.error("non-constant type reference {}",
+								paramType);
+						throw new RuntimeException();
+					}
+				}
+
+			});
+		}
+		return Pair.make(sourceMap, insts);
 	}
 
 	private Pair<List<SSAInstruction>, Integer> compileFlowType(
