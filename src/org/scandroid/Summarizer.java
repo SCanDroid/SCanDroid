@@ -245,7 +245,8 @@ public class Summarizer<E extends ISSABasicBlock> {
 				cgContext, summary, monitor);
 		logger.debug(dfAnalysis.toString());
 
-		List<SSAInstruction> instructions = new MethodSummarizer(cgContext, imethod).summarizeFlows(dfAnalysis);
+		List<SSAInstruction> instructions = new MethodSummarizer(cgContext,
+				imethod).summarizeFlows(dfAnalysis);
 
 		if (0 == instructions.size()) {
 			logger.warn("No instructions in summary for " + methodDescriptor);
@@ -970,14 +971,15 @@ public class Summarizer<E extends ISSABasicBlock> {
 
 					@Override
 					public Void visitStaticFieldFlow(
-							StaticFieldFlow<IExplodedBasicBlock> staticFieldFlow) {
+							StaticFieldFlow<IExplodedBasicBlock> flow) {
 						// just create a static get instruction for this field
 						int val = tbl.newSymbol();
 						// TODO: this will create multiple get instructions if
 						// more than one flow goes through a static field, but
 						// the overhead isn't too bad
-						insts.add(instFactory.GetInstruction(val,
-								staticFieldFlow.getField().getReference()));
+						insts.add(instFactory.GetInstruction(val, flow
+								.getField().getReference()));
+						sourceMap.put(flow, Integer.valueOf(val));
 						return null;
 					}
 
@@ -1025,7 +1027,8 @@ public class Summarizer<E extends ISSABasicBlock> {
 
 					// Otherwise we need to synthesize a call to the function
 					// whose actual parameter is a sink.
-					SSAInvokeInstruction inv = (SSAInvokeInstruction) flow.getBlock().getDelegate().getInstruction();
+					SSAInvokeInstruction inv = (SSAInvokeInstruction) flow
+							.getBlock().getDelegate().getInstruction();
 					findOrCreateInvoke(inv);
 					return null;
 				}
@@ -1035,7 +1038,8 @@ public class Summarizer<E extends ISSABasicBlock> {
 					// recover return type
 					TypeReference typeRef = method.getReturnType();
 					// emit return instruction
-					insts.add(instFactory.ReturnInstruction(sourceVal, typeRef.isPrimitiveType()));					
+					insts.add(instFactory.ReturnInstruction(sourceVal,
+							typeRef.isPrimitiveType()));
 					return null;
 				}
 
@@ -1043,7 +1047,8 @@ public class Summarizer<E extends ISSABasicBlock> {
 				public Void visitStaticFieldFlow(
 						StaticFieldFlow<IExplodedBasicBlock> flow) {
 					// emit field put
-					insts.add(instFactory.PutInstruction(sourceVal, flow.getField().getReference()));
+					insts.add(instFactory.PutInstruction(sourceVal, flow
+							.getField().getReference()));
 					return null;
 				}
 			});
