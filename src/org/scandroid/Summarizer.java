@@ -120,10 +120,26 @@ import com.ibm.wala.util.CancelException;
 import com.ibm.wala.util.MonitorUtil.IProgressMonitor;
 import com.ibm.wala.util.collections.Filter;
 import com.ibm.wala.util.collections.Pair;
+import com.ibm.wala.util.debug.UnimplementedError;
 import com.ibm.wala.util.graph.traverse.DFSPathFinder;
 import com.ibm.wala.util.intset.OrdinalSet;
 import com.ibm.wala.util.strings.StringStuff;
 
+/**
+ * @author acfoltzer
+ *
+ * @param <E>
+ */
+/**
+ * @author acfoltzer
+ *
+ * @param <E>
+ */
+/**
+ * @author acfoltzer
+ * 
+ * @param <E>
+ */
 public class Summarizer<E extends ISSABasicBlock> {
 	private static final Logger logger = LoggerFactory
 			.getLogger(Summarizer.class);
@@ -229,8 +245,7 @@ public class Summarizer<E extends ISSABasicBlock> {
 				cgContext, summary, monitor);
 		logger.debug(dfAnalysis.toString());
 
-		List<SSAInstruction> instructions = compileFlowMap(cgContext, imethod,
-				dfAnalysis);
+		List<SSAInstruction> instructions = new MethodSummarizer(cgContext, imethod).summarizeFlows(dfAnalysis);
 
 		if (0 == instructions.size()) {
 			logger.warn("No instructions in summary for " + methodDescriptor);
@@ -350,164 +365,6 @@ public class Summarizer<E extends ISSABasicBlock> {
 		logger.debug("compiled flowMap: " + insts.toString());
 		return insts;
 
-	}
-
-	private Pair<Map<FlowType<IExplodedBasicBlock>, Integer>, List<SSAInstruction>> compileSources(
-			CGAnalysisContext<IExplodedBasicBlock> ctx, IMethod method,
-			Set<FlowType<IExplodedBasicBlock>> sources) {
-		final Map<FlowType<IExplodedBasicBlock>, Integer> sourceMap = Maps
-				.newHashMap();
-		final List<SSAInstruction> insts = Lists.newArrayList();
-		final SymbolTable tbl = new SymbolTable(method.getNumberOfParameters());
-		final SSAInstructionFactory instFactory = Language.JAVA
-				.instructionFactory();
-		final Map<SSAInvokeInstruction, SSAInvokeInstruction> invs = Maps
-				.newHashMap();
-		for (FlowType<IExplodedBasicBlock> source : sources) {
-			source.visit(new FlowTypeVisitor<IExplodedBasicBlock, Void>() {
-
-				@Override
-				public Void visitFieldFlow(FieldFlow<IExplodedBasicBlock> flow) {
-					// first create an object of the right type
-					int ref = tbl.newSymbol();
-					insts.add(instFactory.NewInstruction(ref, NewSiteReference
-							.make(ProgramCounter.NO_SOURCE_LINE_NUMBER, flow
-									.getField().getDeclaringClass()
-									.getReference())));
-					// then deref the field
-					int field = tbl.newSymbol();
-					insts.add(instFactory.GetInstruction(field, ref, flow
-							.getField().getReference()));
-					// associate the dereffed value with this flow
-					sourceMap.put(flow, Integer.valueOf(ref));
-					return null;
-				}
-
-				@Override
-				public Void visitIKFlow(IKFlow<IExplodedBasicBlock> flow) {
-					// just create a new object of this type
-					int ref = tbl.newSymbol();
-					insts.add(instFactory.NewInstruction(ref, NewSiteReference
-							.make(ProgramCounter.NO_SOURCE_LINE_NUMBER, flow
-									.getIK().getConcreteType().getReference())));
-					// associate the new object with this flow
-					sourceMap.put(flow, Integer.valueOf(ref));
-					return null;
-				}
-
-				@Override
-				public Void visitParameterFlow(
-						ParameterFlow<IExplodedBasicBlock> flow) {
-					// two cases: either this is a formal to the method we're
-					// analyzing, or an actual to a method that writes to some
-					// fields on its corresponding formal.
-
-					if (flow.getBlock().isEntryBlock()) {
-						// In the first case, we just associate the val number
-						// with this flow
-						sourceMap.put(flow, Integer.valueOf(tbl
-								.getParameter(flow.getArgNum())));
-						return null;
-					} else {
-						// In the second case, we have to synthesize a call to
-						// the function
-						SSAInvokeInstruction inv = (SSAInvokeInstruction) flow
-								.getBlock().getDelegate().getInstruction();
-						SSAInvokeInstruction synthInv = findOrCreateInvoke(tbl,
-								insts, invs, inv);
-						sourceMap.put(flow, Integer.valueOf(synthInv
-								.getUse(flow.getArgNum())));
-					}
-					return null;
-				}
-
-				@Override
-				public Void visitReturnFlow(ReturnFlow<IExplodedBasicBlock> flow) {
-					// this will only be the case where we have a flow from the
-					// result of an invoked method
-					SSAInvokeInstruction inv = (SSAInvokeInstruction) flow.getBlock().getDelegate().getInstruction();
-					SSAInvokeInstruction synthInv = findOrCreateInvoke(tbl, insts, invs, inv);
-					sourceMap.put(flow, Integer.valueOf(synthInv.getDef()));
-					return null;
-				}
-
-				@Override
-				public Void visitStaticFieldFlow(
-						StaticFieldFlow<IExplodedBasicBlock> staticFieldFlow) {
-					// just create a static get instruction for this field
-					int val = tbl.newSymbol();
-					// TODO: this will create multiple get instructions if more than one flow goes through a static field, but the overhead isn't too bad
-					insts.add(instFactory.GetInstruction(val, staticFieldFlow.getField().getReference()));
-					return null;
-				}
-
-				private SSAInvokeInstruction findOrCreateInvoke(
-						SymbolTable tbl, List<SSAInstruction> insts,
-						Map<SSAInvokeInstruction, SSAInvokeInstruction> invs,
-						SSAInvokeInstruction inv) {
-					SSAInvokeInstruction synthInv = invs.get(inv);
-					if (synthInv != null) {
-						return synthInv;
-					} else {
-						final MethodReference declaredTarget = inv
-								.getDeclaredTarget();
-						final int numParams = declaredTarget
-								.getNumberOfParameters();
-						int[] paramVals = new int[numParams];
-						for (int i = 0; i < numParams; i++) {
-							TypeReference paramType = declaredTarget
-									.getParameterType(i);
-							if (paramType.isPrimitiveType()) {
-								paramVals[i] = findOrCreateConstant(tbl,
-										paramType);
-							} else {
-								int ref = tbl.newSymbol();
-								insts.add(instFactory.NewInstruction(
-										ref,
-										NewSiteReference
-												.make(ProgramCounter.NO_SOURCE_LINE_NUMBER,
-														paramType)));
-								paramVals[i] = ref;
-							}
-						}
-						if (inv.hasDef()) {
-							synthInv = instFactory.InvokeInstruction(
-									inv.getDef(), paramVals,
-									inv.getException(), inv.getCallSite());
-						} else {
-							synthInv = instFactory.InvokeInstruction(paramVals,
-									inv.getException(), inv.getCallSite());
-						}
-						insts.add(synthInv);
-						invs.put(inv, synthInv);
-						return synthInv;
-					}
-				}
-
-				private int findOrCreateConstant(SymbolTable tbl,
-						TypeReference paramType) {
-					if (paramType.equals(TypeReference.Boolean)) {
-						return tbl.getConstant(false);
-					} else if (paramType.equals(TypeReference.Double)) {
-						return tbl.getConstant(0d);
-					} else if (paramType.equals(TypeReference.Float)) {
-						return tbl.getConstant(0f);
-					} else if (paramType.equals(TypeReference.Int)) {
-						return tbl.getConstant(0);
-					} else if (paramType.equals(TypeReference.Long)) {
-						return tbl.getConstant(0l);
-					} else if (paramType.equals(TypeReference.JavaLangString)) {
-						return tbl.getConstant("");
-					} else {
-						logger.error("non-constant type reference {}",
-								paramType);
-						throw new RuntimeException();
-					}
-				}
-
-			});
-		}
-		return Pair.make(sourceMap, insts);
 	}
 
 	private Pair<List<SSAInstruction>, Integer> compileFlowType(
@@ -973,5 +830,295 @@ public class Summarizer<E extends ISSABasicBlock> {
 						flow.getField());
 			}
 		});
+	}
+
+	/**
+	 * A one-time-use context for a single method summarization. This manages
+	 * various state built up by the summarization process such as the symbol
+	 * table, maps from flows to SSA values, and the new (synthetic)
+	 * instructions
+	 * 
+	 * @author acfoltzer
+	 * 
+	 */
+	private static class MethodSummarizer {
+		private static final Logger logger = LoggerFactory
+				.getLogger(Summarizer.MethodSummarizer.class);
+		private static final SSAInstructionFactory instFactory = Language.JAVA
+				.instructionFactory();
+
+		private final List<SSAInstruction> insts = Lists.newArrayList();
+		private final Map<SSAInvokeInstruction, SSAInvokeInstruction> invs = Maps
+				.newHashMap();
+		private final Map<TypeReference, Integer> objs = Maps.newHashMap();
+		private final CGAnalysisContext<IExplodedBasicBlock> ctx;
+		private final IMethod method;
+		private final SymbolTable tbl;
+
+		/**
+		 * Populated by compileSources
+		 */
+		private final Map<FlowType<IExplodedBasicBlock>, Integer> sourceMap = Maps
+				.newHashMap();
+
+		public MethodSummarizer(CGAnalysisContext<IExplodedBasicBlock> ctx,
+				IMethod method) {
+			this.ctx = ctx;
+			this.method = method;
+
+			final int numParams = method.getNumberOfParameters();
+			// symbol table initially has parameter values reserved
+			this.tbl = new SymbolTable(numParams);
+
+			// if any params are reference types, we can use them for later
+			// value resolution
+			for (int param = 0; param < numParams; param++) {
+				final TypeReference typeRef = method.getParameterType(param);
+				if (!typeRef.isPrimitiveType()) {
+					objs.put(typeRef, Integer.valueOf(param));
+				}
+			}
+		}
+
+		public List<SSAInstruction> summarizeFlows(
+				Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> flowMap) {
+			compileSources(flowMap.keySet());
+			for (Entry<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> entry : flowMap
+					.entrySet()) {
+				FlowType<IExplodedBasicBlock> source = entry.getKey();
+				for (FlowType<IExplodedBasicBlock> sink : entry.getValue()) {
+					compileEdge(source, sink);
+				}
+			}
+			return insts;
+		}
+
+		/**
+		 * Given a set of sources (from the LHS of the flow map), create
+		 * sufficient instructions to make SSA values for each source. After
+		 * running this method, the instructions will be in insts, and sourceMap
+		 * will contain the associated SSA values.
+		 * 
+		 * @param sources
+		 */
+		private void compileSources(Set<FlowType<IExplodedBasicBlock>> sources) {
+			for (FlowType<IExplodedBasicBlock> source : sources) {
+				source.visit(new FlowTypeVisitor<IExplodedBasicBlock, Void>() {
+
+					@Override
+					public Void visitFieldFlow(
+							FieldFlow<IExplodedBasicBlock> flow) {
+						// first create an object of the right type
+						int ref = findOrCreateValue(flow.getField()
+								.getDeclaringClass().getReference());
+						// then deref the field
+						int field = tbl.newSymbol();
+						insts.add(instFactory.GetInstruction(field, ref, flow
+								.getField().getReference()));
+						// associate the dereffed value with this flow
+						sourceMap.put(flow, Integer.valueOf(ref));
+						return null;
+					}
+
+					@Override
+					public Void visitIKFlow(IKFlow<IExplodedBasicBlock> flow) {
+						// just create a new object of this type
+						int ref = findOrCreateValue(flow.getIK()
+								.getConcreteType().getReference());
+						// associate the new object with this flow
+						sourceMap.put(flow, Integer.valueOf(ref));
+						return null;
+					}
+
+					@Override
+					public Void visitParameterFlow(
+							ParameterFlow<IExplodedBasicBlock> flow) {
+						// two cases: either this is a formal to the method
+						// we're analyzing, or an actual to a method that writes
+						// to some fields on its corresponding formal.
+
+						if (flow.getBlock().isEntryBlock()) {
+							// In the first case, we just associate the val
+							// number with this flow
+							sourceMap.put(flow, Integer.valueOf(tbl
+									.getParameter(flow.getArgNum())));
+							return null;
+						} else {
+							// In the second case, we have to synthesize a call
+							// to the function
+							SSAInvokeInstruction inv = (SSAInvokeInstruction) flow
+									.getBlock().getDelegate().getInstruction();
+							SSAInvokeInstruction synthInv = findOrCreateInvoke(inv);
+							sourceMap.put(flow, Integer.valueOf(synthInv
+									.getUse(flow.getArgNum())));
+						}
+						return null;
+					}
+
+					@Override
+					public Void visitReturnFlow(
+							ReturnFlow<IExplodedBasicBlock> flow) {
+						// this will only be the case where we have a flow from
+						// the
+						// result of an invoked method
+						SSAInvokeInstruction inv = (SSAInvokeInstruction) flow
+								.getBlock().getDelegate().getInstruction();
+						SSAInvokeInstruction synthInv = findOrCreateInvoke(inv);
+						sourceMap.put(flow, Integer.valueOf(synthInv.getDef()));
+						return null;
+					}
+
+					@Override
+					public Void visitStaticFieldFlow(
+							StaticFieldFlow<IExplodedBasicBlock> staticFieldFlow) {
+						// just create a static get instruction for this field
+						int val = tbl.newSymbol();
+						// TODO: this will create multiple get instructions if
+						// more than one flow goes through a static field, but
+						// the overhead isn't too bad
+						insts.add(instFactory.GetInstruction(val,
+								staticFieldFlow.getField().getReference()));
+						return null;
+					}
+
+				});
+			}
+		}
+
+		/**
+		 * Given a source and a sink, create sufficient instructions to
+		 * represent a flow from that source to that sink.
+		 * 
+		 * @param source
+		 * @param sink
+		 */
+		private void compileEdge(FlowType<IExplodedBasicBlock> source,
+				FlowType<IExplodedBasicBlock> sink) {
+			final int sourceVal = sourceMap.get(source).intValue();
+			sink.visit(new FlowTypeVisitor<IExplodedBasicBlock, Void>() {
+
+				@Override
+				public Void visitFieldFlow(FieldFlow<IExplodedBasicBlock> flow) {
+					// first create an object to assign to
+					int ref = findOrCreateValue(flow.getField()
+							.getDeclaringClass().getReference());
+					// then put sourceVal into the field
+					insts.add(instFactory.PutInstruction(ref, sourceVal, flow
+							.getField().getReference()));
+					return null;
+				}
+
+				@Override
+				public Void visitIKFlow(IKFlow<IExplodedBasicBlock> flow) {
+					// TODO unused?
+					throw new UnimplementedError("IKFlow as a sink?");
+				}
+
+				@Override
+				public Void visitParameterFlow(
+						ParameterFlow<IExplodedBasicBlock> flow) {
+					// I don't think we need to do anything for the case where
+					// this is a formal param of the summarized method
+					if (flow.getBlock().isEntryBlock()) {
+						return null;
+					}
+
+					// Otherwise we need to synthesize a call to the function
+					// whose actual parameter is a sink.
+					SSAInvokeInstruction inv = (SSAInvokeInstruction) flow.getBlock().getDelegate().getInstruction();
+					findOrCreateInvoke(inv);
+					return null;
+				}
+
+				@Override
+				public Void visitReturnFlow(ReturnFlow<IExplodedBasicBlock> flow) {
+					// recover return type
+					TypeReference typeRef = method.getReturnType();
+					// emit return instruction
+					insts.add(instFactory.ReturnInstruction(sourceVal, typeRef.isPrimitiveType()));					
+					return null;
+				}
+
+				@Override
+				public Void visitStaticFieldFlow(
+						StaticFieldFlow<IExplodedBasicBlock> flow) {
+					// emit field put
+					insts.add(instFactory.PutInstruction(sourceVal, flow.getField().getReference()));
+					return null;
+				}
+			});
+		}
+
+		private SSAInvokeInstruction findOrCreateInvoke(SSAInvokeInstruction inv) {
+			SSAInvokeInstruction synthInv = invs.get(inv);
+			if (synthInv != null) {
+				// return existing instruction if we already have it
+				return synthInv;
+			}
+
+			final MethodReference declaredTarget = inv.getDeclaredTarget();
+			final int numParams = declaredTarget.getNumberOfParameters();
+			int[] paramVals = new int[numParams];
+			for (int i = 0; i < numParams; i++) {
+				TypeReference paramType = declaredTarget.getParameterType(i);
+				if (paramType.isPrimitiveType()) {
+					paramVals[i] = findOrCreateValue(paramType);
+				} else {
+					int ref = findOrCreateValue(paramType);
+					paramVals[i] = ref;
+				}
+			}
+			if (inv.hasDef()) {
+				synthInv = instFactory.InvokeInstruction(inv.getDef(),
+						paramVals, inv.getException(), inv.getCallSite());
+			} else {
+				synthInv = instFactory.InvokeInstruction(paramVals,
+						inv.getException(), inv.getCallSite());
+			}
+			insts.add(synthInv);
+			invs.put(inv, synthInv);
+			return synthInv;
+		}
+
+		private int findOrCreateValue(TypeReference typeRef) {
+			if (typeRef.isPrimitiveType()) {
+				return findOrCreateConstant(typeRef);
+			} else {
+				return findOrCreateObject(typeRef);
+			}
+		}
+
+		private int findOrCreateConstant(TypeReference paramType) {
+			if (paramType.equals(TypeReference.Boolean)) {
+				return tbl.getConstant(false);
+			} else if (paramType.equals(TypeReference.Double)) {
+				return tbl.getConstant(0d);
+			} else if (paramType.equals(TypeReference.Float)) {
+				return tbl.getConstant(0f);
+			} else if (paramType.equals(TypeReference.Int)) {
+				return tbl.getConstant(0);
+			} else if (paramType.equals(TypeReference.Long)) {
+				return tbl.getConstant(0l);
+			} else if (paramType.equals(TypeReference.JavaLangString)) {
+				return tbl.getConstant("");
+			} else {
+				logger.error("non-constant type reference {}", paramType);
+				throw new RuntimeException();
+			}
+		}
+
+		private int findOrCreateObject(TypeReference typeRef) {
+			Integer objVal = objs.get(typeRef);
+			if (objVal != null) {
+				// return existing value if we already have one
+				return objVal.intValue();
+			}
+			int ref = tbl.newSymbol();
+			insts.add(instFactory.NewInstruction(ref, NewSiteReference.make(
+					ProgramCounter.NO_SOURCE_LINE_NUMBER, typeRef)));
+			objs.put(typeRef, Integer.valueOf(ref));
+			return ref;
+		}
+
 	}
 }

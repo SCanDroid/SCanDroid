@@ -145,6 +145,6 @@ public abstract class FlowType<E extends ISSABasicBlock> {
     	R visitIKFlow(IKFlow<E> flow);
     	R visitParameterFlow(ParameterFlow<E> flow);
     	R visitReturnFlow(ReturnFlow<E> flow);
-		R visitStaticFieldFlow(StaticFieldFlow<E> staticFieldFlow);
+		R visitStaticFieldFlow(StaticFieldFlow<E> flow);
     }
 }
