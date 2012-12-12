@@ -270,7 +270,7 @@ public class XMLSummaryWriter {
         for (; i < summary.getNumberOfParameters(); i++) {
             TypeReference tr = summary.getParameterType(i);
 
-            if (tr.isPrimitiveType()) {
+            if (tr.isPrimitiveType() || tr.isArrayType()) {
             	typeSigs.append(tr.getName().toUnicodeString());
             } else {
             	typeSigs.append(tr.getName().toUnicodeString()+ ";");

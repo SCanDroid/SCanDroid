@@ -85,6 +85,7 @@ import com.ibm.wala.ipa.callgraph.CGNode;
 import com.ibm.wala.ipa.callgraph.CallGraphBuilderCancelException;
 import com.ibm.wala.ipa.callgraph.Entrypoint;
 import com.ibm.wala.ipa.callgraph.impl.DefaultEntrypoint;
+import com.ibm.wala.ipa.callgraph.impl.FakeRootMethod;
 import com.ibm.wala.ipa.callgraph.propagation.InstanceKey;
 import com.ibm.wala.ipa.cfg.BasicBlockInContext;
 import com.ibm.wala.ipa.cha.ClassHierarchyException;
@@ -373,10 +374,8 @@ public class Summarizer<E extends ISSABasicBlock> {
 				compileSource(source);
 			}
 			// step 2.
-			for (Entry<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> entry : flowMap
-					.entrySet()) {
-				FlowType<IExplodedBasicBlock> source = entry.getKey();
-				for (FlowType<IExplodedBasicBlock> sink : entry.getValue()) {
+			for (FlowType<IExplodedBasicBlock> source : sourceMap.keySet()) {
+				for (FlowType<IExplodedBasicBlock> sink : flowMap.get(source)) {
 					compileEdge(source, sink);
 				}
 			}
@@ -422,6 +421,11 @@ public class Summarizer<E extends ISSABasicBlock> {
 				@Override
 				public Void visitParameterFlow(
 						ParameterFlow<IExplodedBasicBlock> flow) {
+					if (FakeRootMethod.isFromFakeRoot(flow.getBlock())) {
+						// TODO: better understand this weird edge case
+						return null;
+					}
+					
 					// two cases: either this is a formal to the method
 					// we're analyzing, or an actual to a method that writes
 					// to some fields on its corresponding formal.
