@@ -225,7 +225,7 @@
 	   </taskdef>
 
 	<target name="test-jenkins-coverage" depends="build, build-tests">
-		<jacoco:coverage>
+		<jacoco:coverage append="false">
 			<junit haltonerror="false" haltonfailure="false" fork="yes" printsummary="withOutAndErr">
 				<!-- Use the basic SCanDroid classpath: -->
 				<classpath refid="SimpleAnalysisPlugin.classpath" />
