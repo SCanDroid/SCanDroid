@@ -317,7 +317,7 @@ public class SSAtoXMLVisitor implements SSAInstruction.IVisitor {
             String nameString = callee.getName().toUnicodeString();
             elt.setAttribute(XMLSummaryWriter.A_NAME, nameString);
             
-            String classString = typeRefToStr(instruction.getDeclaredResultType());
+            String classString = instruction.getDeclaredTarget().getDeclaringClass().getName().toUnicodeString();
             elt.setAttribute(XMLSummaryWriter.A_CLASS, classString);
 
             if (! instruction.getDeclaredResultType().equals(TypeReference.Void) ) {

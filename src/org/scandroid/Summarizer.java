@@ -80,7 +80,6 @@ import com.google.common.collect.Maps;
 import com.ibm.wala.classLoader.IMethod;
 import com.ibm.wala.classLoader.Language;
 import com.ibm.wala.classLoader.NewSiteReference;
-import com.ibm.wala.classLoader.ProgramCounter;
 import com.ibm.wala.dataflow.IFDS.TabulationResult;
 import com.ibm.wala.ipa.callgraph.CGNode;
 import com.ibm.wala.ipa.callgraph.CallGraphBuilderCancelException;
@@ -189,6 +188,23 @@ public class Summarizer<E extends ISSABasicBlock> {
 	public void summarize(String methodDescriptor, IProgressMonitor monitor)
 			throws ClassHierarchyException, CallGraphBuilderCancelException,
 			IOException, ParserConfigurationException {
+		summarize(methodDescriptor, monitor, ISpecs.EMPTY_SPECS);
+	}
+
+	/**
+	 * Create summary with additional Specs to be combined with the standard
+	 * method summary specs
+	 * 
+	 * @param signature
+	 * @param timedMonitor
+	 * @param sourceSinkSpecs
+	 * @throws IOException
+	 * @throws CallGraphBuilderCancelException
+	 * @throws ClassHierarchyException
+	 */
+	public void summarize(String methodDescriptor, IProgressMonitor monitor,
+			ISpecs additionalSpecs) throws IOException,
+			ClassHierarchyException, CallGraphBuilderCancelException {
 
 		MethodReference methodRef = StringStuff
 				.makeMethodReference(methodDescriptor);
@@ -220,7 +236,7 @@ public class Summarizer<E extends ISSABasicBlock> {
 				});
 
 		Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> dfAnalysis = runDFAnalysis(
-				cgContext, summary, monitor);
+				cgContext, summary, monitor, additionalSpecs);
 		logger.debug(dfAnalysis.toString());
 
 		List<SSAInstruction> instructions = new MethodSummarizer(imethod)
@@ -248,22 +264,30 @@ public class Summarizer<E extends ISSABasicBlock> {
 		return writer.serialize();
 	}
 
-	public Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> runDFAnalysis(
+	private Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> runDFAnalysis(
 			CGAnalysisContext<IExplodedBasicBlock> cgContext,
 			MethodSummary mSummary) throws ClassHierarchyException,
 			CallGraphBuilderCancelException, IOException {
 		return runDFAnalysis(cgContext, mSummary, new TimedMonitor(TIME_LIMIT));
 	}
 
-	public Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> runDFAnalysis(
+	private Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> runDFAnalysis(
 			CGAnalysisContext<IExplodedBasicBlock> cgContext,
 			MethodSummary mSummary, IProgressMonitor monitor)
 			throws IOException, ClassHierarchyException,
 			CallGraphBuilderCancelException {
+		return runDFAnalysis(cgContext, mSummary, monitor, ISpecs.EMPTY_SPECS);
+	}
 
-		ISpecs specs = TestSpecs.combine(new MethodSummarySpecs(mSummary),
+	private Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> runDFAnalysis(
+			CGAnalysisContext<IExplodedBasicBlock> cgContext,
+			MethodSummary mSummary, IProgressMonitor monitor,
+			ISpecs additionalSpecs) {
+
+		ISpecs specs = TestSpecs.combine(additionalSpecs, TestSpecs.combine(
+				new MethodSummarySpecs(mSummary),
 				new StaticSpecs(cgContext.getClassHierarchy(), mSummary
-						.getMethod().getSignature()));
+						.getMethod().getSignature())));
 
 		Map<BasicBlockInContext<IExplodedBasicBlock>, Map<FlowType<IExplodedBasicBlock>, Set<CodeElement>>> initialTaints = InflowAnalysis
 				.analyze(cgContext, new HashMap<InstanceKey, String>(), specs);
@@ -337,7 +361,7 @@ public class Summarizer<E extends ISSABasicBlock> {
 			for (int param = 0; param < numParams; param++) {
 				final TypeReference typeRef = method.getParameterType(param);
 				if (!typeRef.isPrimitiveType()) {
-					objs.put(typeRef, Integer.valueOf(param));
+					objs.put(typeRef, Integer.valueOf(tbl.getParameter(param)));
 				}
 			}
 		}
@@ -356,6 +380,7 @@ public class Summarizer<E extends ISSABasicBlock> {
 					compileEdge(source, sink);
 				}
 			}
+			logger.debug("summarized instructions: {}", insts);
 			return insts;
 		}
 
@@ -538,12 +563,7 @@ public class Summarizer<E extends ISSABasicBlock> {
 			int[] paramVals = new int[numParams];
 			for (int i = 0; i < numParams; i++) {
 				TypeReference paramType = declaredTarget.getParameterType(i);
-				if (paramType.isPrimitiveType()) {
-					paramVals[i] = findOrCreateValue(paramType);
-				} else {
-					int ref = findOrCreateValue(paramType);
-					paramVals[i] = ref;
-				}
+				paramVals[i] = findOrCreateValue(paramType);
 			}
 			if (inv.hasDef()) {
 				synthInv = instFactory.InvokeInstruction(inv.getDef(),
@@ -574,6 +594,7 @@ public class Summarizer<E extends ISSABasicBlock> {
 		}
 
 		private int findOrCreateConstant(TypeReference paramType) {
+			logger.debug("finding constant for {}", paramType);
 			if (paramType.equals(TypeReference.Boolean)) {
 				return tbl.getConstant(false);
 			} else if (paramType.equals(TypeReference.Double)) {
@@ -593,14 +614,14 @@ public class Summarizer<E extends ISSABasicBlock> {
 		}
 
 		private int findOrCreateObject(TypeReference typeRef) {
+			logger.debug("finding object {}", typeRef);
 			Integer objVal = objs.get(typeRef);
 			if (objVal != null) {
 				// return existing value if we already have one
 				return objVal.intValue();
 			}
 			int ref = tbl.newSymbol();
-			insts.add(instFactory.NewInstruction(ref, NewSiteReference.make(
-					ProgramCounter.NO_SOURCE_LINE_NUMBER, typeRef)));
+			insts.add(instFactory.NewInstruction(ref, NewSiteReference.make(0, typeRef)));
 			objs.put(typeRef, Integer.valueOf(ref));
 			return ref;
 		}

@@ -50,4 +50,22 @@ public interface ISpecs {
 
     /* Methods that sink data supplied by some of their parameters. */
     public SinkSpec[] getSinkSpecs();
+    
+    public static ISpecs EMPTY_SPECS = new ISpecs() {
+		
+    	@Override
+		public SourceSpec[] getSourceSpecs() {
+			return new SourceSpec[] {};
+		}
+		
+		@Override
+		public SinkSpec[] getSinkSpecs() {
+			return new SinkSpec[] {};
+		}
+		
+		@Override
+		public MethodNamePattern[] getEntrypointSpecs() {
+			return new MethodNamePattern[] {};
+		}
+	};
 }

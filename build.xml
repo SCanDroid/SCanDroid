@@ -219,10 +219,10 @@
 			</batchtest>
 		</junit>
 	</target>
-	
+
 	<taskdef uri="antlib:org.jacoco.ant" resource="org/jacoco/ant/antlib.xml">
-	        <classpath path="lib/jacocoant.jar"/>
-	   </taskdef>
+		<classpath path="lib/jacocoant.jar" />
+	</taskdef>
 
 	<target name="test-jenkins-coverage" depends="build, build-tests">
 		<jacoco:coverage append="false">
@@ -237,5 +237,25 @@
 				</batchtest>
 			</junit>
 		</jacoco:coverage>
+	</target>
+
+	<target name="test-jenkins-coverage-report" depends="test-jenkins-coverage">
+		<jacoco:report>
+			<executiondata>
+				<file file="jacoco.exec" />
+			</executiondata>
+
+			<structure name="SCanDroid">
+				<classfiles>
+					<fileset dir="bin" />
+				</classfiles>
+				<sourcefiles encoding="UTF-8">
+					<fileset dir="src" />
+				</sourcefiles>
+			</structure>
+
+			<html destdir="report" />
+
+		</jacoco:report>
 	</target>
 </project>

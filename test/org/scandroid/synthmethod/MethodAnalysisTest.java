@@ -60,6 +60,7 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 import org.scandroid.MethodSummarySpecs;
 import org.scandroid.Summarizer;
+import org.scandroid.TimedMonitor;
 import org.scandroid.dataflow.DataflowTest;
 import org.scandroid.domain.CodeElement;
 import org.scandroid.domain.DomainElement;
@@ -73,7 +74,13 @@ import org.scandroid.flow.types.FlowType;
 import org.scandroid.flow.types.ParameterFlow;
 import org.scandroid.flow.types.ReturnFlow;
 import org.scandroid.flow.types.StaticFieldFlow;
+import org.scandroid.spec.CallArgSinkSpec;
+import org.scandroid.spec.CallArgSourceSpec;
+import org.scandroid.spec.CallRetSourceSpec;
 import org.scandroid.spec.ISpecs;
+import org.scandroid.spec.MethodNamePattern;
+import org.scandroid.spec.SinkSpec;
+import org.scandroid.spec.SourceSpec;
 import org.scandroid.spec.StaticSpecs;
 import org.scandroid.util.AndroidAnalysisContext;
 import org.scandroid.util.CGAnalysisContext;
@@ -116,6 +123,34 @@ public class MethodAnalysisTest {
 	private static final String TEST_DATA_DIR = "data/testdata/";
 	private static final String TEST_JAR = TEST_DATA_DIR
 			+ "testJar-1.0-SNAPSHOT.jar";
+
+	private ISpecs sourceSinkSpecs = new ISpecs() {
+
+		@Override
+		public SourceSpec[] getSourceSpecs() {
+			return new SourceSpec[] {
+					new CallArgSourceSpec(new MethodNamePattern(
+							"Lorg/scandroid/testing/SourceSink", "load"),
+							new int[] { 0 }),
+					new CallRetSourceSpec(new MethodNamePattern(
+							"Lorg/scandroid/testing/SourceSink", "source"),
+							new int[] { 0 }) // I think args are irrelevant
+												// for this source spec...
+			};
+		}
+
+		@Override
+		public SinkSpec[] getSinkSpecs() {
+			return new SinkSpec[] { new CallArgSinkSpec(new MethodNamePattern(
+					"Lorg/scandroid/testing/SourceSink", "sink"),
+					new int[] { 0 }) };
+		}
+
+		@Override
+		public MethodNamePattern[] getEntrypointSpecs() {
+			return new MethodNamePattern[0];
+		}
+	};
 
 	/**
 	 * Hack alert: since @Parameters-annotated methods are run before every
@@ -201,7 +236,8 @@ public class MethodAnalysisTest {
 	@Before
 	public void makeSummary() throws Throwable {
 		Summarizer summarizer = new Summarizer(TEST_JAR);
-		summarizer.summarize(entrypoint.getMethod().getSignature());
+		summarizer.summarize(entrypoint.getMethod().getSignature(),
+				new TimedMonitor(3600), sourceSinkSpecs);
 		File summaryFile = new File(FileUtils.getTempDirectory(),
 				summaryFileName());
 		summaryFile.deleteOnExit();
@@ -244,9 +280,12 @@ public class MethodAnalysisTest {
 		final MethodSummary methodSummary = new MethodSummary(entrypoint
 				.getMethod().getReference());
 		methodSummary.setStatic(entrypoint.getMethod().isStatic());
-		ISpecs specs = TestSpecs.combine(new MethodSummarySpecs(methodSummary),
-				new StaticSpecs(noSummaryContext.getClassHierarchy(),
-						entrypoint.getMethod().getSignature()));
+
+		ISpecs specs = TestSpecs.combine(sourceSinkSpecs, TestSpecs.combine(
+				sourceSinkSpecs, TestSpecs.combine(new MethodSummarySpecs(
+						methodSummary),
+						new StaticSpecs(noSummaryContext.getClassHierarchy(),
+								entrypoint.getMethod().getSignature()))));
 
 		long startTime = System.currentTimeMillis();
 
@@ -259,9 +298,10 @@ public class MethodAnalysisTest {
 		System.out.println(" ---  DIRECT RESULTS DONE             ---  ");
 		System.out.println(" ----------------------------------------  ");
 
-		specs = TestSpecs.combine(new MethodSummarySpecs(methodSummary),
-				new StaticSpecs(summaryContext.getClassHierarchy(), entrypoint
-						.getMethod().getSignature()));
+		specs = TestSpecs.combine(sourceSinkSpecs, TestSpecs.combine(
+				new MethodSummarySpecs(methodSummary), new StaticSpecs(
+						summaryContext.getClassHierarchy(), entrypoint
+								.getMethod().getSignature())));
 
 		startTime = System.currentTimeMillis();
 		Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> summarizedResults = runDFAnalysis(
@@ -373,43 +413,59 @@ public class MethodAnalysisTest {
 		if (flow1.getBlock() == null) {
 			if (flow2.getBlock() != null)
 				return false;
-		}  
+		}
 		// compare fields for static field flows
 		if (flow1 instanceof StaticFieldFlow) {
-			IField field1 = ((StaticFieldFlow<IExplodedBasicBlock>) flow1).getField();
-			IField field2 = ((StaticFieldFlow<IExplodedBasicBlock>) flow2).getField();
-			if (!field1.equals(field2)) 
+			IField field1 = ((StaticFieldFlow<IExplodedBasicBlock>) flow1)
+					.getField();
+			IField field2 = ((StaticFieldFlow<IExplodedBasicBlock>) flow2)
+					.getField();
+			if (!field1.equals(field2))
 				return false;
 		}
 		// ... and non-static field flows
 		if (flow1 instanceof FieldFlow) {
 			IField field1 = ((FieldFlow<IExplodedBasicBlock>) flow1).getField();
 			IField field2 = ((FieldFlow<IExplodedBasicBlock>) flow2).getField();
-			if (!field1.equals(field2)) 
+			if (!field1.equals(field2))
 				return false;
 		}
-		// if it's a return flow source, compare the target of the invoke instruction
+		// if it's a return flow source, compare the target of the invoke
+		// instruction
 		if (flow1 instanceof ReturnFlow && flow1.isSource() && flow2.isSource()) {
-			SSAInvokeInstruction inst1 = (SSAInvokeInstruction) flow1.getBlock().getDelegate().getLastInstruction();
-			SSAInvokeInstruction inst2 = (SSAInvokeInstruction) flow2.getBlock().getDelegate().getLastInstruction();
+			SSAInvokeInstruction inst1 = (SSAInvokeInstruction) flow1
+					.getBlock().getDelegate().getLastInstruction();
+			SSAInvokeInstruction inst2 = (SSAInvokeInstruction) flow2
+					.getBlock().getDelegate().getLastInstruction();
 			if (!inst1.getDeclaredTarget().equals(inst2.getDeclaredTarget()))
 				return false;
 		}
 		// otherwise they're both sinks, so they'll fail below
-		
-		// if it's a parameter flow source, they should both be in the same method
-		if (flow1 instanceof ParameterFlow && flow1.isSource() && flow2.isSource()) {
-			if (!flow1.getBlock().getMethod().getSignature().equals(flow2.getBlock().getMethod().getSignature())) 				
+
+		// if it's a parameter flow source, they should both be in the same
+		// method
+		if (flow1 instanceof ParameterFlow && flow1.isSource()
+				&& flow2.isSource()) {
+			if (!flow1.getBlock().getMethod().getSignature()
+					.equals(flow2.getBlock().getMethod().getSignature()))
 				return false;
 		}
-		
-		// if it's a parameter flow sink, compare the target of the invoke instruction and the argnum
-		if (flow1 instanceof ParameterFlow && !flow1.isSource() && !flow2.isSource()) {
-			if (((ParameterFlow) flow1).getArgNum() != ((ParameterFlow) flow2).getArgNum())
+
+		// if it's a parameter flow sink, compare the target of the invoke
+		// instruction and the argnum
+		if (flow1 instanceof ParameterFlow && !flow1.isSource()
+				&& !flow2.isSource()) {
+			if (((ParameterFlow) flow1).getArgNum() != ((ParameterFlow) flow2)
+					.getArgNum())
 				return false;
-			SSAInvokeInstruction inst1 = (SSAInvokeInstruction) flow1.getBlock().getDelegate().getLastInstruction();
-			SSAInvokeInstruction inst2 = (SSAInvokeInstruction) flow2.getBlock().getDelegate().getLastInstruction();
-			if (inst1 != null && inst2 != null && !inst1.getDeclaredTarget().equals(inst2.getDeclaredTarget())) 
+			SSAInvokeInstruction inst1 = (SSAInvokeInstruction) flow1
+					.getBlock().getDelegate().getLastInstruction();
+			SSAInvokeInstruction inst2 = (SSAInvokeInstruction) flow2
+					.getBlock().getDelegate().getLastInstruction();
+			if (inst1 != null
+					&& inst2 != null
+					&& !inst1.getDeclaredTarget().equals(
+							inst2.getDeclaredTarget()))
 				return false;
 			if (inst1 != null && inst2 == null)
 				return false;
