@@ -47,6 +47,7 @@ import org.scandroid.domain.StaticFieldElement;
 import org.scandroid.flow.InflowAnalysis;
 import org.scandroid.flow.types.FlowType;
 import org.scandroid.flow.types.StaticFieldFlow;
+import org.scandroid.util.CGAnalysisContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -87,6 +88,7 @@ public class StaticFieldSourceSpec extends SourceSpec {
 	 */
 	@Override
 	public <E extends ISSABasicBlock> void addDomainElements(
+			CGAnalysisContext<E> ctx,
 			Map<BasicBlockInContext<E>, Map<FlowType<E>, Set<CodeElement>>> taintMap,
 			IMethod im, 
 			BasicBlockInContext<E> block,

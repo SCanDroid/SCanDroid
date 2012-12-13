@@ -281,7 +281,7 @@ public class MethodAnalysisTest {
 				.getMethod().getReference());
 		methodSummary.setStatic(entrypoint.getMethod().isStatic());
 
-		ISpecs specs = TestSpecs.combine(sourceSinkSpecs, TestSpecs.combine(
+		ISpecs specs1 = TestSpecs.combine(sourceSinkSpecs, TestSpecs.combine(
 				sourceSinkSpecs, TestSpecs.combine(new MethodSummarySpecs(
 						methodSummary),
 						new StaticSpecs(noSummaryContext.getClassHierarchy(),
@@ -290,7 +290,7 @@ public class MethodAnalysisTest {
 		long startTime = System.currentTimeMillis();
 
 		Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> directResults = runDFAnalysis(
-				noSummaryContext, specs);
+				noSummaryContext, specs1);
 
 		long directRunTime = System.currentTimeMillis() - startTime;
 
@@ -298,14 +298,14 @@ public class MethodAnalysisTest {
 		System.out.println(" ---  DIRECT RESULTS DONE             ---  ");
 		System.out.println(" ----------------------------------------  ");
 
-		specs = TestSpecs.combine(sourceSinkSpecs, TestSpecs.combine(
+		ISpecs specs2 = TestSpecs.combine(sourceSinkSpecs, TestSpecs.combine(
 				new MethodSummarySpecs(methodSummary), new StaticSpecs(
 						summaryContext.getClassHierarchy(), entrypoint
 								.getMethod().getSignature())));
 
 		startTime = System.currentTimeMillis();
 		Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> summarizedResults = runDFAnalysis(
-				summaryContext, specs);
+				summaryContext, specs2);
 
 		long summaryRunTime = System.currentTimeMillis() - startTime;
 

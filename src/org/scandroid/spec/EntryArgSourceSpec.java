@@ -48,6 +48,7 @@ import org.scandroid.domain.InstanceKeyElement;
 import org.scandroid.flow.InflowAnalysis;
 import org.scandroid.flow.types.FlowType;
 import org.scandroid.flow.types.ParameterFlow;
+import org.scandroid.util.CGAnalysisContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -84,7 +85,7 @@ public class EntryArgSourceSpec extends SourceSpec {
         argNums = args;
     }    
 	@Override
-	public<E extends ISSABasicBlock> void addDomainElements(
+	public<E extends ISSABasicBlock> void addDomainElements(CGAnalysisContext<E> ctx,
 			Map<BasicBlockInContext<E>, Map<FlowType<E>, Set<CodeElement>>> taintMap,
 			IMethod im, BasicBlockInContext<E> block, SSAInvokeInstruction invInst,
 			int[] newArgNums, 
@@ -108,18 +109,19 @@ public class EntryArgSourceSpec extends SourceSpec {
 						for (IClass impl : pa.getClassHierarchy().getImplementors(typeRef)) {
 							logger.debug("creating instance key {} for interface {}", impl, clazz);
 							InstanceKey ik = new ConcreteTypeKey(impl);
-							valueElements.add(new InstanceKeyElement(ik));
+							valueElements.addAll(ctx.codeElementsForInstanceKey(ik));
 						}
 					} else {
 						InstanceKey ik = new ConcreteTypeKey(clazz);
-						valueElements.add(new InstanceKeyElement(ik));
+						valueElements.addAll(ctx.codeElementsForInstanceKey(ik));
 					}					
 				}
 				
 				for (InstanceKey ik : pointsToSet) {
-					valueElements.add(new InstanceKeyElement(ik));
+					valueElements.addAll(ctx.codeElementsForInstanceKey(ik));
 				}
 				InflowAnalysis.addDomainElements(taintMap, block, flow, valueElements);
+				logger.debug("added elements for entry {}: {}", this, valueElements);
 		    }
 		}
 	}

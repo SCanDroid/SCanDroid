@@ -49,6 +49,7 @@ import org.scandroid.domain.InstanceKeyElement;
 import org.scandroid.flow.InflowAnalysis;
 import org.scandroid.flow.types.FlowType;
 import org.scandroid.flow.types.ParameterFlow;
+import org.scandroid.util.CGAnalysisContext;
 
 import com.google.common.collect.Sets;
 import com.ibm.wala.classLoader.IMethod;
@@ -80,6 +81,7 @@ public class CallArgSourceSpec extends SourceSpec {
 
 	@Override
 	public <E extends ISSABasicBlock> void addDomainElements(
+			CGAnalysisContext<E> ctx,
 			Map<BasicBlockInContext<E>, Map<FlowType<E>, Set<CodeElement>>> taintMap,
 			IMethod target, BasicBlockInContext<E> block,
 			SSAInvokeInstruction invInst, int[] newArgNums,

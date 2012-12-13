@@ -44,6 +44,7 @@ import java.util.Set;
 
 import org.scandroid.domain.CodeElement;
 import org.scandroid.flow.types.FlowType;
+import org.scandroid.util.CGAnalysisContext;
 
 import com.ibm.wala.classLoader.IMethod;
 import com.ibm.wala.dataflow.IFDS.ISupergraph;
@@ -79,7 +80,7 @@ public abstract class SourceSpec implements ISourceSpec {
 	@Override
 	public abstract String toString();
 	
-	abstract public<E extends ISSABasicBlock> void addDomainElements(
+	abstract public<E extends ISSABasicBlock> void addDomainElements(CGAnalysisContext<E> ctx,
 			Map<BasicBlockInContext<E>, Map<FlowType<E>,Set<CodeElement>>> taintMap, 
 			IMethod im, BasicBlockInContext<E> block, SSAInvokeInstruction invInst,
 			int[] newArgNums, ISupergraph<BasicBlockInContext<E>, CGNode> graph, 

@@ -134,6 +134,7 @@ public class OutflowAnalysis {
 			graph.put(source, dests);
 		}
 		dests.add(dest);
+		logger.debug("added edge from {} to {}", source, dest);
 	}
 
 	private void processArgSinks(
@@ -587,8 +588,16 @@ public class OutflowAnalysis {
 							// this!)
 							final SSAInstruction[] insts = graph.getICFG()
 									.getCFG(caller).getInstructions();
-							final int invokeIndex = Lists.newArrayList(insts)
-									.lastIndexOf(invokeInst);
+							int invokeIndex = -1;
+							for (int i = 0; i < insts.length; i++) {
+								if (insts[i] instanceof SSAInvokeInstruction) {
+									SSAInvokeInstruction invokeInst2 = (SSAInvokeInstruction) insts[i];
+									if (invokeInst.getDeclaredTarget().equals(invokeInst2.getDeclaredTarget())) {
+										invokeIndex = i;
+										break;
+									}
+								}
+							}
 							if (invokeIndex == -1) {
 								logger.error("couldn't find invoke instruction in caller node");
 							}

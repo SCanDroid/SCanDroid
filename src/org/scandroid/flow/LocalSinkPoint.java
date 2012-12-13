@@ -94,9 +94,11 @@ public class LocalSinkPoint implements ISinkPoint {
 		logger.debug("checking for sources from code elements {}", elts);
 
 		for (CodeElement elt : elts) {
+			logger.debug("possible elements for {}: {}", elt, domain.getPossibleElements(elt));
 			for (DomainElement de : domain.getPossibleElements(elt)) {
 				if (flowResult.getResult(block).contains(
 						domain.getMappedIndex(de))) {
+					logger.debug("adding taint source {}", de.taintSource);
 					sources.add(de.taintSource);
 				}
 			}

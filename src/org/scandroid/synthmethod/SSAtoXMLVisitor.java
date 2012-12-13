@@ -347,7 +347,7 @@ public class SSAtoXMLVisitor implements SSAInstruction.IVisitor {
 
             TypeReference type = instruction.getConcreteType();
 
-            String className = type.getName().getClassName().toUnicodeString();
+            String className = type.getName().toUnicodeString();
 
             Element elt = doc.createElement(XMLSummaryWriter.E_NEW);
             elt.setAttribute(XMLSummaryWriter.A_DEF, localName);

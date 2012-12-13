@@ -85,8 +85,10 @@ import com.ibm.wala.ipa.callgraph.CGNode;
 import com.ibm.wala.ipa.callgraph.CallGraphBuilderCancelException;
 import com.ibm.wala.ipa.callgraph.Entrypoint;
 import com.ibm.wala.ipa.callgraph.impl.DefaultEntrypoint;
+import com.ibm.wala.ipa.callgraph.impl.Everywhere;
 import com.ibm.wala.ipa.callgraph.impl.FakeRootMethod;
 import com.ibm.wala.ipa.callgraph.propagation.InstanceKey;
+import com.ibm.wala.ipa.callgraph.propagation.PointerKey;
 import com.ibm.wala.ipa.cfg.BasicBlockInContext;
 import com.ibm.wala.ipa.cha.ClassHierarchyException;
 import com.ibm.wala.ipa.summaries.MethodSummary;
@@ -240,8 +242,8 @@ public class Summarizer<E extends ISSABasicBlock> {
 				cgContext, summary, monitor, additionalSpecs);
 		logger.debug(dfAnalysis.toString());
 
-		List<SSAInstruction> instructions = new MethodSummarizer(imethod)
-				.summarizeFlows(dfAnalysis);
+		List<SSAInstruction> instructions = new MethodSummarizer(cgContext,
+				imethod).summarizeFlows(dfAnalysis);
 
 		if (0 == instructions.size()) {
 			logger.warn("No instructions in summary for " + methodDescriptor);
@@ -341,6 +343,7 @@ public class Summarizer<E extends ISSABasicBlock> {
 		private final Map<SSAInvokeInstruction, SSAInvokeInstruction> invs = Maps
 				.newHashMap();
 		private final Map<TypeReference, Integer> objs = Maps.newHashMap();
+		private final CGAnalysisContext<IExplodedBasicBlock> ctx;
 		private final IMethod method;
 		private final SymbolTable tbl;
 
@@ -350,7 +353,9 @@ public class Summarizer<E extends ISSABasicBlock> {
 		private final Map<FlowType<IExplodedBasicBlock>, Integer> sourceMap = Maps
 				.newHashMap();
 
-		public MethodSummarizer(IMethod method) {
+		public MethodSummarizer(CGAnalysisContext<IExplodedBasicBlock> ctx,
+				IMethod method) {
+			this.ctx = ctx;
 			this.method = method;
 
 			final int numParams = method.getNumberOfParameters();
@@ -425,7 +430,7 @@ public class Summarizer<E extends ISSABasicBlock> {
 						// TODO: better understand this weird edge case
 						return null;
 					}
-					
+
 					// two cases: either this is a formal to the method
 					// we're analyzing, or an actual to a method that writes
 					// to some fields on its corresponding formal.
@@ -566,7 +571,23 @@ public class Summarizer<E extends ISSABasicBlock> {
 			final int numParams = declaredTarget.getNumberOfParameters();
 			int[] paramVals = new int[numParams];
 			for (int i = 0; i < numParams; i++) {
-				TypeReference paramType = declaredTarget.getParameterType(i);
+				TypeReference paramType = null;
+
+				// first try to find out the concrete type of the argument
+				final CGNode node = ctx.cg.getNode(method,
+						Everywhere.EVERYWHERE);
+				final PointerKey pk = ctx.pa.getHeapModel()
+						.getPointerKeyForLocal(node, inv.getUse(i));
+				for (InstanceKey ik : ctx.pa.getPointsToSet(pk)) {
+					paramType = ik.getConcreteType().getReference();
+				}
+
+				// if the pointer analysis doesn't know, we just use the
+				// declared type. Note that this may be different than the
+				// concrete type of the formal parameter
+				if (paramType == null) {
+					paramType = declaredTarget.getParameterType(i);
+				}
 				paramVals[i] = findOrCreateValue(paramType);
 			}
 			if (inv.hasDef()) {
@@ -625,7 +646,8 @@ public class Summarizer<E extends ISSABasicBlock> {
 				return objVal.intValue();
 			}
 			int ref = tbl.newSymbol();
-			insts.add(instFactory.NewInstruction(ref, NewSiteReference.make(0, typeRef)));
+			insts.add(instFactory.NewInstruction(ref,
+					NewSiteReference.make(0, typeRef)));
 			objs.put(typeRef, Integer.valueOf(ref));
 			return ref;
 		}
