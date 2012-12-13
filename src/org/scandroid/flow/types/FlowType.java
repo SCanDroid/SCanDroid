@@ -68,7 +68,7 @@ public abstract class FlowType<E extends ISSABasicBlock> {
     
     @Override
     public String toString() {
-        return "block=" + block + ", source=" + source;
+        return "block=" + block + ", source=" + source + ", desc=" + descString();
     }
     
     public String descString() {

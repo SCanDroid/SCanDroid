@@ -122,7 +122,7 @@ public class MethodAnalysisTest {
 	public static final String WALA_NATIVES_XML = "data/MethodSummaries.xml";
 	private static final String TEST_DATA_DIR = "data/testdata/";
 	private static final String TEST_JAR = TEST_DATA_DIR
-			+ "testJar-1.0-SNAPSHOT.jar";
+			+ "testJar-1.0-SNAPSHOT.dex";
 
 	private ISpecs sourceSinkSpecs = new ISpecs() {
 

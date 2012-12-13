@@ -91,6 +91,7 @@ import com.ibm.wala.ssa.SSAInstruction;
 import com.ibm.wala.ssa.SSAInstruction.Visitor;
 import com.ibm.wala.ssa.SSAInvokeInstruction;
 import com.ibm.wala.ssa.SSAReturnInstruction;
+import com.ibm.wala.ssa.analysis.ExplodedControlFlowGraph;
 import com.ibm.wala.ssa.analysis.IExplodedBasicBlock;
 import com.ibm.wala.types.MethodReference;
 import com.ibm.wala.types.TypeReference;
@@ -496,7 +497,9 @@ public class OutflowAnalysis {
 			Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> flowGraph,
 			SinkSpec ss) {
 		Set<ISinkPoint> sinkPoints = calculateSinkPoints(ss);
-
+		if (!(ss instanceof StaticFieldSinkSpec)) {
+			logger.debug("for {}, sinkPoints={}", ss, sinkPoints);
+		}
 		for (ISinkPoint sinkPoint : sinkPoints) {
 			for (FlowType<IExplodedBasicBlock> source : sinkPoint.findSources(
 					ctx, flowResult, domain)) {
@@ -529,7 +532,7 @@ public class OutflowAnalysis {
 		if (null == methods) {
 			logger.warn("no methods found for sink spec {}", sinkSpec);
 		}
-		
+
 		for (IMethod method : methods) {
 			for (CGNode node : cg.getNodes(method.getReference())) {
 				BasicBlockInContext<IExplodedBasicBlock> entryBlock = graph
@@ -564,6 +567,8 @@ public class OutflowAnalysis {
 			callees.addAll(cg.getNodes(method.getReference()));
 			calleeRefs.add(method.getReference());
 		}
+		logger.debug("callee nodes {}", callees);
+		logger.debug("callee refs {}", calleeRefs);
 
 		// for each possible callee
 		for (CGNode callee : callees) {
@@ -578,11 +583,21 @@ public class OutflowAnalysis {
 						// if the invoke instruction targets a possible callee
 						if (calleeRefs.contains(invokeInst.getDeclaredTarget())) {
 							// look up the instruction's block in context
-							final int blockNumber = caller.getIR()
-									.getBasicBlockForInstruction(invokeInst)
-									.getNumber();
-							BasicBlockInContext<IExplodedBasicBlock> callBlock = graph
-									.getLocalBlock(caller, blockNumber);
+							// (surely there's a more straightforward way to do
+							// this!)
+							final SSAInstruction[] insts = graph.getICFG()
+									.getCFG(caller).getInstructions();
+							final int invokeIndex = Lists.newArrayList(insts)
+									.lastIndexOf(invokeInst);
+							if (invokeIndex == -1) {
+								logger.error("couldn't find invoke instruction in caller node");
+							}
+							final IExplodedBasicBlock block = graph.getICFG()
+									.getCFG(caller)
+									.getBlockForInstruction(invokeIndex);
+							BasicBlockInContext<IExplodedBasicBlock> callBlock = new BasicBlockInContext<IExplodedBasicBlock>(
+									caller, block);
+
 							for (int argNum : sinkSpec.getArgNums()) {
 								// and add a sink point for each arg num
 								final int ssaVal = invokeInst.getUse(argNum);
