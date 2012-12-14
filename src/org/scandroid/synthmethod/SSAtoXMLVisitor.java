@@ -352,6 +352,19 @@ public class SSAtoXMLVisitor implements SSAInstruction.IVisitor {
             Element elt = doc.createElement(XMLSummaryWriter.E_NEW);
             elt.setAttribute(XMLSummaryWriter.A_DEF, localName);
             elt.setAttribute(XMLSummaryWriter.A_CLASS, className);
+            
+            if (type.isArrayType()) {
+            	// array allocations need a size value
+            	Element sizeElt = doc.createElement(XMLSummaryWriter.E_CONSTANT);
+            	final String sizeName = "sizeOf$allocAt" + instruction.getNewSite().getProgramCounter();
+				sizeElt.setAttribute(XMLSummaryWriter.A_NAME, sizeName);
+				sizeElt.setAttribute(XMLSummaryWriter.A_TYPE, "int");
+				sizeElt.setAttribute(XMLSummaryWriter.A_VALUE, "1");
+				summary.add(sizeElt);
+				
+            	elt.setAttribute(XMLSummaryWriter.A_SIZE, sizeName);
+            }
+            
             summary.add(elt);
         } catch (Exception e) {
             throw new SSASerializationException(e);

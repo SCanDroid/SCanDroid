@@ -549,7 +549,7 @@ public class Summarizer<E extends ISSABasicBlock> {
 		}
 
 		/**
-		 * Synthesize an invoke instruction corresponding to the given origina
+		 * Synthesize an invoke instruction corresponding to the given original
 		 * instruction. This makes some attempt to minimize the number of
 		 * synthesized instructions by first checking if we've synthesized for
 		 * this exact instruction before.
