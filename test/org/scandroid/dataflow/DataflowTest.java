@@ -122,7 +122,7 @@ public class DataflowTest {
 	 */
 	private static final String TEST_DATA_DIR = "data/testdata/";
 	private static final String TEST_JAR = TEST_DATA_DIR
-			+ "testJar-1.0-SNAPSHOT.jar";
+			+ "testJar-1.0-SNAPSHOT.";
 
 	private static final boolean DEBUG_CFG = false;
 
@@ -130,7 +130,7 @@ public class DataflowTest {
 	 * Hack alert: since @Parameters-annotated methods are run before every
 	 * other JUnit method, we have to do setup of the analysis context here
 	 */
-	@Parameters(name = "{0}")
+	@Parameters(name = "{1}")
 	public static Collection<Object[]> setup() throws Throwable {
 		ch.qos.logback.classic.Logger root = (ch.qos.logback.classic.Logger) LoggerFactory
 				.getLogger(Logger.ROOT_LOGGER_NAME);
@@ -142,11 +142,11 @@ public class DataflowTest {
 		final URI summaries = DataflowTest.class.getResource(
 				"/data/MethodSummaries.xml").toURI();
 
-		analysisContext = new AndroidAnalysisContext(
+		AndroidAnalysisContext analysisContext = new AndroidAnalysisContext(
 				new DefaultSCanDroidOptions() {
 					@Override
 					public URI getClasspath() {
-						return new File(TEST_JAR).toURI();
+						return new File(TEST_JAR + "jar").toURI();
 					}
 
 					@Override
@@ -222,7 +222,14 @@ public class DataflowTest {
 			}
 		}
 
-		return entrypoints;
+		List<Object[]> finalEntrypoints = Lists.newArrayList();
+		for (Object[] args : entrypoints) {
+			finalEntrypoints.add(new Object[] { "jar", args[0] + "$jar",
+					args[1] });
+			finalEntrypoints.add(new Object[] { "dex", args[0] + "$dex",
+					args[1] });
+		}
+		return finalEntrypoints;
 	}
 
 	@AfterClass
@@ -261,15 +268,60 @@ public class DataflowTest {
 
 	private String descriptor;
 
+	private final String whichJar;
+
+	private AndroidAnalysisContext jarAnalysisContext;
+
+	private AndroidAnalysisContext dexAnalysisContext;
+
 	/**
 	 * @param methodDescriptor
 	 *            used to name tests
 	 * @param entrypoint
 	 *            the method to test
 	 */
-	public DataflowTest(String methodDescriptor, Entrypoint entrypoint) {
+	public DataflowTest(String jarSuffix, String methodDescriptor,
+			Entrypoint entrypoint) throws Throwable {
+		this.whichJar = jarSuffix;
 		this.descriptor = methodDescriptor;
 		this.entrypoint = entrypoint;
+
+		final URI summaries = DataflowTest.class.getResource(
+				"/data/MethodSummaries.xml").toURI();
+		this.jarAnalysisContext = new AndroidAnalysisContext(
+				new DefaultSCanDroidOptions() {
+					@Override
+					public URI getClasspath() {
+						return new File(TEST_JAR + "jar").toURI();
+					}
+
+					@Override
+					public URI getSummariesURI() {
+						return summaries;
+					}
+
+					@Override
+					public boolean stdoutCG() {
+						return false;
+					}
+				});
+		this.dexAnalysisContext = new AndroidAnalysisContext(
+				new DefaultSCanDroidOptions() {
+					@Override
+					public URI getClasspath() {
+						return new File(TEST_JAR + "dex").toURI();
+					}
+
+					@Override
+					public URI getSummariesURI() {
+						return summaries;
+					}
+
+					@Override
+					public boolean stdoutCG() {
+						return false;
+					}
+				});
 	}
 
 	@Test
@@ -277,6 +329,14 @@ public class DataflowTest {
 		Assert.assertNotNull(
 				"Could not find method to test for: " + descriptor, entrypoint);
 
+		AndroidAnalysisContext analysisContext;
+		if (whichJar == "jar") {
+			analysisContext = jarAnalysisContext;
+		} else if (whichJar == "dex") {
+			analysisContext = dexAnalysisContext;
+		} else {
+			throw new RuntimeException("not jar or dex?");
+		}
 		CGAnalysisContext<IExplodedBasicBlock> ctx = new CGAnalysisContext<IExplodedBasicBlock>(
 				analysisContext, new IEntryPointSpecifier() {
 					@Override
@@ -365,7 +425,8 @@ public class DataflowTest {
 			}
 		};
 
-		ISpecs staticsSpecs = new StaticSpecs(ctx.getClassHierarchy(), entrypoint.getMethod().getSignature());
+		ISpecs staticsSpecs = new StaticSpecs(ctx.getClassHierarchy(),
+				entrypoint.getMethod().getSignature());
 		// ISpecs specs = TestSpecs.combine(methodSpecs, sourceSinkSpecs);
 		ISpecs specs = TestSpecs.combine(staticsSpecs,
 				TestSpecs.combine(methodSpecs, sourceSinkSpecs));

@@ -122,7 +122,9 @@ public class MethodAnalysisTest {
 	public static final String WALA_NATIVES_XML = "data/MethodSummaries.xml";
 	private static final String TEST_DATA_DIR = "data/testdata/";
 	private static final String TEST_JAR = TEST_DATA_DIR
-			+ "testJar-1.0-SNAPSHOT.dex";
+			+ "testJar-1.0-SNAPSHOT.";
+
+	private final String testJar;
 
 	private ISpecs sourceSinkSpecs = new ISpecs() {
 
@@ -156,7 +158,7 @@ public class MethodAnalysisTest {
 	 * Hack alert: since @Parameters-annotated methods are run before every
 	 * other JUnit method, we have to do setup of the analysis context here
 	 */
-	@Parameters(name = "{0}")
+	@Parameters(name = "{1}")
 	public static Collection<Object[]> setup() throws Throwable {
 		ch.qos.logback.classic.Logger root = (ch.qos.logback.classic.Logger) LoggerFactory
 				.getLogger(Logger.ROOT_LOGGER_NAME);
@@ -167,7 +169,9 @@ public class MethodAnalysisTest {
 				new DefaultSCanDroidOptions() {
 					@Override
 					public URI getClasspath() {
-						return new File(TEST_JAR).toURI();
+						// assume that both have the same methods, but we have
+						// to pick one to populate
+						return new File(TEST_JAR + "jar").toURI();
 					}
 
 					@Override
@@ -215,8 +219,13 @@ public class MethodAnalysisTest {
 				}
 			}
 		}
-		// System.exit(0);
-		return entrypoints;
+
+		List<Object[]> finalEntrypoints = Lists.newArrayList();
+		for (Object[] args : entrypoints) {
+			finalEntrypoints.add(new Object[] { "jar", args[0] + "$jar", args[1] });
+			finalEntrypoints.add(new Object[] { "dex", args[0] + "$dex", args[1] });
+		}
+		return finalEntrypoints;
 	}
 
 	public final Entrypoint entrypoint;
@@ -229,13 +238,15 @@ public class MethodAnalysisTest {
 	 * @param entrypoint
 	 *            the method to test
 	 */
-	public MethodAnalysisTest(String methodDescriptor, Entrypoint entrypoint) {
+	public MethodAnalysisTest(String jarSuffix, String methodDescriptor,
+			Entrypoint entrypoint) {
+		this.testJar = TEST_JAR + jarSuffix;
 		this.entrypoint = entrypoint;
 	}
 
 	@Before
 	public void makeSummary() throws Throwable {
-		Summarizer summarizer = new Summarizer(TEST_JAR);
+		Summarizer summarizer = new Summarizer(testJar);
 		summarizer.summarize(entrypoint.getMethod().getSignature(),
 				new TimedMonitor(3600), sourceSinkSpecs);
 		File summaryFile = new File(FileUtils.getTempDirectory(),
