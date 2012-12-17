@@ -1,4 +1,4 @@
-/*
+/**
  *
  * Copyright (c) 2009-2012,
  *
@@ -40,86 +40,131 @@ package com.ibm.wala.dex.util.config;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.StringTokenizer;
+import java.net.URI;
 import java.util.jar.JarFile;
 
-import com.ibm.wala.classLoader.DexFileModule;
-
 import com.ibm.wala.classLoader.BinaryDirectoryTreeModule;
+import com.ibm.wala.classLoader.DexFileModule;
 import com.ibm.wala.ipa.callgraph.AnalysisScope;
 import com.ibm.wala.shrikeCT.InvalidClassFileException;
 import com.ibm.wala.types.ClassLoaderReference;
 import com.ibm.wala.util.config.AnalysisScopeReader;
 import com.ibm.wala.util.debug.Assertions;
-import com.ibm.wala.util.io.FileProvider;
-
 
 /**
  * Create AnalysisScope from java & dalvik file.
+ * 
  * @see com.ibm.wala.ipa.callgraph.AnalysisScope
  */
 public class DexAnalysisScopeReader extends AnalysisScopeReader {
 
-      private static final ClassLoader WALA_CLASSLOADER = AnalysisScopeReader.class.getClassLoader();
+	private static final ClassLoader WALA_CLASSLOADER = AnalysisScopeReader.class
+			.getClassLoader();
 
-      private static final String BASIC_FILE = "./conf/primordial.txt";
+	private static final String BASIC_FILE = "conf" + File.separator
+			+ "primordial.txt";
 
-      /**
-       * @param classPath class path to analyze, delimited by File.pathSeparator
-       * @param exclusionsFile file holding class hierarchy exclusions. may be null
-       * @throws IOException
-       * @throws IllegalStateException if there are problems reading wala properties
-       */
-      public static AnalysisScope makeAndroidBinaryAnalysisScope(String classPath, File exclusionsFile) throws IOException {
-          if (classPath == null) {
-              throw new IllegalArgumentException("classPath null");
-          }                  
-          AnalysisScope scope = AnalysisScopeReader.readJavaScope(BASIC_FILE, exclusionsFile, WALA_CLASSLOADER);
-          ClassLoaderReference loader = scope.getLoader(AnalysisScope.APPLICATION);
-          addClassPathToScope(classPath, scope, loader);
-          return scope;
-      }
+	/**
+	 * @param classPath
+	 *            class path to analyze, delimited by File.pathSeparator
+	 * @param exclusionsFile
+	 *            file holding class hierarchy exclusions. may be null
+	 * @throws IOException
+	 * @throws IllegalStateException
+	 *             if there are problems reading wala properties
+	 */
+	public static AnalysisScope makeAndroidBinaryAnalysisScope(
+			String classPath, File exclusionsFile) throws IOException {
+		if (classPath == null) {
+			throw new IllegalArgumentException("classPath null");
+		}
+		AnalysisScope scope = AnalysisScopeReader.readJavaScope(BASIC_FILE,
+				exclusionsFile, WALA_CLASSLOADER);
+		ClassLoaderReference loader = scope
+				.getLoader(AnalysisScope.APPLICATION);
+		addClassPathToScope(classPath, scope, loader);
+		return scope;
+	}
 
-    /**
-     * Handle .apk file.
-     * @param classPath
-     * @param scope
-     * @param loader
-     */
-    public static void addClassPathToScope(String classPath,
-            AnalysisScope scope, ClassLoaderReference loader) {
-        if (classPath == null) {
-            throw new IllegalArgumentException("null classPath");
-        }
-        try {
-        	String[] paths = classPath.split(File.pathSeparator);
+	public static AnalysisScope makeAndroidBinaryAnalysisScope(
+			JarFile classPath, File exclusionsFile) throws IOException {
+		if (classPath == null) {
+			throw new IllegalArgumentException("classPath null");
+		}
+		AnalysisScope scope = AnalysisScopeReader.readJavaScope(BASIC_FILE,
+				exclusionsFile, WALA_CLASSLOADER);
+		ClassLoaderReference loader = scope
+				.getLoader(AnalysisScope.APPLICATION);
+		scope.addToScope(loader, classPath);
+		return scope;
+	}
 
-            for (int i = 0; i < paths.length; i++) {
-                if (paths[i].endsWith(".jar")) {  //handle jar file
-                    scope.addToScope(loader, new JarFile(paths[i]));
-                }
-                else if (paths[i].endsWith(".apk") || paths[i].endsWith(".dex")) { //Handle android file.
-                    File f = new File(paths[i]);
-                    scope.addToScope(loader, new DexFileModule(f));
-                }
-                else {
-                    File f = new File(paths[i]);
-                    if (f.isDirectory()) { //handle directory FIXME not working for .dex and .apk files into that directory
-                        scope.addToScope(loader, new BinaryDirectoryTreeModule(
-                                f));
-                    } else { //handle java class file.
-                        try {
-                            scope.addClassFileToScope(loader, f);
-                        } catch(InvalidClassFileException e) {
-                            throw new IllegalArgumentException("Invalid class file");
-                        }
-                    }
-                }
-            }
+	public static AnalysisScope makeAndroidBinaryAnalysisScope(URI classPath,
+			File exclusionsFile) throws IOException {
+		if (classPath == null) {
+			throw new IllegalArgumentException("classPath null");
+		}
+		AnalysisScope scope = AnalysisScopeReader.readJavaScope(BASIC_FILE,
+				exclusionsFile, WALA_CLASSLOADER);
+		ClassLoaderReference loader = scope
+				.getLoader(AnalysisScope.APPLICATION);
 
+		final String path = classPath.getPath();
+		if (path.endsWith(".jar")) {
+			scope.addToScope(loader, new JarFile(new File(classPath)));
+		} else if (path.endsWith(".apk") || path.endsWith(".dex")) {
+			scope.addToScope(loader, new DexFileModule(new File(classPath)));
+		} else {
+			throw new IOException(
+					"could not determine type of classpath from file extension: "
+							+ path);
+		}
 
-        } catch (IOException e) {
-            Assertions.UNREACHABLE(e.toString());
-        }
-    }
+		return scope;
+	}
+
+	/**
+	 * Handle .apk file.
+	 * 
+	 * @param classPath
+	 * @param scope
+	 * @param loader
+	 */
+	public static void addClassPathToScope(String classPath,
+			AnalysisScope scope, ClassLoaderReference loader) {
+		if (classPath == null) {
+			throw new IllegalArgumentException("null classPath");
+		}
+		try {
+			String[] paths = classPath.split(File.pathSeparator);
+
+			for (int i = 0; i < paths.length; i++) {
+				if (paths[i].endsWith(".jar")) { // handle jar file
+					scope.addToScope(loader, new JarFile(paths[i]));
+				} else if (paths[i].endsWith(".apk")
+						|| paths[i].endsWith(".dex")) { // Handle android file.
+					File f = new File(paths[i]);
+					scope.addToScope(loader, new DexFileModule(f));
+				} else {
+					File f = new File(paths[i]);
+					if (f.isDirectory()) { // handle directory FIXME not working
+											// for .dex and .apk files into that
+											// directory
+						scope.addToScope(loader, new BinaryDirectoryTreeModule(
+								f));
+					} else { // handle java class file.
+						try {
+							scope.addClassFileToScope(loader, f);
+						} catch (InvalidClassFileException e) {
+							throw new IllegalArgumentException(
+									"Invalid class file");
+						}
+					}
+				}
+			}
+
+		} catch (IOException e) {
+			Assertions.UNREACHABLE(e.toString());
+		}
+	}
 }

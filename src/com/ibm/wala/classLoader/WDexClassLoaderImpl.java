@@ -38,8 +38,6 @@
 
 package com.ibm.wala.classLoader;
 
-import static util.MyLogger.LogLevel.DEBUG;
-
 import java.io.IOException;
 import java.util.Collection;
 import java.util.HashSet;
@@ -48,8 +46,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
-
-import util.MyLogger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.ibm.wala.ipa.callgraph.impl.SetOfClasses;
 import com.ibm.wala.ipa.cha.IClassHierarchy;
@@ -66,6 +64,8 @@ import com.ibm.wala.util.warnings.Warnings;
  *
  */
 public class WDexClassLoaderImpl extends ClassLoaderImpl {
+	private static final Logger logger = LoggerFactory.getLogger(WDexClassLoaderImpl.class);
+	
     private SetOfClasses lExclusions;
     private IClassLoader lParent;
 
@@ -97,7 +97,7 @@ public class WDexClassLoaderImpl extends ClassLoaderImpl {
         
         for (Iterator<Module> it = modules.iterator(); it.hasNext();) {
             Module archive = it.next();
-            MyLogger.log(DEBUG,"add archive: : "+archive);
+            logger.debug("add archive: : "+archive);
             Set<ModuleEntry> classFiles = getDexFiles(archive);
             
             removeClassFiles(classFiles, classModuleEntries);
@@ -176,7 +176,7 @@ public class WDexClassLoaderImpl extends ClassLoaderImpl {
     			else {
     				IClass iClass = new DexIClass(this, cha, dexEntry);
     				if (iClass.getReference().getName().equals(tName)) {
-    					MyLogger.log(DEBUG, "Load class: " + dexEntry.getClassName());
+    					logger.debug("Load class: " + dexEntry.getClassName());
     					loadedClasses.put(tName, iClass);
     				} else {
     					Warnings.add(InvalidDexFile.create(dexEntry.getClassName()));
