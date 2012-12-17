@@ -42,20 +42,18 @@ import static org.jf.dexlib.Util.AccessFlags.ABSTRACT;
 import static org.jf.dexlib.Util.AccessFlags.INTERFACE;
 import static org.jf.dexlib.Util.AccessFlags.PRIVATE;
 import static org.jf.dexlib.Util.AccessFlags.PUBLIC;
-import static util.MyLogger.LogLevel.DEBUG;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import org.jf.dexlib.AnnotationDirectoryItem;
 import org.jf.dexlib.ClassDataItem;
 import org.jf.dexlib.ClassDataItem.EncodedField;
 import org.jf.dexlib.ClassDataItem.EncodedMethod;
 import org.jf.dexlib.ClassDefItem;
 import org.jf.dexlib.TypeIdItem;
 import org.jf.dexlib.TypeListItem;
-
-import util.MyLogger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.ibm.wala.ipa.cha.IClassHierarchy;
 import com.ibm.wala.shrikeCT.InvalidClassFileException;
@@ -63,6 +61,7 @@ import com.ibm.wala.types.TypeReference;
 import com.ibm.wala.util.strings.ImmutableByteArray;
 
 public class DexIClass extends BytecodeClass<IClassLoader> {
+	private static final Logger logger = LoggerFactory.getLogger(DexIClass.class);
 
     /**
      * Item which contains the class definitions.
@@ -252,8 +251,8 @@ public class DexIClass extends BytecodeClass<IClassLoader> {
     	boolean isActivity = false;
     	ArrayList<IMethod> methodsAL = new ArrayList<IMethod>();
     	
-    	MyLogger.log(DEBUG, "class: " + classDef.getClassType().getTypeDescriptor());
-    	MyLogger.log(DEBUG, "superclass: " + classDef.getSuperclass().getTypeDescriptor());
+    	logger.debug("class: " + classDef.getClassType().getTypeDescriptor());
+    	logger.debug("superclass: " + classDef.getSuperclass().getTypeDescriptor());
 
     	if (classDef.getSuperclass().getTypeDescriptor() == "Landroid/app/Activity;")
     		isActivity = true;
@@ -272,8 +271,8 @@ public class DexIClass extends BytecodeClass<IClassLoader> {
             // Create Direct methods (static, private, constructor)
             for (int i = 0; i < directMethods.size(); i++) {
                 EncodedMethod dMethod = directMethods.get(i);
-                MyLogger.log(DEBUG, "direct method info: " + dMethod.method.getMethodString());
-                MyLogger.log(DEBUG, "direct method name: " + dMethod.method.getMethodName().getStringValue());
+                logger.debug("direct method info: " + dMethod.method.getMethodString());
+                logger.debug("direct method name: " + dMethod.method.getMethodName().getStringValue());
                 //methods[i] = new DexIMethod(dMethod,this);
                 methodsAL.add(new DexIMethod(dMethod,this));
 
@@ -285,18 +284,21 @@ public class DexIClass extends BytecodeClass<IClassLoader> {
                 //if (methods[i].isClinit())
                 if (methodsAL.get(i).isClinit()) {
                     clinitId = i;
-                    MyLogger.log(DEBUG, "Clinit id: " + i);
+                    logger.debug("Clinit id: " + i);
                 }
             }
 
             // Create virtual methods (other methods)
             for (int i = 0; i < virtualMethods.size(); i++) {
-                MyLogger.log(DEBUG, "virtual method info: " + virtualMethods.get(i).method.getMethodString());
-                MyLogger.log(DEBUG, "virtual method name: " + virtualMethods.get(i).method.getMethodName().getStringValue());
-                MyLogger.log(DEBUG, "virtual method prototype name: " + virtualMethods.get(i).method.getPrototype().getPrototypeString());
-                MyLogger.log(DEBUG, "virtual method return type: " + virtualMethods.get(i).method.getPrototype().getReturnType().getTypeDescriptor());
+                logger.debug("virtual method info: " + virtualMethods.get(i).method.getMethodString());
+                logger.debug("virtual method name: " + virtualMethods.get(i).method.getMethodName().getStringValue());
+                logger.debug("virtual method prototype name: " + virtualMethods.get(i).method.getPrototype().getPrototypeString());
+                logger.debug("virtual method return type: " + virtualMethods.get(i).method.getPrototype().getReturnType().getTypeDescriptor());
                 //methods[dSize+i] = new DexIMethod(virtualMethods[i],this);
                 methodsAL.add(new DexIMethod(virtualMethods.get(i),this));
+                //is this enough to determine if the class is an activity?
+                //maybe check superclass?  -- but that may also not be enough
+                //may need to keep checking superclass of superclass, etc.
                 if (virtualMethods.get(i).method.getMethodName().getStringValue().equals("onCreate") 
                 		&& virtualMethods.get(i).method.getPrototype().getPrototypeString().equals("(Landroid/os/Bundle;)V"))
                 	isActivity = true;
@@ -304,7 +306,7 @@ public class DexIClass extends BytecodeClass<IClassLoader> {
         }
         
         if (methods == null && methodsAL.size() > 0 && isActivity) {
-            MyLogger.log(DEBUG, "Activity Found, adding ActivityModelMethod to class: " + this.getName().toString());
+            logger.debug("Activity Found, adding ActivityModelMethod to class: " + this.getName().toString());
         	methodsAL.add(new ActivityModelMethod(ActivityModelMethod.getActivityModel(),this));
         }
         

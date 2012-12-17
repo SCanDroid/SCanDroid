@@ -39,7 +39,6 @@
 package com.ibm.wala.classLoader;
 
 import static org.jf.dexlib.ItemType.TYPE_CLASS_DEF_ITEM;
-import static util.MyLogger.LogLevel.DEBUG;
 
 import java.io.File;
 import java.io.IOException;
@@ -50,8 +49,8 @@ import java.util.Iterator;
 import org.jf.dexlib.ClassDefItem;
 import org.jf.dexlib.DexFile;
 import org.jf.dexlib.Section;
-
-import util.MyLogger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A module which is a wrapper around .dex and .apk file.
@@ -59,6 +58,7 @@ import util.MyLogger;
  * @author barjo
  */
 public class DexFileModule implements Module {
+	private static final Logger logger = LoggerFactory.getLogger(DexFileModule.class);
 
     private final DexFile dexfile;
     private final Collection<ModuleEntry> entries;
@@ -68,7 +68,7 @@ public class DexFileModule implements Module {
      *            the .dex or .apk file
      * @throws IllegalArgumentException
      */
-    public DexFileModule(File f) throws IllegalArgumentException {
+    public DexFileModule(File f) throws IllegalArgumentException {    	
         try {
             dexfile = new DexFile(f);
         } catch (IOException e) {
@@ -82,7 +82,7 @@ public class DexFileModule implements Module {
                 .getSectionForType(TYPE_CLASS_DEF_ITEM);
 
         for (ClassDefItem cdefitems : cldeff.getItems()) {
-            MyLogger.log(DEBUG, "DexFileModule adding class: " + cdefitems.getConciseIdentity());
+            logger.debug("DexFileModule adding class: " + cdefitems.getConciseIdentity());
             entries.add(new DexModuleEntry(cdefitems));
         }
     }

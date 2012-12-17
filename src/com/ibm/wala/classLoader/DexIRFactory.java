@@ -12,13 +12,15 @@
 
 package com.ibm.wala.classLoader;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.ibm.wala.cfg.ControlFlowGraph;
-import com.ibm.wala.classLoader.IMethod;
 import com.ibm.wala.ipa.callgraph.Context;
 import com.ibm.wala.shrikeCT.InvalidClassFileException;
 import com.ibm.wala.ssa.DefaultIRFactory;
+import com.ibm.wala.ssa.DexSSABuilder;
 import com.ibm.wala.ssa.IR;
-import com.ibm.wala.ssa.IRFactory;
 import com.ibm.wala.ssa.SSACFG;
 import com.ibm.wala.ssa.SSAInstruction;
 import com.ibm.wala.ssa.SSAOptions;
@@ -26,12 +28,8 @@ import com.ibm.wala.ssa.ShrikeIndirectionData;
 import com.ibm.wala.ssa.SymbolTable;
 import com.ibm.wala.ssa.analysis.DeadAssignmentElimination;
 
-import com.ibm.wala.ssa.DexSSABuilder;
-
-import util.MyLogger;
-import static util.MyLogger.LogLevel.WARNING;
-
 public class DexIRFactory extends DefaultIRFactory {
+	private static final Logger logger = LoggerFactory.getLogger(DexIRFactory.class);
 
     public final static boolean buildLocalMap = false;
 
@@ -132,7 +130,7 @@ public class DexIRFactory extends DefaultIRFactory {
             @SuppressWarnings("unchecked")
             @Override
             protected ShrikeIndirectionData getIndirectionData() {
-                MyLogger.log(WARNING, "Implement ShrikeIndirectionData ?");
+                logger.warn("Implement ShrikeIndirectionData ?");
                 return indirectionData;
             }
         };
