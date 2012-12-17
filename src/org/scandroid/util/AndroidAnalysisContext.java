@@ -47,6 +47,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Deque;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -57,14 +58,13 @@ import org.scandroid.synthmethod.DefaultSCanDroidOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import ch.qos.logback.classic.Level;
-
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Queues;
 import com.google.common.collect.Sets;
 import com.ibm.wala.classLoader.DexFileModule;
+import com.ibm.wala.classLoader.IClass;
 import com.ibm.wala.classLoader.Module;
-import com.ibm.wala.classLoader.ModuleEntry;
 import com.ibm.wala.dex.util.config.DexAnalysisScopeReader;
 import com.ibm.wala.ipa.callgraph.AnalysisCache;
 import com.ibm.wala.ipa.callgraph.AnalysisOptions;
@@ -368,6 +368,32 @@ public class AndroidAnalysisContext {
 			}
 		}
 		return summary;
+	}
+	
+	/**
+	 * Returns all concrete classes implementing the given interface or any subinterfaces
+	 * @param iRoot
+	 * @return
+	 */
+	public Collection<IClass> concreteClassesForInterface(IClass iRoot) {
+		Set<IClass> clazzes = Sets.newHashSet();
+		Set<IClass> done = Sets.newHashSet();
+		Deque<IClass> todo = Queues.newArrayDeque();
+		todo.push(iRoot);
+		
+		while (!todo.isEmpty()) {
+			IClass i = todo.pop();
+			for (IClass clazz : cha.getImplementors(i.getReference())) {
+				if (clazz.isInterface() && !done.contains(clazz)) {
+					done.add(i);
+					todo.push(clazz);
+				} else if (!clazz.isAbstract()) {
+					clazzes.add(clazz);
+				}
+			}
+		}
+		
+		return clazzes;
 	}
 	
 	public ISCanDroidOptions getOptions() {

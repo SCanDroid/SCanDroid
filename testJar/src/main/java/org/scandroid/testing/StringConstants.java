@@ -7,4 +7,12 @@ public class StringConstants {
 	public String returnFoo() {
 		return FOO;
 	}
+	
+	public String returnBar() {
+		return BAR;
+	}
+	
+	public String returnSomething() {
+		return returnFoo();
+	}
 }

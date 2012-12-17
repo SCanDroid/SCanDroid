@@ -351,14 +351,28 @@ public class CGAnalysisContext<E extends ISSABasicBlock> {
 						.getHeapModel().getPointerKeyForArrayContents(ik));
 				if (pointsToSet.isEmpty()) {
 					logger.debug("pointsToSet empty for array contents, creating InstanceKey manually");
-					InstanceKey contentsIK = new ConcreteTypeKey(pa
-							.getClassHierarchy().lookupClass(
-									typeRef.getArrayElementType()));
-					final InstanceKeyElement elt = new InstanceKeyElement(
-							contentsIK);
-					if (!elts.contains(elt)) {
-						elts.add(elt);
-						iks.push(contentsIK);
+					final IClass contentsClass = pa.getClassHierarchy()
+							.lookupClass(typeRef.getArrayElementType());
+					if (contentsClass.isInterface()) {
+						for (IClass implementor : analysisContext.concreteClassesForInterface(contentsClass)) {
+							final InstanceKey contentsIK = new ConcreteTypeKey(
+									implementor);
+							final InstanceKeyElement elt = new InstanceKeyElement(
+									contentsIK);
+							if (!elts.contains(elt)) {
+								elts.add(elt);
+								iks.push(contentsIK);
+							}
+						}
+					} else {
+						InstanceKey contentsIK = new ConcreteTypeKey(
+								contentsClass);
+						final InstanceKeyElement elt = new InstanceKeyElement(
+								contentsIK);
+						if (!elts.contains(elt)) {
+							elts.add(elt);
+							iks.push(contentsIK);
+						}
 					}
 				} else {
 					for (InstanceKey contentsIK : pointsToSet) {
@@ -377,7 +391,9 @@ public class CGAnalysisContext<E extends ISSABasicBlock> {
 				final TypeReference fieldTypeRef = field
 						.getFieldTypeReference();
 				elts.add(new FieldElement(ik, field.getReference()));
-				if (fieldTypeRef.isPrimitiveType()) {
+				final IClass fieldClass = analysisContext.getClassHierarchy()
+						.lookupClass(fieldTypeRef);
+				if (fieldTypeRef.isPrimitiveType() || fieldClass == null) {
 					continue;
 				} else if (fieldTypeRef.isArrayType()) {
 					PointerKey pk = pa.getHeapModel()
@@ -414,8 +430,7 @@ public class CGAnalysisContext<E extends ISSABasicBlock> {
 									.isInterface(fieldTypeRef)) {
 						logger.debug("pointsToSet empty for reference field, creating InstanceKey manually");
 						InstanceKey fieldIK = new ConcreteTypeKey(
-								analysisContext.getClassHierarchy()
-										.lookupClass(fieldTypeRef));
+								fieldClass);
 						final InstanceKeyElement elt = new InstanceKeyElement(
 								fieldIK);
 						if (!elts.contains(elt)) {
