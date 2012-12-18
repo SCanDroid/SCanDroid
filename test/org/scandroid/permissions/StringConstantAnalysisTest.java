@@ -33,7 +33,6 @@ import com.ibm.wala.ssa.SSAInstruction;
 import com.ibm.wala.ssa.SSAInvokeInstruction;
 import com.ibm.wala.ssa.analysis.IExplodedBasicBlock;
 import com.ibm.wala.types.MethodReference;
-import com.ibm.wala.util.shrike.ShrikeUtil;
 import com.ibm.wala.util.strings.StringStuff;
 
 @RunWith(Parameterized.class)

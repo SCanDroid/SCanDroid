@@ -2,7 +2,7 @@
  *
  * Copyright (c) 2009-2012,
  *
- *  Galois, Inc. (Aaron Tomb <atomb@galois.com>, Rogan Creswick <creswick@galois.com>)
+ *  Galois, Inc. (Aaron Tomb <atomb@galois.com>, Rogan Creswick <creswick@galois.com>, Adam Foltzer <acfoltzer@galois.com>)
  *  Steve Suh    <suhsteve@gmail.com>
  *
  * All rights reserved.
@@ -70,6 +70,7 @@ import org.scandroid.spec.ISpecs;
 import org.scandroid.spec.MethodNamePattern;
 import org.scandroid.spec.SinkSpec;
 import org.scandroid.spec.SourceSpec;
+import org.scandroid.spec.SpecUtils;
 import org.scandroid.spec.StaticSpecs;
 import org.scandroid.synthmethod.DefaultSCanDroidOptions;
 import org.scandroid.synthmethod.TestSpecs;
@@ -428,8 +429,8 @@ public class DataflowTest {
 		ISpecs staticsSpecs = new StaticSpecs(ctx.getClassHierarchy(),
 				entrypoint.getMethod().getSignature());
 		// ISpecs specs = TestSpecs.combine(methodSpecs, sourceSinkSpecs);
-		ISpecs specs = TestSpecs.combine(staticsSpecs,
-				TestSpecs.combine(methodSpecs, sourceSinkSpecs));
+		ISpecs specs = SpecUtils.combine(staticsSpecs,
+				SpecUtils.combine(methodSpecs, sourceSinkSpecs));
 
 		Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> dfResults = runDFAnalysis(
 				ctx, specs);

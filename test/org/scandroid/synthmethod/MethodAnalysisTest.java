@@ -1,8 +1,8 @@
-/*
+/**
  *
  * Copyright (c) 2009-2012,
  *
- *  Galois, Inc. (Aaron Tomb <atomb@galois.com>, Rogan Creswick <creswick@galois.com>)
+ *  Galois, Inc. (Aaron Tomb <atomb@galois.com>, Rogan Creswick <creswick@galois.com>, Adam Foltzer <acfoltzer@galois.com>)
  *  Steve Suh    <suhsteve@gmail.com>
  *
  * All rights reserved.
@@ -81,6 +81,7 @@ import org.scandroid.spec.ISpecs;
 import org.scandroid.spec.MethodNamePattern;
 import org.scandroid.spec.SinkSpec;
 import org.scandroid.spec.SourceSpec;
+import org.scandroid.spec.SpecUtils;
 import org.scandroid.spec.StaticSpecs;
 import org.scandroid.util.AndroidAnalysisContext;
 import org.scandroid.util.CGAnalysisContext;
@@ -292,8 +293,8 @@ public class MethodAnalysisTest {
 				.getMethod().getReference());
 		methodSummary.setStatic(entrypoint.getMethod().isStatic());
 
-		ISpecs specs1 = TestSpecs.combine(sourceSinkSpecs, TestSpecs.combine(
-				sourceSinkSpecs, TestSpecs.combine(new MethodSummarySpecs(
+		ISpecs specs1 = SpecUtils.combine(sourceSinkSpecs, SpecUtils.combine(
+				sourceSinkSpecs, SpecUtils.combine(new MethodSummarySpecs(
 						methodSummary),
 						new StaticSpecs(noSummaryContext.getClassHierarchy(),
 								entrypoint.getMethod().getSignature()))));
@@ -309,7 +310,7 @@ public class MethodAnalysisTest {
 		System.out.println(" ---  DIRECT RESULTS DONE             ---  ");
 		System.out.println(" ----------------------------------------  ");
 
-		ISpecs specs2 = TestSpecs.combine(sourceSinkSpecs, TestSpecs.combine(
+		ISpecs specs2 = SpecUtils.combine(sourceSinkSpecs, SpecUtils.combine(
 				new MethodSummarySpecs(methodSummary), new StaticSpecs(
 						summaryContext.getClassHierarchy(), entrypoint
 								.getMethod().getSignature())));

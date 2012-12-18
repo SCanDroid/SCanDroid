@@ -2,7 +2,7 @@
  *
  * Copyright (c) 2009-2012,
  *
- *  Galois, Inc. (Aaron Tomb <atomb@galois.com>, Rogan Creswick <creswick@galois.com>)
+ *  Galois, Inc. (Aaron Tomb <atomb@galois.com>, Rogan Creswick <creswick@galois.com>, Adam Foltzer <acfoltzer@galois.com>)
  *  Steve Suh    <suhsteve@gmail.com>
  *
  * All rights reserved.
@@ -65,9 +65,9 @@ import org.scandroid.flow.types.ParameterFlow;
 import org.scandroid.flow.types.ReturnFlow;
 import org.scandroid.flow.types.StaticFieldFlow;
 import org.scandroid.spec.ISpecs;
+import org.scandroid.spec.SpecUtils;
 import org.scandroid.spec.StaticSpecs;
 import org.scandroid.synthmethod.DefaultSCanDroidOptions;
-import org.scandroid.synthmethod.TestSpecs;
 import org.scandroid.synthmethod.XMLSummaryWriter;
 import org.scandroid.util.AndroidAnalysisContext;
 import org.scandroid.util.CGAnalysisContext;
@@ -287,7 +287,7 @@ public class Summarizer<E extends ISSABasicBlock> {
 			MethodSummary mSummary, IProgressMonitor monitor,
 			ISpecs additionalSpecs) {
 
-		ISpecs specs = TestSpecs.combine(additionalSpecs, TestSpecs.combine(
+		ISpecs specs = SpecUtils.combine(additionalSpecs, SpecUtils.combine(
 				new MethodSummarySpecs(mSummary),
 				new StaticSpecs(cgContext.getClassHierarchy(), mSummary
 						.getMethod().getSignature())));
