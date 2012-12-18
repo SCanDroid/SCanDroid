@@ -1,10 +1,13 @@
-/*
+/**
  *
  * Copyright (c) 2009-2012,
  *
+ *  Galois, Inc. (Aaron Tomb <atomb@galois.com>, 
+ *                Rogan Creswick <creswick@galois.com>, 
+ *                Adam Foltzer <acfoltzer@galois.com>)
  *  Adam Fuchs          <afuchs@cs.umd.edu>
  *  Avik Chaudhuri      <avik@cs.umd.edu>
- *  Steve Suh           <suhsteve@gmail.com>
+ *  Steve Suh    <suhsteve@gmail.com>
  *
  * All rights reserved.
  *
@@ -47,14 +50,11 @@ import java.util.Set;
 import org.scandroid.domain.CodeElement;
 import org.scandroid.domain.DomainElement;
 import org.scandroid.domain.IFDSTaintDomain;
-import org.scandroid.flow.functions.IDTransferFunctions;
-import org.scandroid.flow.functions.IFDSTaintFlowFunctionProvider;
 import org.scandroid.flow.functions.TaintTransferFunctions;
 import org.scandroid.flow.types.FlowType;
 import org.scandroid.util.CGAnalysisContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 
 import com.google.common.collect.Lists;
 import com.ibm.wala.dataflow.IFDS.IFlowFunctionMap;

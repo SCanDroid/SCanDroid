@@ -1,9 +1,11 @@
-/*
+/**
  *
  * Copyright (c) 2009-2012,
  *
- *  Galois, Inc. (Aaron Tomb <atomb@galois.com>)
- *  Steve Suh           <suhsteve@gmail.com>
+ *  Galois, Inc. (Aaron Tomb <atomb@galois.com>, 
+ *                Rogan Creswick <creswick@galois.com>, 
+ *                Adam Foltzer <acfoltzer@galois.com>)
+ *  Steve Suh    <suhsteve@gmail.com>
  *
  * All rights reserved.
  *
@@ -38,7 +40,6 @@
 
 package org.scandroid.spec;
 
-import java.util.Arrays;
 import java.util.Map;
 import java.util.Set;
 

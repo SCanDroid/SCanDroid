@@ -1,8 +1,10 @@
-/*
+/**
  *
  * Copyright (c) 2009-2012,
  *
- *  Galois, Inc. (Aaron Tomb <atomb@galois.com>, Rogan Creswick <creswick@galois.com>)
+ *  Galois, Inc. (Aaron Tomb <atomb@galois.com>, 
+ *                Rogan Creswick <creswick@galois.com>, 
+ *                Adam Foltzer <acfoltzer@galois.com>)
  *  Steve Suh    <suhsteve@gmail.com>
  *
  * All rights reserved.
@@ -35,6 +37,7 @@
  *
  *
  */
+
 package org.scandroid.flow.functions;
 
 import java.util.List;

@@ -1,10 +1,11 @@
-/*
+/**
  *
  * Copyright (c) 2009-2012,
  *
  *  Adam Fuchs          <afuchs@cs.umd.edu>
  *  Avik Chaudhuri      <avik@cs.umd.edu>
  *  Steve Suh           <suhsteve@gmail.com>
+ *  Galois, Inc. (Adam Foltzer <acfoltzer@galois.com)
  *
  * All rights reserved.
  *
