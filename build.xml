@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<project basedir="." default="build" name="SimpleAnalysisPluginLibDexLib" xmlns:jacoco="antlib:org.jacoco.ant">
+<project basedir="." default="build" name="SimpleAnalysisPluginLibDexLib" xmlns:jacoco="antlib:org.jacoco.ant" xmlns:ivy="antlib:org.apache.ivy.ant">
 	<property environment="env" />
 	<property name="LIBS" value="${basedir}/lib" />
 	<property name="WALA" value="${basedir}/wala" />
@@ -10,7 +10,18 @@
 	<property name="src-dir" value="src" />
 	<property name="test-src-dir" value="test" />
 
+	<!-- ================================= 
+          target: retrieve              
+         ================================= -->
+    <target name="retrieve" description="download project dependencies">
+    	<ivy:settings />
+        <ivy:retrieve />
+    	<ivy:cachepath pathid="IvyDeps.classpath" />
+    </target>
+
+	
 	<path id="SimpleAnalysisPlugin.classpath">
+		<path refid="IvyDeps.classpath" />
 		<pathelement location="bin" />
 		<pathelement location="${basedir}" />
 		<!-- <pathelement location="${LIBS}/android_modeled2.jar"/> -->
@@ -23,18 +34,9 @@
 		<pathelement location="${WALA}/wala_shrike.jar" />
 		<pathelement location="${WALA}/wala_util.jar" />
 		<pathelement location="${LIBS}/dexlib-1.3.4-dev.jar" />
-		<pathelement location="${LIBS}/guava-12.0.1.jar" />
-		<pathelement location="${LIBS}/jgrapht-0.8.3.jar" />
-		<pathelement location="${LIBS}/junit-4.11-beta-1.jar" />
-		<pathelement location="${LIBS}/commons-cli-1.2.jar" />
-		<pathelement location="${LIBS}/commons-io-2.4.jar" />
-		<pathelement location="${LIBS}/commons-lang3-3.1.jar" />
-		<pathelement location="${LIBS}/slf4j-api-1.7.1.jar" />
-		<pathelement location="${LIBS}/logback-core-1.0.7.jar" />
-		<pathelement location="${LIBS}/logback-classic-1.0.7.jar" />
 	</path>
 
-	<target name="init" depends="init-mac,init-linux,init-windows">
+	<target name="init" depends="retrieve,init-mac,init-linux,init-windows">
 		<mkdir dir="bin" />
 		<copy includeemptydirs="false" todir="bin">
 			<fileset dir="${src-dir}">
@@ -162,14 +164,14 @@
 			<zipfileset excludes="META-INF/*.SF" src="${WALA}/wala_shrike.jar" />
 			<zipfileset excludes="META-INF/*.SF" src="${WALA}/wala_util.jar" />
 			<zipfileset excludes="META-INF/*.SF" src="${LIBS}/dexlib-1.3.4-dev.jar" />
-			<zipfileset excludes="META-INF/*.SF" src="${LIBS}/guava-12.0.1.jar" />
+			<zipfileset excludes="META-INF/*.SF" src="${LIBS}/guava-13.0.1.jar" />
 			<zipfileset excludes="META-INF/*.SF" src="${LIBS}/jgrapht-0.8.3.jar" />
 			<zipfileset excludes="META-INF/*.SF" src="${LIBS}/commons-cli-1.2.jar" />
 			<zipfileset excludes="META-INF/*.SF" src="${LIBS}/commons-io-2.4.jar" />
 			<zipfileset excludes="META-INF/*.SF" src="${LIBS}/commons-lang3-3.1.jar" />
-			<zipfileset excludes="META-INF/*.SF" src="${LIBS}/slf4j-api-1.7.1.jar" />
-			<zipfileset excludes="META-INF/*.SF" src="${LIBS}/logback-classic-1.0.7.jar" />
-			<zipfileset excludes="META-INF/*.SF" src="${LIBS}/logback-core-1.0.7.jar" />
+			<zipfileset excludes="META-INF/*.SF" src="${LIBS}/slf4j-api-1.7.2.jar" />
+			<zipfileset excludes="META-INF/*.SF" src="${LIBS}/logback-classic-1.0.9.jar" />
+			<zipfileset excludes="META-INF/*.SF" src="${LIBS}/logback-core-1.0.9.jar" />
 		</jar>
 	</target>
 
