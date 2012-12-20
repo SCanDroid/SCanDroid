@@ -15,8 +15,15 @@ Fetch SCanDroid from github
 git clone https://github.com/SCanDroid/SCanDroid.git
 ```
 
-####WALA
-Download [WALA](http://wala.sourceforge.net/wiki/index.php/UserGuide:Accessing_WALA_Using_Git) and create jars
+####WALA 
+
+Download our fork of WALA from GitHub
+(https://github.com/SCanDroid/WALA) (WALA is an IBM project, hosted
+here:
+[WALA](http://wala.sourceforge.net/wiki/index.php/UserGuide:Accessing_WALA_Using_Git)
+it is distributed under the terms of the Eclipse Public License, and
+all WALA artifacts that may be included with SCanDroid retain that
+license.)  and create jars
 
 Import WALA into Eclipse
 
@@ -27,7 +34,8 @@ Import WALA into Eclipse
 5. Uncheck the following WALA related projects:  _polyglot_ and _js_
 6. Click Finish
 
-Export the following WALA .jar files into SCanDroid/wala
+Export the following WALA .jar files into SCanDroid/wala, if they do
+not already exist.
 - wala_cast.jar
 - wala_cast_java.jar
 - wala_cast_java_jdt.jar
@@ -43,13 +51,21 @@ Modify your WALA properties file according to [WALA:Getting Started](http://wala
 - SCanDroid/conf/wala.properties.windows
 
 ####Dependencies
-Place other dependencies in _SCanDroid/lib_.  Your dependency files should be similar to the following: 
 
-`dexlib-1.3.4-dev.jar`, `guava-12.0.1.jar`, `jgrapht-0.8.3.jar`, `junit-4.9b2.jar`, `commons-cli-1.2.jar`.
+We use Apache Ivy to manage most of the other depenedencies, with one
+exception.  dexlib-1.3.4-dev is a BSD3-licensed library available from
+http://code.google.com/p/smali/.  The jar is located in
+_SCanDroid/lib_.
 
-If you downloaded a different version, please edit build.xml and change the .jar names accordingly.
-
-Finally, SCanDroid uses the Android library during the analysis.  The Android jar included in the [Android SDK](developer.android.com/sdk) includes methods that are stubbed out.  This makes it lightweight and ideal for download and development, however in order to do a sound analysis SCanDroid requires either a well modeled Android library or the full implementation.  You may model your own, compile the full implemntation, or download a precompiled version online. [GrepCode](http://grepcode.com/project/repository.grepcode.com/java/ext/com.google.android/android/) has some precompiled Android libraries that may be used.
+Finally, SCanDroid uses the Android library during the analysis.  The
+Android jar included in the [Android SDK](developer.android.com/sdk)
+includes methods that are stubbed out.  This makes it lightweight and
+ideal for download and development, however in order to do a sound
+analysis SCanDroid requires either a well modeled Android library or
+the full implementation.  You may model your own, compile the full
+implemntation, or download a precompiled version
+online. [GrepCode](http://grepcode.com/project/repository.grepcode.com/java/ext/com.google.android/android/)
+has some precompiled Android libraries that may be used.
 
 ####Compiling and Running
 Compiling SCanDroid
@@ -74,4 +90,4 @@ Dependencies
 - [JGraphT](http://jgrapht.org) is a free Java class library that provides mathematical graph-theory objects and algorithms. It runs on Java 2 Platform (requires JDK 1.6 or later). JGraphT is licensed under the terms of the GNU Lesser General Public License (LGPL). `0.8.3`
 - [Apache Commons CLI](http://commons.apache.org/cli) provides an API for parsing command line options passed to programs. The Commons CLI library is licensed under the Apache Software License. `1.2`
 - [dexlib](http://code.google.com/p/smali) is a library to read in and write out dex files. dexlib is licensed under the BSD License. `1.3.4`
-    - [Guava](http://code.google.com/p/guava-libraries/) contains several of Google's core libraries. A dependency used by dexlib and is under the Apache License. `12.0.1`
+- [Guava](http://code.google.com/p/guava-libraries/) contains several of Google's core libraries. A dependency used by dexlib and is under the Apache License. `12.0.1`

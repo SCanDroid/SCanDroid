@@ -10,12 +10,50 @@
 	<property name="src-dir" value="src" />
 	<property name="test-src-dir" value="test" />
 
+  <!--
+      here is the version of ivy we will use. change this property to try a newer 
+      version if you want 
+  -->
+  <property name="ivy.install.version" value="2.0.0-beta1"/>
+  <property name="ivy.jar.dir" value="${LIBS}/ivy"/>
+  <property name="ivy.jar.file" value="${ivy.jar.dir}/ivy.jar"/>
+
+  <target name="download-ivy" unless="skip.download">
+    <mkdir dir="${ivy.jar.dir}"/>
+    <!--
+        download Ivy from web site so that it can be used even without any special installation 
+    -->
+    <echo message="installing ivy..."/>
+    <get src="http://repo1.maven.org/maven2/org/apache/ivy/ivy/${ivy.install.version}/ivy-${ivy.install.version}.jar" dest="${ivy.jar.file}" usetimestamp="true"/>
+  </target>
+
+  <!--
+      ================================= 
+      target: install-ivy         
+      this target is not necessary if you put ivy.jar in your ant lib directory
+      if you already have ivy in your ant lib, you can simply remove this
+      target and the dependency the 'go' target has on it
+      ================================= 
+  -->
+  <target name="install-ivy" depends="download-ivy" description="--> install ivy">
+    <!--
+        try to load ivy here from local ivy dir, in case the user has not already dropped
+    	  it into ant's lib dir (note that the latter copy will always take precedence).
+    	  We will not fail as long as local lib dir exists (it may be empty) and
+    	  ivy is in at least one of ant's lib dir or the local lib dir. 
+    -->
+    <path id="ivy.lib.path">
+      <fileset dir="${ivy.jar.dir}" includes="*.jar"/>
+    </path>
+    <taskdef resource="org/apache/ivy/ant/antlib.xml" uri="antlib:org.apache.ivy.ant" classpathref="ivy.lib.path"/>
+  </target>
+
 	<!-- ================================= 
           target: retrieve              
          ================================= -->
-    <target name="retrieve" description="download project dependencies">
+    <target name="retrieve" depends="install-ivy" description="download project dependencies">
     	<ivy:settings />
-        <ivy:retrieve />
+      <ivy:retrieve />
     	<ivy:cachepath pathid="IvyDeps.classpath" />
     </target>
 
@@ -222,7 +260,8 @@
 		</junit>
 	</target>
 
-	<taskdef uri="antlib:org.jacoco.ant" resource="org/jacoco/ant/antlib.xml">
+	<taskdef uri="antlib:org.jacoco.ant"
+           resource="org/jacoco/ant/antlib.xml">
 		<classpath path="lib/jacocoant.jar" />
 	</taskdef>
 
