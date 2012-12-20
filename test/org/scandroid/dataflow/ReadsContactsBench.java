@@ -38,54 +38,20 @@
  *
  */
 
-package org.scandroid.spec;
+package org.scandroid.dataflow;
 
-import java.util.Map;
-import java.util.Set;
+import org.junit.Test;
+import org.scandroid.SeparateEntryAnalysis;
 
-import org.scandroid.domain.CodeElement;
-import org.scandroid.flow.types.FlowType;
-import org.scandroid.util.CGAnalysisContext;
+public class ReadsContactsBench {
 
-import com.ibm.wala.classLoader.IMethod;
-import com.ibm.wala.dataflow.IFDS.ISupergraph;
-import com.ibm.wala.ipa.callgraph.CGNode;
-import com.ibm.wala.ipa.callgraph.CallGraph;
-import com.ibm.wala.ipa.callgraph.propagation.PointerAnalysis;
-import com.ibm.wala.ipa.cfg.BasicBlockInContext;
-import com.ibm.wala.ssa.ISSABasicBlock;
-import com.ibm.wala.ssa.SSAInvokeInstruction;
-
-
-public abstract class SourceSpec implements ISourceSpec {
-
-    protected MethodNamePattern namePattern;
-    protected int[] argNums; // null = all arguments, empty = no arguments?
-
-	public static int[] getNewArgNums(int n) {
-		int[] newArgNums = new int[n];
-		for (int i = 0; i < n; i++) {
-			newArgNums[i] = i+1;
-		}
-		return newArgNums;
+	@Test
+	public void runReadsContacts() throws Throwable {
+		SeparateEntryAnalysis.main(new String[] { 
+				"--android-lib", "data/android-2.3.7_r1.jar", 
+				"-l", 
+				"--verbose", "INFO",
+				"data/testdata/ReadsContactApp.apk" });
 	}
-	
-	public MethodNamePattern getNamePattern() {
-		return namePattern;
-	}
-	
-	public int[] getArgNums() {
-		return argNums;
-	}		
-	
-	@Override
-	public abstract String toString();
-	
-	abstract public<E extends ISSABasicBlock> void addDomainElements(CGAnalysisContext<E> ctx,
-			Map<BasicBlockInContext<E>, Map<FlowType<E>,Set<CodeElement>>> taintMap, 
-			IMethod im, BasicBlockInContext<E> block, SSAInvokeInstruction invInst,
-			int[] newArgNums, ISupergraph<BasicBlockInContext<E>, CGNode> graph, 
-			PointerAnalysis pa, CallGraph cg);
 
-	
 }

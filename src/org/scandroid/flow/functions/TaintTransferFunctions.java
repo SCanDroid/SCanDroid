@@ -1,8 +1,10 @@
-/*
+/**
  *
  * Copyright (c) 2009-2012,
  *
- *  Galois, Inc. (Aaron Tomb <atomb@galois.com>, Rogan Creswick <creswick@galois.com>)
+ *  Galois, Inc. (Aaron Tomb <atomb@galois.com>, 
+ *                Rogan Creswick <creswick@galois.com>, 
+ *                Adam Foltzer <acfoltzer@galois.com>)
  *  Steve Suh    <suhsteve@gmail.com>
  *
  * All rights reserved.
@@ -299,17 +301,15 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 		for (CodeElement ce : getStaticFieldAccessCodeElts(node,
 				(SSAGetInstruction) inst)) {
 			StaticFieldElement sfe = (StaticFieldElement) ce;
-			IField field = pa.getClassHierarchy()
-					.resolveField(sfe.getRef());
+			IField field = pa.getClassHierarchy().resolveField(sfe.getRef());
 			if (field.isFinal()) {
 				continue;
 			}
-			final StaticFieldFlow<E> taintSource = new StaticFieldFlow<E>(dest, field,
-					true);
+			final StaticFieldFlow<E> taintSource = new StaticFieldFlow<E>(dest,
+					field, true);
 			elts.add(new DomainElement(ce, taintSource));
 		}
-		IUnaryFlowFunction newTaints = new ConstantFlowFunction<E>(domain,
-				elts);
+		IUnaryFlowFunction newTaints = new ConstantFlowFunction<E>(domain, elts);
 		return compose(flowFunction, newTaints);
 	}
 

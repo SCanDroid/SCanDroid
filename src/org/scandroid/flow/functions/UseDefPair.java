@@ -53,4 +53,9 @@ final class UseDefPair
     public CodeElement getDef() {
         return def;
     }
+	@Override
+	public String toString() {
+		return "UseDefPair [use=" + use + ", def=" + def + "]";
+	}
+    
 }

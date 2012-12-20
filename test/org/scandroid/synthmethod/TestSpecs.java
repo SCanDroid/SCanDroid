@@ -1,8 +1,10 @@
-/*
+/**
  *
  * Copyright (c) 2009-2012,
  *
- *  Galois, Inc. (Aaron Tomb <atomb@galois.com>, Rogan Creswick <creswick@galois.com>)
+ *  Galois, Inc. (Aaron Tomb <atomb@galois.com>, 
+ *                Rogan Creswick <creswick@galois.com>, 
+ *                Adam Foltzer <acfoltzer@galois.com>)
  *  Steve Suh    <suhsteve@gmail.com>
  *
  * All rights reserved.
@@ -37,11 +39,7 @@
  */
 package org.scandroid.synthmethod;
 
-import java.lang.reflect.Array;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
 
 import org.scandroid.MethodSummarySpecs;
 import org.scandroid.spec.CallArgSinkSpec;
@@ -53,7 +51,6 @@ import org.scandroid.spec.SourceSpec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.collect.Lists;
 import com.ibm.wala.classLoader.IMethod;
 import com.ibm.wala.ipa.cha.ClassHierarchy;
 import com.ibm.wala.ipa.summaries.MethodSummary;
@@ -98,49 +95,5 @@ public class TestSpecs implements ISpecs {
 		final MethodSummarySpecs methodSummarySpecs = new MethodSummarySpecs(
 				methodSummary);
 		return methodSummarySpecs;
-	}
-
-	/**
-	 * Combine two specs objects.
-	 * 
-	 * @param s1
-	 * @param s2
-	 * @return
-	 */
-	public static ISpecs combine(final ISpecs s1, final ISpecs s2) {
-		return new ISpecs() {
-			@Override
-			public SourceSpec[] getSourceSpecs() {
-				SourceSpec[] s1Sources = s1.getSourceSpecs();
-				SourceSpec[] s2Sources = s2.getSourceSpecs();
-				
-				return concat(s1Sources, s2Sources);
-			}
-			
-			@Override
-			public SinkSpec[] getSinkSpecs() {
-				return concat(s1.getSinkSpecs(), s2.getSinkSpecs());
-			}
-			
-			@Override
-			public MethodNamePattern[] getEntrypointSpecs() {
-				return concat(s1.getEntrypointSpecs(), s2.getEntrypointSpecs());
-			}
-
-			@SuppressWarnings("unchecked")
-			private <T> T[] concat(final T[] a, final T[] b) {
-				if (null == a) {
-					return b;
-				}
-				if (null == b) {
-					return a;
-				}
-				
-				T[] newArray = (T[]) Array.newInstance(a.getClass().getComponentType(), a.length + b.length);
-				System.arraycopy(a, 0, newArray, 0, a.length);
-				System.arraycopy(b, 0, newArray, a.length, b.length);
-				return newArray;
-			}
-		};
 	}
 }

@@ -1,230 +1,302 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<project basedir="." default="build" name="SimpleAnalysisPluginLibDexLib">
-    <property environment="env"/>
-    <property name="LIBS" value="${basedir}/lib"/>
-    <property name="WALA" value="${basedir}/wala"/>
-    <property name="debuglevel" value="source,lines,vars"/>
-    <property name="target" value="1.6"/>
-    <property name="source" value="1.6"/>
-	
-	<property name="src-dir" value="src"/>
-	<property name="test-src-dir" value="test"/>
+<project basedir="." default="build" name="SimpleAnalysisPluginLibDexLib" xmlns:jacoco="antlib:org.jacoco.ant" xmlns:ivy="antlib:org.apache.ivy.ant">
+	<property environment="env" />
+	<property name="LIBS" value="${basedir}/lib" />
+	<property name="WALA" value="${basedir}/wala" />
+	<property name="debuglevel" value="source,lines,vars" />
+	<property name="target" value="1.6" />
+	<property name="source" value="1.6" />
 
-    <path id="SimpleAnalysisPlugin.classpath">
-        <pathelement location="bin"/>
-    	<pathelement location="${basedir}" />
-<!--        <pathelement location="${LIBS}/android_modeled2.jar"/> -->
-        <pathelement location="${WALA}/wala_cast.jar"/>
-        <pathelement location="${WALA}/wala_cast_java.jar"/>
-        <pathelement location="${WALA}/wala_cast_java_jdt.jar"/>
-        <pathelement location="${WALA}/wala_core_tests.jar"/>
-        <pathelement location="${WALA}/wala_core.jar"/>
-        <pathelement location="${WALA}/wala_ide.jar"/>
-        <pathelement location="${WALA}/wala_shrike.jar"/>
-        <pathelement location="${WALA}/wala_util.jar"/>
-        <pathelement location="${LIBS}/dexlib-1.3.4-dev.jar"/>
-        <pathelement location="${LIBS}/guava-12.0.1.jar"/>
-        <pathelement location="${LIBS}/jgrapht-0.8.3.jar"/>
-        <pathelement location="${LIBS}/junit-4.11-beta-1.jar"/>
-    	<pathelement location="${LIBS}/commons-cli-1.2.jar"/>
-    	<pathelement location="${LIBS}/commons-io-2.4.jar"/>
-    	<pathelement location="${LIBS}/commons-lang3-3.1.jar"/>
-    	<pathelement location="${LIBS}/slf4j-api-1.7.1.jar"/>
-    	<pathelement location="${LIBS}/logback-core-1.0.7.jar"/>
-    	<pathelement location="${LIBS}/logback-classic-1.0.7.jar"/>
+	<property name="src-dir" value="src" />
+	<property name="test-src-dir" value="test" />
+
+  <!--
+      here is the version of ivy we will use. change this property to try a newer 
+      version if you want 
+  -->
+  <property name="ivy.install.version" value="2.0.0-beta1"/>
+  <property name="ivy.jar.dir" value="${LIBS}/ivy"/>
+  <property name="ivy.jar.file" value="${ivy.jar.dir}/ivy.jar"/>
+
+  <target name="download-ivy" unless="skip.download">
+    <mkdir dir="${ivy.jar.dir}"/>
+    <!--
+        download Ivy from web site so that it can be used even without any special installation 
+    -->
+    <echo message="installing ivy..."/>
+    <get src="http://repo1.maven.org/maven2/org/apache/ivy/ivy/${ivy.install.version}/ivy-${ivy.install.version}.jar" dest="${ivy.jar.file}" usetimestamp="true"/>
+  </target>
+
+  <!--
+      ================================= 
+      target: install-ivy         
+      this target is not necessary if you put ivy.jar in your ant lib directory
+      if you already have ivy in your ant lib, you can simply remove this
+      target and the dependency the 'go' target has on it
+      ================================= 
+  -->
+  <target name="install-ivy" depends="download-ivy" description="--> install ivy">
+    <!--
+        try to load ivy here from local ivy dir, in case the user has not already dropped
+    	  it into ant's lib dir (note that the latter copy will always take precedence).
+    	  We will not fail as long as local lib dir exists (it may be empty) and
+    	  ivy is in at least one of ant's lib dir or the local lib dir. 
+    -->
+    <path id="ivy.lib.path">
+      <fileset dir="${ivy.jar.dir}" includes="*.jar"/>
     </path>
+    <taskdef resource="org/apache/ivy/ant/antlib.xml" uri="antlib:org.apache.ivy.ant" classpathref="ivy.lib.path"/>
+  </target>
 
-    <target name="init" depends="init-mac,init-linux,init-windows">
-        <mkdir dir="bin"/>
-        <copy includeemptydirs="false" todir="bin">
-            <fileset dir="${src-dir}">
-                <exclude name="**/*.launch"/>
-                <exclude name="**/*.svn"/>
-                <exclude name="**/*.java"/>
-            </fileset>
-        </copy>
+	<!-- ================================= 
+          target: retrieve              
+         ================================= -->
+    <target name="retrieve" depends="install-ivy" description="download project dependencies">
+    	<ivy:settings />
+      <ivy:retrieve />
+    	<ivy:cachepath pathid="IvyDeps.classpath" />
     </target>
 
-    <!-- Init wala.properties file -->
-
-    <target name="init-mac" depends="cond-os" if="ismac">
-        <copy overwrite="true" file="conf/wala.properties.mac" tofile="wala.properties"/>
-    </target>
-   
-    <target name="init-linux" depends="cond-os" if="islinux">
-        <copy overwrite="true" file="conf/wala.properties.linux" tofile="wala.properties"/>
-    </target>
-
-    <target name="init-windows" depends="cond-os" if="iswindows">
-        <copy overwrite="true" file="conf/wala.properties.windows" tofile="wala.properties"/>
-    </target>
-
-    <target name="cond-os">
-	<condition property="iswindows">
-		<os family="windows"/>
-	</condition>
-	<condition property="ismac">
-		<os family="mac"/>
-	</condition>
-	<condition property="islinux">
-		<and><os family="unix"/><not><os family="mac"/></not></and>
-	</condition>
-    </target>
-
-    <!-- Clean the project -->
-    <target name="clean">
-        <delete dir="bin"/>
-        <delete file="sap.jar"/>
-        <delete file="sap_project.zip"/>
-        <delete file="sap_project-src.zip"/>
-    </target>
-    <target depends="clean" name="cleanall"/>
-
-    <!-- Build the project -->
-    <target depends="build-subprojects,build-project" name="build"/>
-    <target name="build-subprojects"/>
 	
-    <target depends="init" name="build-project">
-        <echo message="${ant.project.name}: ${ant.file}"/>
-        <javac debug="true" 
-        	debuglevel="${debuglevel}" 
-        	destdir="bin" 
-        	source="${source}" 
-        	target="${target}" includeantruntime="false">
-            <src path="${src-dir}"/>
-            <classpath refid="SimpleAnalysisPlugin.classpath"/>
-        </javac>
-    </target>
-	
-    <target description="Build all projects which reference this project. Useful to propagate changes." 
-    	name="build-refprojects"/>
+	<path id="SimpleAnalysisPlugin.classpath">
+		<path refid="IvyDeps.classpath" />
+		<pathelement location="bin" />
+		<pathelement location="${basedir}" />
+		<!-- <pathelement location="${LIBS}/android_modeled2.jar"/> -->
+		<pathelement location="${WALA}/wala_cast.jar" />
+		<pathelement location="${WALA}/wala_cast_java.jar" />
+		<pathelement location="${WALA}/wala_cast_java_jdt.jar" />
+		<pathelement location="${WALA}/wala_core_tests.jar" />
+		<pathelement location="${WALA}/wala_core.jar" />
+		<pathelement location="${WALA}/wala_ide.jar" />
+		<pathelement location="${WALA}/wala_shrike.jar" />
+		<pathelement location="${WALA}/wala_util.jar" />
+		<pathelement location="${LIBS}/dexlib-1.3.4-dev.jar" />
+	</path>
 
-    <target depends="build" name="build-tests">
-        <echo message="${ant.project.name}: ${ant.file}"/>
-        <javac debug="true" 
-            debuglevel="${debuglevel}" 
-            destdir="bin" 
-            source="${source}" 
-            target="${target}" includeantruntime="false">
-            <src path="${src-dir}"/>
-            <src path="${test-src-dir}"/>
-            <classpath refid="SimpleAnalysisPlugin.classpath"/>
-        </javac>
-    </target>
-	
-    <!-- Run a default analysis-->
-    <target name="run">
-        <java classname="CombinedAnalysis" failonerror="true" fork="yes">
-            <arg line="apks/com.infonow.bofa.apk:${LIBS}/android_modeled2.jar android_flow.examples"/>
-            <classpath refid="SimpleAnalysisPlugin.classpath"/>
-        </java>
-    </target>
+	<target name="init" depends="retrieve,init-mac,init-linux,init-windows">
+		<mkdir dir="bin" />
+		<copy includeemptydirs="false" todir="bin">
+			<fileset dir="${src-dir}">
+				<exclude name="**/*.launch" />
+				<exclude name="**/*.svn" />
+				<exclude name="**/*.java" />
+			</fileset>
+		</copy>
+	</target>
 
-    <target name="run-init" depends="init">
-        <mkdir dir="bin/conf"/>
-        <copy includeemptydirs="false" todir="bin/conf">
-            <fileset dir="${basedir}/conf" includes="*" />
-        </copy>
-    </target>
+	<!-- Init wala.properties file -->
 
-    <!-- practice -->
-    <target name="practice.dex.CG" depends="run-init,build">
-        <java classname="practice.dex.PDFCallGraphTest" failonerror="true" fork="yes">
-            <arg line="-apk ${basedir}/apks/Hello.apk"/>
-            <classpath refid="SimpleAnalysisPlugin.classpath"/>
-        </java>
-    </target>
+	<target name="init-mac" depends="cond-os" if="ismac">
+		<copy overwrite="true" file="conf/wala.properties.mac" tofile="wala.properties" />
+	</target>
 
-    <target name="practice.dex.TI" depends="run-init,build">
-        <java classname="practice.dex.TypeInferenceTest" failonerror="true" fork="yes">
-            <arg line="-apk ${basedir}/apks/Hello.apk" />
-            <classpath refid="SimpleAnalysisPlugin.classpath"/>
-        </java>
-    </target>
+	<target name="init-linux" depends="cond-os" if="islinux">
+		<copy overwrite="true" file="conf/wala.properties.linux" tofile="wala.properties" />
+	</target>
 
-    <target name="practice.dex.IR" depends="run-init,build">
-        <java classname="practice.dex.PDFWalaIRTest" failonerror="true" fork="yes">
-            <arg line="-apk ${basedir}/apks/Hello.apk" />
-            <classpath refid="SimpleAnalysisPlugin.classpath"/>
-        </java>
-    </target>
+	<target name="init-windows" depends="cond-os" if="iswindows">
+		<copy overwrite="true" file="conf/wala.properties.windows" tofile="wala.properties" />
+	</target>
 
-    <!-- Create the jar -->
-    <target depends="build" name="jar">
-        <jar destfile="sap.jar" filesetmanifest="mergewithoutmain">
-            <manifest>
-                <attribute name="Main-Class" value="org.scandroid.SeparateEntryAnalysis"/>
-                <attribute name="Class-Path" value="."/>
-            </manifest>
-            <fileset dir="${basedir}/bin"/>
-            <zipfileset excludes="META-INF/*.SF" src="${WALA}/wala_cast.jar"/>
-            <zipfileset excludes="META-INF/*.SF" src="${WALA}/wala_cast_java.jar"/>
-            <zipfileset excludes="META-INF/*.SF" src="${WALA}/wala_cast_java_jdt.jar"/>
-            <zipfileset excludes="META-INF/*.SF" src="${WALA}/wala_core.jar"/>
-            <zipfileset excludes="META-INF/*.SF" src="${WALA}/wala_core_tests.jar"/>
-            <zipfileset excludes="META-INF/*.SF" src="${WALA}/wala_ide.jar"/>
-            <zipfileset excludes="META-INF/*.SF" src="${WALA}/wala_shrike.jar"/>
-            <zipfileset excludes="META-INF/*.SF" src="${WALA}/wala_util.jar"/>
-            <zipfileset excludes="META-INF/*.SF" src="${LIBS}/dexlib-1.3.4-dev.jar"/>
-            <zipfileset excludes="META-INF/*.SF" src="${LIBS}/guava-12.0.1.jar"/>
-            <zipfileset excludes="META-INF/*.SF" src="${LIBS}/jgrapht-0.8.3.jar"/>
-        	<zipfileset excludes="META-INF/*.SF" src="${LIBS}/commons-cli-1.2.jar"/>
-        	<zipfileset excludes="META-INF/*.SF" src="${LIBS}/commons-io-2.4.jar"/>
-        	<zipfileset excludes="META-INF/*.SF" src="${LIBS}/commons-lang3-3.1.jar"/>
-        	<zipfileset excludes="META-INF/*.SF" src="${LIBS}/slf4j-api-1.7.1.jar"/>
-        	<zipfileset excludes="META-INF/*.SF" src="${LIBS}/logback-classic-1.0.7.jar"/>
-        	<zipfileset excludes="META-INF/*.SF" src="${LIBS}/logback-core-1.0.7.jar"/>
-        </jar>
-    </target>
+	<target name="cond-os">
+		<condition property="iswindows">
+			<os family="windows" />
+		</condition>
+		<condition property="ismac">
+			<os family="mac" />
+		</condition>
+		<condition property="islinux">
+			<and>
+				<os family="unix" />
+				<not>
+					<os family="mac" />
+				</not>
+			</and>
+		</condition>
+	</target>
 
-    <!-- Zip the project -->
-    <target depends="jar" name="zip">
- 	<zip destfile="${basedir}/sap_project.zip">
-  	  <zipfileset dir="conf/" includes="*" prefix="conf/"/>
-	  <zipfileset dir="tools/" includes="script.pl,apktool.jar" prefix="tools"/>
-  	  <fileset dir="." includes="sap.jar"/>
-  	</zip>
-    </target>
+	<!-- Clean the project -->
+	<target name="clean">
+		<delete dir="bin" />
+		<delete file="sap.jar" />
+		<delete file="sap_project.zip" />
+		<delete file="sap_project-src.zip" />
+	</target>
+	<target depends="clean" name="cleanall" />
 
-    <target name="zip-src" depends="clean">
- 	<zip destfile="${basedir}/sap_project-src.zip">
-  	  <zipfileset dir="conf/" includes="*" prefix="conf/"/>
-      <zipfileset dir="tools/" includes="script.pl,apktool.jar" prefix="tools"/>
-      <zipfileset dir="${src-dir}/" includes="**/*.java" prefix="${src-dir}"/>
-      <zipfileset dir="lib/" includes="*.jar" prefix="lib"/>
-  	  <fileset dir="." includes="build.xml"/>
-  	</zip>
-    </target>
+	<!-- Build the project -->
+	<target depends="build-subprojects,build-project" name="build" />
+	<target name="build-subprojects" />
 
-    <target name="test" depends="build, build-tests">
-        <junit haltonerror="false" 
-        	   haltonfailure="false" 
-        	   fork="no" 
-        	   printsummary="withOutAndErr">
-        	<!-- Use the basic SCanDroid classpath: -->
-            <classpath refid="SimpleAnalysisPlugin.classpath"/>
-        	
-            <batchtest>
-                <fileset dir="${test-src-dir}" includes="**/*Test.java" />
-                <!-- basic output -->
-                <formatter type="plain" usefile="false"/>
-            </batchtest>
-        </junit>
-    </target>
-	
-    <target name="test-jenkins" depends="build, build-tests">
-        <junit haltonerror="false" 
-        	   haltonfailure="false" 
-        	   fork="no" 
-        	   printsummary="withOutAndErr">
-        	<!-- Use the basic SCanDroid classpath: -->
-            <classpath refid="SimpleAnalysisPlugin.classpath"/>
-        	
-            <batchtest>
-                <fileset dir="${test-src-dir}" includes="**/*Test.java" />
-                <!-- basic output -->
-                <formatter type="xml" />
-            </batchtest>
-        </junit>
-    </target>
+	<target depends="init" name="build-project">
+		<echo message="${ant.project.name}: ${ant.file}" />
+		<javac debug="true" debuglevel="${debuglevel}" destdir="bin" source="${source}" target="${target}" includeantruntime="false">
+			<src path="${src-dir}" />
+			<classpath refid="SimpleAnalysisPlugin.classpath" />
+		</javac>
+	</target>
+
+	<target description="Build all projects which reference this project. Useful to propagate changes." name="build-refprojects" />
+
+	<target depends="build" name="build-tests">
+		<echo message="${ant.project.name}: ${ant.file}" />
+		<javac debug="true" debuglevel="${debuglevel}" destdir="bin" source="${source}" target="${target}" includeantruntime="false">
+			<src path="${src-dir}" />
+			<src path="${test-src-dir}" />
+			<classpath refid="SimpleAnalysisPlugin.classpath" />
+		</javac>
+	</target>
+
+	<!-- Run a default analysis-->
+	<target name="run">
+		<java classname="CombinedAnalysis" failonerror="true" fork="yes">
+			<arg line="apks/com.infonow.bofa.apk:${LIBS}/android_modeled2.jar android_flow.examples" />
+			<classpath refid="SimpleAnalysisPlugin.classpath" />
+		</java>
+	</target>
+
+	<target name="run-init" depends="init">
+		<mkdir dir="bin/conf" />
+		<copy includeemptydirs="false" todir="bin/conf">
+			<fileset dir="${basedir}/conf" includes="*" />
+		</copy>
+	</target>
+
+	<!-- practice -->
+	<target name="practice.dex.CG" depends="run-init,build">
+		<java classname="practice.dex.PDFCallGraphTest" failonerror="true" fork="yes">
+			<arg line="-apk ${basedir}/apks/Hello.apk" />
+			<classpath refid="SimpleAnalysisPlugin.classpath" />
+		</java>
+	</target>
+
+	<target name="practice.dex.TI" depends="run-init,build">
+		<java classname="practice.dex.TypeInferenceTest" failonerror="true" fork="yes">
+			<arg line="-apk ${basedir}/apks/Hello.apk" />
+			<classpath refid="SimpleAnalysisPlugin.classpath" />
+		</java>
+	</target>
+
+	<target name="practice.dex.IR" depends="run-init,build">
+		<java classname="practice.dex.PDFWalaIRTest" failonerror="true" fork="yes">
+			<arg line="-apk ${basedir}/apks/Hello.apk" />
+			<classpath refid="SimpleAnalysisPlugin.classpath" />
+		</java>
+	</target>
+
+	<!-- Create the jar -->
+	<target depends="build" name="jar">
+		<jar destfile="sap.jar" filesetmanifest="mergewithoutmain">
+			<manifest>
+				<attribute name="Main-Class" value="org.scandroid.SeparateEntryAnalysis" />
+				<attribute name="Class-Path" value="." />
+			</manifest>
+			<fileset dir="${basedir}/bin" />
+			<zipfileset excludes="META-INF/*.SF" src="${WALA}/wala_cast.jar" />
+			<zipfileset excludes="META-INF/*.SF" src="${WALA}/wala_cast_java.jar" />
+			<zipfileset excludes="META-INF/*.SF" src="${WALA}/wala_cast_java_jdt.jar" />
+			<zipfileset excludes="META-INF/*.SF" src="${WALA}/wala_core.jar" />
+			<zipfileset excludes="META-INF/*.SF" src="${WALA}/wala_core_tests.jar" />
+			<zipfileset excludes="META-INF/*.SF" src="${WALA}/wala_ide.jar" />
+			<zipfileset excludes="META-INF/*.SF" src="${WALA}/wala_shrike.jar" />
+			<zipfileset excludes="META-INF/*.SF" src="${WALA}/wala_util.jar" />
+			<zipfileset excludes="META-INF/*.SF" src="${LIBS}/dexlib-1.3.4-dev.jar" />
+			<zipfileset excludes="META-INF/*.SF" src="${LIBS}/guava-13.0.1.jar" />
+			<zipfileset excludes="META-INF/*.SF" src="${LIBS}/jgrapht-0.8.3.jar" />
+			<zipfileset excludes="META-INF/*.SF" src="${LIBS}/commons-cli-1.2.jar" />
+			<zipfileset excludes="META-INF/*.SF" src="${LIBS}/commons-io-2.4.jar" />
+			<zipfileset excludes="META-INF/*.SF" src="${LIBS}/commons-lang3-3.1.jar" />
+			<zipfileset excludes="META-INF/*.SF" src="${LIBS}/slf4j-api-1.7.2.jar" />
+			<zipfileset excludes="META-INF/*.SF" src="${LIBS}/logback-classic-1.0.9.jar" />
+			<zipfileset excludes="META-INF/*.SF" src="${LIBS}/logback-core-1.0.9.jar" />
+		</jar>
+	</target>
+
+	<!-- Zip the project -->
+	<target depends="jar" name="zip">
+		<zip destfile="${basedir}/sap_project.zip">
+			<zipfileset dir="conf/" includes="*" prefix="conf/" />
+			<zipfileset dir="tools/" includes="script.pl,apktool.jar" prefix="tools" />
+			<fileset dir="." includes="sap.jar" />
+		</zip>
+	</target>
+
+	<target name="zip-src" depends="clean">
+		<zip destfile="${basedir}/sap_project-src.zip">
+			<zipfileset dir="conf/" includes="*" prefix="conf/" />
+			<zipfileset dir="tools/" includes="script.pl,apktool.jar" prefix="tools" />
+			<zipfileset dir="${src-dir}/" includes="**/*.java" prefix="${src-dir}" />
+			<zipfileset dir="lib/" includes="*.jar" prefix="lib" />
+			<fileset dir="." includes="build.xml" />
+		</zip>
+	</target>
+
+
+	<target name="test" depends="build, build-tests">
+		<junit haltonerror="false" haltonfailure="false" fork="yes" printsummary="withOutAndErr">
+			<!-- Use the basic SCanDroid classpath: -->
+			<classpath refid="SimpleAnalysisPlugin.classpath" />
+
+			<batchtest>
+				<fileset dir="${test-src-dir}" includes="**/*Test.java" />
+				<!-- basic output -->
+				<formatter type="plain" usefile="false" />
+			</batchtest>
+		</junit>
+	</target>
+
+
+	<target name="test-jenkins" depends="build, build-tests">
+		<junit haltonerror="false" haltonfailure="false" fork="no" printsummary="withOutAndErr">
+			<!-- Use the basic SCanDroid classpath: -->
+			<classpath refid="SimpleAnalysisPlugin.classpath" />
+
+			<batchtest>
+				<fileset dir="${test-src-dir}" includes="**/*Test.java" />
+				<!-- basic output -->
+				<formatter type="xml" />
+			</batchtest>
+		</junit>
+	</target>
+
+	<taskdef uri="antlib:org.jacoco.ant"
+           resource="org/jacoco/ant/antlib.xml">
+		<classpath path="lib/jacocoant.jar" />
+	</taskdef>
+
+	<target name="test-jenkins-coverage" depends="build, build-tests">
+		<jacoco:coverage append="false">
+			<junit haltonerror="false" haltonfailure="false" fork="yes" printsummary="withOutAndErr">
+				<!-- Use the basic SCanDroid classpath: -->
+				<classpath refid="SimpleAnalysisPlugin.classpath" />
+
+				<batchtest>
+					<fileset dir="${test-src-dir}" includes="**/*Test.java" />
+					<!-- basic output -->
+					<formatter type="xml" />
+				</batchtest>
+			</junit>
+		</jacoco:coverage>
+	</target>
+
+	<target name="test-jenkins-coverage-report" depends="test-jenkins-coverage">
+		<jacoco:report>
+			<executiondata>
+				<file file="jacoco.exec" />
+			</executiondata>
+
+			<structure name="SCanDroid">
+				<classfiles>
+					<fileset dir="bin" />
+				</classfiles>
+				<sourcefiles encoding="UTF-8">
+					<fileset dir="src" />
+				</sourcefiles>
+			</structure>
+
+			<html destdir="report" />
+
+		</jacoco:report>
+	</target>
 </project>

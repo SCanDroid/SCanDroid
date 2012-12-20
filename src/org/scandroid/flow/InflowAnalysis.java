@@ -1,10 +1,13 @@
-/*
+/**
  *
  * Copyright (c) 2009-2012,
  *
+ *  Galois, Inc. (Aaron Tomb <atomb@galois.com>, 
+ *                Rogan Creswick <creswick@galois.com>, 
+ *                Adam Foltzer <acfoltzer@galois.com>)
  *  Adam Fuchs          <afuchs@cs.umd.edu>
  *  Avik Chaudhuri      <avik@cs.umd.edu>
- *  Steve Suh           <suhsteve@gmail.com>
+ *  Steve Suh    <suhsteve@gmail.com>
  *
  * All rights reserved.
  *
@@ -117,7 +120,8 @@ public class InflowAnalysis <E extends ISSABasicBlock> {
 
     
     private static<E extends ISSABasicBlock> 
-    void processInputSource(Map<BasicBlockInContext<E>,
+    void processInputSource(CGAnalysisContext<E> ctx,
+    						Map<BasicBlockInContext<E>,
                             Map<FlowType<E>,Set<CodeElement>>> taintMap, 
                             SourceSpec ss, 
                             CallGraph cg, 
@@ -134,14 +138,15 @@ public class InflowAnalysis <E extends ISSABasicBlock> {
                 }
             
                 for (BasicBlockInContext<E> bb:entriesForProcedure) {
-                    ss.addDomainElements(taintMap, im, bb, null, newArgNums, graph, pa, cg);
+                    ss.addDomainElements(ctx, taintMap, im, bb, null, newArgNums, graph, pa, cg);
                 }
             }
     	}
     }
     
     private static<E extends ISSABasicBlock> 
-    void processStaticFieldSource(Map<BasicBlockInContext<E>,
+    void processStaticFieldSource(CGAnalysisContext<E> ctx, 
+    						Map<BasicBlockInContext<E>,
                             Map<FlowType<E>,Set<CodeElement>>> taintMap, 
                             StaticFieldSourceSpec ss, 
                             CallGraph cg, 
@@ -158,11 +163,12 @@ public class InflowAnalysis <E extends ISSABasicBlock> {
     		logger.error("Could not find entry basic block.");
     	}
     	
-    	ss.addDomainElements(taintMap, bb.getMethod(), bb, null, null, graph, pa, cg);
+    	ss.addDomainElements(ctx, taintMap, bb.getMethod(), bb, null, null, graph, pa, cg);
     }
     
     private static<E extends ISSABasicBlock> 
-    void processFunctionCalls(Map<BasicBlockInContext<E>,
+    void processFunctionCalls(CGAnalysisContext<E> ctx,
+    						  Map<BasicBlockInContext<E>,
                               Map<FlowType<E>,Set<CodeElement>>> taintMap, 
                               ArrayList<SourceSpec> ssAL, ISupergraph<BasicBlockInContext<E>, CGNode> graph, 
                               PointerAnalysis pa, 
@@ -197,7 +203,7 @@ public class InflowAnalysis <E extends ISSABasicBlock> {
 								int[] argNums = ssAL.get(i).getArgNums();
 								argNums = (argNums == null) ? SourceSpec.getNewArgNums((target.isStatic())?target.getNumberOfParameters():target.getNumberOfParameters()-1) : argNums;
 
-								ssAL.get(i).addDomainElements(taintMap, target, block, invInst, argNums, graph, pa, cg);
+								ssAL.get(i).addDomainElements(ctx, taintMap, target, block, invInst, argNums, graph, pa, cg);
 
 							}
 						}
@@ -211,12 +217,13 @@ public class InflowAnalysis <E extends ISSABasicBlock> {
       Map<BasicBlockInContext<E>,Map<FlowType<E>,Set<CodeElement>>> analyze(
             CGAnalysisContext<E> analysisContext, Map<InstanceKey, String> prefixes,
             ISpecs s) {
-        return analyze(analysisContext.cg, analysisContext.getClassHierarchy(), analysisContext.graph, analysisContext.pa, prefixes, s);
+        return analyze(analysisContext, analysisContext.cg, analysisContext.getClassHierarchy(), analysisContext.graph, analysisContext.pa, prefixes, s);
     }
 
     public static <E extends ISSABasicBlock>
       Map<BasicBlockInContext<E>,Map<FlowType<E>,Set<CodeElement>>> 
-    analyze(CallGraph cg, 
+    analyze(CGAnalysisContext<E> ctx,
+    	  CallGraph cg, 
           ClassHierarchy cha, 
           ISupergraph<BasicBlockInContext<E>, CGNode> graph,
           PointerAnalysis pa, 
@@ -235,16 +242,16 @@ public class InflowAnalysis <E extends ISSABasicBlock> {
         ArrayList<SourceSpec> ssAL = new ArrayList<SourceSpec>();
         for (int i = 0; i < ss.length; i++) {
         	if (ss[i] instanceof EntryArgSourceSpec)
-        		processInputSource(taintMap, ss[i], cg, graph, cha, pa);
+        		processInputSource(ctx, taintMap, ss[i], cg, graph, cha, pa);
         	else if (ss[i] instanceof CallRetSourceSpec || ss[i] instanceof CallArgSourceSpec)
         		ssAL.add(ss[i]);
         	else if (ss[i] instanceof StaticFieldSourceSpec) {
-        		processStaticFieldSource(taintMap, (StaticFieldSourceSpec)ss[i], cg, graph, cha, pa);
+        		processStaticFieldSource(ctx, taintMap, (StaticFieldSourceSpec)ss[i], cg, graph, cha, pa);
         	} else 
         		throw new UnsupportedOperationException("Unrecognized SourceSpec");
         } 
         if (!ssAL.isEmpty())
-        	processFunctionCalls(taintMap, ssAL, graph, pa, cha, cg);
+        	processFunctionCalls(ctx, taintMap, ssAL, graph, pa, cha, cg);
 
         logger.info("************");
         logger.info("* Results: *");

@@ -1,8 +1,10 @@
-/*
+/**
  *
  * Copyright (c) 2009-2012,
  *
- *  Galois, Inc. (Aaron Tomb <atomb@galois.com>, Rogan Creswick <creswick@galois.com>)
+ *  Galois, Inc. (Aaron Tomb <atomb@galois.com>, 
+ *                Rogan Creswick <creswick@galois.com>, 
+ *                Adam Foltzer <acfoltzer@galois.com>)
  *  Steve Suh    <suhsteve@gmail.com>
  *
  * All rights reserved.
@@ -317,7 +319,7 @@ public class SSAtoXMLVisitor implements SSAInstruction.IVisitor {
             String nameString = callee.getName().toUnicodeString();
             elt.setAttribute(XMLSummaryWriter.A_NAME, nameString);
             
-            String classString = typeRefToStr(instruction.getDeclaredResultType());
+            String classString = instruction.getDeclaredTarget().getDeclaringClass().getName().toUnicodeString();
             elt.setAttribute(XMLSummaryWriter.A_CLASS, classString);
 
             if (! instruction.getDeclaredResultType().equals(TypeReference.Void) ) {
@@ -347,11 +349,24 @@ public class SSAtoXMLVisitor implements SSAInstruction.IVisitor {
 
             TypeReference type = instruction.getConcreteType();
 
-            String className = type.getName().getClassName().toUnicodeString();
+            String className = type.getName().toUnicodeString();
 
             Element elt = doc.createElement(XMLSummaryWriter.E_NEW);
             elt.setAttribute(XMLSummaryWriter.A_DEF, localName);
             elt.setAttribute(XMLSummaryWriter.A_CLASS, className);
+            
+            if (type.isArrayType()) {
+            	// array allocations need a size value
+            	Element sizeElt = doc.createElement(XMLSummaryWriter.E_CONSTANT);
+            	final String sizeName = "sizeOf$allocAt" + instruction.getNewSite().getProgramCounter();
+				sizeElt.setAttribute(XMLSummaryWriter.A_NAME, sizeName);
+				sizeElt.setAttribute(XMLSummaryWriter.A_TYPE, "int");
+				sizeElt.setAttribute(XMLSummaryWriter.A_VALUE, "1");
+				summary.add(sizeElt);
+				
+            	elt.setAttribute(XMLSummaryWriter.A_SIZE, sizeName);
+            }
+            
             summary.add(elt);
         } catch (Exception e) {
             throw new SSASerializationException(e);
