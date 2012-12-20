@@ -1,10 +1,12 @@
-/*
+/**
  *
  * Copyright (c) 2009-2012,
  *
  *  Adam Fuchs          <afuchs@cs.umd.edu>
  *  Avik Chaudhuri      <avik@cs.umd.edu>
  *  Steve Suh           <suhsteve@gmail.com>
+ *  
+ *  Galois, Inc. (Aaron Tomb <atomb@galois.com>, Rogan Creswick <creswick@galois.com>, Adam Foltzer <acfoltzer@galois.com>)
  *
  * All rights reserved.
  *
@@ -40,16 +42,13 @@
 package org.scandroid.flow;
 
 import java.util.Collection;
-import java.util.Deque;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.scandroid.domain.CodeElement;
 import org.scandroid.domain.DomainElement;
-import org.scandroid.domain.FieldElement;
 import org.scandroid.domain.IFDSTaintDomain;
 import org.scandroid.domain.InstanceKeyElement;
 import org.scandroid.domain.LocalElement;
@@ -70,9 +69,7 @@ import org.slf4j.LoggerFactory;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Queues;
 import com.google.common.collect.Sets;
-import com.ibm.wala.classLoader.IField;
 import com.ibm.wala.classLoader.IMethod;
 import com.ibm.wala.dataflow.IFDS.ICFGSupergraph;
 import com.ibm.wala.dataflow.IFDS.ISupergraph;
@@ -80,7 +77,6 @@ import com.ibm.wala.dataflow.IFDS.TabulationResult;
 import com.ibm.wala.ipa.callgraph.CGNode;
 import com.ibm.wala.ipa.callgraph.CallGraph;
 import com.ibm.wala.ipa.callgraph.impl.Everywhere;
-import com.ibm.wala.ipa.callgraph.propagation.ConcreteTypeKey;
 import com.ibm.wala.ipa.callgraph.propagation.InstanceKey;
 import com.ibm.wala.ipa.callgraph.propagation.LocalPointerKey;
 import com.ibm.wala.ipa.callgraph.propagation.PointerAnalysis;
@@ -93,10 +89,8 @@ import com.ibm.wala.ssa.SSAInvokeInstruction;
 import com.ibm.wala.ssa.SSAReturnInstruction;
 import com.ibm.wala.ssa.analysis.IExplodedBasicBlock;
 import com.ibm.wala.types.MethodReference;
-import com.ibm.wala.types.TypeReference;
 import com.ibm.wala.util.debug.UnimplementedError;
 import com.ibm.wala.util.intset.IntSet;
-import com.ibm.wala.util.intset.OrdinalSet;
 
 /**
  * @author acfoltzer
@@ -133,6 +127,7 @@ public class OutflowAnalysis {
 			graph.put(source, dests);
 		}
 		dests.add(dest);
+		logger.debug("added edge from {} to {}", source, dest);
 	}
 
 	private void processArgSinks(
@@ -496,7 +491,9 @@ public class OutflowAnalysis {
 			Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> flowGraph,
 			SinkSpec ss) {
 		Set<ISinkPoint> sinkPoints = calculateSinkPoints(ss);
-
+		if (!(ss instanceof StaticFieldSinkSpec)) {
+			logger.debug("for {}, sinkPoints={}", ss, sinkPoints);
+		}
 		for (ISinkPoint sinkPoint : sinkPoints) {
 			for (FlowType<IExplodedBasicBlock> source : sinkPoint.findSources(
 					ctx, flowResult, domain)) {
@@ -529,7 +526,7 @@ public class OutflowAnalysis {
 		if (null == methods) {
 			logger.warn("no methods found for sink spec {}", sinkSpec);
 		}
-		
+
 		for (IMethod method : methods) {
 			for (CGNode node : cg.getNodes(method.getReference())) {
 				BasicBlockInContext<IExplodedBasicBlock> entryBlock = graph
@@ -564,6 +561,8 @@ public class OutflowAnalysis {
 			callees.addAll(cg.getNodes(method.getReference()));
 			calleeRefs.add(method.getReference());
 		}
+		logger.debug("callee nodes {}", callees);
+		logger.debug("callee refs {}", calleeRefs);
 
 		// for each possible callee
 		for (CGNode callee : callees) {
@@ -578,11 +577,29 @@ public class OutflowAnalysis {
 						// if the invoke instruction targets a possible callee
 						if (calleeRefs.contains(invokeInst.getDeclaredTarget())) {
 							// look up the instruction's block in context
-							final int blockNumber = caller.getIR()
-									.getBasicBlockForInstruction(invokeInst)
-									.getNumber();
-							BasicBlockInContext<IExplodedBasicBlock> callBlock = graph
-									.getLocalBlock(caller, blockNumber);
+							// (surely there's a more straightforward way to do
+							// this!)
+							final SSAInstruction[] insts = graph.getICFG()
+									.getCFG(caller).getInstructions();
+							int invokeIndex = -1;
+							for (int i = 0; i < insts.length; i++) {
+								if (insts[i] instanceof SSAInvokeInstruction) {
+									SSAInvokeInstruction invokeInst2 = (SSAInvokeInstruction) insts[i];
+									if (invokeInst.getDeclaredTarget().equals(invokeInst2.getDeclaredTarget())) {
+										invokeIndex = i;
+										break;
+									}
+								}
+							}
+							if (invokeIndex == -1) {
+								logger.error("couldn't find invoke instruction in caller node");
+							}
+							final IExplodedBasicBlock block = graph.getICFG()
+									.getCFG(caller)
+									.getBlockForInstruction(invokeIndex);
+							BasicBlockInContext<IExplodedBasicBlock> callBlock = new BasicBlockInContext<IExplodedBasicBlock>(
+									caller, block);
+
 							for (int argNum : sinkSpec.getArgNums()) {
 								// and add a sink point for each arg num
 								final int ssaVal = invokeInst.getUse(argNum);

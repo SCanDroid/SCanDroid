@@ -40,6 +40,7 @@ package org.scandroid.flow.types;
 import com.ibm.wala.ipa.cfg.BasicBlockInContext;
 import com.ibm.wala.ssa.ISSABasicBlock;
 import com.ibm.wala.ssa.SSAInvokeInstruction;
+import com.ibm.wala.ssa.analysis.IExplodedBasicBlock;
 
 /** A flow to or from the parameter of a method. This can represent formal
  * parameters of methods being analyzed, or actual parameters of methods
@@ -97,7 +98,7 @@ public class ParameterFlow <E extends ISSABasicBlock> extends FlowType<E> {
     public String descString() {
         String s = "arg(" + argNum + ")";
         if(!getBlock().isEntryBlock()) {
-            SSAInvokeInstruction inv = (SSAInvokeInstruction)getBlock().getLastInstruction();
+            SSAInvokeInstruction inv = (SSAInvokeInstruction) ((IExplodedBasicBlock) getBlock().getDelegate()).getInstruction();
             s = s + ":" + inv.getDeclaredTarget().getSignature();
         }
         return s;

@@ -1,10 +1,8 @@
-/**
+/*
  *
  * Copyright (c) 2009-2012,
  *
- *  Galois, Inc. (Aaron Tomb <atomb@galois.com>, 
- *                Rogan Creswick <creswick@galois.com>, 
- *                Adam Foltzer <acfoltzer@galois.com>)
+ *  Galois, Inc. (Aaron Tomb <atomb@galois.com>, Rogan Creswick <creswick@galois.com>)
  *  Steve Suh    <suhsteve@gmail.com>
  *
  * All rights reserved.
@@ -37,37 +35,21 @@
  *
  *
  */
+package org.scandroid.testing;
 
-package org.scandroid.spec;
-
-public interface ISpecs {
-    /* A list of functions that are entry points. Arguments to these
-     * functions that are considered sources should be in the
-     * SourceSpec list. */
-    public MethodNamePattern[] getEntrypointSpecs();
-
-    /* Other methods that source data via their return values or
-     * modification of their parameters. */
-    public SourceSpec[] getSourceSpecs();
-
-    /* Methods that sink data supplied by some of their parameters. */
-    public SinkSpec[] getSinkSpecs();
-    
-    public static ISpecs EMPTY_SPECS = new ISpecs() {
-		
-    	@Override
-		public SourceSpec[] getSourceSpecs() {
-			return new SourceSpec[] {};
-		}
-		
-		@Override
-		public SinkSpec[] getSinkSpecs() {
-			return new SinkSpec[] {};
-		}
-		
-		@Override
-		public MethodNamePattern[] getEntrypointSpecs() {
-			return new MethodNamePattern[] {};
-		}
-	};
+public class StringConstants {
+	public static final String FOO = "FOO";
+	public static final String BAR = "BAR";
+	
+	public String returnFoo() {
+		return FOO;
+	}
+	
+	public String returnBar() {
+		return BAR;
+	}
+	
+	public String returnSomething() {
+		return returnFoo();
+	}
 }

@@ -68,7 +68,7 @@ public abstract class FlowType<E extends ISSABasicBlock> {
     
     @Override
     public String toString() {
-        return "block=" + block + ", source=" + source;
+        return "block=" + block + ", source=" + source + ", desc=" + descString();
     }
     
     public String descString() {
@@ -145,6 +145,6 @@ public abstract class FlowType<E extends ISSABasicBlock> {
     	R visitIKFlow(IKFlow<E> flow);
     	R visitParameterFlow(ParameterFlow<E> flow);
     	R visitReturnFlow(ReturnFlow<E> flow);
-		R visitStaticFieldFlow(StaticFieldFlow<E> staticFieldFlow);
+		R visitStaticFieldFlow(StaticFieldFlow<E> flow);
     }
 }

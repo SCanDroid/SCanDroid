@@ -47,6 +47,7 @@ import org.scandroid.domain.CodeElement;
 import org.scandroid.flow.InflowAnalysis;
 import org.scandroid.flow.types.FlowType;
 import org.scandroid.flow.types.ReturnFlow;
+import org.scandroid.util.CGAnalysisContext;
 
 import com.ibm.wala.classLoader.IMethod;
 import com.ibm.wala.dataflow.IFDS.ISupergraph;
@@ -74,6 +75,7 @@ public class CallRetSourceSpec extends SourceSpec {
 
 	@Override
 	public<E extends ISSABasicBlock> void addDomainElements(
+			CGAnalysisContext<E> ctx,
 			Map<BasicBlockInContext<E>, Map<FlowType<E>, Set<CodeElement>>> taintMap,
 			IMethod im, BasicBlockInContext<E> block, SSAInvokeInstruction invInst,
 			int[] newArgNums, ISupergraph<BasicBlockInContext<E>, CGNode> graph, PointerAnalysis pa, CallGraph cg) {

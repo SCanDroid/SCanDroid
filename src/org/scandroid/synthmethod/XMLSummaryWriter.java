@@ -1,8 +1,10 @@
-/*
+/**
  *
  * Copyright (c) 2009-2012,
  *
- *  Galois, Inc. (Aaron Tomb <atomb@galois.com>, Rogan Creswick <creswick@galois.com>)
+ *  Galois, Inc. (Aaron Tomb <atomb@galois.com>, 
+ *                Rogan Creswick <creswick@galois.com>, 
+ *                Adam Foltzer <acfoltzer@galois.com>)
  *  Steve Suh    <suhsteve@gmail.com>
  *
  * All rights reserved.
@@ -270,6 +272,12 @@ public class XMLSummaryWriter {
         for (; i < summary.getNumberOfParameters(); i++) {
             TypeReference tr = summary.getParameterType(i);
 
+            // unwrap array types
+            while (tr.isArrayType()) {
+            	typeSigs.append("[");
+            	tr = tr.getArrayElementType();
+            }
+            
             if (tr.isPrimitiveType()) {
             	typeSigs.append(tr.getName().toUnicodeString());
             } else {
