@@ -54,4 +54,13 @@ public class InvokeCallArgTest extends SourceSink {
     	SourceSink.load(buff);
         return buff.length;
     }
+    
+    public static void invokeCallArgSinkSpecInt(int data) {
+    	SourceSink.sink(data);
+    }
+    
+    public static void invokeCallArgSinkSpecBiInt(int a, int b) {
+    	SourceSink.sink(a + b);
+    }
+
 }
