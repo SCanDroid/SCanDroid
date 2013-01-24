@@ -262,7 +262,10 @@
 
 	<taskdef uri="antlib:org.jacoco.ant"
            resource="org/jacoco/ant/antlib.xml">
-		<classpath path="lib/jacocoant.jar" />
+		<!-- <classpath> -->
+		<!-- 	<path refid="ivy.path" /> -->
+		<!-- </classpath> -->
+		<classpath path="lib/ivy/jacocoant.jar" />
 	</taskdef>
 
 	<target name="test-jenkins-coverage" depends="build, build-tests">

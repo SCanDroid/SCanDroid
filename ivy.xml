@@ -30,7 +30,7 @@
 	    <dependency org="commons-io" name="commons-io" rev="2.4" />
 	    <dependency org="org.apache.commons" name="commons-lang3" rev="3.1" />
 	    <dependency org="com.google.guava" name="guava" rev="13.0.1" />
-	    <!-- <dependency org="org.jacoco" name="org.jacoco.ant" rev="0.5.10.201208310627" /> -->
+	    <!-- <dependency org="org.jacoco" name="org.jacoco.ant" rev="0.6.0.201210061924" /> -->
 	    <dependency org="net.sf.jgrapht" name="jgrapht" rev="0.8.3" />
 	    <dependency org="junit" name="junit" rev="4.11" />
 	    <dependency org="ch.qos.logback" name="logback-core" rev="1.0.9" />

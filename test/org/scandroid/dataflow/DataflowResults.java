@@ -226,6 +226,13 @@ public class DataflowResults {
 				// returns the arg to load(...)
 			   Sets.newHashSet("arg(0):org.scandroid.testing.SourceSink.load([C)V -> ret"));
     	
+    	oracle.put(ost+"InvokeCallArgTest.invokeCallArgSinkSpecInt(I)V",
+			   Sets.newHashSet("arg(0) -> arg(0):org.scandroid.testing.SourceSink.sink(Ljava/lang/Object;)V"));
+
+    	oracle.put(ost+"InvokeCallArgTest.invokeCallArgSinkSpecBiInt(II)V",
+ 			   Sets.newHashSet("arg(0) -> arg(0):org.scandroid.testing.SourceSink.sink(Ljava/lang/Object;)V"
+ 					         , "arg(1) -> arg(0):org.scandroid.testing.SourceSink.sink(Ljava/lang/Object;)V"));
+    	
 		return oracle;
 	}
     
