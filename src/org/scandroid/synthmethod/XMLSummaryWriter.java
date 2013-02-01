@@ -87,6 +87,7 @@ public class XMLSummaryWriter {
     final static String E_GETFIELD = "getfield";
     final static String E_ATHROW = "throw";
     final static String E_CONSTANT = "constant";
+    final static String E_PHI = "phi";
 
     //
     // Define XML attribute names

@@ -40,6 +40,7 @@
 package org.scandroid.flow.functions;
 
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -83,6 +84,7 @@ import com.ibm.wala.ssa.SSAFieldAccessInstruction;
 import com.ibm.wala.ssa.SSAGetInstruction;
 import com.ibm.wala.ssa.SSAInstruction;
 import com.ibm.wala.ssa.SSAInvokeInstruction;
+import com.ibm.wala.ssa.SSAPhiInstruction;
 import com.ibm.wala.ssa.SSAPutInstruction;
 import com.ibm.wala.ssa.SSAReturnInstruction;
 import com.ibm.wala.types.FieldReference;
@@ -254,16 +256,36 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 		// we first try to process the destination instruction
 		SSAInstruction inst = dest.getLastInstruction();
 		CGNode node = dest.getNode();
-
+		Iterator<SSAPhiInstruction> phiI = null;
 		if (null == inst) {
-			logger.trace("Using identity fn. for normal flow (dest instruction null)");
-			return IDENTITY_FN;
+			// may contain Phi instructions, so fetch them.
+			phiI = dest.iteratePhis();
+			
+			// if we don't have a Phi inst in this basicblock, then return identify_fn
+			if (!phiI.hasNext()) {
+				logger.trace("Using identity fn. for normal flow (dest instruction null)");
+				return IDENTITY_FN;
+			}
 		}
 
 		logger.trace("\tinstruction: {}", inst);
+		Iterable<CodeElement> inCodeElts;
+		Iterable<CodeElement> outCodeElts;
+		if (phiI == null) {
+			inCodeElts = getInCodeElts(node, inst);
+			outCodeElts = getOutCodeElts(node, inst);
+		}
+		else {
+			inCodeElts = Sets.newHashSet();
+			outCodeElts = Sets.newHashSet();
 
-		Iterable<CodeElement> inCodeElts = getInCodeElts(node, inst);
-		Iterable<CodeElement> outCodeElts = getOutCodeElts(node, inst);
+			while (phiI.hasNext()) {
+				inst = phiI.next();
+				((Set<CodeElement>) inCodeElts).addAll((Set<CodeElement>)getInCodeElts(node, inst));
+				((Set<CodeElement>) outCodeElts).addAll((Set<CodeElement>)getOutCodeElts(node, inst));
+			}
+		}
+		
 		if (!inCodeElts.iterator().hasNext()) {
 			logger.trace("no input elements for {}", inst);
 		}
@@ -430,7 +452,7 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 			elts.addAll(getArrayRefCodeElts(node,
 					(SSAArrayLoadInstruction) inst));
 		}
-
+		
 		for (int i = 0; i < useNo; i++) {
 			int valNo = inst.getUse(i);
 
@@ -540,7 +562,7 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 		}
 		return elts;
 	}
-
+		
 	private IUnaryFlowFunction union(final IUnaryFlowFunction g,
 			final IUnaryFlowFunction h) {
 		return new IUnaryFlowFunction() {
