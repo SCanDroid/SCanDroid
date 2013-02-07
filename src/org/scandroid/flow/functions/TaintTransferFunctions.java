@@ -230,7 +230,30 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 		}
 		// return new TracingFlowFunction<E>(domain, new
 		// CallToReturnFunction<E>(domain));
-		return callToReturn;
+		// return callToReturn;
+		if (logger.isTraceEnabled()) {
+			logger.trace("getCallToReturnFlowFunction\n\t{}\n\t-> {}\n\t-> {}", src
+					.getNode().getMethod().getSignature(), src.getNumber(), dest.getNumber());
+			logger.trace("\t{} -> {} -> {}", src.getLastInstruction(), 
+					dest.getLastInstruction());
+		}
+
+		// we always need to process the destination instruction
+		final IUnaryFlowFunction flowFromDest = getNormalFlowFunction(null,
+				dest);
+
+		
+		final SSAInstruction inst = src.getLastInstruction();
+		if (null == inst || !(inst instanceof SSAInvokeInstruction)) {
+			// if we don't have an invoke, just treat as a normal edge
+			logger.warn("call block null or not an invoke instruction");
+			return flowFromDest;
+		}
+		
+		// Remove elements from heap and use only LocalElements 
+		// and ReturnElements in the dest block
+		return compose(flowFromDest, callToReturn);
+				
 	}
 
 	@Override
@@ -268,10 +291,10 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 			}
 		}
 
-		logger.trace("\tinstruction: {}", inst);
 		Iterable<CodeElement> inCodeElts;
 		Iterable<CodeElement> outCodeElts;
 		if (phiI == null) {
+			logger.trace("\tinstruction: {}", inst);
 			inCodeElts = getInCodeElts(node, inst);
 			outCodeElts = getOutCodeElts(node, inst);
 		}
@@ -281,11 +304,12 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 
 			while (phiI.hasNext()) {
 				inst = phiI.next();
+				logger.trace("\tinstruction: {}", inst);
 				((Set<CodeElement>) inCodeElts).addAll((Set<CodeElement>)getInCodeElts(node, inst));
 				((Set<CodeElement>) outCodeElts).addAll((Set<CodeElement>)getOutCodeElts(node, inst));
 			}
 		}
-		
+				
 		if (!inCodeElts.iterator().hasNext()) {
 			logger.trace("no input elements for {}", inst);
 		}
@@ -453,6 +477,11 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 					(SSAArrayLoadInstruction) inst));
 		}
 		
+//		if (inst instanceof SSAPhiInstruction) {
+//			elts.addAll(getPhiCodeElts(node,
+//					(SSAPhiInstruction) inst));
+//		}
+		
 		for (int i = 0; i < useNo; i++) {
 			int valNo = inst.getUse(i);
 
@@ -560,6 +589,33 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 				elts.add(new InstanceKeyElement(ik));
 			}
 		}
+		return elts;
+	}
+	
+	private Set<CodeElement> getPhiCodeElts(CGNode node,
+			SSAPhiInstruction inst) {
+		Set<CodeElement> elts = Sets.newHashSet();
+		
+		int noUses = inst.getNumberOfUses();
+		for (int i = 0; i < noUses; i++) {
+			final PointerKey pk = pa.getHeapModel().getPointerKeyForLocal(node, inst.getUse(i));
+			final OrdinalSet<InstanceKey> pointsToSet = pa.getPointsToSet(pk);
+			elts.add(new LocalElement(inst.getUse(i)));
+			if (pointsToSet.isEmpty()) {
+				logger.debug(
+						"pointsToSet empty for phi instruction {}",
+						inst);
+			} else {
+				for (InstanceKey ik : pointsToSet) {
+					if (logger.isTraceEnabled()) {
+						logger.trace("adding element for phi in {}", ik
+								.getConcreteType().getName());
+					}
+					elts.add(new InstanceKeyElement(ik));
+				}
+			}
+		}
+
 		return elts;
 	}
 		
