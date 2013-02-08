@@ -247,7 +247,7 @@
 
 
 	<target name="test-jenkins" depends="build, build-tests">
-		<junit haltonerror="false" haltonfailure="false" fork="no" printsummary="withOutAndErr">
+		<junit haltonerror="false" haltonfailure="false" fork="yes" printsummary="withOutAndErr">
 			<!-- Use the basic SCanDroid classpath: -->
 			<classpath refid="SimpleAnalysisPlugin.classpath" />
 
