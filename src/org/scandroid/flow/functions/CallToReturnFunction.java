@@ -51,6 +51,7 @@ import com.ibm.wala.dataflow.IFDS.IUnaryFlowFunction;
 import com.ibm.wala.ssa.ISSABasicBlock;
 import com.ibm.wala.util.intset.IntSet;
 import com.ibm.wala.util.intset.MutableSparseIntSet;
+import com.ibm.wala.util.intset.SparseIntSet;
 
 
 public class CallToReturnFunction <E extends ISSABasicBlock> 
@@ -64,23 +65,21 @@ public class CallToReturnFunction <E extends ISSABasicBlock>
 	}
 
 	@Override
-	public IntSet getTargets(int d) {
-		MutableSparseIntSet set = MutableSparseIntSet.makeEmpty();
-        
+	public IntSet getTargets(int d) {        
 		// Local elements (and the 0 element) flow through CallToReturn edges, 
 		// but nothing else does (everything else is subject to whatever 
 		// happened in the invoked function)
-        if (0 == d) {
-        	set.add(d);
-        } else {
-        	DomainElement de = domain.getMappedObject(d);
-        	if (de.codeElement instanceof LocalElement || de.codeElement instanceof ReturnElement) {
-        		set.add(d);
-        	} else {
-        		logger.trace("throwing away {}", de);
-        	}
-        }
-		return set;
+		if (0 == d) {
+			return TaintTransferFunctions.ZERO_SET;
+		} 
+
+		DomainElement de = domain.getMappedObject(d);
+		if (de.codeElement instanceof LocalElement || de.codeElement instanceof ReturnElement) {
+			return SparseIntSet.singleton(d);
+		} else {
+			logger.trace("throwing away {}", de);
+			return TaintTransferFunctions.EMPTY_SET;
+		}
 	}
 
 }

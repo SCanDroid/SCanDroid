@@ -40,6 +40,7 @@
 package org.scandroid.flow.functions;
 
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -83,6 +84,7 @@ import com.ibm.wala.ssa.SSAFieldAccessInstruction;
 import com.ibm.wala.ssa.SSAGetInstruction;
 import com.ibm.wala.ssa.SSAInstruction;
 import com.ibm.wala.ssa.SSAInvokeInstruction;
+import com.ibm.wala.ssa.SSAPhiInstruction;
 import com.ibm.wala.ssa.SSAPutInstruction;
 import com.ibm.wala.ssa.SSAReturnInstruction;
 import com.ibm.wala.types.FieldReference;
@@ -228,7 +230,30 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 		}
 		// return new TracingFlowFunction<E>(domain, new
 		// CallToReturnFunction<E>(domain));
-		return callToReturn;
+		// return callToReturn;
+		if (logger.isTraceEnabled()) {
+			logger.trace("getCallToReturnFlowFunction\n\t{}\n\t-> {}\n\t-> {}", src
+					.getNode().getMethod().getSignature(), src.getNumber(), dest.getNumber());
+			logger.trace("\t{} -> {} -> {}", src.getLastInstruction(), 
+					dest.getLastInstruction());
+		}
+
+		// we always need to process the destination instruction
+		final IUnaryFlowFunction flowFromDest = getNormalFlowFunction(null,
+				dest);
+
+		
+		final SSAInstruction inst = src.getLastInstruction();
+		if (null == inst || !(inst instanceof SSAInvokeInstruction)) {
+			// if we don't have an invoke, just treat as a normal edge
+			logger.warn("call block null or not an invoke instruction");
+			return flowFromDest;
+		}
+		
+		// Remove elements from heap and use only LocalElements 
+		// and ReturnElements in the dest block
+		return compose(flowFromDest, callToReturn);
+				
 	}
 
 	@Override
@@ -254,16 +279,37 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 		// we first try to process the destination instruction
 		SSAInstruction inst = dest.getLastInstruction();
 		CGNode node = dest.getNode();
-
+		Iterator<SSAPhiInstruction> phiI = null;
 		if (null == inst) {
-			logger.trace("Using identity fn. for normal flow (dest instruction null)");
-			return IDENTITY_FN;
+			// may contain Phi instructions, so fetch them.
+			phiI = dest.iteratePhis();
+			
+			// if we don't have a Phi inst in this basicblock, then return identify_fn
+			if (!phiI.hasNext()) {
+				logger.trace("Using identity fn. for normal flow (dest instruction null)");
+				return IDENTITY_FN;
+			}
 		}
 
-		logger.trace("\tinstruction: {}", inst);
+		Iterable<CodeElement> inCodeElts;
+		Iterable<CodeElement> outCodeElts;
+		if (phiI == null) {
+			logger.trace("\tinstruction: {}", inst);
+			inCodeElts = getInCodeElts(node, inst);
+			outCodeElts = getOutCodeElts(node, inst);
+		}
+		else {
+			inCodeElts = Sets.newHashSet();
+			outCodeElts = Sets.newHashSet();
 
-		Iterable<CodeElement> inCodeElts = getInCodeElts(node, inst);
-		Iterable<CodeElement> outCodeElts = getOutCodeElts(node, inst);
+			while (phiI.hasNext()) {
+				inst = phiI.next();
+				logger.trace("\tinstruction: {}", inst);
+				((Set<CodeElement>) inCodeElts).addAll((Set<CodeElement>)getInCodeElts(node, inst));
+				((Set<CodeElement>) outCodeElts).addAll((Set<CodeElement>)getOutCodeElts(node, inst));
+			}
+		}
+				
 		if (!inCodeElts.iterator().hasNext()) {
 			logger.trace("no input elements for {}", inst);
 		}
@@ -430,7 +476,12 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 			elts.addAll(getArrayRefCodeElts(node,
 					(SSAArrayLoadInstruction) inst));
 		}
-
+		
+//		if (inst instanceof SSAPhiInstruction) {
+//			elts.addAll(getPhiCodeElts(node,
+//					(SSAPhiInstruction) inst));
+//		}
+		
 		for (int i = 0; i < useNo; i++) {
 			int valNo = inst.getUse(i);
 
@@ -540,7 +591,34 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 		}
 		return elts;
 	}
+	
+	private Set<CodeElement> getPhiCodeElts(CGNode node,
+			SSAPhiInstruction inst) {
+		Set<CodeElement> elts = Sets.newHashSet();
+		
+		int noUses = inst.getNumberOfUses();
+		for (int i = 0; i < noUses; i++) {
+			final PointerKey pk = pa.getHeapModel().getPointerKeyForLocal(node, inst.getUse(i));
+			final OrdinalSet<InstanceKey> pointsToSet = pa.getPointsToSet(pk);
+			elts.add(new LocalElement(inst.getUse(i)));
+			if (pointsToSet.isEmpty()) {
+				logger.debug(
+						"pointsToSet empty for phi instruction {}",
+						inst);
+			} else {
+				for (InstanceKey ik : pointsToSet) {
+					if (logger.isTraceEnabled()) {
+						logger.trace("adding element for phi in {}", ik
+								.getConcreteType().getName());
+					}
+					elts.add(new InstanceKeyElement(ik));
+				}
+			}
+		}
 
+		return elts;
+	}
+		
 	private IUnaryFlowFunction union(final IUnaryFlowFunction g,
 			final IUnaryFlowFunction h) {
 		return new IUnaryFlowFunction() {

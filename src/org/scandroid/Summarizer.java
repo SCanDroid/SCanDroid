@@ -43,8 +43,10 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -79,6 +81,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.ibm.wala.classLoader.IMethod;
 import com.ibm.wala.classLoader.Language;
 import com.ibm.wala.classLoader.NewSiteReference;
@@ -98,6 +101,8 @@ import com.ibm.wala.ssa.ISSABasicBlock;
 import com.ibm.wala.ssa.SSAInstruction;
 import com.ibm.wala.ssa.SSAInstructionFactory;
 import com.ibm.wala.ssa.SSAInvokeInstruction;
+import com.ibm.wala.ssa.SSAPhiInstruction;
+import com.ibm.wala.ssa.SSAReturnInstruction;
 import com.ibm.wala.ssa.SymbolTable;
 import com.ibm.wala.ssa.analysis.IExplodedBasicBlock;
 import com.ibm.wala.types.MethodReference;
@@ -345,6 +350,8 @@ public class Summarizer<E extends ISSABasicBlock> {
 		private final Map<SSAInvokeInstruction, SSAInvokeInstruction> invs = Maps
 				.newHashMap();
 		private final Map<TypeReference, Integer> objs = Maps.newHashMap();
+		private final Map<BasicBlockInContext<IExplodedBasicBlock>, SSAReturnInstruction> rets = Maps
+				.newHashMap();
 		private final CGAnalysisContext<IExplodedBasicBlock> ctx;
 		private final IMethod method;
 		private final SymbolTable tbl;
@@ -376,18 +383,124 @@ public class Summarizer<E extends ISSABasicBlock> {
 
 		public List<SSAInstruction> summarizeFlows(
 				Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> flowMap) {
+			
+			
 			// step 1.
 			for (FlowType<IExplodedBasicBlock> source : flowMap.keySet()) {
 				compileSource(source);
 			}
+			
+			// A little book keeping to keep track of different parameter sink flows to Method Calls.
+			// We need to keep track of which parameters that have source flows into them, as well as
+			// which sources flow into each parameter.
+			// This will hopefully prevent us from having multiple invoke statements, and hopefully
+			// only have one single invoke.
+			Map<MethodReference, 
+            Map<BasicBlockInContext<IExplodedBasicBlock>, 
+                Map<Integer, List<FlowType<IExplodedBasicBlock>>>>> methodParamFlows = mapParamSources(flowMap);
+			
+			// We shall also create a mapping for return values
+			Map<BasicBlockInContext<IExplodedBasicBlock>, List <FlowType<IExplodedBasicBlock>>> returnFlows = mapReturnFlows(flowMap);
+
+
 			// step 2.
 			for (FlowType<IExplodedBasicBlock> source : sourceMap.keySet()) {
 				for (FlowType<IExplodedBasicBlock> sink : flowMap.get(source)) {
-					compileEdge(source, sink);
+					compileEdge(source, sink, methodParamFlows, returnFlows);
 				}
 			}
 			logger.debug("summarized instructions: {}", insts);
 			return insts;
+		}
+		
+
+		/**
+		 * Given a flowMap, create a mapping of MethodReference Parameters to their
+		 * respective source FlowTypes and return this mapping.  We will separate these
+		 * MethodReferences by their respective call locations, ie basicblocks.
+		 * @param flowMap
+		 * @return
+		 */
+		private Map<MethodReference, 
+	                Map<BasicBlockInContext<IExplodedBasicBlock>, 
+                        Map<Integer, List<FlowType<IExplodedBasicBlock>>>>> 
+		        mapParamSources(Map<FlowType<IExplodedBasicBlock>, 
+		                    	Set<FlowType<IExplodedBasicBlock>>> flowMap) {
+			
+			Map<MethodReference, 
+			    Map<BasicBlockInContext<IExplodedBasicBlock>, 
+			        Map<Integer, List<FlowType<IExplodedBasicBlock>>>>> methodParamFlows = Maps.newHashMap();
+			for (FlowType<IExplodedBasicBlock> source : sourceMap.keySet()) {
+				for (FlowType<IExplodedBasicBlock> sink : flowMap.get(source)) {
+					if (sink instanceof ParameterFlow) {											
+						//Retrieve the MethodReference for the ParameterFlow
+						ParameterFlow<IExplodedBasicBlock> pf = (ParameterFlow<IExplodedBasicBlock>)sink;
+						BasicBlockInContext<IExplodedBasicBlock> block = pf.getBlock();
+						MethodReference mr;
+						
+						// if the sink basicblock is an entrynode, then this may be a call
+						// to a constructor's super class.
+						if (block.isEntryBlock())
+							mr = block.getMethod().getReference();
+						else {
+							SSAInvokeInstruction ssaInv = (SSAInvokeInstruction)block.getDelegate().getInstruction();
+							mr = ssaInv.getDeclaredTarget();						
+						}
+						
+						// Retrieve the mapping of the MethodReference, otherwise
+						// create the entry
+						if (!methodParamFlows.containsKey(mr)) {
+							Map<BasicBlockInContext<IExplodedBasicBlock>, Map<Integer, List<FlowType<IExplodedBasicBlock>>>> blockMap = Maps.newHashMap();							
+							methodParamFlows.put(mr, blockMap);
+						}
+						// Retrieve the mapping of the BasicBlock, otherwise
+						// create the entry
+						Map<BasicBlockInContext<IExplodedBasicBlock>, Map<Integer, List<FlowType<IExplodedBasicBlock>>>> blockMap = methodParamFlows.get(mr);
+						if (!blockMap.containsKey(pf.getBlock())) {
+							Map<Integer, List<FlowType<IExplodedBasicBlock>>> intMap = Maps.newHashMap();							
+							blockMap.put(pf.getBlock(), intMap);
+						}												
+						// Retrieve the mapping of a MethodReference parameter, otherwise
+						// create the entry
+						Map<Integer, List<FlowType<IExplodedBasicBlock>>> intMap = blockMap.get(pf.getBlock());
+						if (!intMap.containsKey(pf.getArgNum())) {
+							List<FlowType<IExplodedBasicBlock>> flowList = new ArrayList<FlowType<IExplodedBasicBlock>>();
+							intMap.put(pf.getArgNum(), flowList);
+						}						
+						// Keep track of the source that is flowing into a sink parameter
+						List<FlowType<IExplodedBasicBlock>> flowList = intMap.get(pf.getArgNum());
+						flowList.add(source);
+					}
+				}
+			}
+			return methodParamFlows;
+		}
+		
+		/**
+		 * Given a flowMap, create a list of source FlowTypes that correspond to each
+		 * ReturnFlow
+		 * @param flowMap
+		 * @return
+		 */
+		private Map<BasicBlockInContext<IExplodedBasicBlock>, List <FlowType<IExplodedBasicBlock>>> mapReturnFlows(Map<FlowType<IExplodedBasicBlock>, 
+            	Set<FlowType<IExplodedBasicBlock>>> flowMap) {
+			Map<BasicBlockInContext<IExplodedBasicBlock>, List<FlowType<IExplodedBasicBlock>>> returnFlows = Maps.newHashMap();
+			for (FlowType<IExplodedBasicBlock> source : sourceMap.keySet()) {
+				for (FlowType<IExplodedBasicBlock> sink : flowMap.get(source)) {
+					if (sink instanceof ReturnFlow) {
+						ReturnFlow<IExplodedBasicBlock> rf = (ReturnFlow<IExplodedBasicBlock>)sink;
+						BasicBlockInContext<IExplodedBasicBlock> block = rf.getBlock();
+						List<FlowType<IExplodedBasicBlock>> sourceFlows;
+						if (!returnFlows.containsKey(block)) {
+							sourceFlows = new ArrayList<FlowType<IExplodedBasicBlock>> ();
+							returnFlows.put(block, sourceFlows);
+						}
+						sourceFlows = returnFlows.get(block);
+						sourceFlows.add(source);						
+					}
+				}
+			}
+			return returnFlows;
 		}
 
 		/**
@@ -489,9 +602,16 @@ public class Summarizer<E extends ISSABasicBlock> {
 		 * 
 		 * @param source
 		 * @param sink
+		 * @param methodParamFlows 
+		 * @param returnFlows 
 		 */
 		private void compileEdge(FlowType<IExplodedBasicBlock> source,
-				FlowType<IExplodedBasicBlock> sink) {
+				FlowType<IExplodedBasicBlock> sink, 
+				final Map<MethodReference, Map<BasicBlockInContext<IExplodedBasicBlock>, 
+				                               Map<Integer, List<FlowType<IExplodedBasicBlock>>>>> 
+		                                           methodParamFlows, 
+		        final Map<BasicBlockInContext<IExplodedBasicBlock>, 
+		                                      List<FlowType<IExplodedBasicBlock>>> returnFlows) {
 			final int sourceVal = sourceMap.get(source).intValue();
 			sink.visit(new FlowTypeVisitor<IExplodedBasicBlock, Void>() {
 
@@ -525,7 +645,7 @@ public class Summarizer<E extends ISSABasicBlock> {
 					// whose actual parameter is a sink.
 					SSAInvokeInstruction inv = (SSAInvokeInstruction) flow
 							.getBlock().getDelegate().getInstruction();
-					findOrCreateInvoke(inv);
+					findOrCreateInvoke(inv, flow.getBlock(), methodParamFlows);
 					return null;
 				}
 
@@ -534,8 +654,9 @@ public class Summarizer<E extends ISSABasicBlock> {
 					// recover return type
 					TypeReference typeRef = method.getReturnType();
 					// emit return instruction
-					insts.add(instFactory.ReturnInstruction(sourceVal,
-							typeRef.isPrimitiveType()));
+					findOrCreateReturn(flow.getBlock(), typeRef, returnFlows);
+//					insts.add(instFactory.ReturnInstruction(sourceVal,
+//							typeRef.isPrimitiveType()));
 					return null;
 				}
 
@@ -550,6 +671,36 @@ public class Summarizer<E extends ISSABasicBlock> {
 			});
 		}
 
+		private SSAReturnInstruction findOrCreateReturn(BasicBlockInContext<IExplodedBasicBlock> bbic, TypeReference typeRef,
+				Map<BasicBlockInContext<IExplodedBasicBlock>, 
+				    List<FlowType<IExplodedBasicBlock>>> returnFlows) {
+			SSAReturnInstruction synthRet = rets.get(bbic);
+			if (synthRet != null) {
+				return synthRet;
+			}
+			
+			List<FlowType<IExplodedBasicBlock>> flowTypes = returnFlows.get(bbic);
+			int sourceVal;
+			if (flowTypes.size() == 1) {
+				sourceVal = sourceMap.get(flowTypes.get(0)).intValue();
+			}
+			else {
+				int[] phiVals = new int[flowTypes.size()];
+				for (int i = 0; i < flowTypes.size(); i++) {
+					phiVals[i] = sourceMap.get(flowTypes.get(i)).intValue();
+				}
+				sourceVal = tbl.newSymbol();
+				SSAPhiInstruction phiInst = instFactory.PhiInstruction(sourceVal, phiVals);
+				insts.add(phiInst);
+			}
+			
+			synthRet = instFactory.ReturnInstruction(sourceVal,
+					typeRef.isPrimitiveType());
+			insts.add(synthRet);
+			rets.put(bbic, synthRet);
+			return synthRet;
+		}
+		
 		/**
 		 * Synthesize an invoke instruction corresponding to the given original
 		 * instruction. This makes some attempt to minimize the number of
@@ -591,6 +742,97 @@ public class Summarizer<E extends ISSABasicBlock> {
 					paramType = declaredTarget.getParameterType(i);
 				}
 				paramVals[i] = findOrCreateValue(paramType);
+			}
+			if (inv.hasDef()) {
+				synthInv = instFactory.InvokeInstruction(inv.getDef(),
+						paramVals, inv.getException(), inv.getCallSite());
+			} else {
+				synthInv = instFactory.InvokeInstruction(paramVals,
+						inv.getException(), inv.getCallSite());
+			}
+			insts.add(synthInv);
+			invs.put(inv, synthInv);
+			return synthInv;
+		}
+		
+		/**
+		 * Synthesize an invoke instruction corresponding to the given original
+		 * instruction. This makes some attempt to minimize the number of
+		 * synthesized instructions by first checking if we've synthesized for
+		 * this exact instruction before.
+		 * 
+		 * In addition to returning the synthesized instruction, this adds the
+		 * instruction to insts.
+		 * 
+		 * @param inv
+		 * @param basicBlockInContext 
+		 * @return
+		 */
+		private SSAInvokeInstruction findOrCreateInvoke(SSAInvokeInstruction inv, 
+				BasicBlockInContext<IExplodedBasicBlock> basicBlockInContext, 
+				Map<MethodReference, Map<BasicBlockInContext<IExplodedBasicBlock>, 
+				                         Map<Integer, List<FlowType<IExplodedBasicBlock>>>>> 
+		                                     methodParamFlows) {
+			SSAInvokeInstruction synthInv = invs.get(inv);
+			if (synthInv != null) {
+				// return existing instruction if we already have it
+				return synthInv;
+			}
+
+			final MethodReference declaredTarget = inv.getDeclaredTarget();
+			final int numParams = declaredTarget.getNumberOfParameters();
+			int[] paramVals = new int[numParams];
+			
+			Map<BasicBlockInContext<IExplodedBasicBlock>, 
+			    Map<Integer, List<FlowType<IExplodedBasicBlock>>>> blockMap = methodParamFlows.get(declaredTarget);
+			Map<Integer, List<FlowType<IExplodedBasicBlock>>> paramMap = blockMap.get(basicBlockInContext);
+			assert(paramMap != null);
+
+			for (int i = 0; i < numParams; i++) {
+				TypeReference paramType = null;
+
+				// first try to find out the concrete type of the argument
+				final CGNode node = ctx.cg.getNode(method,
+						Everywhere.EVERYWHERE);
+				final PointerKey pk = ctx.pa.getHeapModel()
+						.getPointerKeyForLocal(node, inv.getUse(i));
+				for (InstanceKey ik : ctx.pa.getPointsToSet(pk)) {
+					paramType = ik.getConcreteType().getReference();
+				}
+
+				// if the pointer analysis doesn't know, we just use the
+				// declared type. Note that this may be different than the
+				// concrete type of the formal parameter
+				if (paramType == null) {
+					paramType = declaredTarget.getParameterType(i);
+				}
+				// if the parameter is a sink, we probably have a definition of the source
+				// somewhere in our methodParamFlows and sourceMap.
+				if (paramMap.containsKey(i)) {
+					// First we check to see if we have multiple sources going into the same sink, if we do
+					// create a phi instruction which contains all the definitions into a result				
+					List<FlowType<IExplodedBasicBlock>> flowList = paramMap.get(i);
+					assert (flowList.size() >= 1);
+					if (flowList.size() > 1) {
+						int[] phiVals = new int [flowList.size()];
+						for (int j = 0; j < flowList.size(); j++) {
+							phiVals[j] = sourceMap.get(flowList.get(j)).intValue();
+						}
+						int ref = tbl.newSymbol();
+						SSAPhiInstruction synthPhi = instFactory.PhiInstruction(ref, phiVals);
+						insts.add(synthPhi);
+						paramVals[i] = ref;
+					}
+					// otherwise search for the ssa ref and use it
+					else {
+						paramVals[i] = sourceMap.get(flowList.get(0)).intValue();
+					}
+					
+				}
+				//otherwise just treat normally and create the parameter objects
+				else {
+					paramVals[i] = findOrCreateValue(paramType);
+				}
 			}
 			if (inv.hasDef()) {
 				synthInv = instFactory.InvokeInstruction(inv.getDef(),

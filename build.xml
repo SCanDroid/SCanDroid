@@ -57,7 +57,6 @@
     	<ivy:cachepath pathid="IvyDeps.classpath" />
     </target>
 
-	
 	<path id="SimpleAnalysisPlugin.classpath">
 		<path refid="IvyDeps.classpath" />
 		<pathelement location="bin" />

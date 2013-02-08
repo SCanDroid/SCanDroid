@@ -414,10 +414,34 @@ public class SSAtoXMLVisitor implements SSAInstruction.IVisitor {
     public void visitInstanceof(SSAInstanceofInstruction instruction) {
         throw new SSASerializationException("Unsupported.");
     }
-
+    
+    /**
+     * <phi arg0="localdef_8" arg1="arg5" arg2="arg0" 
+     * arg3="localdef_6" def="localdef_10"/>
+     * 
+     */ 	
     @Override
     public void visitPhi(SSAPhiInstruction instruction) {
-        throw new SSASerializationException("Unsupported.");
+        try {
+            String eltName = XMLSummaryWriter.E_PHI;
+            Element elt = doc.createElement(eltName);
+        	            
+            int paramCount = instruction.getNumberOfUses();
+            for (int i=0; i < paramCount; i++) {
+            	String argName = getLocalName(instruction.getUse(i));
+            	elt.setAttribute(XMLSummaryWriter.A_ARG+i, argName);
+            }
+            
+            elt.setAttribute(XMLSummaryWriter.A_NUM_ARGS, Integer.toString(paramCount));
+            
+            int defNum = instruction.getDef();
+            String localName = newLocalDef(defNum);
+            elt.setAttribute(XMLSummaryWriter.A_DEF, localName);        	
+
+            summary.add(elt);
+        } catch (Exception e) {
+            throw new SSASerializationException(e);
+        }    	
     }
 
     @Override
