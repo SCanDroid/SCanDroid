@@ -255,7 +255,7 @@
                        haltonfailure="false" 
                        fork="yes" 
                        maxmemory="6G"
-                       printsummary="on">
+                       printsummary="withOutAndErr">
 			<!-- Use the basic SCanDroid classpath: -->
 			<classpath refid="SimpleAnalysisPlugin.classpath" />
 
@@ -278,7 +278,7 @@
                          haltonfailure="false" 
                          fork="yes" 
                          maxmemory="6G"
-                         printsummary="on">
+                         printsummary="withOutAndErr">
 				<!-- Use the basic SCanDroid classpath: -->
 				<classpath refid="SimpleAnalysisPlugin.classpath" />
 
