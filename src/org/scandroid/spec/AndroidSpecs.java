@@ -130,6 +130,8 @@ public class AndroidSpecs implements ISpecs {
 			new MethodNamePattern(prv, "insert");
 	static MethodNamePattern prvUpdate =
 			new MethodNamePattern(prv, "update");
+	static MethodNamePattern prvDelete =
+			new MethodNamePattern(prv, "delete");
 
 	static MethodNamePattern ctxStartActivity =
 			new MethodNamePattern(ctx, "startActivity");
