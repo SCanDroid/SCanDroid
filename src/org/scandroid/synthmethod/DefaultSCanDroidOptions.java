@@ -40,11 +40,20 @@
 package org.scandroid.synthmethod;
 
 import java.io.File;
+import java.io.InputStream;
 import java.net.URI;
+import java.util.Collection;
 
+import org.scandroid.util.AndroidAnalysisContext;
 import org.scandroid.util.ISCanDroidOptions;
 
+import com.ibm.wala.ipa.callgraph.AnalysisCache;
+import com.ibm.wala.ipa.callgraph.AnalysisOptions;
+import com.ibm.wala.ipa.callgraph.AnalysisScope;
 import com.ibm.wala.ipa.callgraph.AnalysisOptions.ReflectionOptions;
+import com.ibm.wala.ipa.callgraph.impl.DefaultContextSelector;
+import com.ibm.wala.ipa.callgraph.propagation.SSAPropagationCallGraphBuilder;
+import com.ibm.wala.ipa.cha.ClassHierarchy;
 import com.ibm.wala.util.io.FileProvider;
 
 public abstract class DefaultSCanDroidOptions implements ISCanDroidOptions {
@@ -156,6 +165,16 @@ public abstract class DefaultSCanDroidOptions implements ISCanDroidOptions {
 	public boolean cgBuilderWarnings() {
 		return false;
 	}
+	
+	@Override
+    public SSAPropagationCallGraphBuilder makeCallGraphBuilder(
+            AnalysisScope scope, AnalysisOptions analysisOptions,
+            AnalysisCache cache, ClassHierarchy cha,
+            Collection<InputStream> extraSummaries) {
+        return AndroidAnalysisContext.makeZeroCFABuilder(analysisOptions, cache,
+                cha, scope, new DefaultContextSelector(analysisOptions, cha),
+                null, extraSummaries, null);
+    }
 
 	public static String dumpString(ISCanDroidOptions options) {
 		return "DefaultSCanDroidOptions [pdfCG()=" + options.pdfCG()

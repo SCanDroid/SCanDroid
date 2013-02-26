@@ -40,7 +40,9 @@
 package org.scandroid.util;
 
 import java.io.File;
+import java.io.InputStream;
 import java.net.URI;
+import java.util.Collection;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -53,8 +55,15 @@ import org.slf4j.LoggerFactory;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
+import com.ibm.wala.ipa.callgraph.impl.DefaultContextSelector;
 
+
+import com.ibm.wala.ipa.callgraph.AnalysisCache;
+import com.ibm.wala.ipa.callgraph.AnalysisOptions;
 import com.ibm.wala.ipa.callgraph.AnalysisOptions.ReflectionOptions;
+import com.ibm.wala.ipa.callgraph.AnalysisScope;
+import com.ibm.wala.ipa.callgraph.propagation.SSAPropagationCallGraphBuilder;
+import com.ibm.wala.ipa.cha.ClassHierarchy;
 
 @SuppressWarnings("static-access")
 public class CLISCanDroidOptions implements ISCanDroidOptions {
@@ -318,4 +327,14 @@ public class CLISCanDroidOptions implements ISCanDroidOptions {
 		// TODO Auto-generated method stub
 		return true;
 	}
+
+    @Override
+    public SSAPropagationCallGraphBuilder makeCallGraphBuilder(
+            AnalysisScope scope, AnalysisOptions analysisOptions,
+            AnalysisCache cache, ClassHierarchy cha,
+            Collection<InputStream> extraSummaries) {
+        return AndroidAnalysisContext.makeZeroCFABuilder(analysisOptions, cache,
+                cha, scope, new DefaultContextSelector(analysisOptions, cha),
+                null, extraSummaries, null);
+    }
 }
