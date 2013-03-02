@@ -151,6 +151,7 @@ public class CGAnalysisContext<E extends ISSABasicBlock> {
 		}
 
 		cgb = AndroidAnalysisContext.makeZeroCFABuilder(analysisOptions, cache,
+//		cgb = AndroidAnalysisContext.makeVanillaZeroOneCFABuilder(analysisOptions, cache,
 				cha, scope, new DefaultContextSelector(analysisOptions, cha),
 				null, extraSummaries, null);
 
