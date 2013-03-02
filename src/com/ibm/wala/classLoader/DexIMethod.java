@@ -52,6 +52,7 @@ import static org.jf.dexlib.Util.AccessFlags.VOLATILE;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 
 import org.jf.dexlib.AnnotationItem;
 import org.jf.dexlib.AnnotationSetItem;
@@ -132,6 +133,7 @@ import com.ibm.wala.types.MethodReference;
 import com.ibm.wala.types.Selector;
 import com.ibm.wala.types.TypeName;
 import com.ibm.wala.types.TypeReference;
+import com.ibm.wala.types.annotations.Annotation;
 import com.ibm.wala.util.strings.Atom;
 import com.ibm.wala.util.strings.ImmutableByteArray;
 
@@ -3256,5 +3258,11 @@ public class DexIMethod implements IBytecodeMethod {
 		throw new UnsupportedOperationException("getCallSites() not implemented");
 		//return null;
 	}
+
+	@Override
+	public Collection<Annotation> getAnnotations() {
+		// TODO Auto-generated method stub
+		return Collections.emptySet();
+}
 
 }

@@ -44,6 +44,8 @@ import static org.jf.dexlib.Util.AccessFlags.PRIVATE;
 import static org.jf.dexlib.Util.AccessFlags.PUBLIC;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import org.jf.dexlib.ClassDataItem;
@@ -58,6 +60,7 @@ import org.slf4j.LoggerFactory;
 import com.ibm.wala.ipa.cha.IClassHierarchy;
 import com.ibm.wala.shrikeCT.InvalidClassFileException;
 import com.ibm.wala.types.TypeReference;
+import com.ibm.wala.types.annotations.Annotation;
 import com.ibm.wala.util.strings.ImmutableByteArray;
 
 public class DexIClass extends BytecodeClass<IClassLoader> {
@@ -330,4 +333,10 @@ public class DexIClass extends BytecodeClass<IClassLoader> {
 //      return construcorId!=-1?methods[construcorId]:null;
         return clinitId!=-1?methods[clinitId]:null;
     }
+
+	@Override
+	public Collection<Annotation> getAnnotations() {
+		// TODO Auto-generated method stub
+		return Collections.emptySet();
+	}
 }
