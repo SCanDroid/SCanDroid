@@ -456,14 +456,30 @@ public class MethodAnalysisTest {
 		}
 		// otherwise they're both sinks, so they'll fail below
 
-		// if it's a parameter flow source, they should both be in the same
-		// method
+//		// if it's a parameter flow source, they should both be in the same
+//		// method
+//		if (flow1 instanceof ParameterFlow && flow1.isSource()
+//				&& flow2.isSource()) {
+//			if (!flow1.getBlock().getMethod().getSignature()
+//					.equals(flow2.getBlock().getMethod().getSignature()))
+//				return false;
+//		}
+
+		// *relaxed above rule a bit to account for indirectcalls
+		// if it's a parameter flow source, they may not both be in the same method.
+		// If the parameter source was invoked indirectly, the summary may move this
+		// invoke instruction directly into the summary method
 		if (flow1 instanceof ParameterFlow && flow1.isSource()
 				&& flow2.isSource()) {
 			if (!flow1.getBlock().getMethod().getSignature()
 					.equals(flow2.getBlock().getMethod().getSignature()))
-				return false;
+				if (flow2 instanceof ParameterFlow && 
+						flow1.descString().equals(flow2.descString()))
+					return true;
+				else
+					return false;
 		}
+
 
 		// if it's a parameter flow sink, compare the target of the invoke
 		// instruction and the argnum
