@@ -44,6 +44,7 @@ import org.scandroid.domain.DomainElement;
 import org.scandroid.domain.IFDSTaintDomain;
 import org.scandroid.domain.LocalElement;
 import org.scandroid.domain.ReturnElement;
+import org.scandroid.domain.ThrowElement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -74,7 +75,8 @@ public class CallToReturnFunction <E extends ISSABasicBlock>
 		} 
 
 		DomainElement de = domain.getMappedObject(d);
-		if (de.codeElement instanceof LocalElement || de.codeElement instanceof ReturnElement) {
+		if (de.codeElement instanceof LocalElement || de.codeElement instanceof ReturnElement ||
+				de.codeElement instanceof ThrowElement) {
 			return SparseIntSet.singleton(d);
 		} else {
 			logger.trace("throwing away {}", de);
