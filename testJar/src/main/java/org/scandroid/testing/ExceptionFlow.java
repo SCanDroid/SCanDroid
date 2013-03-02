@@ -52,7 +52,50 @@ public class ExceptionFlow {
 		return null;
 	}
 	
+	private static Exception useFlow2(Exception e) {
+		try {
+			throwerE(e);
+		}
+		catch (Exception e1) {
+			return e1;
+		}
+		return null;
+	}
+		
+	private static String noFlow(String[] args) {
+		try {
+			thrower_nf(args[0]);
+		} catch (Exception e) {
+			return e.getMessage();
+		}
+		return null;
+	}
+	
+	private static String noFlow2(String[] args) {
+		try {
+			thrower(args[0]);
+		} catch (Exception e) {
+			Exception e1 = new Exception("no flow");
+			return e1.getMessage();
+		}
+		return null;
+	}
+	
 	public static void thrower(String str) throws Exception {
 		throw new Exception(str);
 	}
+	
+	public static void throwerI(Integer i) throws Exception {
+		throw new Exception(i.toString());
+	}
+	
+	public static void throwerE(Exception e) throws Exception {
+//		throw new Exception("no_flow");
+		throw e;
+	}
+	
+	public static void thrower_nf(String str) throws Exception {
+		throw new Exception("no flow");
+	}
+
 }
