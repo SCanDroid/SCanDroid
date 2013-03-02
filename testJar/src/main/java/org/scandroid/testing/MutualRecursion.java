@@ -80,4 +80,13 @@ public class MutualRecursion {
 	public Bar barize(Foo foo) {
 		return new Bar(fooize(foo.bar));
 	}
+	
+	public static Foo fooize_static(Bar bar) {
+		return new Foo(barize_static(bar.foo));
+	}
+	
+	public static Bar barize_static(Foo foo) {
+		return new Bar(fooize_static(foo.bar));
+	}
+
 }
