@@ -702,7 +702,6 @@ public class OutflowAnalysis {
 						// add sink point for instruction
 						SSAThrowInstruction throwInst = (SSAThrowInstruction) inst;
 						final int ssaVal = throwInst.getUse(0);
-						System.out.println("moo: " + ssaVal);
 						BasicBlockInContext<IExplodedBasicBlock> bbic = new BasicBlockInContext<IExplodedBasicBlock>(
 								node, bb);
 						final ExceptionFlow<IExplodedBasicBlock> sinkFlow = new ExceptionFlow<IExplodedBasicBlock>(
