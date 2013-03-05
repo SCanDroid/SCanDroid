@@ -153,42 +153,42 @@ public class DexSSABuilder extends AbstractIntRegisterMachine {
             this.dexCFG = dexCFG;
         }
 
-//      public int meetStack(int slot, int[] rhs, IBasicBlock<Instruction> bb) {
-//
-//          assert bb != null : "null basic block";
-//
-//          if (bb.isExitBlock()) {
-//              return TOP;
-//          }
-//
-//          if (allTheSame(rhs)) {
-//              for (int i = 0; i < rhs.length; i++) {
-//                  if (rhs[i] != TOP) {
-//                      return rhs[i];
-//                  }
-//              }
-//              // didn't find anything but TOP
-//              return TOP;
-//          } else {
-//              SSACFG.BasicBlock newBB = cfg.getNode(dexCFG.getNumber(bb));
-//              // if we already have a phi for this stack location
-//              SSAPhiInstruction phi = newBB.getPhiForStackSlot(slot);
-//              int result;
-//              if (phi == null) {
-//                  // no phi already exists. create one.
-//                  result = symbolTable.newPhi(rhs);
-//                  PhiValue v = symbolTable.getPhiValue(result);
-//                  phi = v.getPhiInstruction();
-//                  newBB.addPhiForStackSlot(slot, phi);
-//              } else {
-//                  // already created a phi. update it to account for the
-//                  // new merge.
-//                  result = phi.getDef();
-//                  phi.setValues(rhs.clone());
-//              }
-//              return result;
-//          }
-//      }
+        public int meetStack(int slot, int[] rhs, BasicBlock bb) {
+
+        	assert bb != null : "null basic block";
+
+        	if (bb.isExitBlock()) {
+        		return TOP;
+        	}
+
+        	if (allTheSame(rhs)) {
+        		for (int i = 0; i < rhs.length; i++) {
+        			if (rhs[i] != TOP) {
+        				return rhs[i];
+        			}
+        		}
+        		// didn't find anything but TOP
+        		return TOP;
+        	} else {
+        		SSACFG.BasicBlock newBB = cfg.getNode(dexCFG.getNumber(bb));
+        		// if we already have a phi for this stack location
+        		SSAPhiInstruction phi = newBB.getPhiForStackSlot(slot);
+        		int result;
+        		if (phi == null) {
+        			// no phi already exists. create one.
+        			result = symbolTable.newPhi(rhs);
+        			PhiValue v = symbolTable.getPhiValue(result);
+        			phi = v.getPhiInstruction();
+        			newBB.addPhiForStackSlot(slot, phi);
+        		} else {
+        			// already created a phi. update it to account for the
+        			// new merge.
+        			result = phi.getDef();
+        			phi.setValues(rhs.clone());
+        		}
+        		return result;
+        	}
+        }
 
         public int meetLocal(int n, int[] rhs, DexCFG.BasicBlock bb) {
             if (allTheSame(rhs)) {
@@ -318,7 +318,7 @@ public class DexSSABuilder extends AbstractIntRegisterMachine {
                 }
             }
         }
-//      MyLogger.log(LogLevel.DEBUG, "DexSSABuilder - initializeVariables() - local: " + local);
+        
         // This useless value ensures that the state cannot be empty, even
         // for a static method with no arguments in blocks with an empty stack
         // and no locals being used. This ensures that propagation of the
@@ -331,9 +331,9 @@ public class DexSSABuilder extends AbstractIntRegisterMachine {
         // causes a bug right now in normal cases, so I'm commenting it out
         // for now. If there's a problem, let's add a regression test
         // to catch it.
-        //
-        // TODO: if there's no stack do we need this?
-        //entryState.push(symbolTable.newSymbol());
+        //       
+        entryState.push(symbolTable.newSymbol());
+        
     }
 
     /**
