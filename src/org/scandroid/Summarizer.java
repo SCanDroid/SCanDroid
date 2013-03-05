@@ -61,6 +61,7 @@ import org.scandroid.flow.FlowAnalysis;
 import org.scandroid.flow.InflowAnalysis;
 import org.scandroid.flow.OutflowAnalysis;
 import org.scandroid.flow.functions.TaintTransferFunctions;
+import org.scandroid.flow.types.ExceptionFlow;
 import org.scandroid.flow.types.FieldFlow;
 import org.scandroid.flow.types.FlowType;
 import org.scandroid.flow.types.FlowType.FlowTypeVisitor;
@@ -593,6 +594,12 @@ public class Summarizer<E extends ISSABasicBlock> {
 					return null;
 				}
 
+				@Override
+				public Void visitExceptionFlow(ExceptionFlow<IExplodedBasicBlock> flow) {
+					// for now, we don't have exceptions as sources.
+					return null;
+				}
+
 			});
 		}
 
@@ -668,6 +675,13 @@ public class Summarizer<E extends ISSABasicBlock> {
 							.getField().getReference()));
 					return null;
 				}
+
+				@Override
+				public Void visitExceptionFlow(ExceptionFlow<IExplodedBasicBlock> flow) {
+					// TODO: add throw exceptions in summary
+					return null;
+				}
+
 			});
 		}
 
