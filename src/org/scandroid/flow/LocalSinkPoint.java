@@ -91,15 +91,9 @@ public class LocalSinkPoint implements ISinkPoint {
 			logger.warn("no instance keys found for SinkPoint {}", this);
 		}
 
-		/*
-		 * Commented (suhsteve)
-		 * Shouldn't need to take into consideration InstanceKeys (objs on the heap)
-		 * if we are only considering LocalSinkPoints.  We should have LocalElements 
-		 * available for them.
-		 */
-//		for (InstanceKey ik : iks) {
-//			elts.addAll(ctx.codeElementsForInstanceKey(ik));
-//		}
+		for (InstanceKey ik : iks) {
+			elts.addAll(ctx.codeElementsForInstanceKey(ik));
+		}
 		
 		logger.debug("checking for sources from code elements {}", elts);
 
