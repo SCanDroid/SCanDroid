@@ -678,7 +678,7 @@ public class Summarizer<E extends ISSABasicBlock> {
 
 				@Override
 				public Void visitExceptionFlow(ExceptionFlow<IExplodedBasicBlock> flow) {
-					// TODO: add throw exceptions in summary
+					insts.add(instFactory.ThrowInstruction(sourceVal));
 					return null;
 				}
 
