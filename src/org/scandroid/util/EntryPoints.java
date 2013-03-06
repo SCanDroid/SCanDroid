@@ -64,7 +64,7 @@ import org.w3c.dom.NodeList;
 import com.google.common.collect.Lists;
 import com.ibm.wala.classLoader.IMethod;
 import com.ibm.wala.ipa.callgraph.Entrypoint;
-import com.ibm.wala.ipa.callgraph.impl.DefaultEntrypoint;
+import com.ibm.wala.ipa.callgraph.impl.FieldPopulatingEntrypoint;
 import com.ibm.wala.ipa.cha.ClassHierarchy;
 import com.ibm.wala.types.ClassLoaderReference;
 import com.ibm.wala.types.MethodReference;
@@ -98,7 +98,7 @@ public class EntryPoints {
             if(im.getReference().getDeclaringClass().getClassLoader().
                                 equals(ClassLoaderReference.Application)) {
                 logger.debug("Adding entry point: "+im.getSignature());
-                entries.add(new DefaultEntrypoint(im, cha));
+                entries.add(new FieldPopulatingEntrypoint(im, cha));
             }
         }
     }
@@ -112,7 +112,7 @@ public class EntryPoints {
     			if(LoaderUtils.fromLoader(im, ClassLoaderReference.Application))
     			{
     				logger.debug("Adding entry point: "+im.getSignature());
-    				entries.add(new DefaultEntrypoint(im, cha));
+    				entries.add(new FieldPopulatingEntrypoint(im, cha));
     			}
     		}
     	}
@@ -143,7 +143,7 @@ public class EntryPoints {
                 if (im.getReference().getDeclaringClass().getClassLoader()
                         .equals(ClassLoaderReference.Application)) {
                     logger.debug("Adding entry point: " + im.getSignature());
-                    entries.add(new DefaultEntrypoint(im, cha));
+                    entries.add(new FieldPopulatingEntrypoint(im, cha));
                 }
             }
         }
@@ -172,7 +172,7 @@ public class EntryPoints {
 
                for (IMethod im : cha.getPossibleTargets(methodRef)) {
                    logger.debug("Adding entry point: " + im.getSignature());
-                   entries.add(new DefaultEntrypoint(im, cha));
+                   entries.add(new FieldPopulatingEntrypoint(im, cha));
                }
            }
     }
@@ -195,7 +195,7 @@ public class EntryPoints {
 
     		for (IMethod im : cha.getPossibleTargets(mr)) {
     			logger.debug("Adding entry point: " + im.getSignature());
-    			entries.add(new DefaultEntrypoint(im, cha));
+    			entries.add(new FieldPopulatingEntrypoint(im, cha));
     		}
     	}
     }
@@ -332,7 +332,7 @@ public class EntryPoints {
             if (method != null)
                 im = cha.resolveMethod(StringStuff.makeMethodReference(intent[1]+"."+method));
             if (im!=null)
-                entries.add(new DefaultEntrypoint(im,cha));
+                entries.add(new FieldPopulatingEntrypoint(im,cha));
 
         }
         for (String[] intent: ReceiverIntentList) {
@@ -343,7 +343,7 @@ public class EntryPoints {
             if (method != null)
                 im = cha.resolveMethod(StringStuff.makeMethodReference(intent[1]+"."+method));
             if (im!=null)
-                entries.add(new DefaultEntrypoint(im,cha));
+                entries.add(new FieldPopulatingEntrypoint(im,cha));
         }
         //IMethod im = cha.resolveMethod(StringStuff.makeMethodReference("android.app.Activity.onCreate(Landroid/os/Bundle;)V"));
         //entries.add(new DefaultEntrypoint(im, cha));

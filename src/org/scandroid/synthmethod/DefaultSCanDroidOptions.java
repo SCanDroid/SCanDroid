@@ -40,11 +40,20 @@
 package org.scandroid.synthmethod;
 
 import java.io.File;
+import java.io.InputStream;
 import java.net.URI;
+import java.util.Collection;
 
+import org.scandroid.util.AndroidAnalysisContext;
 import org.scandroid.util.ISCanDroidOptions;
 
+import com.ibm.wala.ipa.callgraph.AnalysisCache;
+import com.ibm.wala.ipa.callgraph.AnalysisOptions;
+import com.ibm.wala.ipa.callgraph.AnalysisScope;
 import com.ibm.wala.ipa.callgraph.AnalysisOptions.ReflectionOptions;
+import com.ibm.wala.ipa.callgraph.impl.DefaultContextSelector;
+import com.ibm.wala.ipa.callgraph.propagation.SSAPropagationCallGraphBuilder;
+import com.ibm.wala.ipa.cha.ClassHierarchy;
 import com.ibm.wala.util.io.FileProvider;
 
 public abstract class DefaultSCanDroidOptions implements ISCanDroidOptions {
@@ -127,7 +136,8 @@ public abstract class DefaultSCanDroidOptions implements ISCanDroidOptions {
 	@Override
 	public URI getAndroidLibrary() {
 		try {
-			return new FileProvider().getResource("data/android-2.3.7_r1.jar").toURI();
+			return new FileProvider().getResource("data/android-2.3.7_r1.jar")
+					.toURI();
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
@@ -141,35 +151,47 @@ public abstract class DefaultSCanDroidOptions implements ISCanDroidOptions {
 	@Override
 	public URI getSummariesURI() {
 		try {
-			return new FileProvider().getResource("data/MethodSummaries.xml").toURI();
+			return new FileProvider().getResource("data/MethodSummaries.xml")
+					.toURI();
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
 	}
-	
+
 	@Override
 	public boolean classHierarchyWarnings() {
 		return false;
 	}
-	
+
 	@Override
 	public boolean cgBuilderWarnings() {
 		return false;
 	}
 
+	@Override
+	public SSAPropagationCallGraphBuilder makeCallGraphBuilder(
+			AnalysisScope scope, AnalysisOptions opts, AnalysisCache cache,
+			ClassHierarchy cha, Collection<InputStream> extraSummaries) {
+		return AndroidAnalysisContext.makeZeroCFABuilder(opts, cache, cha,
+				scope, new DefaultContextSelector(opts, cha), null,
+				extraSummaries, null);
+	}
+
 	public static String dumpString(ISCanDroidOptions options) {
 		return "DefaultSCanDroidOptions [pdfCG()=" + options.pdfCG()
-				+ ", pdfPartialCG()=" + options.pdfPartialCG() + ", pdfOneLevelCG()="
-				+ options.pdfOneLevelCG() + ", systemToApkCG()=" + options.systemToApkCG()
+				+ ", pdfPartialCG()=" + options.pdfPartialCG()
+				+ ", pdfOneLevelCG()=" + options.pdfOneLevelCG()
+				+ ", systemToApkCG()=" + options.systemToApkCG()
 				+ ", stdoutCG()=" + options.stdoutCG() + ", includeLibrary()="
-				+ options.includeLibrary() + ", separateEntries()=" + options.separateEntries()
-				+ ", ifdsExplorer()=" + options.ifdsExplorer()
-				+ ", addMainEntrypoints()=" + options.addMainEntrypoints()
-				+ ", useThreadRunMain()=" + options.useThreadRunMain()
-				+ ", stringPrefixAnalysis()=" + options.stringPrefixAnalysis()
-				+ ", testCGBuilder()=" + options.testCGBuilder()
-				+ ", useDefaultPolicy()=" + options.useDefaultPolicy()
-				+ ", getClasspath()=" + options.getClasspath() + ", getFilename()="
+				+ options.includeLibrary() + ", separateEntries()="
+				+ options.separateEntries() + ", ifdsExplorer()="
+				+ options.ifdsExplorer() + ", addMainEntrypoints()="
+				+ options.addMainEntrypoints() + ", useThreadRunMain()="
+				+ options.useThreadRunMain() + ", stringPrefixAnalysis()="
+				+ options.stringPrefixAnalysis() + ", testCGBuilder()="
+				+ options.testCGBuilder() + ", useDefaultPolicy()="
+				+ options.useDefaultPolicy() + ", getClasspath()="
+				+ options.getClasspath() + ", getFilename()="
 				+ options.getFilename() + ", getAndroidLibrary()="
 				+ options.getAndroidLibrary() + ", getReflectionOptions()="
 				+ options.getReflectionOptions() + ", getSummariesURI()="
