@@ -42,6 +42,7 @@ import java.util.List;
 
 import org.scandroid.spec.EntryArgSinkSpec;
 import org.scandroid.spec.EntryArgSourceSpec;
+import org.scandroid.spec.EntryExcSinkSpec;
 import org.scandroid.spec.EntryRetSinkSpec;
 import org.scandroid.spec.ISpecs;
 import org.scandroid.spec.MethodNamePattern;
@@ -129,6 +130,8 @@ public class MethodSummarySpecs implements ISpecs {
 			//
 			sinks.add(new EntryRetSinkSpec(pattern));
 		}
+
+		sinks.add(new EntryExcSinkSpec(pattern));
 		
 		logger.debug("found sinks: " + sinks.toString());
 		return sinks;

@@ -387,17 +387,16 @@ public class SSAtoXMLVisitor implements SSAInstruction.IVisitor {
      */
     @Override
     public void visitThrow(SSAThrowInstruction instruction) {
-        throw new SSASerializationException("Exceptions not currently supported.");
-//        try {
-//            int exValNo = instruction.getException();
-//            String value = getLocalName(exValNo);
-//            
-//            Element elt = doc.createElement(XMLSummaryWriter.E_ATHROW);
-//            elt.setAttribute(XMLSummaryWriter.A_VALUE, value);
-//            summary.add(elt);
-//        } catch (Exception e) {
-//            throw new SSASerializationException(e);
-//        }
+        try {
+            int exValNo = instruction.getException();
+            String value = getLocalName(exValNo);
+
+            Element elt = doc.createElement(XMLSummaryWriter.E_ATHROW);
+            elt.setAttribute(XMLSummaryWriter.A_VALUE, value);
+            summary.add(elt);
+        } catch (Exception e) {
+            throw new SSASerializationException(e);
+        }
     }
 
     @Override

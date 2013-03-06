@@ -2,8 +2,8 @@
  *
  * Copyright (c) 2009-2012,
  *
- *  Galois, Inc. (Aaron Tomb <atomb@galois.com>, Rogan Creswick <creswick@galois.com>)
- *  Steve Suh    <suhsteve@gmail.com>
+ *  Adam Fuchs          <afuchs@cs.umd.edu>
+ *  Avik Chaudhuri      <avik@cs.umd.edu>
  *
  * All rights reserved.
  *
@@ -35,67 +35,51 @@
  *
  *
  */
-package org.scandroid.testing;
 
-public class ExceptionFlow {
+package org.scandroid.domain;
 
-	public static void exceptionFlow(String[] args) {
-		SourceSink.sink(useFlow(args));
+public class ThrowElement extends CodeElement {
+    private final int id;
+    
+    public ThrowElement(int id)
+    {
+        this.id = id;
+    }
+
+    
+    @Override
+	public int hashCode() {
+		final int prime = 97;
+		int result = 1;
+		result = prime * result + id;
+		return result;
 	}
 
-	private static String useFlow(String[] args) {
-		try {
-			thrower(args[0]);
-		} catch (Exception e) {
-			return e.getMessage();
-		}
-		return null;
+
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		ThrowElement other = (ThrowElement) obj;
+		if (id != other.id)
+			return false;
+		return true;
 	}
-	
-	private static Exception useFlow2(Exception e) {
-		try {
-			throwerE(e);
-		}
-		catch (Exception e1) {
-			return e1;
-		}
-		return null;
-	}
-		
-	private static String noFlow(String[] args) {
-		try {
-			thrower_nf(args[0]);
-		} catch (Exception e) {
-			return e.getMessage();
-		}
-		return null;
-	}
-	
-	private static String noFlow2(String[] args) {
-		try {
-			thrower(args[0]);
-		} catch (Exception e) {
-			Exception e1 = new Exception("no flow");
-			return e1.getMessage();
-		}
-		return null;
-	}
-	
-	public static void thrower(String str) throws Exception {
-		throw new Exception(str);
-	}
-	
-	public static void throwerI(Integer i) throws Exception {
-		throw new Exception(i.toString());
-	}
-	
-	public static void throwerE(Exception e) throws Exception {
-//		throw new Exception("no_flow");
-		throw e;
-	}
-	
-	public static void thrower_nf(String str) throws Exception {
-		throw new Exception("no flow");
-	}
+
+
+
+	@Override
+    public String toString()
+    {
+        return "ThrowElement("+id+")";
+    }
 
 }
+
+
+

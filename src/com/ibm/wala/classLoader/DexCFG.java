@@ -317,6 +317,9 @@ public class DexCFG extends AbstractCFG<Instruction, DexCFG.BasicBlock>{
                         exceptionTypes = HashSetFactory.make(exceptionTypes);
                     }
 
+                    // this var gets set to false if goToAllHandlers is true but some enclosing exception handler catches all
+                    // exceptions.  in such a case, we need not add an exceptional edge to the method exit
+                    boolean needEdgeToExitForAllHandlers = true;
                     for (int j = 0; j < hs.length; j++) {
                         if (DEBUG) {
                             logger.debug(" handler " + hs[j]);
@@ -331,6 +334,11 @@ public class DexCFG extends AbstractCFG<Instruction, DexCFG.BasicBlock>{
                                 logger.debug(" gotoAllHandlers " + b);
                             }
                             addExceptionalEdgeTo(b);
+                            // if the handler catches all exceptions, we don't need to add an edge to the exit or any other handlers
+                            if (hs[j].getCatchClass() == null) {
+                              needEdgeToExitForAllHandlers = false;
+                              break;
+                            }
                         } else {
                             TypeReference caughtException = null;
                             if (hs[j].getCatchClass() != null) {
@@ -390,7 +398,7 @@ public class DexCFG extends AbstractCFG<Instruction, DexCFG.BasicBlock>{
                         }
                     }
                     // if needed, add an edge to the exit block.
-                    if (exceptionTypes == null || !exceptionTypes.isEmpty()) {
+                    if ((exceptionTypes == null && needEdgeToExitForAllHandlers) || (exceptionTypes != null && !exceptionTypes.isEmpty())) {
                         BasicBlock exit = exit();
                         addExceptionalEdgeTo(exit);
                     }
@@ -597,7 +605,11 @@ public class DexCFG extends AbstractCFG<Instruction, DexCFG.BasicBlock>{
                 // this is the last non-exit block
                 return getInstructions().length - 1;
             } else {
-                BasicBlock next = getNode(getNumber() + 1);
+                int i = 1;
+                BasicBlock next;
+                do {
+                  next = getNode(getNumber() + i);
+                } while (next == null);
                 return next.getFirstInstructionIndex() - 1;
             }
         }

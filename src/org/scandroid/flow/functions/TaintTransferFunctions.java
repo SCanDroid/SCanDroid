@@ -54,6 +54,7 @@ import org.scandroid.domain.InstanceKeyElement;
 import org.scandroid.domain.LocalElement;
 import org.scandroid.domain.ReturnElement;
 import org.scandroid.domain.StaticFieldElement;
+import org.scandroid.domain.ThrowElement;
 import org.scandroid.flow.types.StaticFieldFlow;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -80,13 +81,17 @@ import com.ibm.wala.ssa.ISSABasicBlock;
 import com.ibm.wala.ssa.SSAArrayLoadInstruction;
 import com.ibm.wala.ssa.SSAArrayReferenceInstruction;
 import com.ibm.wala.ssa.SSAArrayStoreInstruction;
+import com.ibm.wala.ssa.SSACFG;
 import com.ibm.wala.ssa.SSAFieldAccessInstruction;
+import com.ibm.wala.ssa.SSAGetCaughtExceptionInstruction;
 import com.ibm.wala.ssa.SSAGetInstruction;
 import com.ibm.wala.ssa.SSAInstruction;
 import com.ibm.wala.ssa.SSAInvokeInstruction;
 import com.ibm.wala.ssa.SSAPhiInstruction;
 import com.ibm.wala.ssa.SSAPutInstruction;
 import com.ibm.wala.ssa.SSAReturnInstruction;
+import com.ibm.wala.ssa.SSAThrowInstruction;
+import com.ibm.wala.ssa.analysis.IExplodedBasicBlock;
 import com.ibm.wala.types.FieldReference;
 import com.ibm.wala.types.TypeReference;
 import com.ibm.wala.util.collections.Pair;
@@ -383,18 +388,31 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 				dest);
 
 		final SSAInvokeInstruction invoke = (SSAInvokeInstruction) inst;
+		
+		// Propagate thrown exception element to a local element in the
+		// destination method (original caller). If an element was thrown
+		// there should be a catch instruction associated with the dest block.
+		IUnaryFlowFunction throwFlow = new ThrowFlowFunction<E>(domain, invoke.getException());
+		if (dest.isCatchBlock()) {
+			IExplodedBasicBlock iebb = (IExplodedBasicBlock)dest.getDelegate();
+			SSAGetCaughtExceptionInstruction catchInst = iebb.getCatchInstruction();
+			throwFlow = union(throwFlow, new ThrowFlowFunction<E>(domain, catchInst.getDef()));
+		}
 
 		if (invoke.getNumberOfReturnValues() == 0) {
 			// no return values, just propagate global information
 			// return new TracingFlowFunction<E>(domain, compose (flowFromDest,
 			// new GlobalIdentityFunction<E>(domain)));
-			return compose(flowFromDest, globalId);
+			return compose(flowFromDest, 
+					union(globalId, throwFlow));
 		}
 
+		
 		// we have a return value, so we need to map any return elements onto
 		// the local element corresponding to the invoke's def
 		final IUnaryFlowFunction flowToDest = union(globalId,
-				new ReturnFlowFunction<E>(domain, invoke.getDef()));
+				union (new ReturnFlowFunction<E>(domain, invoke.getDef()),
+						throwFlow));
 
 		// return new TracingFlowFunction<E>(domain, compose(flowFromDest,
 		// flowToDest));
@@ -429,6 +447,10 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 		if (inst instanceof SSAArrayStoreInstruction) {
 			elts.addAll(getArrayRefCodeElts(node,
 					(SSAArrayStoreInstruction) inst));
+		}
+		
+		if (inst instanceof SSAThrowInstruction) {
+			elts.add(new ThrowElement(inst.getUse(0)));
 		}
 
 		for (int i = 0; i < defNo; i++) {

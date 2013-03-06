@@ -46,6 +46,7 @@ import org.scandroid.domain.DomainElement;
 import org.scandroid.domain.IFDSTaintDomain;
 import org.scandroid.domain.LocalElement;
 import org.scandroid.flow.types.FlowType;
+import org.scandroid.flow.types.ReturnFlow;
 import org.scandroid.util.CGAnalysisContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -86,13 +87,14 @@ public class LocalSinkPoint implements ISinkPoint {
 		PointerKey pk = ctx.pa.getHeapModel().getPointerKeyForLocal(node,
 				ssaVal);
 		OrdinalSet<InstanceKey> iks = ctx.pa.getPointsToSet(pk);
-		if (null == iks) {
+		if (null == iks || iks.isEmpty()) {
 			logger.warn("no instance keys found for SinkPoint {}", this);
 		}
 
 		for (InstanceKey ik : iks) {
 			elts.addAll(ctx.codeElementsForInstanceKey(ik));
 		}
+		
 		logger.debug("checking for sources from code elements {}", elts);
 
 		for (CodeElement elt : elts) {

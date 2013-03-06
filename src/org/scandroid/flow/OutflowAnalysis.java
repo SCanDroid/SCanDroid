@@ -53,11 +53,13 @@ import org.scandroid.domain.IFDSTaintDomain;
 import org.scandroid.domain.InstanceKeyElement;
 import org.scandroid.domain.LocalElement;
 import org.scandroid.domain.ReturnElement;
+import org.scandroid.flow.types.ExceptionFlow;
 import org.scandroid.flow.types.FlowType;
 import org.scandroid.flow.types.ParameterFlow;
 import org.scandroid.flow.types.ReturnFlow;
 import org.scandroid.spec.CallArgSinkSpec;
 import org.scandroid.spec.EntryArgSinkSpec;
+import org.scandroid.spec.EntryExcSinkSpec;
 import org.scandroid.spec.EntryRetSinkSpec;
 import org.scandroid.spec.ISpecs;
 import org.scandroid.spec.SinkSpec;
@@ -87,10 +89,12 @@ import com.ibm.wala.ssa.SSAInstruction;
 import com.ibm.wala.ssa.SSAInstruction.Visitor;
 import com.ibm.wala.ssa.SSAInvokeInstruction;
 import com.ibm.wala.ssa.SSAReturnInstruction;
+import com.ibm.wala.ssa.SSAThrowInstruction;
 import com.ibm.wala.ssa.analysis.IExplodedBasicBlock;
 import com.ibm.wala.types.MethodReference;
 import com.ibm.wala.util.debug.UnimplementedError;
 import com.ibm.wala.util.intset.IntSet;
+import com.ibm.wala.util.intset.OrdinalSet;
 
 /**
  * @author acfoltzer
@@ -448,6 +452,8 @@ public class OutflowAnalysis {
 				processSinkSpec(flowResult, domain, taintFlow, ss[i]);
 			else if (ss[i] instanceof StaticFieldSinkSpec)
 				processSinkSpec(flowResult, domain, taintFlow, ss[i]);
+			else if (ss[i] instanceof EntryExcSinkSpec)
+				processSinkSpec(flowResult, domain, taintFlow, ss[i]);
 			else
 				throw new UnsupportedOperationException(
 						"SinkSpec not yet Implemented");
@@ -514,6 +520,9 @@ public class OutflowAnalysis {
 		}
 		if (sinkSpec instanceof StaticFieldSinkSpec) {
 			return calculateSinkPoints((StaticFieldSinkSpec) sinkSpec);
+		}
+		if (sinkSpec instanceof EntryExcSinkSpec) {
+			return calculateSinkPoints((EntryExcSinkSpec) sinkSpec);
 		}
 		throw new UnimplementedError();
 	}
@@ -620,7 +629,6 @@ public class OutflowAnalysis {
 
 	private Set<ISinkPoint> calculateSinkPoints(EntryRetSinkSpec sinkSpec) {
 		Set<ISinkPoint> points = Sets.newHashSet();
-
 		Collection<IMethod> methods = sinkSpec.getNamePattern()
 				.getPossibleTargets(cha);
 		if (null == methods) {
@@ -671,6 +679,42 @@ public class OutflowAnalysis {
 					.getExit(node)));
 		}
 
+		return points;
+	}
+	
+	private Set<ISinkPoint> calculateSinkPoints(EntryExcSinkSpec sinkSpec) {
+		Set<ISinkPoint> points = Sets.newHashSet();
+		Collection<IMethod> methods = sinkSpec.getNamePattern()
+				.getPossibleTargets(cha);
+		if (null == methods) {
+			logger.warn("no methods found for sink spec {}", sinkSpec);
+		}
+		
+		// for all possible exception throwing methods that match pattern
+		for (IMethod method: methods) {
+			//for all possible CGNodes of that method
+			for (CGNode node : cg.getNodes(method.getReference())) {
+				Iterator<IExplodedBasicBlock> bbI = graph.getICFG().getCFG(node).iterator();
+				while (bbI.hasNext()) {
+					IExplodedBasicBlock bb = bbI.next();
+					SSAInstruction inst = bb.getInstruction();
+					if (inst instanceof SSAThrowInstruction) {									
+						// add sink point for instruction
+						SSAThrowInstruction throwInst = (SSAThrowInstruction) inst;
+						final int ssaVal = throwInst.getUse(0);
+						BasicBlockInContext<IExplodedBasicBlock> bbic = new BasicBlockInContext<IExplodedBasicBlock>(
+								node, bb);
+						final ExceptionFlow<IExplodedBasicBlock> sinkFlow = new ExceptionFlow<IExplodedBasicBlock>(
+								bbic, false);
+						final LocalSinkPoint sinkPoint = new LocalSinkPoint(bbic, ssaVal, sinkFlow);
+						points.add(sinkPoint);
+								
+					}
+				}
+			}
+		}
+		
+		
 		return points;
 	}
 

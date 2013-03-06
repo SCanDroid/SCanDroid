@@ -197,6 +197,9 @@ public class InflowAnalysis <E extends ISSABasicBlock> {
 				SSAInvokeInstruction invInst = (SSAInvokeInstruction) inst;
 				for (IMethod target : cha.getPossibleTargets(invInst.getDeclaredTarget())) {
 					if (targets.contains(target)) {
+						System.out.println("howdie: " + target);
+						System.out.println(invInst);
+						System.out.println(block);
 						for (int i = 0; i < targetList.size(); i++) {
 							if (targetList.get(i).contains(target)) {
 
@@ -245,9 +248,9 @@ public class InflowAnalysis <E extends ISSABasicBlock> {
         		processInputSource(ctx, taintMap, ss[i], cg, graph, cha, pa);
         	else if (ss[i] instanceof CallRetSourceSpec || ss[i] instanceof CallArgSourceSpec)
         		ssAL.add(ss[i]);
-        	else if (ss[i] instanceof StaticFieldSourceSpec) {
+        	else if (ss[i] instanceof StaticFieldSourceSpec)
         		processStaticFieldSource(ctx, taintMap, (StaticFieldSourceSpec)ss[i], cg, graph, cha, pa);
-        	} else 
+        	else 
         		throw new UnsupportedOperationException("Unrecognized SourceSpec");
         } 
         if (!ssAL.isEmpty())

@@ -44,6 +44,7 @@ import org.scandroid.domain.DomainElement;
 import org.scandroid.domain.IFDSTaintDomain;
 import org.scandroid.domain.LocalElement;
 import org.scandroid.domain.ReturnElement;
+import org.scandroid.domain.ThrowElement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,6 +52,7 @@ import com.ibm.wala.dataflow.IFDS.IUnaryFlowFunction;
 import com.ibm.wala.ssa.ISSABasicBlock;
 import com.ibm.wala.util.intset.IntSet;
 import com.ibm.wala.util.intset.MutableSparseIntSet;
+import com.ibm.wala.util.intset.SparseIntSet;
 
 
 public class CallToReturnFunction <E extends ISSABasicBlock> 
@@ -70,17 +72,18 @@ public class CallToReturnFunction <E extends ISSABasicBlock>
 		// Local elements (and the 0 element) flow through CallToReturn edges, 
 		// but nothing else does (everything else is subject to whatever 
 		// happened in the invoked function)
-        if (0 == d) {
-        	set.add(d);
-        } else {
-        	DomainElement de = domain.getMappedObject(d);
-        	if (de.codeElement instanceof LocalElement || de.codeElement instanceof ReturnElement) {
-        		set.add(d);
-        	} else {
-        		logger.trace("throwing away {}", de);
-        	}
-        }
-		return set;
+		if (0 == d) {
+			return TaintTransferFunctions.ZERO_SET;
+		} 
+
+		DomainElement de = domain.getMappedObject(d);
+		if (de.codeElement instanceof LocalElement || de.codeElement instanceof ReturnElement ||
+				de.codeElement instanceof ThrowElement) {
+			return SparseIntSet.singleton(d);
+		} else {
+			logger.trace("throwing away {}", de);
+			return TaintTransferFunctions.EMPTY_SET;
+		}
 	}
 
 }
