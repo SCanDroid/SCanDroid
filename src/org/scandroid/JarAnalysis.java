@@ -49,6 +49,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
@@ -68,6 +69,7 @@ import com.ibm.wala.util.CancelRuntimeException;
  */
 public class JarAnalysis {
 
+	// time limit for summarizing one method, in seconds:
 	private static final int TIME_LIMIT = 15 * 60;
 	//private static final int THREAD_COUNT = 70;
 	private static final int THREAD_COUNT = 3;
@@ -172,6 +174,7 @@ public class JarAnalysis {
 			} 
 			System.out.println("Are we exiting now, or looping more?");
 		}
+		pool.shutdown();
 		System.out.println("Why are we still here?");
 	}
 
@@ -228,7 +231,7 @@ public class JarAnalysis {
 				methods = clazz.getMethods();
 			} catch (Throwable e) {
 				System.out.println("Could not load class: " + c);
-				e.printStackTrace();
+				//e.printStackTrace();
 				continue;
 			}
 			for (Method m : methods) {

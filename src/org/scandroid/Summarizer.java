@@ -186,6 +186,16 @@ public class Summarizer<E extends ISSABasicBlock> {
 					public boolean stdoutCG() {
 						return false;
 					}
+					
+					@Override
+					public URI getAndroidLibrary() {
+						try {
+							return new File("data/android-2.3.7_r1.jar").toURI();
+						} catch (Exception e) {
+							throw new RuntimeException(e);
+						}
+					}
+
 				});
 		writer = new XMLSummaryWriter();
 	}
