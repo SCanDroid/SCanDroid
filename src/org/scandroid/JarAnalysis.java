@@ -230,7 +230,7 @@ public class JarAnalysis {
 
 				methods = clazz.getMethods();
 			} catch (Throwable e) {
-				System.out.println("Could not load class: " + c);
+				System.out.println("Could not load class: " + c + " reason: "+ e.getMessage());
 				//e.printStackTrace();
 				continue;
 			}

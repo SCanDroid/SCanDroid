@@ -46,10 +46,8 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 import javax.xml.parsers.ParserConfigurationException;
@@ -82,7 +80,6 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import com.ibm.wala.classLoader.IMethod;
 import com.ibm.wala.classLoader.Language;
 import com.ibm.wala.classLoader.NewSiteReference;
@@ -113,16 +110,6 @@ import com.ibm.wala.util.MonitorUtil.IProgressMonitor;
 import com.ibm.wala.util.debug.UnimplementedError;
 import com.ibm.wala.util.strings.StringStuff;
 
-/**
- * @author acfoltzer
- *
- * @param <E>
- */
-/**
- * @author acfoltzer
- *
- * @param <E>
- */
 /**
  * @author acfoltzer
  * 
@@ -265,7 +252,7 @@ public class Summarizer<E extends ISSABasicBlock> {
 
 		if (0 == instructions.size()) {
 			logger.warn("No instructions in summary for " + methodDescriptor);
-			return;
+			//return;
 		}
 
 		for (SSAInstruction inst : instructions) {
