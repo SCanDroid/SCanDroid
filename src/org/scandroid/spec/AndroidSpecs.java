@@ -196,7 +196,7 @@ public class AndroidSpecs implements ISpecs {
 
 
 	private static SourceSpec[] sourceSpecs = {
-//		new EntryArgSourceSpec( actCreate, null ),
+		new EntryArgSourceSpec( actCreate, null ),
 		//doesn't have any parameters
 		// new EntryArgSourceSpec( actStart, null ),
 		// new EntryArgSourceSpec( actResume, null ),
@@ -227,18 +227,15 @@ public class AndroidSpecs implements ISpecs {
 
 		//no parameters
 		//new EntryArgSourceSpec( prvCreate, null ),
-//		new CallArgSourceSpec( prvQuery, new int[] { 2, 3, 4, 5 }, SourceType.PROVIDER_SOURCE),
-//		new CallArgSourceSpec( prvInsert, new int[] { 2 }, SourceType.PROVIDER_SOURCE),
-//		new CallArgSourceSpec( prvUpdate, new int[] { 2, 3, 4 }, SourceType.PROVIDER_SOURCE),
 				
 		new CallArgSourceSpec(bndTransact, new int[] { 3 }),
 		
 		new CallRetSourceSpec(rslvQuery, new int[] {}),
 //		new CallRetSourceSpec(httpExecute, new int[] {}),
 		new CallRetSourceSpec(actGetIntent, new int[] {}),
-		
-//		new CallRetSourceSpec(new MethodNamePattern("LTest/Apps/GenericSource", "getIntSource"), new int[]{}),
-		new CallRetSourceSpec(new MethodNamePattern("LTest/Apps/GenericSource", "getStringSource"), new int[]{}),
+
+//		new CallRetSourceSpec(new MethodNamePattern("Lcom/ssuh/callback/GenericSource", "getIntSource"), new int[]{}),
+//		new CallRetSourceSpec(new MethodNamePattern("LTest/Apps/GenericSource", "getStringSource"), new int[]{}),
 
         new CallRetSourceSpec(new MethodNamePattern(lm, "getProviders"), null),
         new CallRetSourceSpec(new MethodNamePattern(lm, "getProvider"), null),
@@ -274,12 +271,12 @@ public class AndroidSpecs implements ISpecs {
 
 		
 		new EntryArgSinkSpec( bndOnTransact, new int[] { 3 } ),
-//		new EntryArgSinkSpec( actOnActivityResult, new int[] { 2 } ),
-//		new EntryArgSinkSpec( actOnSaveInstanceState, new int[] { 0 } ),
+		new EntryArgSinkSpec( actOnActivityResult, new int[] { 2 } ),
+		new EntryArgSinkSpec( actOnSaveInstanceState, new int[] { 0 } ),
 
 		//new EntryRetSinkSpec(prvQuery),
 		
-		new CallArgSinkSpec(new MethodNamePattern("LTest/Apps/GenericSink", "setSink"), new int[]{ 1 }),
+//		new CallArgSinkSpec(new MethodNamePattern("Lcom/ssuh/callback/GenericSink", "setSink"), new int[]{ 1 }),
 		
         new CallArgSinkSpec(new MethodNamePattern(smsGsm, "sendTextMessage"), null),
         new CallArgSinkSpec(new MethodNamePattern(sms, "sendMultipartTextMessage"), null),
@@ -297,7 +294,7 @@ public class AndroidSpecs implements ISpecs {
 //			callBacks = new MethodNamePattern[] {};
 //		return callBacks;
 //	}
-	public void addPossibleListeners(ClassHierarchy cha) {
+	public static void addPossibleListeners(ClassHierarchy cha) {
 		Set<String> ignoreMethods = new HashSet<String>();
 		ignoreMethods.add("<init>");
 		ignoreMethods.add("<clinit>");
@@ -310,7 +307,7 @@ public class AndroidSpecs implements ISpecs {
 		ignoreMethods.add("notify");
 		ignoreMethods.add("notifyAll");
 		ignoreMethods.add("finalize");
-		ignoreMethods.add("wait");		
+		ignoreMethods.add("wait");
 
 		List<MethodNamePattern> moreEntryPointSpecs = new ArrayList<MethodNamePattern> ();
 		
@@ -356,7 +353,7 @@ public class AndroidSpecs implements ISpecs {
 
 	}
 	
-	public MethodNamePattern[] getCallBacks() {
+	public static MethodNamePattern[] getCallBacks() {
 		return callBacks;
 	}
 	
