@@ -51,6 +51,8 @@ import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
+import org.scandroid.model.AppModelMethod;
+import org.scandroid.spec.AndroidSpecs;
 import org.slf4j.LoggerFactory;
 
 import ch.qos.logback.classic.Level;
@@ -332,6 +334,6 @@ public class CLISCanDroidOptions implements ISCanDroidOptions {
 			ClassHierarchy cha, Collection<InputStream> extraSummaries) {
 		return AndroidAnalysisContext.makeZeroCFABuilder(opts, cache, cha,
 				scope, new DefaultContextSelector(opts, cha), null,
-				extraSummaries, null);
+				extraSummaries, (new AppModelMethod(cha, scope)).getSummary());
 	}
 }
