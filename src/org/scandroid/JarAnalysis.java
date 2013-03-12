@@ -72,7 +72,7 @@ public class JarAnalysis {
 	// time limit for summarizing one method, in seconds:
 	private static final int TIME_LIMIT = 15 * 60;
 	//private static final int THREAD_COUNT = 70;
-	private static final int THREAD_COUNT = 3;
+	private static int THREAD_COUNT = 3;
 	protected static final String PRG = "[PRG] ";
 	private static String OUTPUT_DIR = "results";
 
@@ -83,8 +83,9 @@ public class JarAnalysis {
 	 */
 	public static void main(String[] args) throws IOException,
 			ClassNotFoundException {
-		final String appJar = args[0];
-		final String pkglistFile = args.length == 2 ? args[1] : null;
+		THREAD_COUNT = Integer.parseInt(args[0]);
+		final String appJar = args[1];
+		final String pkglistFile = args[2];
 		Set<String> interesting = loadLinesAsSet(pkglistFile);
 
 		analyzeJar(appJar, interesting);
