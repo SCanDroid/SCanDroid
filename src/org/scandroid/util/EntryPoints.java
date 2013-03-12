@@ -119,9 +119,12 @@ public class EntryPoints {
     	return entries;
     }
     
-    public void activityModelEntry(ClassHierarchy cha, AndroidAnalysisContext loader) {
+    public static List<Entrypoint> appModelEntry(ClassHierarchy cha) {
+    	List<Entrypoint> entries = Lists.newArrayList();
+
         String[] methodReferences = {
-            "android.app.Activity.ActivityModel()V",
+//            "android.app.Activity.ActivityModel()V",
+            "com.SCanDroid.AppModel.entry()V",
             // find all onActivityResult functions and add them as entry points
 //            "android.app.Activity.onActivityResult(IILandroid/content/Intent;)V",
 //
@@ -147,6 +150,7 @@ public class EntryPoints {
                 }
             }
         }
+        return entries;
     }
     
     private void systemEntry(ClassHierarchy cha, AndroidAnalysisContext loader) {

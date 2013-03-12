@@ -55,6 +55,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.jar.JarFile;
 
+import org.scandroid.spec.AndroidSpecs;
 import org.scandroid.synthmethod.DefaultSCanDroidOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -160,9 +161,20 @@ public class AndroidAnalysisContext {
 				androidLib)));
 		}
 		
+		scope.addToScope(ClassLoaderReference.Application, new JarFile(new File("data/AppModel_dummy.jar")));
 		
 		cha = ClassHierarchy.make(scope);
+		
+		AnalysisScope scope_appmodel = 
+				DexAnalysisScopeReader.makeAndroidBinaryAnalysisScope(
+						androidLib, 
+						exclusions);
+		scope_appmodel.setLoaderImpl(ClassLoaderReference.Application,
+				"com.ibm.wala.classLoader.WDexClassLoaderImpl");
 
+		scope_appmodel.setLoaderImpl(ClassLoaderReference.Primordial,
+				"com.ibm.wala.classLoader.WDexClassLoaderImpl");
+		AndroidSpecs.addPossibleListeners(ClassHierarchy.make(scope_appmodel));
 		
 		if (options.classHierarchyWarnings()) {
 			// log ClassHierarchy warnings
