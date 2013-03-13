@@ -46,10 +46,8 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 import javax.xml.parsers.ParserConfigurationException;
@@ -61,6 +59,7 @@ import org.scandroid.flow.FlowAnalysis;
 import org.scandroid.flow.InflowAnalysis;
 import org.scandroid.flow.OutflowAnalysis;
 import org.scandroid.flow.functions.TaintTransferFunctions;
+import org.scandroid.flow.types.ExceptionFlow;
 import org.scandroid.flow.types.FieldFlow;
 import org.scandroid.flow.types.FlowType;
 import org.scandroid.flow.types.FlowType.FlowTypeVisitor;
@@ -81,7 +80,6 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import com.ibm.wala.classLoader.IMethod;
 import com.ibm.wala.classLoader.Language;
 import com.ibm.wala.classLoader.NewSiteReference;
@@ -112,16 +110,6 @@ import com.ibm.wala.util.MonitorUtil.IProgressMonitor;
 import com.ibm.wala.util.debug.UnimplementedError;
 import com.ibm.wala.util.strings.StringStuff;
 
-/**
- * @author acfoltzer
- *
- * @param <E>
- */
-/**
- * @author acfoltzer
- *
- * @param <E>
- */
 /**
  * @author acfoltzer
  * 
@@ -185,6 +173,16 @@ public class Summarizer<E extends ISSABasicBlock> {
 					public boolean stdoutCG() {
 						return false;
 					}
+					
+					@Override
+					public URI getAndroidLibrary() {
+						try {
+							return new File("data/android-2.3.7_r1.jar").toURI();
+						} catch (Exception e) {
+							throw new RuntimeException(e);
+						}
+					}
+
 				});
 		writer = new XMLSummaryWriter();
 	}
@@ -254,7 +252,7 @@ public class Summarizer<E extends ISSABasicBlock> {
 
 		if (0 == instructions.size()) {
 			logger.warn("No instructions in summary for " + methodDescriptor);
-			return;
+			//return;
 		}
 
 		for (SSAInstruction inst : instructions) {
@@ -593,6 +591,12 @@ public class Summarizer<E extends ISSABasicBlock> {
 					return null;
 				}
 
+				@Override
+				public Void visitExceptionFlow(ExceptionFlow<IExplodedBasicBlock> flow) {
+					// for now, we don't have exceptions as sources.
+					return null;
+				}
+
 			});
 		}
 
@@ -668,6 +672,13 @@ public class Summarizer<E extends ISSABasicBlock> {
 							.getField().getReference()));
 					return null;
 				}
+
+				@Override
+				public Void visitExceptionFlow(ExceptionFlow<IExplodedBasicBlock> flow) {
+					insts.add(instFactory.ThrowInstruction(sourceVal));
+					return null;
+				}
+
 			});
 		}
 

@@ -45,8 +45,8 @@ import java.util.Collection;
 
 import com.ibm.wala.ipa.callgraph.AnalysisCache;
 import com.ibm.wala.ipa.callgraph.AnalysisOptions;
-import com.ibm.wala.ipa.callgraph.AnalysisScope;
 import com.ibm.wala.ipa.callgraph.AnalysisOptions.ReflectionOptions;
+import com.ibm.wala.ipa.callgraph.AnalysisScope;
 import com.ibm.wala.ipa.callgraph.propagation.SSAPropagationCallGraphBuilder;
 import com.ibm.wala.ipa.cha.ClassHierarchy;
 
@@ -159,7 +159,7 @@ public interface ISCanDroidOptions {
 	 */
 	public URI getSummariesURI();
 
-	/**
+    /**
      * @return a new call graph builder
      */
 	public SSAPropagationCallGraphBuilder

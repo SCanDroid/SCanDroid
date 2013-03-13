@@ -9,10 +9,10 @@
   </appender>
 
   <logger name="com.ibm.wala" level="WARN"/>
-  <logger name="org.scandroid.util.CGAnalysisContext" level="DEBUG"/>
-  <logger name="org.scandroid.flow.functions.TaintTransferFunctions" level="DEBUG"/>
+  <logger name="org.scandroid.util.CGAnalysisContext" level="WARN"/>
+  <logger name="org.scandroid.flow.functions.TaintTransferFunctions" level="WARN"/>
 
-  <root level="DEBUG">
+  <root level="WARN">
     <appender-ref ref="STDOUT" />
   </root>
 

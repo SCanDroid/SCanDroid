@@ -220,7 +220,10 @@ public class DataflowResults {
     	
     	oracle.put(ost+"InvokeCallArgTest.invokeCallArgSourceSpec()Ljava/lang/String;",
 				// returns the arg to load(...)
-			   Sets.newHashSet("arg(0):org.scandroid.testing.SourceSink.load([C)V -> ret"));
+			   Sets.newHashSet("arg(0):org.scandroid.testing.SourceSink.load([C)V -> ret",
+			    // This second flow is a side effect of tainting and tracking 
+			    // static fields
+					   "<Primordial,Ljava/lang/StringValue>.cache -> ret"));
     	
     	oracle.put(ost+"InvokeCallArgTest.invokeCallArgSourceSpecInt()I",
 				// returns the arg to load(...)

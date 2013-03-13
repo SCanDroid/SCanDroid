@@ -49,6 +49,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
@@ -59,7 +60,6 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
-import com.google.common.collect.Sets.SetView;
 import com.ibm.wala.ssa.ISSABasicBlock;
 import com.ibm.wala.util.CancelRuntimeException;
 
@@ -69,8 +69,10 @@ import com.ibm.wala.util.CancelRuntimeException;
  */
 public class JarAnalysis {
 
+	// time limit for summarizing one method, in seconds:
 	private static final int TIME_LIMIT = 15 * 60;
-	private static final int THREAD_COUNT = 70;
+	//private static final int THREAD_COUNT = 70;
+	private static int THREAD_COUNT = 3;
 	protected static final String PRG = "[PRG] ";
 	private static String OUTPUT_DIR = "results";
 
@@ -81,11 +83,12 @@ public class JarAnalysis {
 	 */
 	public static void main(String[] args) throws IOException,
 			ClassNotFoundException {
-		final String appJar = args[0];
-		final String blacklistFile = args.length == 2 ? args[1] : null;
-		Set<String> blacklist = loadLinesAsSet(blacklistFile);
+		THREAD_COUNT = Integer.parseInt(args[0]);
+		final String appJar = args[1];
+		final String pkglistFile = args[2];
+		Set<String> interesting = loadLinesAsSet(pkglistFile);
 
-		analyzeJar(appJar, blacklist);
+		analyzeJar(appJar, interesting);
 	}
 
 	public static void analyzeJar(final String appJar)
@@ -94,22 +97,25 @@ public class JarAnalysis {
 		analyzeJar(appJar, mt);
 	}
 
-	public static void analyzeJar(final String appJar, Set<String> blacklist)
+	public static void analyzeJar(final String appJar, Set<String> interestingPkgs)
 			throws ClassNotFoundException, IOException {
 		final Multimap<String, String> pkgMethods = getMethodsByPackage(appJar);
 
 		Set<Future<?>> futures = Sets.newHashSet();
-		ExecutorService pool = Executors.newFixedThreadPool(THREAD_COUNT);
+		// ExecutorService pool = Executors.newFixedThreadPool(THREAD_COUNT);
+		
+		int tcount = Math.min(interestingPkgs.size(), THREAD_COUNT);
+		ExecutorService pool = Executors.newFixedThreadPool(tcount);
 
-		Set<String> fullPkgSet = pkgMethods.keySet();
-
-		SetView<String> interestingPkgs = Sets
-				.difference(fullPkgSet, blacklist);
-		System.out.println("Working on:");
+//		Set<String> fullPkgSet = pkgMethods.keySet();
+//
+//		SetView<String> interestingPkgs = Sets
+//				.difference(fullPkgSet, blacklist);
+		System.out.println("Working on these packages:");
 		for (final String pkg : interestingPkgs) {
-			System.out.println(pkg);
+			System.out.println("   "+pkg);
 		}
-
+		System.out.println("--------------------------");
 		for (final String pkg : interestingPkgs) {
 			Runnable runner = new Runnable() {
 				public void run() {
@@ -152,17 +158,25 @@ public class JarAnalysis {
 			futures.add(pool.submit(runner));
 		}
 
+		System.out.println("Joining on futures. "+futures.size()+" to wait on.");
 		for (Future<?> f : futures) {
 			try {
+				System.out.print("Waiting...");
 				f.get();
+				System.out.println("...future joined.");
 			} catch (InterruptedException e) {
+				System.out.println("   Exception: "+e.getMessage());
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			} catch (ExecutionException e) {
+				System.out.println("   Exception: "+e.getMessage());
 				// TODO Auto-generated catch block
 				e.printStackTrace();
-			}
+			} 
+			System.out.println("Are we exiting now, or looping more?");
 		}
+		pool.shutdown();
+		System.out.println("Why are we still here?");
 	}
 
 	private static Set<String> loadLinesAsSet(String blacklistFile)
@@ -217,8 +231,8 @@ public class JarAnalysis {
 
 				methods = clazz.getMethods();
 			} catch (Throwable e) {
-				System.out.println("Could not load class: " + c);
-				e.printStackTrace();
+				System.out.println("Could not load class: " + c + " reason: "+ e.getMessage());
+				//e.printStackTrace();
 				continue;
 			}
 			for (Method m : methods) {

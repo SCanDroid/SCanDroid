@@ -89,22 +89,12 @@ public abstract class AbstractIntRegisterMachine implements FixedPointConstants 
     /**
      * The solver
      */
-    private DataflowSolver solver;
+    private DataflowSolver<BasicBlock,MachineState>  solver;
 
     /**
      * The control flow graph to analyze
      */
     final private DexCFG cfg;
-
-    /**
-     * The max height of the stack.
-     */
-    //  final private int maxStackHeight;
-
-    /**
-     * the max number of locals in play
-     */
-    final protected int maxLocals;
 
     /**
      * Should uninitialized variables be considered TOP (optimistic) or BOTTOM (pessimistic);
@@ -115,8 +105,6 @@ public abstract class AbstractIntRegisterMachine implements FixedPointConstants 
         if (G == null) {
             throw new IllegalArgumentException("G is null");
         }
-        //    maxStackHeight = G.getMaxStackHeight();
-        maxLocals = G.getDexMethod().getMaxLocals();
         this.cfg = G;
     }
 
@@ -268,14 +256,14 @@ public abstract class AbstractIntRegisterMachine implements FixedPointConstants 
     }
 
     public MachineState getEntryState() {
-        return (MachineState) solver.getIn(cfg.entry());
+        return solver.getIn(cfg.entry());
     }
 
     /**
      * @return the state at the entry to a given block
      */
     public MachineState getIn(BasicBlock bb) {
-        return (MachineState) solver.getIn(bb);
+        return solver.getIn(bb);
     }
 
     private class MeetOperator extends AbstractMeetOperator<MachineState> {
@@ -294,10 +282,6 @@ public abstract class AbstractIntRegisterMachine implements FixedPointConstants 
         @Override
         public byte evaluate(MachineState lhs, MachineState[] rhs) {
             BasicBlock bb = lhs.getBasicBlock();
-            // TODO
-//          Exception e = new Exception("evaluating a MeetOperator");
-//          e.printStackTrace();
-//          return NOT_CHANGED;
             if (!bb.isCatchBlock()) {
                 return meet(lhs, rhs, bb, meeter) ? CHANGED : NOT_CHANGED;
             } else {
@@ -339,7 +323,7 @@ public abstract class AbstractIntRegisterMachine implements FixedPointConstants 
          * @param bb The basic block at whose entry this meet occurs
          * @return The value result of the meet
          */
-//      int meetStack(int slot, int[] rhs, IBasicBlock<Instruction> bb);
+        int meetStack(int slot, int[] rhs, BasicBlock bb);
 
         /**
          * Return the integer that represents stack slot 0 after a meet at the entry to a catch block.
@@ -370,10 +354,10 @@ public abstract class AbstractIntRegisterMachine implements FixedPointConstants 
      */
     private boolean meet(IVariable lhs, IVariable[] rhs, BasicBlock bb, Meeter meeter) {
 
-//      boolean changed = meetStacks(lhs, rhs, bb, meeter);
+    	boolean changed = meetStacks(lhs, rhs, bb, meeter);
 
-        return meetLocals(lhs, rhs, bb, meeter);
-//      return changed;
+    	changed |= meetLocals(lhs, rhs, bb, meeter);
+    	return changed;
     }
 
     /**
@@ -385,14 +369,9 @@ public abstract class AbstractIntRegisterMachine implements FixedPointConstants 
      * @return true if the lhs value changes. false otherwise.
      */
     private boolean meetForCatchBlock(IVariable lhs, IVariable[] rhs, BasicBlock bb, Meeter meeter) {
-
-        //TODO: do we need to check the meet of the catch block?  possibly compare the value of meet with the symboltable values of the exception registers?
-        boolean changed = meetRegistersAtCatchBlock(lhs, bb, meeter);
-
+    	
+        boolean changed = meetStacksAtCatchBlock(lhs, bb, meeter);
         changed |= meetLocals(lhs, rhs, bb, meeter);
-
-//      int meet = meeter.meetStackAtCatchBlock(bb);
-//      boolean changed = meetLocals(lhs, rhs, bb, meeter);
         return changed;
     }
 
@@ -404,37 +383,63 @@ public abstract class AbstractIntRegisterMachine implements FixedPointConstants 
      * @param bb the basic block at whose entry the meet occurs
      * @return true if the lhs value changes. false otherwise.
      */
-    private boolean meetRegistersAtCatchBlock(IVariable lhs, BasicBlock bb, Meeter meeter) {
+//    private boolean meetRegistersAtCatchBlock(IVariable lhs, BasicBlock bb, Meeter meeter) {
+//        boolean changed = false;
+//        MachineState L = (MachineState) lhs;
+//
+//        // evaluate the meet of the stack of height 1, which holds the exception
+//        // object.
+//
+//        // allocate lhs registers if it's
+//        // not already allocated.
+//        if (L.locals == null) {
+//            L.allocateLocals(((DexIMethod)L.getBasicBlock().getMethod()).getMaxLocals());
+//        }
+//
+//        DexIMethod dMethod = (DexIMethod)L.getBasicBlock().getMethod();
+//        //System.out.println("dMethod local size: " + dMethod.getExceptionReg() + " - local size: " + L.locals.length);
+//        assert(L.locals.length == dMethod.getExceptionReg()+1);
+//        for (int i = 0; i < L.locals.length; i++)
+//        logger.debug("local: " + L.locals[i]);
+//
+//        int meet = meeter.meetStackAtCatchBlock(bb);
+//        if (L.locals[dMethod.getExceptionReg()] == TOP) {
+//            if (meet != TOP) {
+//                changed = true;
+//                L.locals[dMethod.getExceptionReg()] = meet;
+//            }
+//        } else if (meet != L.locals[dMethod.getExceptionReg()]) {
+//            changed = true;
+//            L.locals[dMethod.getExceptionReg()] = meet;
+//        }
+//        return changed;
+//    }
+    private boolean meetStacksAtCatchBlock(IVariable lhs, BasicBlock bb, Meeter meeter) {
         boolean changed = false;
         MachineState L = (MachineState) lhs;
 
         // evaluate the meet of the stack of height 1, which holds the exception
         // object.
 
-        // allocate lhs registers if it's
+        // allocate lhs.stack if it's
         // not already allocated.
-        if (L.locals == null) {
-            L.allocateLocals();
+        if (L.stack == null) {
+          L.allocateStack(1);
+          L.stackHeight = 1;
         }
-
-        DexIMethod dMethod = (DexIMethod)L.getBasicBlock().getMethod();
-        //System.out.println("dMethod local size: " + dMethod.getExceptionReg() + " - local size: " + L.locals.length);
-        assert(L.locals.length == dMethod.getExceptionReg()+1);
-        for (int i = 0; i < L.locals.length; i++)
-        logger.debug("local: " + L.locals[i]);
 
         int meet = meeter.meetStackAtCatchBlock(bb);
-        if (L.locals[dMethod.getExceptionReg()] == TOP) {
-            if (meet != TOP) {
-                changed = true;
-                L.locals[dMethod.getExceptionReg()] = meet;
-            }
-        } else if (meet != L.locals[dMethod.getExceptionReg()]) {
+        if (L.stack[0] == TOP) {
+          if (meet != TOP) {
             changed = true;
-            L.locals[dMethod.getExceptionReg()] = meet;
+            L.stack[0] = meet;
+          }
+        } else if (meet != L.stack[0]) {
+          changed = true;
+          L.stack[0] = meet;
         }
         return changed;
-    }
+      }
 
     /**
      * Evaluate a meet of the stacks of machine states at the entry of a catch block.
@@ -444,32 +449,50 @@ public abstract class AbstractIntRegisterMachine implements FixedPointConstants 
      * @param bb the basic block at whose entry the meet occurs
      * @return true if the lhs value changes. false otherwise.
      */
-//  private boolean meetStacksAtCatchBlock(IVariable lhs, IBasicBlock<Instruction> bb, Meeter meeter) {
-//      boolean changed = false;
-//      MachineState L = (MachineState) lhs;
-//
-//      // evaluate the meet of the stack of height 1, which holds the exception
-//      // object.
-//
-//      // allocate lhs.stack if it's
-//      // not already allocated.
-//      if (L.stack == null) {
-//          L.allocateStack();
-//          L.stackHeight = 1;
-//      }
-//
-//      int meet = meeter.meetStackAtCatchBlock(bb);
-//      if (L.stack[0] == TOP) {
-//          if (meet != TOP) {
-//              changed = true;
-//              L.stack[0] = meet;
-//          }
-//      } else if (meet != L.stack[0]) {
-//          changed = true;
-//          L.stack[0] = meet;
-//      }
-//      return changed;
-//  }
+    private boolean meetStacks(IVariable lhs, IVariable[] rhs, BasicBlock bb, Meeter meeter) {
+        boolean changed = false;
+        MachineState L = (MachineState) lhs;
+
+        // evaluate the element-wise meet over the stacks
+
+        // first ... how high are the stacks?
+        int height = computeMeetStackHeight(rhs);
+
+        // if there's any stack height to meet, allocate lhs.stack if it's
+        // not already allocated.
+        if (height > -1 && (L.stack == null || L.stack.length < height)) {
+          L.allocateStack(height);
+          L.stackHeight = height;
+          changed = true;
+        }
+
+        // now do the element-wise meet.
+        for (int i = 0; i < height; i++) {
+          int[] R = new int[rhs.length];
+          for (int j = 0; j < R.length; j++) {
+            MachineState m = (MachineState) rhs[j];
+            if (m.stack == null || m.stack.length < i+1) {
+              R[j] = TOP;
+            } else {
+              R[j] = m.stack[i];
+              if (R[j] == 0) {
+                R[j] = TOP;
+              }
+            }
+          }
+          int meet = meeter.meetStack(i, R, bb);
+          if (L.stack[i] == TOP) {
+            if (meet != TOP) {
+              changed = true;
+              L.stack[i] = meet;
+            }
+          } else if (meet != L.stack[i]) {
+            changed = true;
+            L.stack[i] = meet;
+          }
+        }
+        return changed;
+      }
 
     /**
      * Evaluate a meet of the stacks of machine states at the entry of a basic block.
@@ -538,8 +561,8 @@ public abstract class AbstractIntRegisterMachine implements FixedPointConstants 
         MachineState L = (MachineState) lhs;
         // need we allocate lhs.locals?
         int nLocals = computeMeetNLocals(rhs);
-        if (nLocals > -1 && L.locals == null) {
-            L.allocateLocals();
+        if (nLocals > -1 && (L.locals == null || L.locals.length < nLocals)) {
+            L.allocateLocals(nLocals);
         }
 
         // evaluate the element-wise meet over the locals.
@@ -636,45 +659,63 @@ public abstract class AbstractIntRegisterMachine implements FixedPointConstants 
         }
 
         void setTOP() {
-            stackHeight = -1;
+        	stackHeight = -1;
+        	stack = null;
         }
 
         boolean isTOP() {
-            return stackHeight == -1;
+        	return stackHeight == -1;
         }
 
-//      public void push(int i) {
-//          if (stack == null)
-//              allocateStack();
-//          stack[stackHeight++] = i;
-//      }
-
-//      public int pop() {
-//          if (stackHeight <= 0) {
-//              assert stackHeight > 0 : "can't pop stack of height " + stackHeight;
-//          }
-//          stackHeight -= 1;
-//          return stack[stackHeight];
-//      }
-
-//      public int peek() {
-//          return stack[stackHeight - 1];
-//      }
-
-//      public void swap() {
-//          int temp = stack[stackHeight - 1];
-//          stack[stackHeight - 1] = stack[stackHeight - 2];
-//          stack[stackHeight - 2] = temp;
-//      }
-
-//      private void allocateStack() {
-//          stack = new int[maxStackHeight + 1];
-//          stackHeight = 0;
-//      }
-
-        private void allocateLocals() {
-            locals = allocateNewLocalsArray();
+        public void push(int i) {
+        	if (stack == null || stackHeight >= stack.length)
+        		allocateStack(stackHeight+1);
+        	stack[stackHeight++] = i;
         }
+
+        public int pop() {
+        	if (stackHeight <= 0) {
+        		assert stackHeight > 0 : "can't pop stack of height " + stackHeight;
+        	}
+        	stackHeight -= 1;
+        	return stack[stackHeight];
+        }
+
+        public int peek() {
+        	return stack[stackHeight - 1];
+        }
+
+        public void swap() {
+        	int temp = stack[stackHeight - 1];
+        	stack[stackHeight - 1] = stack[stackHeight - 2];
+        	stack[stackHeight - 2] = temp;
+        }
+
+        private void allocateStack(int stackHeight) {
+        	if (stack == null) {
+        		stack = new int[stackHeight + 1 ];
+        		this.stackHeight = 0;
+        	} else {
+        		int[] newStack = new int[ Math.max(stack.length, stackHeight) * 2 + 1 ];
+        		System.arraycopy(stack, 0, newStack, 0, stack.length);
+        		stack = newStack;
+        	}
+        }
+        
+        private void allocateLocals(int maxLocals) {
+            int[] result = new int[maxLocals];
+            int start = 0;
+            if (locals != null) {
+              System.arraycopy(locals, 0, result, 0, locals.length);
+              start = locals.length;
+            } 
+            
+            for (int i = start; i < maxLocals; i++) {
+              result[i] = OPTIMISTIC ? TOP : BOTTOM;
+            }
+            
+            locals = result;
+          }
 
 //      public void clearStack() {
 //          stackHeight = 0;
@@ -687,91 +728,91 @@ public abstract class AbstractIntRegisterMachine implements FixedPointConstants 
          * @param j
          */
         public void setLocal(int i, int j) {
-            if (locals == null) {
-                if (OPTIMISTIC && (j == TOP)) {
-                    return;
-                } else {
-                    allocateLocals();
-                }
+            if (locals == null || locals.length < i+1) {
+              if (OPTIMISTIC && (j == TOP)) {
+                return;
+              } else {
+                allocateLocals(i+1);
+              }
             }
             locals[i] = j;
-        }
+          }
 
         /**
          * @param i
          * @return the number of the symbol corresponding to local i
          */
         public int getLocal(int i) {
-            if (locals == null) {
-                if (OPTIMISTIC) {
-                    return TOP;
-                } else {
-                    return BOTTOM;
-                }
+            if (locals == null || locals.length < i+1) {
+              if (OPTIMISTIC) {
+                return TOP;
+              } else {
+                return BOTTOM;
+              }
             } else {
-                return locals[i];
+              return locals[i];
             }
-        }
+          }
 
         public void replaceValue(int from, int to) {
             if (stack != null)
-                for (int i = 0; i < stackHeight; i++)
-                    if (stack[i] == from)
-                        stack[i] = to;
+              for (int i = 0; i < stackHeight; i++)
+                if (stack[i] == from)
+                  stack[i] = to;
 
             if (locals != null)
-                for (int i = 0; i < maxLocals; i++)
-                    if (locals[i] == from)
-                        locals[i] = to;
-        }
+              for (int i = 0; i < locals.length; i++)
+                if (locals[i] == from)
+                  locals[i] = to;
+          }
 
         public boolean hasValue(int val) {
             if (stack != null)
-                for (int i = 0; i < stackHeight; i++)
-                    if (stack[i] == val)
-                        return true;
+              for (int i = 0; i < stackHeight; i++)
+                if (stack[i] == val)
+                  return true;
 
             if (locals != null)
-                for (int i = 0; i < maxLocals; i++)
-                    if (locals[i] == val)
-                        return true;
+              for (int i = 0; i < locals.length; i++)
+                if (locals[i] == val)
+                  return true;
 
             return false;
-        }
+          }
 
         @Override
         public String toString() {
             // TODO
-            return "Some machine state...";
-//          if (isTOP()) {
-//              return "<TOP>@" + System.identityHashCode(this);
-//          }
-//          StringBuffer result = new StringBuffer("<");
+//            return "Some machine state...";
+          if (isTOP()) {
+              return "<TOP>@" + System.identityHashCode(this);
+          }
+          StringBuffer result = new StringBuffer("<");
 //          result.append("S");
 //          if (stackHeight == 0) {
 //              result.append("[empty]");
 //          } else {
 //              result.append(array2StringBuffer(stack, stackHeight));
 //          }
-//          result.append("L");
-//          result.append(array2StringBuffer(locals, maxLocals));
-//          result.append(">");
-//          return result.toString();
+          result.append("L");
+          result.append(array2StringBuffer(locals, locals.length));
+          result.append(">");
+          return result.toString();
         }
 
-//      private StringBuffer array2StringBuffer(int[] array, int n) {
-//          StringBuffer result = new StringBuffer("[");
-//          if (array == null) {
-//              result.append(OPTIMISTIC ? "TOP" : "BOTTOM");
-//          } else {
-//              for (int i = 0; i < n - 1; i++) {
-//                  result.append(array[i]).append(",");
-//              }
-//              result.append(array[n - 1]);
-//          }
-//          result.append("]");
-//          return result;
-//      }
+        private StringBuffer array2StringBuffer(int[] array, int n) {
+            StringBuffer result = new StringBuffer("[");
+            if (array == null) {
+              result.append(OPTIMISTIC ? "TOP" : "BOTTOM");
+            } else {
+              for (int i = 0; i < n - 1; i++) {
+                result.append(array[i]).append(",");
+              }
+              result.append(array[n - 1]);
+            }
+            result.append("]");
+            return result;
+          }
 
         public void copyState(MachineState other) {
             if (other.stack == null) {
@@ -835,14 +876,6 @@ public abstract class AbstractIntRegisterMachine implements FixedPointConstants 
              return locals;
          }
 
-    }
-
-    public int[] allocateNewLocalsArray() {
-        int[] result = new int[maxLocals];
-        for (int i = 0; i < maxLocals; i++) {
-            result[i] = OPTIMISTIC ? TOP : BOTTOM;
-        }
-        return result;
     }
 
     /**

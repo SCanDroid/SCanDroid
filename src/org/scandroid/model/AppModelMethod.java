@@ -123,16 +123,30 @@ public class AppModelMethod {
 		private int[] getParams() {
 			return params;
 		}
+		@Override
+		public boolean equals(Object obj) {
+			if (obj instanceof MethodParams) {
+				MethodParams that = (MethodParams)obj;
+				return (that.im.equals(this.im));
+			}
+			else {
+				return false;
+			}
+		}
+		@Override
+		public int hashCode() {
+			return this.im.hashCode();
+		}
 	}
 	
-	public AppModelMethod(IClassHierarchy cha, AnalysisScope scope, AndroidSpecs specs) {
+	public AppModelMethod(IClassHierarchy cha, AnalysisScope scope) {
     	this.cha = cha;
     	this.scope = scope;    	
 	    Language lang = scope.getLanguage(ClassLoaderReference.Application.getLanguage());
 	    insts = lang.instructionFactory();
 		
 		startMethod();
-    	buildTypeMap(specs);
+    	buildTypeMap();
 		processTypeMap();
 		processCallBackParams();
 		createLoopAndSwitch();
@@ -202,28 +216,30 @@ public class AppModelMethod {
 		}
     }	
     
-    private void buildTypeMap(AndroidSpecs specs) {
+    private void buildTypeMap() {
 		//Go through all possible callbacks found in Application code
 		//Associate their TypeReference with a unique number in typeToID.
 		//Also keep track of all anonymous classes found.
-    	for (MethodNamePattern mnp:specs.getCallBacks()) {
+    	for (MethodNamePattern mnp:AndroidSpecs.getCallBacks()) {
     		for (IMethod im: mnp.getPossibleTargets(cha)) {
     			// limit to functions defined within the application
     			if(LoaderUtils.fromLoader(im, ClassLoaderReference.Application))
     			{   
-    				callBacks.add(new MethodParams(im));
-    				TypeReference tr = im.getDeclaringClass().getReference(); 
-    				if (!typeToID.containsKey(tr)) {
-						logger.debug("AppModel Mapping type "+tr.getName()+" to id " + nextLocal);
-						typeToID.put(tr, nextLocal++);
-    					//class is an innerclass
-    					if (tr.getName().getClassName().toString().contains("$")) {
-    						addDependencies(tr);
+    				if (!callBacks.contains(new MethodParams(im))) {
+    					callBacks.add(new MethodParams(im));
+    					TypeReference tr = im.getDeclaringClass().getReference(); 
+    					if (!typeToID.containsKey(tr)) {
+    						logger.debug("AppModel Mapping type "+tr.getName()+" to id " + nextLocal);
+    						typeToID.put(tr, nextLocal++);
+    						//class is an innerclass
+    						if (tr.getName().getClassName().toString().contains("$")) {
+    							addDependencies(tr);
+    						}
     					}
-    				}
+        			}
     			}
     		}
-    	}    	    
+    	}
     }
     
   	private void addDependencies(TypeReference tr) {

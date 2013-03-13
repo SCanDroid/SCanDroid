@@ -106,7 +106,8 @@ public class SeparateEntryAnalysis {
 //		
 		
 		final List<Entrypoint> entrypoints = EntryPoints
-				.defaultEntryPoints(analysisContext.getClassHierarchy());
+//				.defaultEntryPoints(analysisContext.getClassHierarchy());
+				.appModelEntry(analysisContext.getClassHierarchy());		
 		if (entrypoints == null || entrypoints.size() == 0) {
 			throw new IOException("No Entrypoints Detected!");
 		}

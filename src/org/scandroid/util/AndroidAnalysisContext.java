@@ -55,6 +55,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.jar.JarFile;
 
+import org.scandroid.spec.AndroidSpecs;
 import org.scandroid.synthmethod.DefaultSCanDroidOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -160,9 +161,20 @@ public class AndroidAnalysisContext {
 				androidLib)));
 		}
 		
+		scope.addToScope(ClassLoaderReference.Application, new JarFile(new File("data/AppModel_dummy.jar")));
 		
 		cha = ClassHierarchy.make(scope);
+		
+		AnalysisScope scope_appmodel = 
+				DexAnalysisScopeReader.makeAndroidBinaryAnalysisScope(
+						androidLib, 
+						exclusions);
+		scope_appmodel.setLoaderImpl(ClassLoaderReference.Application,
+				"com.ibm.wala.classLoader.WDexClassLoaderImpl");
 
+		scope_appmodel.setLoaderImpl(ClassLoaderReference.Primordial,
+				"com.ibm.wala.classLoader.WDexClassLoaderImpl");
+		AndroidSpecs.addPossibleListeners(ClassHierarchy.make(scope_appmodel));
 		
 		if (options.classHierarchyWarnings()) {
 			// log ClassHierarchy warnings
@@ -189,6 +201,16 @@ public class AndroidAnalysisContext {
 			SSAContextInterpreter customInterpreter,
 			InputStream summariesStream, MethodSummary extraSummary) {
 
+		return makeVanillaZeroOneCFABuilder(options, cache, cha, scope,
+				customSelector, customInterpreter, Lists.newArrayList(summariesStream),
+				extraSummary);
+	}
+	
+	public static SSAPropagationCallGraphBuilder makeVanillaZeroOneCFABuilder(
+			AnalysisOptions options, AnalysisCache cache, IClassHierarchy cha,
+			AnalysisScope scope, ContextSelector customSelector,
+			SSAContextInterpreter customInterpreter,
+			Collection<InputStream> summariesStreams, MethodSummary extraSummary) {
 		if (options == null) {
 			throw new IllegalArgumentException("options is null");
 		}
@@ -197,12 +219,15 @@ public class AndroidAnalysisContext {
 		// cha);
 		// addBypassLogic(options, scope,
 		// AndroidAppLoader.class.getClassLoader(), methodSpec, cha);
-		addBypassLogic(options, scope, summariesStream, cha, extraSummary);
+		for (InputStream stream : summariesStreams) {
+			addBypassLogic(options, scope, stream, cha, extraSummary);
+		}
 
 		return ZeroXCFABuilder.make(cha, options, cache, customSelector,
-				customInterpreter, ZeroXInstanceKeys.ALLOCATIONS
-						| ZeroXInstanceKeys.CONSTANT_SPECIFIC);
+				customInterpreter, 
+				ZeroXInstanceKeys.ALLOCATIONS | ZeroXInstanceKeys.CONSTANT_SPECIFIC);
 	}
+
 
 	/**
 	 * @param options

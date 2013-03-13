@@ -353,7 +353,8 @@ public class CGAnalysisContext<E extends ISSABasicBlock> {
 					final IClass contentsClass = pa.getClassHierarchy()
 							.lookupClass(typeRef.getArrayElementType());
 					if (contentsClass.isInterface()) {
-						for (IClass implementor : analysisContext.concreteClassesForInterface(contentsClass)) {
+						for (IClass implementor : analysisContext
+								.concreteClassesForInterface(contentsClass)) {
 							final InstanceKey contentsIK = new ConcreteTypeKey(
 									implementor);
 							final InstanceKeyElement elt = new InstanceKeyElement(
@@ -428,8 +429,7 @@ public class CGAnalysisContext<E extends ISSABasicBlock> {
 							&& !analysisContext.getClassHierarchy()
 									.isInterface(fieldTypeRef)) {
 						logger.debug("pointsToSet empty for reference field, creating InstanceKey manually");
-						InstanceKey fieldIK = new ConcreteTypeKey(
-								fieldClass);
+						InstanceKey fieldIK = new ConcreteTypeKey(fieldClass);
 						final InstanceKeyElement elt = new InstanceKeyElement(
 								fieldIK);
 						if (!elts.contains(elt)) {
