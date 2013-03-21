@@ -245,6 +245,7 @@ public class Summarizer<E extends ISSABasicBlock> {
 
 		Map<FlowType<IExplodedBasicBlock>, Set<FlowType<IExplodedBasicBlock>>> dfAnalysis = runDFAnalysis(
 				cgContext, summary, monitor, additionalSpecs);
+
 		logger.debug(dfAnalysis.toString());
 
 		List<SSAInstruction> instructions = new MethodSummarizer(cgContext,
@@ -354,6 +355,7 @@ public class Summarizer<E extends ISSABasicBlock> {
 		private final IMethod method;
 		private final SymbolTable tbl;
 
+
 		/**
 		 * Populated by compileSources
 		 */
@@ -400,13 +402,20 @@ public class Summarizer<E extends ISSABasicBlock> {
 			// We shall also create a mapping for return values
 			Map<BasicBlockInContext<IExplodedBasicBlock>, List <FlowType<IExplodedBasicBlock>>> returnFlows = mapReturnFlows(flowMap);
 
-
 			// step 2.
 			for (FlowType<IExplodedBasicBlock> source : sourceMap.keySet()) {
 				for (FlowType<IExplodedBasicBlock> sink : flowMap.get(source)) {
 					compileEdge(source, sink, methodParamFlows, returnFlows);
 				}
 			}
+
+			// If our method has a Return Type and we don't have a return flow, then
+			// return null
+			if (returnFlows.size() == 0 && !method.getReturnType().equals(TypeReference.Void)) {
+				int result = findOrCreateValue(TypeReference.Null);
+				insts.add(instFactory.ReturnInstruction(result, method.getReturnType().isPrimitiveType()));
+			}
+
 			logger.debug("summarized instructions: {}", insts);
 			return insts;
 		}
@@ -887,7 +896,9 @@ public class Summarizer<E extends ISSABasicBlock> {
 				return tbl.getConstant(0l);
 			} else if (paramType.equals(TypeReference.JavaLangString)) {
 				return tbl.getConstant("");
-			} else {
+			} else if (paramType.equals(TypeReference.Null)) {
+				return tbl.getNullConstant();
+			}else {
 				logger.error("non-constant type reference {}", paramType);
 				throw new RuntimeException();
 			}
