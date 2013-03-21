@@ -57,6 +57,7 @@ import java.util.Collections;
 import org.jf.dexlib.AnnotationItem;
 import org.jf.dexlib.AnnotationSetItem;
 import org.jf.dexlib.ClassDataItem.EncodedMethod;
+import org.jf.dexlib.CodeItem.EncodedCatchHandler;
 import org.jf.dexlib.CodeItem.EncodedTypeAddrPair;
 import org.jf.dexlib.CodeItem.TryItem;
 import org.jf.dexlib.FieldIdItem;
@@ -578,31 +579,13 @@ public class DexIMethod implements IBytecodeMethod {
 
 
 	public ExceptionHandler[][] getHandlers() throws InvalidClassFileException {
-
 		if (handlers != null)
 			return handlers;
 
-		//ExceptionHandler[][] handlers = new ExceptionHandler[eMethod.codeItem.getInstructions().length][];
-
 		TryItem[] tries = eMethod.codeItem.getTries();
-
-		//
-		//      if (tries == null){
-		//          return new ExceptionHandler[eMethod.codeItem.getInstructions().length][];
-		//      }
-		//      ExceptionHandler[][] handlers = new ExceptionHandler[tries.length][];
-		//      for (int i = 0; i < tries.length; i++) {
-		//          EncodedTypeAddrPair[] etaps = tries[i].encodedCatchHandler.handlers;
-		//          handlers[i] = new ExceptionHandler[etaps.length];
-		//          for (int j = 0; j < etaps.length; j++) {
-		//              EncodedTypeAddrPair etap = etaps[j];
-		//              handlers[i][j] = new ExceptionHandler(etap.getHandlerAddress(), etap.exceptionType.getTypeDescriptor());
-		//          }
-		//      }
 
 		this.handlers = new ExceptionHandler[instructions().size()][];
 		if (tries == null){
-			//          return new ExceptionHandler[instructions.size()][];
 			return handlers;
 		}
 
@@ -620,7 +603,6 @@ public class DexIMethod implements IBytecodeMethod {
 			 * label to be associated with the last covered instruction, so we need to get
 			 * the address for that instruction
 			 */
-
 
 			int startInst = getInstructionIndex(startAddress);
 			int endInst;
@@ -661,16 +643,8 @@ public class DexIMethod implements IBytecodeMethod {
 		}
 
 
-		//      for (int i = 0; i < instructions().size(); i++) {
-		//          handlers[i] = (ExceptionHandler[])temp_array.get(i).toArray(new ExceptionHandler[temp_array.get(i).size()]);
-		//
-		//          System.out.println("i: " + i);
-		//          for (int j = 0; j < handlers[i].length; j++) {
-		//              System.out.println("\t j: " + j);
-		//              System.out.println("\t\t Handler: " +  handlers[i][j].getHandler());
-		//              System.out.println("\t\t Catch Class: " + handlers[i][j].getCatchClass());
-		//          }
-		//      }
+		for (int i = 0; i < instructions().size(); i++)
+			handlers[i] = (ExceptionHandler[])temp_array.get(i).toArray(new ExceptionHandler[temp_array.get(i).size()]);
 
 		return handlers;
 	}
@@ -959,11 +933,13 @@ public class DexIMethod implements IBytecodeMethod {
 				instructions.add(new UnaryOperation(instLoc,
 						UnaryOperation.OpID.MOVE, ((Instruction11x)inst).getRegisterA(),
 						getReturnReg(), inst.opcode, this));
+				logger.debug("\tDestination: " + ((Instruction11x)inst).getRegisterA() + ", Source: " + getReturnReg());
 				break;
 			case MOVE_EXCEPTION:
 				instructions.add(new UnaryOperation(instLoc,
 						UnaryOperation.OpID.MOVE, ((Instruction11x)inst).getRegisterA(),
 						getExceptionReg(), inst.opcode, this));
+				logger.debug("\tDestination: " + ((Instruction11x)inst).getRegisterA() + ", Source: " + getExceptionReg());
 				break;
 			case RETURN_VOID:
 				instructions.add(new Return.ReturnVoid(instLoc, inst.opcode, this));
@@ -981,6 +957,7 @@ public class DexIMethod implements IBytecodeMethod {
 			case RETURN_OBJECT:
 				instructions.add(new Return.ReturnSingle(instLoc,
 						((Instruction11x)inst).getRegisterA(), false, inst.opcode, this));
+				logger.debug("\tReturn: " + ((Instruction11x)inst).getRegisterA());
 				break;
 			case CONST_4: {
 				instructions.add(new Constant.IntConstant(instLoc,
