@@ -161,7 +161,9 @@ public class AndroidAnalysisContext {
 				androidLib)));
 		}
 		
-		scope.addToScope(ClassLoaderReference.Application, new JarFile(new File("data/AppModel_dummy.jar")));
+		scope.addToScope(ClassLoaderReference.Application, new JarFile(new File(
+				new FileProvider().getResource("data/AppModel_dummy.jar")
+				.toURI())));
 		
 		cha = ClassHierarchy.make(scope);
 		
