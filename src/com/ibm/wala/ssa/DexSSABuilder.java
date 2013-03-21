@@ -170,6 +170,7 @@ public class DexSSABuilder extends AbstractIntRegisterMachine {
         		// didn't find anything but TOP
         		return TOP;
         	} else {
+
         		SSACFG.BasicBlock newBB = cfg.getNode(dexCFG.getNumber(bb));
         		// if we already have a phi for this stack location
         		SSAPhiInstruction phi = newBB.getPhiForStackSlot(slot);
@@ -200,6 +201,7 @@ public class DexSSABuilder extends AbstractIntRegisterMachine {
                 // didn't find anything but TOP
                 return TOP;
             } else {
+
                 SSACFG.BasicBlock newBB = cfg.getNode(dexCFG.getNumber(bb));
                 if (bb.isExitBlock()) {
                     // no phis in exit block please
@@ -281,31 +283,6 @@ public class DexSSABuilder extends AbstractIntRegisterMachine {
 
 //      MyLogger.log(LogLevel.DEBUG, "DexSSABuilder - initializeVariables() - local: " + local);
 
-
-        //initialize the "this" parameter if it needs to be set.
-        //the "this" parameter will be symbol number 1 in a virtual method.
-//      if (method.getMaxLocals() - method.getNumberOfParameters() - 2 > 0)
-//          entryState.setLocal(local, 1);
-
-//      System.out.println("visiting initalizeVartiables()");
-//      if (method.isStatic())
-//          System.out.println("Static");
-//      if (method.isClinit())
-//          System.out.println("Clinit");
-//      System.out.println("GetNumberOfParameter: " + method.getNumberOfParameterRegisters());
-//      System.out.println("Total Registers: " + (method.getMaxLocals()-2));
-//      System.out.println("local: " + local);
-
-//      if (local >= 0) {
-//          System.out.println("Max Registers: " + (int)(method.getMaxLocals() - 2));
-//          System.out.println("Parameters: " + method.getNumberOfParameters());
-//          System.out.println("Setting Entry State, local:"+ local + " with 1");
-//          entryState.setLocal(local, 1);
-//      }
-
-//      System.out.println("Max Registers: " + (int)(method.getMaxLocals() - 2));
-//      System.out.println("Parameters: " + method.getNumberOfParameters());
-
         for (int i = 0; i < method.getNumberOfParameters(); i++) {
             local++;
             TypeReference t = method.getParameterType(i);
@@ -318,6 +295,11 @@ public class DexSSABuilder extends AbstractIntRegisterMachine {
                 }
             }
         }
+        // Initialize Return and Exception Registers to an arbitrary value in order to 
+        // give it some state. (analysis complains if it's set to default -1 value)
+        entryState.setLocal(method.getReturnReg(), symbolTable.newSymbol());
+        entryState.setLocal(method.getExceptionReg(), symbolTable.newSymbol());
+
         
         // This useless value ensures that the state cannot be empty, even
         // for a static method with no arguments in blocks with an empty stack
@@ -809,26 +791,11 @@ public class DexSSABuilder extends AbstractIntRegisterMachine {
                         logger.debug("  "+i+":"+workingState.getLocal(i)+",");
                     }
                 }
-//              doIndirectReads(bytecodeIndirections.indirectlyReadLocals(getCurrentInstructionIndex()));
-//              int n = instruction.getPoppedCount();
-//              int n = instruction.args.length;
-//              int[] params = new int[n];
-//              for (int i = n - 1; i >= 0; i--) {
-//                  params[i] = workingState.pop();
-//              }
-
 
                 Language lang = dexCFG.getMethod().getDeclaringClass().getClassLoader().getLanguage();
                 // TODO: check that the signature needed by findOrCreate can use the descriptor
                 logger.debug("****" + instruction.clazzName + "****" + instruction.methodName + "****" + instruction.descriptor);
                 MethodReference m = MethodReference.findOrCreate(lang, loader, instruction.clazzName, instruction.methodName, instruction.descriptor);
-
-
-                //((DexIClass)dexCFG.getDexMethod().getDeclaringClass()).getSuperclass().get
-//              MethodReference m = ((DexIClass)dexCFG.getDexMethod().getDeclaringClass()).loader.lookupClass(TypeName.findOrCreate(instruction.clazzName)).
-//              this.myClass.loader.lookupClass(TypeName.findOrCreate(cname)),
-//              ((Instruction21c)inst).getRegisterA()));
-
 
                 logger.debug("Created method reference "+m+" from "+instruction.clazzName+" descriptor "+m.getReturnType());
                 IInvokeInstruction.IDispatch code = instruction.getInvocationCode();
@@ -881,8 +848,6 @@ public class DexSSABuilder extends AbstractIntRegisterMachine {
                 } else {
                     int result = reuseOrCreateDef();
                     // TODO: check that this return register is correct
-                    //I think it be registerCount() or registerCount()+1
-//                  int dest = dexCFG.getDexMethod().regBank.getReturnReg().regID;
                     int dest = dexCFG.getDexMethod().getReturnReg();
 
                     workingState.setLocal(dest, result);
@@ -1222,18 +1187,23 @@ public class DexSSABuilder extends AbstractIntRegisterMachine {
                 }
                 else
                 {
-                    emitInstruction(insts.UnaryOpInstruction(instruction.getOperator(), result, val));
-
-                    if (instruction.op == UnaryOperation.OpID.MOVE) {
-                        workingState.setLocal(instruction.destination, workingState.getLocal(instruction.source));
-                    }
-                    else if (instruction.op == UnaryOperation.OpID.MOVE_WIDE) {
-                        workingState.setLocal(instruction.destination, workingState.getLocal(instruction.source));
-                        if (instruction.source == dexCFG.getDexMethod().getReturnReg())
-                            workingState.setLocal(instruction.destination+1, workingState.getLocal(instruction.source));
-                        else
-                            workingState.setLocal(instruction.destination+1, workingState.getLocal(instruction.source+1));
-                    }
+                	// if it's not a move then emit an instruction, otherwise 
+                	// do the move locally
+                	if (!instruction.isMove()) {
+                		emitInstruction(insts.UnaryOpInstruction(instruction.getOperator(), result, val));
+                	}
+                	else {
+                		if (instruction.op == UnaryOperation.OpID.MOVE) {
+                			workingState.setLocal(instruction.destination, workingState.getLocal(instruction.source));
+                		}
+                		else if (instruction.op == UnaryOperation.OpID.MOVE_WIDE) {
+                			workingState.setLocal(instruction.destination, workingState.getLocal(instruction.source));
+                			if (instruction.source == dexCFG.getDexMethod().getReturnReg())
+                				workingState.setLocal(instruction.destination+1, workingState.getLocal(instruction.source));
+                			else
+                				workingState.setLocal(instruction.destination+1, workingState.getLocal(instruction.source+1));
+                		}
+                	}
 
                 }
             }
