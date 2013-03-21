@@ -493,9 +493,18 @@ public class SSAtoXMLVisitor implements SSAInstruction.IVisitor {
         if (localDefs.containsKey(defNum)) {
             return localDefs.get(defNum);
         }
-        return XMLSummaryWriter.A_ARG + (defNum - 1);
-//        throw new IllegalStateException("defNum: " + defNum
-//                + " is not defined.");
+
+        // arg0 -> argN should already be in localDefs.
+        // return XMLSummaryWriter.A_ARG + (defNum - 1);
+
+        if (!localDefs.containsValue(XMLSummaryWriter.V_NULL)) {
+        	localDefs.put(Integer.valueOf(defNum), XMLSummaryWriter.V_NULL);
+        	return XMLSummaryWriter.V_NULL;
+        }
+        else {       
+        	throw new IllegalStateException("defNum: " + defNum
+        			+ " is not defined.");
+        }
     }
 
 
