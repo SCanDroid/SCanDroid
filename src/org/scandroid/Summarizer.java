@@ -228,6 +228,10 @@ public class Summarizer<E extends ISSABasicBlock> {
 
 		final IMethod imethod = entryMethods.iterator().next();
 
+		// let's ignore constructors and class initializers
+		if (imethod.isInit() || imethod.isClinit())
+			return;
+
 		MethodSummary summary = new MethodSummary(methodRef);
 		summary.setStatic(imethod.isStatic());
 
