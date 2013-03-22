@@ -54,6 +54,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
+import org.jf.dexlib.AnnotationDirectoryItem;
 import org.jf.dexlib.AnnotationItem;
 import org.jf.dexlib.AnnotationSetItem;
 import org.jf.dexlib.ClassDataItem.EncodedMethod;
@@ -207,18 +208,21 @@ public class DexIMethod implements IBytecodeMethod {
 			throws InvalidClassFileException, UnsupportedOperationException {
 
 		ArrayList<String> strings = new ArrayList<String>();
-		AnnotationSetItem annotationSet = myClass.getClassDefItem().getAnnotations().getMethodAnnotations(eMethod.method);
-		if (annotationSet != null) {
-			for (AnnotationItem annotationItem: annotationSet.getAnnotations())
-			{
-				logger.debug("getDeclaredExceptions() AnnotationItem: " +  annotationItem.getEncodedAnnotation().annotationType.getTypeDescriptor());
-				if (annotationItem.getEncodedAnnotation().annotationType.getTypeDescriptor().contentEquals("Ldalvik/annotation/Throws;")) {
-					for (int i = 0; i < annotationItem.getEncodedAnnotation().values.length; i++) {
-						for (int j = 0; j < ((ArrayEncodedValue)annotationItem.getEncodedAnnotation().values[i]).values.length; j++) {
-							String tname = ((TypeEncodedValue)((ArrayEncodedValue)annotationItem.getEncodedAnnotation().values[i]).values[j]).value.getTypeDescriptor();
-							if (tname.endsWith(";"))
-								tname = tname.substring(0,tname.length()-1);
-							strings.add(tname);
+		final AnnotationDirectoryItem classAnnotations = myClass.getClassDefItem().getAnnotations();
+		if (classAnnotations != null) {
+			AnnotationSetItem annotationSet = classAnnotations.getMethodAnnotations(eMethod.method);
+			if (annotationSet != null) {
+				for (AnnotationItem annotationItem: annotationSet.getAnnotations())
+				{
+					logger.debug("getDeclaredExceptions() AnnotationItem: " +  annotationItem.getEncodedAnnotation().annotationType.getTypeDescriptor());
+					if (annotationItem.getEncodedAnnotation().annotationType.getTypeDescriptor().contentEquals("Ldalvik/annotation/Throws;")) {
+						for (int i = 0; i < annotationItem.getEncodedAnnotation().values.length; i++) {
+							for (int j = 0; j < ((ArrayEncodedValue)annotationItem.getEncodedAnnotation().values[i]).values.length; j++) {
+								String tname = ((TypeEncodedValue)((ArrayEncodedValue)annotationItem.getEncodedAnnotation().values[i]).values[j]).value.getTypeDescriptor();
+								if (tname.endsWith(";"))
+									tname = tname.substring(0,tname.length()-1);
+								strings.add(tname);
+							}
 						}
 					}
 				}

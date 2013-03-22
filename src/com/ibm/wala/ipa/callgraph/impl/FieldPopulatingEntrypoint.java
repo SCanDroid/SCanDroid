@@ -99,7 +99,7 @@ public class FieldPopulatingEntrypoint extends DefaultEntrypoint {
 
 		IClass clazz = getCha().lookupClass(paramType);
 		if (null == clazz) {
-			logger.warn("couldn't resolve entrypoint argument class {}", paramType);
+			logger.debug("couldn't resolve entrypoint argument class {}", paramType);
 			return m.addLocal();
 		}		
 		
