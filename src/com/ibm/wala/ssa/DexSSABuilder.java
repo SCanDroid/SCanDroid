@@ -274,14 +274,15 @@ public class DexSSABuilder extends AbstractIntRegisterMachine {
     protected void initializeVariables() {
         MachineState entryState = getEntryState();
         int parameterNumber = 0;
-        // added -2 to account for the return and exception register
-//      int local = method.getMaxLocals() - method.getNumberOfParameters() - 1 - 2;
 
-        //can't use just getNumberOfParameters because it does not account for Long/Wide variables which take up 2 registers
-        //as the parameter
+        // TODO: do we need to give the other local registers, the numbers
+        // before the parameter numbers an initial symbol value?
+
+        // I believe that the parameter register numbers do not start
+        // from 0 to x, but y to z.  Where y begins after the other
+        // local registers have been allocated.  We subtract 2 to
+        // remove the extra Return and Excp register we added in DexIMethod.
         int local = method.getMaxLocals() - method.getNumberOfParameterRegisters() - 1 - 2;
-
-//      MyLogger.log(LogLevel.DEBUG, "DexSSABuilder - initializeVariables() - local: " + local);
 
         for (int i = 0; i < method.getNumberOfParameters(); i++) {
             local++;
@@ -291,16 +292,18 @@ public class DexSSABuilder extends AbstractIntRegisterMachine {
                 entryState.setLocal(local, symbol);
                 if (t.equals(TypeReference.Double) || t.equals(TypeReference.Long)) {
                     local++;
+                    // Probably can do without this line
+                    // but safe to initialize it anyways
                     entryState.setLocal(local,symbol);
                 }
             }
         }
+
         // Initialize Return and Exception Registers to an arbitrary value in order to 
         // give it some state. (analysis complains if it's set to default -1 value)
         entryState.setLocal(method.getReturnReg(), symbolTable.newSymbol());
         entryState.setLocal(method.getExceptionReg(), symbolTable.newSymbol());
 
-        
         // This useless value ensures that the state cannot be empty, even
         // for a static method with no arguments in blocks with an empty stack
         // and no locals being used. This ensures that propagation of the
@@ -793,7 +796,6 @@ public class DexSSABuilder extends AbstractIntRegisterMachine {
                 }
 
                 Language lang = dexCFG.getMethod().getDeclaringClass().getClassLoader().getLanguage();
-                // TODO: check that the signature needed by findOrCreate can use the descriptor
                 logger.debug("****" + instruction.clazzName + "****" + instruction.methodName + "****" + instruction.descriptor);
                 MethodReference m = MethodReference.findOrCreate(lang, loader, instruction.clazzName, instruction.methodName, instruction.descriptor);
 
@@ -802,8 +804,11 @@ public class DexSSABuilder extends AbstractIntRegisterMachine {
                 CallSiteReference site = CallSiteReference.make(getCurrentProgramCounter(), m, code);
                 int exc = reuseOrCreateException();
                 workingState.setLocal(dexCFG.getDexMethod().getExceptionReg(), exc);
-
-
+               
+                
+                // instruction.args contains 'this' the reference to the object
+                // if it is not a static method as well as 2 registers
+                // for each double and long.
                 int n = instruction.args.length;
                 for (int i = 0; i < m.getNumberOfParameters(); i++)
                     if (m.getParameterType(i) == TypeReference.Double || m.getParameterType(i) == TypeReference.Long)
@@ -812,6 +817,7 @@ public class DexSSABuilder extends AbstractIntRegisterMachine {
 
                 int arg_i = 0;
                 //there is no "this" parameter when calling this invoke call
+                //ie. a static method call
                 if (n == m.getNumberOfParameters()) {
                     for (int i = 0; i < n; i++) {
                         params[i] = workingState.getLocal(instruction.args[arg_i]);
@@ -843,25 +849,15 @@ public class DexSSABuilder extends AbstractIntRegisterMachine {
                 if(m.getReturnType().equals(TypeReference.Void))
                 {
                     SSAInstruction inst = insts.InvokeInstruction(params, exc, site);
-                    //System.out.println("Emitting(1) InvokeInstruction: "+inst);
                     emitInstruction(inst);
                 } else {
                     int result = reuseOrCreateDef();
-                    // TODO: check that this return register is correct
                     int dest = dexCFG.getDexMethod().getReturnReg();
-
                     workingState.setLocal(dest, result);
                     SSAInstruction inst = insts.InvokeInstruction(result, params, exc, site);
-                    //System.out.println("Emitting(2) InvokeInstruction: "+inst);
                     emitInstruction(inst);
                 }
-//              if (instruction.getPushedWordSize() > 0) {
-//                  int result = reuseOrCreateDef();
-//                  workingState.push(result);
-//                  emitInstruction(insts.InvokeInstruction(result, params, exc, site));
-//              } else {
-//                  emitInstruction(insts.InvokeInstruction(params, exc, site));
-//              }
+                
                 // TODO: can other methods do indirect writes to a dex method?
 //              doIndirectWrites(bytecodeIndirections.indirectlyWrittenLocals(getCurrentInstructionIndex()), -1);
             }
