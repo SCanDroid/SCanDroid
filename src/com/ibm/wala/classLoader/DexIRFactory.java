@@ -64,9 +64,8 @@ public class DexIRFactory extends DefaultIRFactory {
 
         // calculate the SSA registers from the given cfg
 
-        //TODO: check this
         final SymbolTable symbolTable = new SymbolTable(method.getNumberOfParameters());
-//      final SymbolTable symbolTable = new SymbolTable(method.getNumberOfParameterRegisters());
+
         final SSAInstruction[] newInstrs = new SSAInstruction[method.getDexInstructions().length];
 
         final SSACFG newCfg = new SSACFG(method, cfg, newInstrs);
