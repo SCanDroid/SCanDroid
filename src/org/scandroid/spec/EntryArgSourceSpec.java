@@ -42,6 +42,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Stack;
 
 import org.scandroid.domain.CodeElement;
 import org.scandroid.domain.InstanceKeyElement;
@@ -53,6 +54,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.ibm.wala.classLoader.IClass;
 import com.ibm.wala.classLoader.IMethod;
 import com.ibm.wala.dataflow.IFDS.ISupergraph;
@@ -106,7 +108,7 @@ public class EntryArgSourceSpec extends SourceSpec {
 					if (null == clazz) {
 						logger.error("couldn't find entry arg class {}", typeRef);
 					} else if (clazz.isInterface()) {						
-						for (IClass impl : pa.getClassHierarchy().getImplementors(typeRef)) {
+						for (IClass impl : getImplementors(pa,typeRef)) {
 							logger.debug("creating instance key {} for interface {}", impl, clazz);
 							InstanceKey ik = new ConcreteTypeKey(impl);
 							valueElements.addAll(ctx.codeElementsForInstanceKey(ik));
@@ -129,5 +131,35 @@ public class EntryArgSourceSpec extends SourceSpec {
 	@Override
 	public String toString() {
 		return String.format("EntryArgSourceSpec(%s, %s)", namePattern, Arrays.toString(argNums));
+	}
+
+	/**
+	 * Given a TypeReference, find all classes that implement it.  If
+	 * the implementing class is also an interface, find all the classes
+	 * which implement that, etc.
+	 * 
+	 * @param pa
+	 * @param typeRef
+	 * @return
+	 */
+	private Set<IClass> getImplementors(PointerAnalysis pa, TypeReference typeRef) {
+		Set<IClass> implementors = Sets.newHashSet();
+		Set<TypeReference> explored = Sets.newHashSet();
+		Stack<TypeReference> worklist = new Stack<TypeReference>();
+		worklist.push(typeRef);
+		while (!worklist.isEmpty()) {
+			TypeReference tr = worklist.pop();
+			explored.add(tr);
+			for (IClass impl : pa.getClassHierarchy().getImplementors(tr)) {
+				if (impl.isInterface() &&
+						!explored.contains(impl.getReference())) {
+					worklist.push(impl.getReference());
+				}
+				else if (!impl.isInterface()) {
+					implementors.add(impl);
+				}
+			}
+		}
+		return implementors;
 	}
 }
