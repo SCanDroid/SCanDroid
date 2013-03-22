@@ -329,6 +329,10 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 				(SSAGetInstruction) inst)) {
 			StaticFieldElement sfe = (StaticFieldElement) ce;
 			IField field = pa.getClassHierarchy().resolveField(sfe.getRef());
+			// We don't have a class definition for this field type
+			// TODO: ignore field?
+			if (field == null)
+				continue;
 			if (field.isFinal()) {
 				continue;
 			}
@@ -524,6 +528,11 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 		Set<CodeElement> elts = Sets.newHashSet();
 		final FieldReference fieldRef = inst.getDeclaredField();
 		final IField field = node.getClassHierarchy().resolveField(fieldRef);
+		// We don't have a class definition for this field type
+		// TODO: ignore field?
+		if (field == null)
+			return elts;
+
 		PointerKey pk = pa.getHeapModel().getPointerKeyForLocal(node,
 				inst.getRef());
 
