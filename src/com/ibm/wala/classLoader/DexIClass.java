@@ -162,7 +162,7 @@ public class DexIClass extends BytecodeClass<IClassLoader> {
             //final EncodedField[] encInstFields = classData.getInstanceFields();
 
         	final List<EncodedField> encInstFields = classData.getInstanceFields();
-            instanceFields = new IField[encInstFields.size()];
+        	instanceFields = new IField[encInstFields.size()];
         	for (int i = 0; i < encInstFields.size(); i++) {
         		instanceFields[i] = new DexIField(encInstFields.get(i),this);
         	}
@@ -173,6 +173,12 @@ public class DexIClass extends BytecodeClass<IClassLoader> {
             for (int i = 0; i < encStatFields.size(); i++) {
                 staticFields[i] = new DexIField(encStatFields.get(i),this);
             }
+        } else {
+        	logger.warn("classData is null; creating 0-len arrays " +
+        			"for fields for: " + dexEntry.getClassName());
+        	// no class data, but we need to populate the arrays:
+        	instanceFields = new IField[0];
+        	staticFields = new IField[0];
         }
     }
 
