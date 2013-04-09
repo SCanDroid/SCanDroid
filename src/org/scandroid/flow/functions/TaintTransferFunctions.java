@@ -56,6 +56,7 @@ import org.scandroid.domain.ReturnElement;
 import org.scandroid.domain.StaticFieldElement;
 import org.scandroid.domain.ThrowElement;
 import org.scandroid.flow.types.StaticFieldFlow;
+import org.scandroid.util.AndroidAnalysisContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -329,10 +330,19 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 				(SSAGetInstruction) inst)) {
 			StaticFieldElement sfe = (StaticFieldElement) ce;
 			IField field = pa.getClassHierarchy().resolveField(sfe.getRef());
-			// We don't have a class definition for this field type
-			// TODO: ignore field?
-			if (field == null)
-				continue;
+			// We don't have a class definition for this field type.
+			// Check exclusions file for the field type, if it's in it
+			// then ignore, otherwise an error.
+			// TODO: make sure this is the correct decision
+			if (field == null) {
+				if (AndroidAnalysisContext.inExclusions(sfe.getRef().getDeclaringClass())) {
+					continue;
+				}
+				else {
+					AndroidAnalysisContext.missingClasses(sfe.getRef().getDeclaringClass());
+				}
+			}
+			
 			if (field.isFinal()) {
 				continue;
 			}
@@ -528,10 +538,18 @@ public class TaintTransferFunctions<E extends ISSABasicBlock> implements
 		Set<CodeElement> elts = Sets.newHashSet();
 		final FieldReference fieldRef = inst.getDeclaredField();
 		final IField field = node.getClassHierarchy().resolveField(fieldRef);
-		// We don't have a class definition for this field type
-		// TODO: ignore field?
-		if (field == null)
-			return elts;
+		// We don't have a class definition for this field type.
+		// Check exclusions file, if the type is included in it then
+		// ignore, otherwise throw out an error.
+		// TODO: make sure this is the correct decision
+		if (field == null) {
+			if (AndroidAnalysisContext.inExclusions(fieldRef.getDeclaringClass())) {
+				return elts;
+			}
+			else {
+				AndroidAnalysisContext.missingClasses(fieldRef.getDeclaringClass());
+			}
+		}
 
 		PointerKey pk = pa.getHeapModel().getPointerKeyForLocal(node,
 				inst.getRef());
