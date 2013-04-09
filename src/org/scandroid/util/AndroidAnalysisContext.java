@@ -40,8 +40,10 @@
 
 package org.scandroid.util;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -75,6 +77,7 @@ import com.ibm.wala.ipa.callgraph.ClassTargetSelector;
 import com.ibm.wala.ipa.callgraph.ContextSelector;
 import com.ibm.wala.ipa.callgraph.Entrypoint;
 import com.ibm.wala.ipa.callgraph.MethodTargetSelector;
+import com.ibm.wala.ipa.callgraph.impl.SetOfClasses;
 import com.ibm.wala.ipa.callgraph.impl.Util;
 import com.ibm.wala.ipa.callgraph.propagation.SSAContextInterpreter;
 import com.ibm.wala.ipa.callgraph.propagation.SSAPropagationCallGraphBuilder;
@@ -104,6 +107,7 @@ public class AndroidAnalysisContext {
 	}
 	private static final String methodSpec = "MethodSummaries.xml";
 	private static final String pathToSpec = "data";
+	private static SetOfClasses exclusions;
 
 	private final ISCanDroidOptions options;
 	private final AnalysisScope scope;
@@ -137,6 +141,8 @@ public class AndroidAnalysisContext {
 		this.options = options;
 		scope = DexAnalysisScopeReader.makeAndroidBinaryAnalysisScope(
 				options.getClasspath(), exclusions);
+
+		AndroidAnalysisContext.exclusions = scope.getExclusions();
 
 		scope.setLoaderImpl(ClassLoaderReference.Application,
 				"com.ibm.wala.classLoader.WDexClassLoaderImpl");
@@ -434,5 +440,31 @@ public class AndroidAnalysisContext {
 	
 	public ClassHierarchy getClassHierarchy() {
 		return cha;
+	}
+
+	public static boolean inExclusions(String klassName) {
+		return exclusions.contains(klassName);
+	}
+
+	public static boolean inExclusions(TypeReference klass) {
+		return exclusions.contains(klass);
+	}
+
+	public static void missingClasses(TypeReference typeRef) {
+		try {
+			File file = new File("missingClasses.txt");
+
+			if (!file.exists()) {
+				file.createNewFile();
+			}
+
+			FileWriter fw = new FileWriter(file.getAbsoluteFile());
+			BufferedWriter bw = new BufferedWriter(fw);
+			bw.write(typeRef.getName().toString());
+			bw.newLine();
+			bw.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 }
